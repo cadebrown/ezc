@@ -25,7 +25,7 @@ char_oper = {
 char_block = {
     "if": "If",
     "break": "Break",
-    "count": "Count",
+    "for": "Count",
 }
 
 char_cond = {
@@ -108,7 +108,7 @@ def pile_str(line):
                 try:
                     line = line[len(char):]
                     line = clean_line(line)
-                    if char == "count":
+                    if char == "for":
                         args = line.split(" ")
                         var, min, max = args[:3]
                         step = 1.0
