@@ -1,0 +1,5 @@
+# Generated
+tmp/
+
+# compiled files
+*.o
