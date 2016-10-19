@@ -22,6 +22,10 @@ char_oper = {
     "^": "Pow"
 }
 
+char_oper_func = {
+    "sin": "Sin"
+}
+
 char_block = {
     "if": "If",
     "break": "Break",
@@ -99,6 +103,24 @@ def pile_str(line):
                     line = clean_line(line)
                     op = line
                     exec("R=%s()" % (char_func[char]))
+                    R.var = op
+                    return R
+                except e:
+                    log.err("Parsing Function", line)
+        for char in char_oper_func:
+            if line.startswith(char):
+                try:
+                    line = line.replace(" ", "").replace("=", "")
+                    line = line.split(char)
+                    print line
+                    assign_i = min(line.index(" "), line.index("="))
+                    assign = line[:assign_i]
+                    line = line[assign_i+1:]; line = clean_line(line)
+                    a = line[]
+                    line = line[len(char):]
+                    line = clean_line(line)
+                    op = line
+                    exec("R=%s(assign=%s)" % (char_func[char]))
                     R.var = op
                     return R
                 except e:
@@ -315,3 +337,19 @@ class Div(Operation):
 class Pow(Operation):
     def get_st(self):
         return "mpfr_pow(%s, %s, %s, GMP_RNDN);\n" % (self.assign, self.a, self.b)
+
+
+"""
+
+    Operation Functions
+
+"""
+
+class OpFunc():
+    def __init__(self, assign, a):
+        self.assign = assign
+        self.a = a
+
+class Sin(OpFunc):
+    def get_st(self):
+        return "mpfr_sin(%s, %s, GMP_RNDN);\n" % (self.assign, self.a)

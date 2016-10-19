@@ -1,0 +1,8 @@
+# Precision, in bits
+prec 256
+
+set S1 0.0
+
+set A 1.0
+
+S1 = sin A
