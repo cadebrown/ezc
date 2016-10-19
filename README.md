@@ -138,6 +138,10 @@ Are both valid
 
 For more, see the wiki
 
+## Examples
+
+Check [examples](https://github.com/ChemicalDevelopment/ezc/tree/master/examples)
+
 # Tutorials
 
 Coming soon!
