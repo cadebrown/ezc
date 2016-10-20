@@ -75,7 +75,7 @@ def compile_str(lines):
             if v:
                 statements.append(v)
         except Exception as e:
-            print "Generic Error Found With Statement: \n\t%s\n\t\t%s" % (line, str(e))
+            log.err("GenericLine", str(e))
 
     #out += prec.init_st()
     CONSTS_ST = [Prec("prec", ["64"]), Set("ZERO", ["0"]), Set("ONE", ["1"]), Set("TWO", ["2"]), Set("TEN", ["10"])]

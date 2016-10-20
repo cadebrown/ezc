@@ -12,5 +12,5 @@ chemicaldevelopment.us
 def init():
     print info
 
-def err(task, st):
-    print "%s: \n\t%s: \n\t\t" % (name, task, st)
+def err(task, err):
+    print "%s: \n\t%s" % (name, task, err)
