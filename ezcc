@@ -61,6 +61,8 @@ print cmd
 compile_proc = Popen(cmd, shell=True)
 compile_proc.wait()
 print "CC has finished"
+"""
 clear_proc = Popen(clearcmd, shell=True)
 clear_proc.wait()
 print "Temp files cleared"
+"""

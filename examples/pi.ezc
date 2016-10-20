@@ -1,8 +1,72 @@
-# Precision, in bits
-prec 256
+###
 
-set S1 0.0
+Computes PI, using geometric mean
 
-set A 1.0
+pi = (AGM(1, 1/sqrt(2))^2) / (1-sum(2^(n+1) * (a_n^2-b_n^2)))
 
-S1 = sin A
+AGM is the arithmetic geometric mean.
+
+AGM(x, y) = AGM((x+y)/2, sqrt(x*y))
+
+a_n and b_n are the arithmetic and geometric mean values after n iterations.
+
+To run, use `./pi.o $bits` to compute $bits of PI
+
+###
+
+# Precision, reads in from commandline
+prec $1
+
+epsilon = .5; epsilon = epsilon ^ prec
+
+# 1.0
+a = 1.0
+
+# 1/sqrt(2)
+b = sqrt TWO; b = ONE / b
+
+# initialize variables
+series = 0; n = 0
+
+label loop
+    n = n + ONE
+
+    # average, arithmetic
+    arith = a + b; arith = arith / TWO
+
+    # average, geometric
+    geom = a * b; geom = sqrt geom
+
+    # assign them to terms
+    a = arith; b = geom
+
+    # tmp1 is 2^(n+1)
+    tmp3 = n + ONE; tmp1 = TWO ^ tmp3
+
+    # tmp2 = a^2, tmp3 = b^2
+    tmp2 = a ^ TWO; tmp3 = b ^ TWO
+
+    # form 2^(n+1)*(a^2-b^2)
+    tmp2 = tmp2 - tmp3; tmp1 = tmp1 * tmp2
+
+    # add sum to series
+    series = series + tmp1
+
+    # calculate difference
+    diff = a - b
+
+# if error is too large, repeat another iteration
+if diff > epsilon
+    goto loop
+fi
+
+# calculating end, tmp1 = 4*a^2
+tmp1 = TWO * a; tmp1 = tmp1 ^ TWO
+
+# 1 - sum
+tmp2 = ONE - series
+
+# pi = (4a^2)/((1-sum))
+pi = tmp1 / tmp2
+
+var pi

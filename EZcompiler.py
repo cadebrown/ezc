@@ -1,4 +1,5 @@
 import EZlogger as log
+import math
 
 libs = """#include <stdio.h>
 #include <stdlib.h>
@@ -8,6 +9,7 @@ libs = """#include <stdio.h>
 
 start="""
 int main(int argc, char *argv[]) {
+int _prec, _pprec;
 """
 
 end="""
@@ -22,56 +24,83 @@ char_oper = {
     "^": "Pow"
 }
 
-char_oper_func = {
-    "sin": "Sin"
-}
+char_st = {
+    "prec": "Prec",
+    
+    "echo": "Echo",
+    "var": "Var",
 
-char_block = {
+    "add": "Add",
+    "sub": "Sub",
+    "mul": "Mul",
+    "div": "Div",
+    "pow": "Pow",
+
+    "sqrt": "Sqrt",
+    "sin": "Sin",
+    "cos": "Cos",
+    "log": "Log",
+    "logb": "LogB",
+
+    "label": "Label",
+    "goto": "Goto",
+
     "if": "If",
-    "break": "Break",
-    "for": "Count",
+    "for": "For",
+    "fi": "EndLoop",
+    "rof": "EndLoop"   
 }
 
-char_cond = {
-    ">": "Greater",
-    "<": "Less",
-    "==": "Equal"
-}
+st_must_be_first = [
+    "if",
+    "fi"
+]
 
-char_func = {
-    "echo": "PrintStr",
-    "printstr": "PrintRaw",
-    "var": "PrintVar",
-    "printvar": "PrintRawVar",
-}
+
+var_names = set()
+
+def get_var_init(var):
+    return "mpfr_t %s; mpfr_init(%s);" % (var, var)
+
+def get_var_free(var):
+    return "mpfr_clear(%s);" % (var)
 
 def compile_str(lines):
-    vars = [FloatVar("ZERO", "0.0"),FloatVar("ONE", "1.0"),FloatVar("TWO", "2.0"),FloatVar("TEN", "10.0")]
-    procs = []
-    prec = Prec(128)
+    statements = []
     out = libs + start
+    statement_str = ""
     for line in lines:
         try:
             v = pile_str(line)
-            if isinstance(v, FloatVar):
-                vars.append(v)
-            elif isinstance(v, Prec):
-                prec = v
-            elif v != None:
-                procs.append(v)
-        except:
-            print "Generic Error Found With Statement: \n\t%s" % (line)
+            if v:
+                statements.append(v)
+        except Exception as e:
+            print "Generic Error Found With Statement: \n\t%s\n\t\t%s" % (line, str(e))
 
-    out += prec.init_st()
+    #out += prec.init_st()
+    CONSTS_ST = [Prec("prec", ["64"]), Set("ZERO", ["0"]), Set("ONE", ["1"]), Set("TWO", ["2"]), Set("TEN", ["10"])]
 
-    for v in vars:
-        out += v.init_st()
+    if isinstance(statements[0], Prec):
+        CONSTS_ST[0] = statements[0]
+        statements = statements[1:]
+    else:
+        out += DEFAULT_PREC_ST.get_st()
 
-    for p in procs:
-        out += p.get_st()
+    statements = CONSTS_ST[1:] + statements
+    
+    for st in statements:
+        statement_str += st.get_st() + "\n"
 
-    for v in vars:
-        out += v.clear_st()
+    out += CONSTS_ST[0].get_st() + "\n"
+
+    for v in var_names:
+        if v != "prec":
+            out += get_var_init(v) + "\n"
+
+    out = out + statement_str
+
+    for v in var_names:
+        out += get_var_free(v) + "\n"
 
     out += end
     return out
@@ -80,231 +109,197 @@ def clean_line(v):
     v = v.lstrip()
     v = v.rstrip()
     return v
-        
+
+def split_l(aa):
+    r = []
+    for a in aa:
+        a = clean_line(a)
+        if a and a != "":
+            r.append(a)
+    return r
+
+def parse_function(l):
+    l = clean_line(l)
+    if "=" in l:
+        assign, args = l.split("=")
+        return clean_line(assign), split_l(args.split(" "))
+    else:
+        args = split_l(l.split(" "))
+        return "", args
+
 def pile_str(line):
     if "#" in line:
-        line = line[0:line.index("#")]
+        line = line[:line.index("#")]
     line = clean_line(line)
-    if line.startswith("prec"):
-        val = line[line.index("prec")+4:]
-        line = clean_line(line)
-        return Prec(val)
-    elif line.startswith("set"):
-        line = line[line.index("set")+3:]
-        line = clean_line(line)
-        name = line.split(" ")[0]
-        st = line.split(" ")[1]
-        return FloatVar(name, st)
-    else:
-        for char in char_func:
-            if line.startswith(char):
-                try:
-                    line = line[len(char):]
-                    line = clean_line(line)
-                    op = line
-                    exec("R=%s()" % (char_func[char]))
-                    R.var = op
-                    return R
-                except e:
-                    log.err("Parsing Function", line)
-        for char in char_oper_func:
-            if line.startswith(char):
-                try:
-                    line = line.replace(" ", "").replace("=", "")
-                    line = line.split(char)
-                    print line
-                    assign_i = min(line.index(" "), line.index("="))
-                    assign = line[:assign_i]
-                    line = line[assign_i+1:]; line = clean_line(line)
-                    a = line[]
-                    line = line[len(char):]
-                    line = clean_line(line)
-                    op = line
-                    exec("R=%s(assign=%s)" % (char_func[char]))
-                    R.var = op
-                    return R
-                except e:
-                    log.err("Parsing Function", line)
-        for char in char_block:
-            if line.startswith(char):
-                try:
-                    line = line[len(char):]
-                    line = clean_line(line)
-                    if char == "for":
-                        args = line.split(" ")
-                        var, min, max = args[:3]
-                        step = 1.0
-                        if len(args) > 3:
-                            step = args[3]
-                        exec("R=%s(min=\"%s\", max=\"%s\", var=\"%s\", step=\"%s\")" % (char_block[char], min, max, var, step))
-                    elif char == "if":
-                        for co in char_cond:
-                            if co in line:
-                                exec("cond=%s(\"%s\", \"%s\")" % (char_cond[co], line.split(co)[0], line.split(co)[1]))
-                        exec("R=%s(cond=cond)" % (char_block[char]))
-                    else:
-                        exec("R=%s()" % (char_block[char]))
-                    return R
-                except e:
-                    log.err("Parsing Block", line)
-        for cr in char_block:
-            char = cr[::-1]
-            if line.startswith(char):
-                return BlockEnd()
-        for char in char_oper:
-            if char in line:
-                assign = line[0:line.index("=")]
-                a = line[line.index("=")+1:line.index(char)]
-                b = line[line.index(char)+len(char):]
-                exec("R=%s(assign, a, b)" % (char_oper[char]))
+    if line == "":
+        return
+    for char in char_oper:
+        if char in line and "=" in line:
+            _data = clean_line(line.replace(char, ""))
+            assign, args = parse_function(_data)
+            a, b = args
+            exec("R=%s_Op(assign, a, b)" % (char_oper[char]))
+            return R
+    for char in char_st:
+        if char in line:
+            go_on = True
+            if char in st_must_be_first:
+                go_on = line.startswith(char)
+            if go_on:
+                rm_func = line.replace(char, "", 1) 
+                assign, args = parse_function(rm_func)
+                exec("R=%s(assign=assign, args=args)" % (char_st[char]))
                 return R
+    if "=" in line:
+        assign, args = parse_function(line.replace(char, ""))
+        return Set(assign, args)
 
 
 def is_const(str):
-    return str[0].isdigit() or str[0] == "."
+    return str[0].isdigit() or str[0] == "." or str[0] == "-"
 
-#Class for float variables
-class FloatVar():
-    def __init__(self, name, val):
-        self.name = name
-        self.val = val
+def is_pos_int(str):
+    return str[0].isdigit()
 
-    def init_st(self):
-        init_str = "\nmpfr_t %s; mpfr_init (%s);" % (self.name, self.name)
-        main_str = "mpfr_set_str(%s, \"%s\", 10, GMP_RNDN);\n" % (self.name, self.val)
-        if self.val.startswith("$"):
-            anum = self.val.replace("$", "")
-            main_str = "if (argc > %s) {" % (anum)
-            main_str += "mpfr_set_str(%s, argv[%s], 10, GMP_RNDN);\n" % (self.name, anum)
-            main_str += "} else {  mpfr_set_str(%s, \"0.0\", 10, GMP_RNDN);\n }" % (self.name)
-        return init_str + main_str
+"""
 
-    def clear_st(self):
-        return "mpfr_clear(%s);" % (self.name)
+    Statement
 
-#Class for precision
-class Prec():
-    def __init__(self, prec):
-        self.prec = prec
+"""
 
-    def init_st(self):
-        import math
-        pv = FloatVar("prec", self.prec)
-        return pv.init_st() + "int _prec = %s; int _pprec = %s; mpfr_set_default_prec(_prec);\n" % (self.prec, str(int(math.log(2, 10) * int(self.prec))))
+class Statement():
+    def __init__(self, assign, args):
+        if assign and assign != "":
+            var_names.add(assign)
+        self.assign = assign
+        self.args = args
 
-
-#Class for print statement
-class PrintVar():
-    def __init__(self, var=None):
-        self.var = var
-
+class Prec(Statement):
     def get_st(self):
+        c_str = self.args[0]
+        if "$" in c_str:
+            num = self.args[0].replace("$", "")
+            c_str = "strtol(argv[%s], NULL, 10)" % (num) 
+        return "_prec = %s; mpfr_set_default_prec(_prec); _pprec = (int)(_prec * log(2.0) / log(10.0)); mpfr_t prec; mpfr_init(prec); " % (c_str) + Set("prec", self.args[:1]).get_st()
+
+class Echo(Statement):
+    def get_st(self):
+        return "printf(\"%s\\n\");\n" % (" ".join(self.args))
+    
+class Var(Statement):
+    def get_st(self):
+        self.var = self.args[0]
         return "mpfr_printf(\"%s : %%.*Rf \\n\", _pprec, %s);\n" % (self.var, self.var)
 
-#Class for print statement
-class PrintRawVar():
-    def __init__(self, var=None):
-        self.var = var
-
+class Set(Statement):
     def get_st(self):
-        return "mpfr_printf(\"%%.*Rf \\n\", _pprec, %s);\n" % (self.var)
-
-#Class for print statement
-class PrintStr():
-    def __init__(self, var=None):
-        self.var = var
-
-    def get_st(self):
-        return "mpfr_printf(\"%s\\n\");\n" % (self.var)
-
-# No newline
-class PrintRaw():
-    def __init__(self, var=None):
-        self.var = var
-
-    def get_st(self):
-        return "mpfr_printf(\"%s\");\n" % (self.var.replace("\"", ""))
-
-"""
-
-     Blocks
-
-"""
-
-class Block():
-    def __init__(self, cond=None, var=None, min=None, max=None, step=None):
-        self.var = var
-        self.cond = cond
-        self.max = max
-        self.min = min
-        self.step = step
-    
-    def get_st(self):
-        return "{\n"
-
-class BlockEnd(Block):
-    def get_st(self):
-        return "}\n"
-
-class Break(Block):
-    def get_st(self):
-        return "break;\n"
-
-class If(Block):
-    def get_st(self):
-        return "if (%s) {\n" % (self.cond.get_st())
-
-class Count(Block):
-    def get_st_min(self):
-        if is_const(self.min):
-            minv = FloatVar(self.var + "_min", self.min)
-            return (minv.init_st(), "mpfr_set(%s, %s_min, GMP_RNDN)" % (self.var, self.var))
+        var_names.add(self.assign)
+        r = ""
+        if is_const(self.args[0]):
+            r += "mpfr_set_str(%s, \"%s\", 10, GMP_RNDN);\n" % (self.assign, " ".join(self.args))
+        elif self.args[0].startswith("$"):
+            num = self.args[0].replace("$", "")
+            r += "if (argc > %s) { mpfr_set_str(%s, argv[%s], 10, GMP_RNDN); } else { mpfr_set_str(%s, \"0.0\", 10, GMP_RNDN);\n }" % (num, self.assign, num, self.assign)
         else:
-            return ("", "mpfr_set(%s, %s, GMP_RNDN)" % (self.var, self.min))
+            r += "mpfr_set(%s, %s, GMP_RNDN);" % (self.assign, self.args[0])
+        return r
 
-    def get_st_max(self):
-        if is_const(self.max):
-            maxv = FloatVar(self.var + "_max", self.max)
-            return (maxv.init_st(), "mpfr_cmp(%s, %s_max) <= 0" % (self.var, self.var))
-        else:
-            return ("", "mpfr_cmp(%s, %s) <= 0" % (self.var, self.max))
-
-    def get_st_step(self):
-        if is_const(self.step):
-            stepv = FloatVar(self.var + "_step", self.step)
-            return (stepv.init_st(), "mpfr_add(%s, %s, %s_step, GMP_RNDN)" % (self.var, self.var, self.var))
-        else:
-            return ("", "mpfr_add(%s, %s, %s, GMP_RNDN)" % (self.var, self.var, self.step))
-
+class Add(Statement):
     def get_st(self):
-        vari = FloatVar(self.var, "0.0")
-        minv = self.get_st_min()
-        maxv = self.get_st_max()
-        stepv = self.get_st_step()
-        return vari.init_st() + minv[0] + maxv[0] + stepv[0] + "for (%s; %s; %s) {\n" % (minv[1], maxv[1], stepv[1])
+        return "mpfr_add(%s, %s, %s, GMP_RNDN);\n" % (self.assign, self.args[0], self.args[1])
 
-"""
-
-    Conditions
-
-"""
-
-class Condition():
-    def __init__(self, a, b):
-        self.a = a
-        self.b = b
-    
-class Greater(Condition):
+class Sub(Statement):
     def get_st(self):
-        return "mpfr_cmp(%s, %s) > 0" % (self.a, self.b)
+        return "mpfr_sub(%s, %s, %s, GMP_RNDN);\n" % (self.assign, self.args[0], self.args[1])
 
-class Less(Condition):
+class Mul(Statement):
     def get_st(self):
-        return "mpfr_cmp(%s, %s) < 0" % (self.a, self.b)
+        return "mpfr_mul(%s, %s, %s, GMP_RNDN);\n" % (self.assign, self.args[0], self.args[1])
 
-class Equal(Condition):
+class Div(Statement):
     def get_st(self):
-        return "mpfr_cmp(%s, %s) == 0" % (self.a, self.b)
+        return "mpfr_div(%s, %s, %s, GMP_RNDN);\n" % (self.assign, self.args[0], self.args[1])
+
+class Pow(Statement):
+    def get_st(self):
+        return "mpfr_pow(%s, %s, %s, GMP_RNDN);\n" % (self.assign, self.args[0], self.args[1])
+
+class Sqrt(Statement):
+    def get_st(self):
+        return "mpfr_sqrt(%s, %s, GMP_RNDN);\n" % (self.assign, self.args[0])
+
+class Sin(Statement):
+    def get_st(self):
+        return "mpfr_sin(%s, %s, GMP_RNDN);\n" % (self.assign, self.args[0])
+
+class Cos(Statement):
+    def get_st(self):
+        return "mpfr_cos(%s, %s, GMP_RNDN);\n" % (self.assign, self.args[0])
+
+class Log(Statement):
+    def get_st(self):
+        return "mpfr_log(%s, %s, GMP_RNDN);\n" % (self.assign, self.args[0])
+
+class LogB(Statement):
+    def get_st(self):
+        tmp_0_name ="tmp_0_" + str(abs(hash(self.assign)))
+        tmp_1_name ="tmp_1_" + str(abs(hash(self.assign)))
+        tmp_0_var = Set(tmp_0_name, "0.0").get_st()
+        tmp_1_var = Set(tmp_1_name, "0.0").get_st()
+        find_la = Log(tmp_0_name, self.args[1]).get_st()
+        find_lb = Log(tmp_1_name, self.args[0]).get_st()
+        find_div = Div(self.assign, (tmp_0_name, tmp_1_name)).get_st()
+        return find_la + find_lb + find_div
+
+class Label(Statement):
+    def get_st(self):
+        return "%s :;" % (self.args[0])
+
+class Goto(Statement):
+    def get_st(self):
+        return "goto %s;" % (self.args[0])
+
+class If(Statement):
+    def get_st(self):
+        return "if (mpfr_cmp(%s, %s) %s 0) {" % (self.args[0], self.args[2], self.args[1])
+
+class For(Statement):
+    def get_st(self):
+        self.assign = self.args[0]
+        self.args = self.args[1:]
+        if len(self.args) <= 2:
+            self.args.append("1.0")
+        assigns = ""
+        min_str = self.args[0]
+        max_str = self.args[1]
+        step_str = self.args[2]
+        if is_const(self.args[0]):
+            min_str = "%s_min" % (self.assign)
+            assigns += Set(min_str, [self.args[0]]).get_st()
+        if is_const(self.args[1]):
+            max_str = "%s_max" % (self.assign)
+            assigns += Set(max_str, [self.args[1]]).get_st()
+        if is_const(self.args[2]):
+            step_str = "%s_step" % (self.assign)
+            assigns += Set(step_str, [self.args[2]]).get_st()
+
+        set_str = "mpfr_set(%s, %s, GMP_RNDN)" % (self.assign, min_str)
+        cmp_str = "mpfr_cmp(%s, %s)" % (self.assign, max_str)
+        inc_st = "mpfr_add(%s, %s, %s, GMP_RNDN);" % (self.assign, self.assign, step_str)
+        
+        print inc_st
+
+        loop_var = Set(self.assign, self.args[0])
+        do_name = "do_%s" % (self.assign)
+        stop_do = "%s = 0;" % (do_name)
+        init_st = "%s; int %s = 2;" % (set_str, do_name)
+        loop_st = "while (%s) { " % (do_name)
+        stop_st = "if (%s == 2) { %s = 1; } else { %s if (mpfr_cmp_ui(%s, 0) > 0) { if (%s >= 0) { %s } } else { if (%s <= 0) { %s } } }" % (do_name, do_name, inc_st, step_str, cmp_str, stop_do, cmp_str, stop_do)
+        return assigns + init_st + loop_st + stop_st
+
+class EndLoop(Statement):
+    def get_st(self):
+        return "}"
 
 """
 
@@ -318,38 +313,22 @@ class Operation():
         self.a = a
         self.b = b
 
-class Add(Operation):
+class Add_Op(Operation):
     def get_st(self):
-        return "mpfr_add(%s, %s, %s, GMP_RNDN);\n" % (self.assign, self.a, self.b)
+        return Add(self.assign, [self.a, self.b]).get_st()
 
-class Sub(Operation):
+class Sub_Op(Operation):
     def get_st(self):
-        return "mpfr_sub(%s, %s, %s, GMP_RNDN);\n" % (self.assign, self.a, self.b)
+        return Sub(self.assign, [self.a, self.b]).get_st()
 
-class Mul(Operation):
+class Mul_Op(Operation):
     def get_st(self):
-        return "mpfr_mul(%s, %s, %s, GMP_RNDN);\n" % (self.assign, self.a, self.b)
+        return Mul(self.assign, [self.a, self.b]).get_st()
 
-class Div(Operation):
+class Div_Op(Operation):
     def get_st(self):
-        return "mpfr_div(%s, %s, %s, GMP_RNDN);\n" % (self.assign, self.a, self.b)
+        return Div(self.assign, [self.a, self.b]).get_st()
 
-class Pow(Operation):
+class Pow_Op(Operation):
     def get_st(self):
-        return "mpfr_pow(%s, %s, %s, GMP_RNDN);\n" % (self.assign, self.a, self.b)
-
-
-"""
-
-    Operation Functions
-
-"""
-
-class OpFunc():
-    def __init__(self, assign, a):
-        self.assign = assign
-        self.a = a
-
-class Sin(OpFunc):
-    def get_st(self):
-        return "mpfr_sin(%s, %s, GMP_RNDN);\n" % (self.assign, self.a)
+        return Pow(self.assign, [self.a, self.b]).get_st()

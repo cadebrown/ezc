@@ -1,42 +1,27 @@
 ###
 
-ChemicalDevelopment EZC language.
+ChemicalDevelopment
 
-Multiprecision language for quick prototyping.
-
-To compile this, run `./ezcc examples/e.ezc -o e.o && ./e.o`
+Computes e, run `./e.o $bits` to compute $bits of e
 
 ###
 
-# Precision, in bits
-prec 256
+prec $1
 
-# Multiline init
-set SUM 1; set PREV_SUM SUM; set INV_FACT 1
-# Set tolerance to 0 bits, and initialize error
-set TOL 0; set ERR 0
+toler = .5; toler = toler ^ prec
 
-# Loops through
-for i 1 100000
-    # INV_FACT = 1 / (i!)
-    INV_FACT = INV_FACT / i
-    # Add on
-    SUM = SUM + INV_FACT
-    # Calculate the difference
-    ERR = SUM - PREV_SUM
-    # Absolute value (no built in function yet
-    if ERR < ZERO
-        ERR = ZERO - ERR
+e = 1; i_f = 1; prev_sum = e
+
+for i 1 10000
+    i_f = i_f / i
+    e = e + i_f
+    diff = e - prev_sum
+    if diff < toler
+        goto end
     fi
-    # If it is less than tolerance
-    if ERR < TOL
-        # set to max so it runs no more
-        i = i_max
-    fi
-    # Store previuos sum
-    PREV_SUM = SUM + ZERO
+    prev_sum = e
 rof
-# prints out plain string (no "s)
-printstr "e ~ "
-# prints digits of SUM
-printvar SUM
+
+label end
+
+var e
