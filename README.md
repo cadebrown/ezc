@@ -16,7 +16,7 @@ The only things you'll need are `cc` (which most should have), `/usr/bin/python`
 
 # Running
 
-use it like: `ezcc $file $file1 . . . -o $output`. Then, run `./$output`
+use it like: `./ezcc $file $file1 . . . -o $output`. Then, run `./$output`
 
 # Structure
 
@@ -43,13 +43,13 @@ To set the precision for the whole file, use
 or whatever number of bits to use (default is 128)
 
 To initialize a variable, use:
-`set E 2.718281828459045`
+`E = 2.718281828459045`
 
 The length of digits is not limited by a double.
 
 You can also copy a variable like:
 
-`set copE E`
+`other_var = E`
 
 ## Methods
 
@@ -99,7 +99,7 @@ Currently, `if`, and `for` are supported
 
 ### If
 
-You can use different conditions for `if`, `<`, `>`, `==`
+You can use all comparing operaters (<, >, =<, >= ,==)
 
 if example:
 ```
@@ -111,14 +111,16 @@ fi
 `for` is used in the following syntax:
 
 ```
-for $variable MIN MAX [STEP]
+for $variable START END [STEP]
 
 rof
 ```
 
-$variable is a new variable that has not been initialized, `MIN` and `MAX` and `STEP` can be constants (literally writing out `0.23415`, or they can be variable names)
+$variable is a new variable that has not been initialized, `STAR` and `END` and `STEP` can be constants (literally writing out digits, or they can be variable names)
 
 if nothing is entered for `STEP`, it defaults to 1.0
+
+You can use a higher `START` than `END`, and a negative step value.
 
 so, 
 ```
@@ -134,7 +136,13 @@ for i a b .1
 rof
 ```
 
-Are both valid
+```
+for i 30 -20 -1.0
+
+rof
+```
+
+Are all valid
 
 For more, see the wiki
 

@@ -1,6 +1,6 @@
 name = "EZCC"
 
-version = "0.0.1"
+version = "0.1.0"
 
 info = """%s v%s
 Chemical Development 2016
