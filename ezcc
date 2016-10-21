@@ -1,4 +1,5 @@
 #!/usr/bin/python
+
 import argparse
 import os
 from subprocess import Popen, PIPE
@@ -6,6 +7,7 @@ from subprocess import Popen, PIPE
 parser = argparse.ArgumentParser(description='Generate fractal images with FractalRenderPy')
 parser.add_argument('files', metavar='N', type=str, nargs='+', help='files to compile')
 parser.add_argument('-o', default="a.o", help='Output file')
+parser.add_argument('-r', action='store_true', help='Remove temp files')
 args = parser.parse_args()
 
 # our other file
@@ -61,8 +63,7 @@ print cmd
 compile_proc = Popen(cmd, shell=True)
 compile_proc.wait()
 print "CC has finished"
-"""
-clear_proc = Popen(clearcmd, shell=True)
-clear_proc.wait()
-print "Temp files cleared"
-"""
+if args.r:
+    clear_proc = Popen(clearcmd, shell=True)
+    clear_proc.wait()
+    print "Temp files cleared"
