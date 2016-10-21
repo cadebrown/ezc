@@ -2,17 +2,18 @@
 
 This is a basic example of calculating pi.
 
-Not as accurate as manual calculation
+Not as fast as manual calculation
 
 ###
 
 # First, set the precision in bits to whatever the end user prompts
 setprec $1
 
+# this is cos(pi)
 c_pi = -1.0
 
-# this is the starting point, and from here, we calculate more and more
+# this is the arccos, which should return pi
 pi = acos c_pi
 
+# print out our value
 var pi
-
