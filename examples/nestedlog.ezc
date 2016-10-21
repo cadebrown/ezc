@@ -12,7 +12,7 @@ For more details, see: http://klotza.blogspot.com/2016/10/the-nested-logarithm-c
 ###
 
 # sets precision to $1
-prec $1
+setprec $1
 
 # Constant for figuring the number of iterations it would take
 ext = 2156
