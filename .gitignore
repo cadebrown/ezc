@@ -4,3 +4,4 @@ tmp/
 # compiled files
 *.pyc
 *.o
+.vscode/
