@@ -1,9 +1,16 @@
-#!/bin/sh
-INSTALL_DIR=/usr/local/ezc
-SOURCES="ezcc EZcompiler.py EZlogger.py"
-LINK=/usr/bin/ezcc
+#!/bin/bash
 
-rm $LINK
+INSTALL_DIR=$1
+LINK=$2
+SOURCES="ezcc EZcompiler.py EZlogger.py"
+
+if [ "$1" == "" ] || [ "$1" == "auto" ]; then
+    INSTALL_DIR=/usr/local/ezc
+fi
+
+if [[ "$2" == "" ]]; then
+    LINK=/usr/bin/ezcc
+fi
 
 echo Installing EZC in $INSTALL_DIR
 
@@ -12,6 +19,10 @@ cp -t $INSTALL_DIR $SOURCES
 
 echo Done copying
 
-echo Now linking to $LINK
+if [[ "$LINK" != "none" ]]; then
+    rm $LINK
+    echo Now linking to $LINK
+    ln -s $INSTALL_DIR/ezcc /usr/bin/ezcc
+fi
 
-ln -s $INSTALL_DIR/ezcc /usr/bin/ezcc
+echo "If you got any permissions errors, please run with sudo"
