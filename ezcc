@@ -6,6 +6,7 @@ from subprocess import Popen, PIPE
 #Set args
 parser = argparse.ArgumentParser(description='Generate fractal images with FractalRenderPy')
 parser.add_argument('files', metavar='N', type=str, nargs='+', help='files to compile')
+parser.add_argument('-l', metavar='N', type=str, nargs='+', help='libraries to include')
 parser.add_argument('-o', default="a.o", help='Output file')
 parser.add_argument('-r', action='store_true', help='Remove temp files')
 args = parser.parse_args()
@@ -18,6 +19,11 @@ log.init()
 
 # get sources
 sources = args.files
+
+# get libs
+libs = args.l
+if not libs:
+    libs = []
 
 # print files
 print sources
@@ -49,7 +55,7 @@ for i in range(0, len(sources)):
     # close file
     fsrc.close()
     # EZC is compiled to C
-    str_cmp = compiler.compile_str(lines)
+    str_cmp = compiler.compile_str(lines, libs)
     # we write C file
     fout = open(out, "w+")
     fout.write(str_cmp)

@@ -7,13 +7,11 @@ Not as fast as manual calculation
 ###
 
 # First, set the precision in bits to whatever the end user prompts
+
 setprec $1
 
-# this is cos(pi)
-c_pi = -1.0
+c_p = -1.0
 
-# this is the arccos, which should return pi
-pi = acos c_pi
+pi = acos c_p
 
-# print out our value
 var pi
