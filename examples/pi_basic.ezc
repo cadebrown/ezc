@@ -1,0 +1,19 @@
+###
+
+This is a basic example of calculating pi.
+
+This is very slow. Please see pi.ezc for a faster method.
+
+###
+
+# First, set the precision in bits to whatever the end user prompts
+setprec $1
+
+# this is the starting point, and from here, we calculate more and more
+pi = 3.0
+
+# set largest to loop through
+
+var prec
+
+

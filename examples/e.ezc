@@ -7,7 +7,7 @@ Computes e, euler's number, run `./e.o $bits` to compute $bits of e
 ###
 
 # read in precision
-prec $1
+setprec $1
 
 # set precision to one bit
 toler = .5; toler = toler ^ prec

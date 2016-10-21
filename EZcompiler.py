@@ -25,7 +25,7 @@ char_oper = {
 }
 
 char_st = {
-    "prec": "Prec",
+    "setprec": "Prec",
     
     "echo": "Echo",
     "var": "Var",
@@ -179,12 +179,11 @@ class Statement():
 
 class Prec(Statement):
     def get_st(self):
-        print self.assign
         c_str = self.args[0]
         if "$" in c_str:
             num = self.args[0].replace("$", "")
-            c_str = "strtol(argv[%s], NULL, 10)" % (num) 
-        return "_prec = %s; mpfr_set_default_prec(_prec); _pprec = (int)(_prec * log(2.0) / log(10.0)); mpfr_t prec; mpfr_init(prec); " % (c_str) + Set("prec", self.args[:1]).get_st()
+            c_str = "if (argc > %s) { _prec = strtol(argv[%s], NULL, 10); } else { _prec = 128; } " % (num, num)
+        return "%s mpfr_set_default_prec(_prec); _pprec = (int)(_prec * log(2.0) / log(10.0)); mpfr_t prec; mpfr_init(prec); mpfr_set_ui(prec, _prec, GMP_RNDN); " % (c_str)
 
 class Echo(Statement):
     def get_st(self):

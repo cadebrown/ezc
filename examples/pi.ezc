@@ -15,7 +15,7 @@ To run, use `./pi.o $bits` to compute $bits of PI
 ###
 
 # Precision, reads in from commandline
-prec $1
+setprec $1
 
 # 1.0
 a = 1.0
