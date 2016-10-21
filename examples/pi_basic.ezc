@@ -2,18 +2,17 @@
 
 This is a basic example of calculating pi.
 
-This is very slow. Please see pi.ezc for a faster method.
+Not as accurate as manual calculation
 
 ###
 
 # First, set the precision in bits to whatever the end user prompts
 setprec $1
 
+c_pi = -1.0
+
 # this is the starting point, and from here, we calculate more and more
-pi = 3.0
+pi = acos c_pi
 
-# set largest to loop through
-
-var prec
-
+var pi
 

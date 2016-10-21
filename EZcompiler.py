@@ -40,7 +40,9 @@ char_st = {
 
     "sqrt": "Sqrt",
     "sin": "Sin",
+    "asin": "Asin",
     "cos": "Cos",
+    "acos": "Acos",
     "exp": "Exp",
     "log": "Log",
     "logb": "LogB",
@@ -83,18 +85,17 @@ def compile_str(lines):
     #out += prec.init_st()
     CONSTS_ST = [Prec("prec", ["64"]), Set("ZERO", ["0"]), Set("ONE", ["1"]), Set("TWO", ["2"]), Set("TEN", ["10"])]
 
-    if isinstance(statements[0], Prec):
-        CONSTS_ST[0] = statements[0]
-        statements = statements[1:]
-    else:
-        out += DEFAULT_PREC_ST.get_st()
+    for st in statements:
+        if isinstance(st, Prec):
+            CONSTS_ST[0] = st
+            statements.remove(st)
 
     statements = CONSTS_ST[1:] + statements
+
+    out += CONSTS_ST[0].get_st() + "\n"
     
     for st in statements:
         statement_str += st.get_st() + "\n"
-
-    out += CONSTS_ST[0].get_st() + "\n"
 
     for v in var_names:
         if v != "prec":
@@ -137,7 +138,7 @@ def pile_str(line):
     if line == "":
         return
     for char in char_oper:
-        if char in line and "=" in line:
+        if " " + char + " " in line and "=" in line:
             _data = clean_line(line.replace(char, ""))
             assign, args = parse_function(_data)
             a, b = args
@@ -145,20 +146,23 @@ def pile_str(line):
             return R
     for char in char_st:
         if char in line:
-            go_on = True
-            if char in st_must_be_first:
-                go_on = line.startswith(char)
-            if go_on:
-                rm_func = line.replace(char, "", 1) 
-                assign, args = parse_function(rm_func)
-                exec("R=%s(assign=assign, args=args)" % (char_st[char]))
-                return R
+            if (line.index(char) == 0) or (" %s " % (char) in line):
+                go_on = True
+                if char in st_must_be_first:
+                    go_on = line.startswith(char)
+                if go_on:
+                    rm_func = line.replace(char, "", 1) 
+                    assign, args = parse_function(rm_func)
+                    exec("R=%s(assign=assign, args=args)" % (char_st[char]))
+                    return R
+    print line
     if "=" in line:
         assign, args = parse_function(line.replace(char, ""))
         return Set(assign, args)
 
 
 def is_const(str):
+    str = clean_line(str)
     return str[0].isdigit() or str[0] == "." or str[0] == "-"
 
 def is_pos_int(str):
@@ -179,7 +183,7 @@ class Statement():
 
 class Prec(Statement):
     def get_st(self):
-        c_str = self.args[0]
+        c_str = "_prec = %s; " % (self.args[0])
         if "$" in c_str:
             num = self.args[0].replace("$", "")
             c_str = "if (argc > %s) { _prec = strtol(argv[%s], NULL, 10); } else { _prec = 128; } " % (num, num)
@@ -239,9 +243,17 @@ class Sin(Statement):
     def get_st(self):
         return "mpfr_sin(%s, %s, GMP_RNDN);\n" % (self.assign, self.args[0])
 
+class Asin(Statement):
+    def get_st(self):
+        return "mpfr_asin(%s, %s, GMP_RNDN);\n" % (self.assign, self.args[0])
+
 class Cos(Statement):
     def get_st(self):
         return "mpfr_cos(%s, %s, GMP_RNDN);\n" % (self.assign, self.args[0])
+
+class Acos(Statement):
+    def get_st(self):
+        return "mpfr_acos(%s, %s, GMP_RNDN);\n" % (self.assign, self.args[0])
 
 class Exp(Statement):
     def get_st(self):
