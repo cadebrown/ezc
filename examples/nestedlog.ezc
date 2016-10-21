@@ -1,0 +1,33 @@
+###
+
+ChemicalDevelopment
+
+Nested log constant,
+
+log(1+log(2+log(3+...)))
+
+
+For more details, see: http://klotza.blogspot.com/2016/10/the-nested-logarithm-constants.html
+
+###
+
+# sets precision to $1
+prec $1
+
+# Constant for figuring the number of iterations it would take
+ext = 2156
+
+# finds out how many iterations we need
+largest = $1 ; largest = largest + ext ; largest = sqrt largest ; largest = largest + ext ; largest = int largest
+
+
+constant = 1.0
+
+# loop through, starting at largest, ending at one
+for i largest 1.0 -1.0
+    constant = constant + i
+    constant = log constant
+rof
+
+# print out info
+var constant

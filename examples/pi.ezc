@@ -17,8 +17,6 @@ To run, use `./pi.o $bits` to compute $bits of PI
 # Precision, reads in from commandline
 prec $1
 
-epsilon = .5; epsilon = epsilon ^ prec
-
 # 1.0
 a = 1.0
 
@@ -56,7 +54,7 @@ label loop
     diff = a - b
 
 # if error is too large, repeat another iteration
-if diff > epsilon
+if diff > ZERO
     goto loop
 fi
 

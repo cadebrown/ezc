@@ -2,7 +2,7 @@
 
 ChemicalDevelopment
 
-Computes e, run `./e.o $bits` to compute $bits of e
+Computes e, euler's number, run `./e.o $bits` to compute $bits of e
 
 ###
 

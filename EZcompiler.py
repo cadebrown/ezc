@@ -36,9 +36,12 @@ char_st = {
     "div": "Div",
     "pow": "Pow",
 
+    "int": "Int",
+
     "sqrt": "Sqrt",
     "sin": "Sin",
     "cos": "Cos",
+    "exp": "Exp",
     "log": "Log",
     "logb": "LogB",
 
@@ -176,6 +179,7 @@ class Statement():
 
 class Prec(Statement):
     def get_st(self):
+        print self.assign
         c_str = self.args[0]
         if "$" in c_str:
             num = self.args[0].replace("$", "")
@@ -224,6 +228,10 @@ class Pow(Statement):
     def get_st(self):
         return "mpfr_pow(%s, %s, %s, GMP_RNDN);\n" % (self.assign, self.args[0], self.args[1])
 
+class Int(Statement):
+    def get_st(self):
+        return "mpfr_trunc(%s, %s);\n" % (self.assign, self.args[0])
+
 class Sqrt(Statement):
     def get_st(self):
         return "mpfr_sqrt(%s, %s, GMP_RNDN);\n" % (self.assign, self.args[0])
@@ -235,6 +243,10 @@ class Sin(Statement):
 class Cos(Statement):
     def get_st(self):
         return "mpfr_cos(%s, %s, GMP_RNDN);\n" % (self.assign, self.args[0])
+
+class Exp(Statement):
+    def get_st(self):
+        return "mpfr_exp(%s, %s, GMP_RNDN);\n" % (self.assign, self.args[0])
 
 class Log(Statement):
     def get_st(self):
@@ -287,8 +299,6 @@ class For(Statement):
         cmp_str = "mpfr_cmp(%s, %s)" % (self.assign, max_str)
         inc_st = "mpfr_add(%s, %s, %s, GMP_RNDN);" % (self.assign, self.assign, step_str)
         
-        print inc_st
-
         loop_var = Set(self.assign, self.args[0])
         do_name = "do_%s" % (self.assign)
         stop_do = "%s = 0;" % (do_name)

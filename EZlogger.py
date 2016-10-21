@@ -13,4 +13,4 @@ def init():
     print info
 
 def err(task, err):
-    print "%s: \n\t%s" % (name, task, err)
+    print "%s: \n\t%s" % (task, err)
