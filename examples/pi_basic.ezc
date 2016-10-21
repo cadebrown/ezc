@@ -7,11 +7,11 @@ Not as fast as manual calculation
 ###
 
 # First, set the precision in bits to whatever the end user prompts
-
 setprec $1
 
-c_p = -1.0
+# this is cos of pi
+cos_pi = -1.0
 
-pi = acos c_p
+pi = acos cos_pi
 
 var pi
