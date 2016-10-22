@@ -21,31 +21,31 @@ setprec $1
 a = 1.0
 
 # 1/sqrt(2)
-b = sqrt TWO; b = ONE / b
+b = sqrt TWO ; b = ONE / b
 
 # initialize variables
-series = 0; n = 0
+series = 0 ; n = 0
 
 label loop
     n = n + ONE
 
     # average, arithmetic
-    arith = a + b; arith = arith / TWO
+    arith = a + b ; arith = arith / TWO
 
     # average, geometric
-    geom = a * b; geom = sqrt geom
+    geom = a * b ; geom = sqrt geom
 
     # assign them to terms
-    a = arith; b = geom
+    a = arith ; b = geom
 
     # tmp1 is 2^(n+1)
-    tmp3 = n + ONE; tmp1 = TWO ^ tmp3
+    tmp3 = n + ONE ; tmp1 = TWO ^ tmp3
 
     # tmp2 = a^2, tmp3 = b^2
-    tmp2 = a ^ TWO; tmp3 = b ^ TWO
+    tmp2 = a ^ TWO ; tmp3 = b ^ TWO
 
     # form 2^(n+1)*(a^2-b^2)
-    tmp2 = tmp2 - tmp3; tmp1 = tmp1 * tmp2
+    tmp2 = tmp2 - tmp3 ; tmp1 = tmp1 * tmp2
 
     # add sum to series
     series = series + tmp1
@@ -59,7 +59,7 @@ if diff > ZERO
 fi
 
 # calculating end, tmp1 = 4*a^2
-tmp1 = TWO * a; tmp1 = tmp1 ^ TWO
+tmp1 = TWO * a ; tmp1 = tmp1 ^ TWO
 
 # 1 - sum
 tmp2 = ONE - series
