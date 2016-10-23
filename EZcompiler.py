@@ -120,7 +120,7 @@ def parse_st(line):
             return R
 
 def parse_default(line):
-    if "=" in line:
+    if " = " in line:
         assign, args = parse_function(line)
         exec("R = %s(assign=assign, args=args)" % (char_st["set"]))
         return R
