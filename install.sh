@@ -2,7 +2,7 @@
 
 INSTALL_DIR=$1
 LINK=$2
-SOURCES="ezcc EZcompiler.py EZlogger.py"
+SOURCES="ezcc EZcompiler.py EZlogger.py libMath.py libLoops.py libBasic.py shared_data.py"
 
 if [ "$1" == "" ] || [ "$1" == "auto" ]; then
     INSTALL_DIR=/usr/local/ezc
