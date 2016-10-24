@@ -8,6 +8,14 @@ Made for people who don't want to use low level memory management, but want the 
 
 # Installation
 
+You'll need a few prerequisites: `cc`, and `mpfr`
+
+For debian based linux (including ubuntu), `cc` is included, and run this to install mpfr: `sudo apt-get install libmpfr-dev libmpfr-doc libmpfr4 libmpfr4-dbg`
+
+For MacOS, you'll need [homebrew](http://brew.sh/). Once you have homebrew, simply run `brew install mpfr`
+
+For other OSs, look up mpfr installation. Note that support is limited as of now, as I work out distributing finished versions of EZC compiler
+
 First, clone this repository:
 
 `git clone https://github.com/ChemicalDevelopment/ezc.git`
