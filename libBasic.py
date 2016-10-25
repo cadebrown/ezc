@@ -19,7 +19,9 @@ char_st = {
     "set": "Set",
     
     "echo": "Echo",
-    "var": "Var"
+    "var": "Var",
+
+    "file": "File"
 }
 
 class Prec(Statement):
@@ -38,6 +40,11 @@ class Var(Statement):
     def get_st(self):
         self.var = self.args[0]
         return "mpfr_printf(\"%s : %%.*Rf \\n\", _pprec, %s);\n" % (self.var, self.var)
+
+class File(Statement):
+    def get_st(self):
+        self.var = self.args[0]
+        return "FILE *%s_fp = fopen(\"%s.txt\", \"w+\");\n mpfr_fprintf(%s_fp, \"%s : %%.*Rf\", _pprec, %s);" % (self.var, self.var, self.var, self.var, self.var)
 
 class Set(Statement):
     def get_st(self):
