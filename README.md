@@ -10,9 +10,7 @@ Made for people who don't want to use low level memory management, but want the 
 
 You'll need a few prerequisites: `cc`, and `mpfr`
 
-For debian based linux (including ubuntu), `cc` is included, and run this to install mpfr: `sudo apt-get install libmpfr-dev libmpfr-doc libmpfr4 libmpfr4-dbg`
-
-For MacOS, you'll need [homebrew](http://brew.sh/). Once you have homebrew, simply run `brew install mpfr`
+For Debian/Ubuntu/MacOS, run `sudo ./install.sh`
 
 For other OSs, look up mpfr installation. Note that support is limited as of now, as I work out distributing finished versions of EZC compiler
 
@@ -22,7 +20,7 @@ First, clone this repository:
 
 Then, run `./ezcc` and assure that no errors were produced. If the were, please create and [Issue](https://github.com/ChemicalDevelopment/ezc/issues)
 
-Now, run `sudo ./install.sh`. If you get permissions errors, run `./install.sh ~/ezc/ none`. If you use the second one, when I use `ezcc`, just replace it with `~/ezc/ezcc`
+Now, run `sudo ./install-compiler.sh`. If you get permissions errors, run `./install-compiler.sh ~/ezc/ none`. If you use the second one, when I use `ezcc`, just replace it with `~/ezc/ezcc`
 
 To test it, run `ezcc examples/pi.ezc -o pi.o` (or `~/ezc/ezcc examples/pi.ezc -o pi.o`) 
 
@@ -38,10 +36,6 @@ Not tested on OSX, but should work
 # Documentation
 
 [Chemical Development Docs](http://chemicaldevelopment.us/docs/ezc/) is the documentation for EZC
-
-# Installation
-
-The only things you'll need are `cc` (which most should have), `/usr/bin/python` (most should have), and `mpfr` (look up Installation for your operating system)
 
 # Running
 
