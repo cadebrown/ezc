@@ -54,8 +54,10 @@ def build_classes(imports):
 # just takes a list of statements, and returns C code
 def transpile_sts(list_st):
     r = ""
+    i = 0
     for st in list_st:
-        r += "\t\n" + st.get_st()
+        r += "\n\t"+ st.get_st()
+        i += 1
     return r
 
 # compiles lines and imports into C
@@ -73,7 +75,7 @@ def compile_lines(lines, imports):
     statements = []
 
     # out is C
-    out = libs + start
+    out = license + libs + start
 
     # string of statements
     statement_str = ""
