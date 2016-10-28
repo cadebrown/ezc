@@ -38,7 +38,6 @@ char_st = {
     "logb": "LogB"
 }
 
-
 class Add(Statement):
     def get_st(self):
         return "mpfr_add(%s, %s, %s, GMP_RNDN);\n" % (self.assign, self.args[0], self.args[1])
