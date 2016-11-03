@@ -49,19 +49,17 @@ class Echo(Statement):
 class Var(Statement):
     def get_st(self):
         self.var = self.args[0]
-        return "mpfr_printf(\"%s : %%.*Rf \\n\", _pprec, %s);" % (self.var, self.var)
+        return "mpfr_printf(\"%s : %%.*Rf \\n\", _pprec, %s);" % ((self.var, )*2)
 
 # prints var to file
 class File(Statement):
     def get_st(self):
+        self.var = self.args[0]
+        self.file = "%s.txt" % self.var
         if len(self.args) > 1:
-            self.var = self.args[1]
-            self.file = self.args[0]
-        else:
-            self.var = self.args[0]
-            self.file = self.var + ".txt"
-        res = "FILE *%s_fp = fopen(\"%s\", \"w+\"); " % ((self.var, self.file))
-        res += "mpfr_fprintf(%s_fp, \"%s : %%.*Rf\", _pprec, %s); " % (self.var, self.var, self.var)
+            self.file = self.args[1]
+        res = "FILE *%s_fp = fopen(\"%s\", \"w+\"); " % (self.var, self.file)
+        res += "mpfr_fprintf(%s_fp, \"%s : %%.*Rf\", _pprec, %s); " % ((self.var,)*3)
         res += "fclose(%s_fp); " % (self.var)
         return res
 
