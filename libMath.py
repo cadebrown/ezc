@@ -10,6 +10,13 @@ from shared_data import *
 
 """
 
+# lib setup
+lib_header = """
+
+
+"""
+
+# operators
 char_op = {
     "+": "Add_Op",
     "-": "Sub_Op",
@@ -18,7 +25,7 @@ char_op = {
     "^": "Pow_Op"
 }
 
-
+# strings for functions
 char_st = {
     "add": "Add",
     "sub": "Sub",

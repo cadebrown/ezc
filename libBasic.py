@@ -8,6 +8,12 @@ from shared_data import *
 
 """
 
+# lib setup
+lib_header = """
+
+
+"""
+
 # operators
 char_op = {
 
@@ -48,8 +54,16 @@ class Var(Statement):
 # prints var to file
 class File(Statement):
     def get_st(self):
-        self.var = self.args[0]
-        return "FILE *%s_fp = fopen(\"%s.txt\", \"w+\"); mpfr_fprintf(%s_fp, \"%s : %%.*Rf\", _pprec, %s);" % (self.var, self.var, self.var, self.var, self.var)
+        if len(self.args) > 1:
+            self.var = self.args[1]
+            self.file = self.args[0]
+        else:
+            self.var = self.args[0]
+            self.file = self.var + ".txt"
+        res = "FILE *%s_fp = fopen(\"%s\", \"w+\"); " % ((self.var, self.file))
+        res += "mpfr_fprintf(%s_fp, \"%s : %%.*Rf\", _pprec, %s); " % (self.var, self.var, self.var)
+        res += "fclose(%s_fp); " % (self.var)
+        return res
 
 # inits variable
 class Set(Statement):

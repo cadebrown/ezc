@@ -11,6 +11,12 @@ from libBasic import *
 
 """
 
+# lib setup
+lib_header = """
+
+
+"""
+
 char_st = {
     "label": "Label",
     "goto": "Goto",

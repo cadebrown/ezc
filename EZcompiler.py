@@ -8,7 +8,11 @@ import math
 from shared_data import *
 
 # default libraries that are always included
-default_libs = ["libBasic", "libLoops", "libMath"]
+default_libs = [
+    "libBasic", 
+    "libLoops", 
+    "libMath"
+]
 
 # global var for keeping track
 multiline_comment = False
@@ -25,7 +29,7 @@ def import_libs_code(imports):
     r = ""
     # loop through all libs
     for lib in imports:
-        r += "global %s; import %s; " % (lib, lib)
+        r += "global %s; import %s; libs += %s.lib_header; " % ((lib, ) * 3)
     return r
 
 # add to char_st and char_op to define statements
