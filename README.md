@@ -56,13 +56,14 @@ Comment
 ###
 ```
 
-[Chemical Development Docs](http://chemicaldevelopment.us/docs/ezc/) is the documentation for EZC
+[Functions](http://chemicaldevelopment.us/docs/ezc/functions) for more about functions and statements
 
-Check [examples](https://github.com/ChemicalDevelopment/ezc/tree/master/examples)
+Check [examples](https://github.com/ChemicalDevelopment/ezc/tree/master/examples), 
+
+or [docs examples](http://chemicaldevelopment.us/docs/ezc/examples) for the docs
 
 # Tutorials
 
-[Chemical Development Docs](http://chemicaldevelopment.us/docs/ezc/) is the documentation for EZC
+[Chemical Development Docs](http://chemicaldevelopment.us/docs/ezc/) is the documentation for EZC,
 
-Coming soon!
-
+and a tutorial is located at [docs tutorial](http://chemicaldevelopment.us/docs/ezc/tutorials)
