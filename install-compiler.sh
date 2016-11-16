@@ -1,5 +1,9 @@
 #!/bin/bash
 
+brew install mpfr
+apt install libmpfr-dev libmpfr-doc libmpfr4 libmpfr4-dbg
+dnf install mpfr mpfr-devel
+
 INSTALL_DIR=$1
 LINK=$2
 SOURCES="ezcc EZcompiler.py EZlogger.py libMath.py libLoops.py libBasic.py shared_data.py"
@@ -25,4 +29,5 @@ if [[ "$LINK" != "none" ]]; then
     ln -s $INSTALL_DIR/ezcc /usr/bin/ezcc
 fi
 
-echo "If you got any permissions errors, please run with sudo"
+echo "If you got any permissions errors, please open an issue: https://github.com/ChemicalDevelopment/ezc/issues"
+echo "Done"

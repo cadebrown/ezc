@@ -1,0 +1,35 @@
+{
+    "name": "ezc",
+    "displayName": "ezc",
+    "description": "EZC",
+    "version": "0.6.0",
+    "publisher": "chemdev",
+    "engines": {
+        "vscode": "^1.5.0"
+    },
+    "categories": [
+        "Languages"
+    ],
+    "contributes": {
+        "languages": [
+            {
+                "id": "ezc",
+                "aliases": [
+                    "EZC File",
+                    "ezc"
+                ],
+                "extensions": [
+                    ".ezc"
+                ],
+                "configuration": "./language-configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "ezc",
+                "scopeName": "text.ezc",
+                "path": "./syntaxes/ezc.tmLanguage"
+            }
+        ]
+    }
+}
