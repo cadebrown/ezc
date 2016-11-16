@@ -43,7 +43,7 @@ class Prec(Statement):
 # echo string
 class Echo(Statement):
     def get_st(self):
-        return "printf(\"%s\\n\");" % (" ".join(self.args))
+        return "printf(\"%s\\n\");" % (" ".join(self.args.replace("\"", "")))
     
 # prints out var
 class Var(Statement):

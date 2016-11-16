@@ -15,6 +15,7 @@ toler = .5; toler = toler ^ prec
 # i_f is inverse factorial
 e = 1; i_f = 1; prev_sum = e
 
+
 # loop
 for i 1 10000
     # sum factorials

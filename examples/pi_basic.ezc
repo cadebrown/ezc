@@ -15,3 +15,6 @@ cos_pi = -1.0
 pi = acos cos_pi
 
 var pi
+
+echo "hello"
+
