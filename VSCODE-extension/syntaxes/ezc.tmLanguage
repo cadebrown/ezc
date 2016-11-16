@@ -56,11 +56,10 @@
 		</dict>
 		<dict>
 			<key>match</key>
-			<string>(a?)(sin|cos|tan)(?![_a-zA-Z])</string>
+			<string>((a?)(sin|cos|tan)|(log(b?)|sqrt|pow|add|sub|mul|div|int))(?![_a-zA-Z])</string>
 			<key>name</key>
 			<string>support.type.sys-types.functions</string>
 		</dict>
-
 
 		<dict>
 			<key>match</key>
