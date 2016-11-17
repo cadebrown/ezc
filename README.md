@@ -7,7 +7,7 @@ Made for people who don't want to use low level memory management, but want the 
 [Chemical Development Docs](http://chemicaldevelopment.us/docs/ezc/) is the documentation for EZC
 
 
-![Screenshot](Screenshots/pi_basic.png)
+![Screenshot](screenshots/pi_basic.png)
 
 # Installation
 
