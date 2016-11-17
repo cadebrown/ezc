@@ -23,6 +23,7 @@ char_op = {
     "*": "Mul_Op",
     "/": "Div_Op",
     "^": "Pow_Op"
+    "**": "Pow_Op"
 }
 
 # strings for functions

@@ -26,6 +26,7 @@ char_st = {
     "set": "Set",
     
     "echo": "Echo",
+    "print": "Echo",
     "var": "Var",
 
     "file": "File"
