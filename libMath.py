@@ -73,10 +73,9 @@ class Pow(Statement):
     def get_st(self):
         return "mpfr_pow(%s, %s, %s, GMP_RNDN);\n" % (self.assign, self.args[0], self.args[1])
 
-class Trunc(Statement):
+class Int(Statement):
     def get_st(self):
         return "mpfr_trunc(%s, %s);\n" % (self.assign, self.args[0])
-
 
 class Trunc(Statement):
     def get_st(self):
@@ -84,10 +83,6 @@ class Trunc(Statement):
             return "mpfr_trunc(%s, %s);\n" % (self.assign, self.args[0])
         else:
             return [Mod(self.assign, self.args).get_st(), Sub(self.assign, [self.args[0], self.assign]).get_st()]
-
-class Int(Statement):
-    def get_st(self):
-        return "mpfr_fmod(%s, %s, %s, GMP_RNDN);\n" % (self.assign, self.args[0], self.args[1])
 
 class Sqrt(Statement):
     def get_st(self):
