@@ -5,3 +5,6 @@ tmp/
 *.pyc
 *.o
 .vscode/
+
+dist/*
+build/*

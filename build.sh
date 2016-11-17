@@ -1,0 +1,1 @@
+pyinstaller --onefile ezcc.py EZcompiler.py EZlogger.py libBasic.py libLoops.py libMath.py shared_data.py
