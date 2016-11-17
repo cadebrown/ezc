@@ -85,7 +85,7 @@ class Trunc(Statement):
         else:
             return [Mod(self.assign, self.args).get_st(), Sub(self.assign, [self.args[0], self.assign]).get_st()]
 
-class Mod(Statement):
+class Int(Statement):
     def get_st(self):
         return "mpfr_fmod(%s, %s, %s, GMP_RNDN);\n" % (self.assign, self.args[0], self.args[1])
 
