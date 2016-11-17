@@ -7,6 +7,8 @@ import math
 # used for dynamic libraries
 from shared_data import *
 
+import libBasic, libLoops, libMath
+
 # default libraries that are always included
 default_libs = [
     "libBasic", 
