@@ -6,9 +6,9 @@ from subprocess import Popen, PIPE
 
 # set args
 
-parser = argparse.ArgumentParser(description='Generate fractal images with FractalRenderPy')
-parser.add_argument('files', metavar='N', type=str, nargs='+', help='files to compile')
-parser.add_argument('-l', metavar='N', type=str, nargs='+', help='libraries to include')
+parser = argparse.ArgumentParser(description='Compile EZC Language. http://github.chemicaldevelopment.us/ezc')
+parser.add_argument('files', metavar='files', type=str, nargs='+', help='files to compile')
+parser.add_argument('-l', metavar='lib', type=str, nargs='+', help='libraries to include')
 parser.add_argument('-o', default="a.o", help='Output file')
 parser.add_argument('-r', action='store_true', help='Remove temp files')
 args = parser.parse_args()

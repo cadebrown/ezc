@@ -73,14 +73,14 @@
 
 		<dict>
 			<key>match</key>
-			<string>((add|sub|mul|div)|(a?)(sin|cos|tan)|(pow|exp|log(b?)|sqrt|int))(?![_a-zA-Z])</string>
+			<string>((add|sub|mul|div)|(a?)(sin|cos|tan)|(pow|exp|log(b?)|sqrt|int|trunc|mod))(?![_a-zA-Z])</string>
 			<key>name</key>
 			<string>support.type.sys-types.functions</string>
 		</dict>
 
             <dict>
                 <key>match</key>
-                <string>(setprec|var|echo|\+|\-|\*|\/|\^|\*\*)</string>
+                <string>(setprec|var|echo|\+|\-|\*|\/|\^|\*\*|_|\%)</string>
                 <key>name</key>
                 <string>constant.numeric</string>
             </dict>   

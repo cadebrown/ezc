@@ -22,8 +22,13 @@ char_op = {
     "-": "Sub_Op",
     "*": "Mul_Op",
     "/": "Div_Op",
-    "^": "Pow_Op"
-    "**": "Pow_Op"
+    "^": "Pow_Op",
+    "**": "Pow_Op",
+
+    "%": "Mod_Op",
+
+    "_": "Trunc_Op"
+
 }
 
 # strings for functions
@@ -32,9 +37,11 @@ char_st = {
     "sub": "Sub",
     "mul": "Mul",
     "div": "Div",
+    "mod": "Mod",
     "pow": "Pow",
 
     "int": "Int",
+    "trunc": "Trunc",
 
     "sqrt": "Sqrt",
     "sin": "Sin",
@@ -66,9 +73,21 @@ class Pow(Statement):
     def get_st(self):
         return "mpfr_pow(%s, %s, %s, GMP_RNDN);\n" % (self.assign, self.args[0], self.args[1])
 
-class Int(Statement):
+class Trunc(Statement):
     def get_st(self):
         return "mpfr_trunc(%s, %s);\n" % (self.assign, self.args[0])
+
+
+class Trunc(Statement):
+    def get_st(self):
+        if len(self.args) == 1:
+            return "mpfr_trunc(%s, %s);\n" % (self.assign, self.args[0])
+        else:
+            return [Mod(self.assign, self.args).get_st(), Sub(self.assign, [self.args[0], self.assign]).get_st()]
+
+class Mod(Statement):
+    def get_st(self):
+        return "mpfr_fmod(%s, %s, %s, GMP_RNDN);\n" % (self.assign, self.args[0], self.args[1])
 
 class Sqrt(Statement):
     def get_st(self):
@@ -134,3 +153,12 @@ class Div_Op(Operator):
 class Pow_Op(Operator):
     def get_st(self):
         return Pow(self.assign, [self.a, self.b]).get_st()
+
+class Mod_Op(Operator):
+    def get_st(self):
+        return Mod(self.assign, [self.a, self.b]).get_st()
+
+class Trunc_Op(Operator):
+    def get_st(self):
+        return Trunc(self.assign, [self.a, self.b]).get_st()
+

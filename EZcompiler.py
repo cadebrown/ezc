@@ -60,7 +60,11 @@ def transpile_sts(list_st):
     r = ""
     i = 0
     for st in list_st:
-        r += "\n\t"+ st.get_st()
+        if isinstance(st.get_st(), str):
+            r += "\n\t" + st.get_st()
+        else:
+            for rr in st.get_st():
+                r += "\n\t" + rr
         i += 1
     return r
 
@@ -146,7 +150,10 @@ def parse_oper(line):
         if " " + item + " " in line and "=" in line:
             _data = clean_line(line.replace(item, ""))
             assign, args = parse_function(_data)
-            a, b = args
+            if len(args) == 1:
+                a, b = args[0], None
+            else:
+                a, b = args
             exec("R = %s(assign, a, b)" % (char_op[item]))
             return R
 
