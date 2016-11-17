@@ -1,0 +1,6 @@
+ezcc-0.8.0 (0.8.0-16ubuntu8) trusty; urgency=low
+
+  * initial package
+    - Updated the initial deb package
+
+ -- Cade Brown <info@chemicaldevelopment.us>  Thu, 17 Nov 2016 12:27:32 -0500

@@ -8,3 +8,9 @@ tmp/
 
 dist/*
 build/*
+deb-package/usr/bin/ezcc
+deb-package/usr/share/doc/ezcc/changelog.gz
+
+
+# package
+*.deb
