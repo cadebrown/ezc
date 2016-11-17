@@ -8,6 +8,12 @@ Made for people who don't want to use low level memory management, but want the 
 
 # Installation
 
+For any debian based system, simply go to the [latest release](https://github.com/ChemicalDevelopment/ezc/Releases/latest), and download the .deb file, and double click it
+
+For other OSs, I'm working on packaging systems. For now, you can build them following below:
+
+# Building
+
 You'll need a few prerequisites: `cc`, and `mpfr`
 
 For Debian/Ubuntu/MacOS, run `./install.sh`
