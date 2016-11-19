@@ -1,11 +1,16 @@
 # EZC
 
+"You don't know SRP unless you know EZC"
+
 A intermediate language which is transpiled to C. Multiprecision is built into the language.
 
 Made for people who don't want to use low level memory management, but want the speed it provides.
 
-[Chemical Development Docs](http://chemicaldevelopment.us/docs/ezc/) is the documentation for EZC
+Also, it strictly enforces SRP (or single responsibility principal).
 
+You can think of it like a calculator language, but with more functions and more digits
+
+[Chemical Development Docs](http://chemicaldevelopment.us/docs/ezc/) is the documentation for EZC
 
 ![Screenshot](screenshots/pi_basic.png)
 
@@ -57,6 +62,8 @@ For any other text editor, look up how to install .tmLanguage files (most suppor
 # Running
 
 use it like: `./ezcc $file $file1 . . . -o $output`. Then, run `./$output`
+
+You can define methods, just check
 
 # Structure
 

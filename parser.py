@@ -10,7 +10,7 @@ import EZlogger as log
 
 # registers a variable, and checks if it is a valid name and then adds it to the global list of names
 def register_var(varname):
-	if re.findall(valid_var, varname) == [varname] and re.findall(consts, varname) != [varname]:
+	if re.findall(valid_var, varname) == [varname] and re.findall(consts, varname) != [varname] and re.findall(literal_str, varname) != [varname]:
 		shared.var_set.add(varname)
 		return True
 	return False
@@ -20,7 +20,7 @@ valid_var = "[_a-zA-Z][_a-zA-Z0-9]*"
 # valid numberical constant
 valid_const = "(\+|\-)?[0-9\.]+"
 # valid argument to a function
-valid_arg = "(?:\$|\-|\+)?[a-zA-Z0-9._]+"
+valid_arg = "(?:\")?(?:\$|\-|\+)?[a-zA-Z0-9._]+(?:\")?"
 # valid break regex (between function params)
 break_regex = "[ ,<>]+"
 # splitting arguments
@@ -33,6 +33,7 @@ usrf_id = "(@([_a-zA-Z][_a-zA-Z0-9]*))"
 literal_c = "[ ]*({(.*)}|(.*);)"
 # literals
 consts = "(NEGONE|ZERO|ONE|TWO|FOUR|TEN)"
+literal_str = "\".*\""
 
 def is_literal(line):
 	return len(re.findall(literal_c, line)) != 0
@@ -42,6 +43,9 @@ def get_c(line):
 	if code[-1] != ";":
 		code = code + ";"
 	return code
+
+def is_literal_string(line):
+	return len(re.findall(literal_str, line)) != 0
 
 # global vars are set in set_regex()
 set_regex = ""
@@ -76,7 +80,6 @@ def set_regex():
 	freeform_regex = "[ ]*(%s) ([. ]*)" % (flist_regex)
 	# user function
 	usrf_regex = "((?:%s)?\@(%s)[ ]*((%s[ ]*)*))" % (assign_regex, valid_var, valid_arg)
-	print olist_regex	
 
 # resolves reference. For example, $3 would give the third commandline argument
 def get_var(text):
@@ -131,7 +134,7 @@ def parse_line(line):
 		line = parse_oper(re.findall(operators_regex, line)[0])[1]
 	elif re.findall(usrf_regex, line):
 		line = parse_usrf(re.findall(usrf_regex, line)[0])[1]
-	elif re.findall(functions_regex, line):
+	elif re.findall(functions_regex, line):		
 		line = parse_func(re.findall(functions_regex, line)[0])[1]
 	elif re.findall(set_regex, line) and "set" not in line:
 		line = parse_line(line.replace("=", "= set"))

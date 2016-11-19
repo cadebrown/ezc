@@ -82,10 +82,16 @@ class Set(LibraryFunction):
 			return "fset(%s, %s);" % (self.args)
 class Var(LibraryFunction):
 	def __str__(self):
-		return "var(\"%s\", %s);" % ((self.args[0], ) * 2)
+		if parser.is_literal_string(" ".join(self.args)):
+			return str(Echo(*self.args))
+		else:
+			return "var(\"%s\", %s);" % ((self.args[0], ) * 2)
 class Echo(LibraryFunction):
 	def __str__(self):
-		return "echo(%s);" % (self.args)
+		if parser.is_literal_string(" ".join(self.args)):
+			return "echo(%s);" % (" ".join(self.args))
+		else:
+			return str(Var(" ".join(self.args)))
 
 class Min(LibraryFunction):
 	def __str__(self):

@@ -42,6 +42,21 @@ ezcc-1.7.0 (0.8.0-16ubuntu8) trusty; urgency=low
 
  -- Cade Brown <info@chemicaldevelopment.us>  Sat, 19 Nov 2016 13:45:30 -0500
 
+ezcc-1.8.0 (0.8.0-16ubuntu8) trusty; urgency=low
+
+  * factorial, gamma
+    - Factorial (x) can now be computed either by a = factorial b or a = b !
+    - gamma is factorial(x-1)
+  * user defined functions
+    - Create a file, and at the top, write #__name__ $name $args . . .
+    And when you compile, you can call it with a = @$name $args
+    See the examples folder for more info
+  * echo, and literal c code
+    - echo now works, use echo "hello world" (including the quotes), or run echo a (without) to print a var
+    - literal c code can be injected by ending the line with ; or, the entire line must be within {} brackets
+    For example, printf("hello world\n"); is read as C code, as is {printf("hello world");}
+
+ -- Cade Brown <info@chemicaldevelopment.us>  Sat, 19 Nov 2016 16:51:43 -0500
 
 
 

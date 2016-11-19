@@ -48,8 +48,6 @@ void ffactorial(mpfr_t r, mpfr_t a) {
 	fgamma(r, __tmp);
 	mpfr_clear(__tmp);
 }
-
-
 """
 
 class Sqrt(LibraryFunction):

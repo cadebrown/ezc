@@ -5,7 +5,6 @@ import lib_linker
 
 this_lib = """
 
-
 """
 
 # used for the for loop
