@@ -1,33 +1,18 @@
-ezcc-0.8.0 (0.8.0-16ubuntu8) trusty; urgency=low
+ezcc-1.8.0 (0.8.0-16ubuntu8) trusty; urgency=low
 
-  * initial package
-    - Updated the initial deb package
+  * factorial, gamma
+    - Factorial (x) can now be computed either by a = factorial b or a = b !
+    - gamma is factorial(x-1)
+  * user defined functions
+    - Create a file, and at the top, write #__name__ $name $args . . .
+    And when you compile, you can call it with a = @$name $args
+    See the examples folder for more info
+  * echo, and literal c code
+    - echo now works, use echo "ayy" or echo a to display ayy or var a
+    - literal c code can be injected by ending the line with ; or {} enclosing
+    For example, printf("ayy"); is read as C code, as is {int a;}
 
- -- Cade Brown <info@chemicaldevelopment.us>  Thu, 17 Nov 2016 12:27:32 -0500
-
-
-ezcc-1.2.5 (0.8.0-16ubuntu8) trusty; urgency=low
-
-  * Added mod, int, and trunc functions
-    - mod, int, and trunc functions calculate modulo, integer trunctation, and multiple truncation
-
- -- Cade Brown <info@chemicaldevelopment.us>  Thu, 17 Nov 2016 15:46:43 -0500
-
-ezcc-1.5.0 (0.8.0-16ubuntu8) trusty; urgency=low
-
-  * Rewrote using regex to search
-    - Most of the old functions are there, with the exception of mod, int, and trunc
-	  They will be implemented soon
-
- -- Cade Brown <info@chemicaldevelopment.us>  Fri, 18 Nov 2016 21:13:20 -0500
-
-ezcc-1.6.0 (0.8.0-16ubuntu8) trusty; urgency=low
-
-  * Added regex support, including trunc, and added new multi file feature. needs documentation
-    - Multi file builds are now supported, and you can declare each file as a function (strict SRP)
-	  These are used with the @ sign to denote local function
-
- -- Cade Brown <info@chemicaldevelopment.us>  Sat, 19 Nov 2016 00:01:30 -0500
+ -- Cade Brown <info@chemicaldevelopment.us>  Sat, 19 Nov 2016 16:51:43 -0500
 
 ezcc-1.7.0 (0.8.0-16ubuntu8) trusty; urgency=low
 
@@ -42,21 +27,32 @@ ezcc-1.7.0 (0.8.0-16ubuntu8) trusty; urgency=low
 
  -- Cade Brown <info@chemicaldevelopment.us>  Sat, 19 Nov 2016 13:45:30 -0500
 
-ezcc-1.8.0 (0.8.0-16ubuntu8) trusty; urgency=low
+ezcc-1.6.0 (0.8.0-16ubuntu8) trusty; urgency=low
 
-  * factorial, gamma
-    - Factorial (x) can now be computed either by a = factorial b or a = b !
-    - gamma is factorial(x-1)
-  * user defined functions
-    - Create a file, and at the top, write #__name__ $name $args . . .
-    And when you compile, you can call it with a = @$name $args
-    See the examples folder for more info
-  * echo, and literal c code
-    - echo now works, use echo "hello world" (including the quotes), or run echo a (without) to print a var
-    - literal c code can be injected by ending the line with ; or, the entire line must be within {} brackets
-    For example, printf("hello world\n"); is read as C code, as is {printf("hello world");}
+  * Added regex support, including trunc, and added new multi file feature. needs documentation
+    - Multi file builds are now supported, and you can declare each file as a function (strict SRP)
+	  These are used with the @ sign to denote local function
 
- -- Cade Brown <info@chemicaldevelopment.us>  Sat, 19 Nov 2016 16:51:43 -0500
+ -- Cade Brown <info@chemicaldevelopment.us>  Sat, 19 Nov 2016 00:01:30 -0500
 
+ezcc-1.5.0 (0.8.0-16ubuntu8) trusty; urgency=low
 
+  * Rewrote using regex to search
+    - Most of the old functions are there, with the exception of mod, int, and trunc
+	  They will be implemented soon
 
+ -- Cade Brown <info@chemicaldevelopment.us>  Fri, 18 Nov 2016 21:13:20 -0500
+
+ezcc-1.2.5 (0.8.0-16ubuntu8) trusty; urgency=low
+
+  * Added mod, int, and trunc functions
+    - mod, int, and trunc functions calculate modulo, integer trunctation, and multiple truncation
+
+ -- Cade Brown <info@chemicaldevelopment.us>  Thu, 17 Nov 2016 15:46:43 -0500
+
+ezcc-0.8.0 (0.8.0-16ubuntu8) trusty; urgency=low
+
+  * initial package
+    - Updated the initial deb package
+
+ -- Cade Brown <info@chemicaldevelopment.us>  Thu, 17 Nov 2016 12:27:32 -0500
