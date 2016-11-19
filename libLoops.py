@@ -1,6 +1,6 @@
-from EZC_types import LibraryFunction, Library
+from shared import LibraryFunction, Library
 
-import re, shared, parser
+import re, parser
 import lib_linker
 
 this_lib = """
