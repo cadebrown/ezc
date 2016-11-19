@@ -58,14 +58,14 @@
 
 		<dict>
 			<key>match</key>
-			<string>(echo|print|set|file|set|var)(?![_a-zA-Z])</string>
+			<string>(set|echo|prec|var)(?![_a-zA-Z])</string>
 			<key>name</key>
 			<string>keyword.control.ezc</string>
 		</dict>
 
             <dict>
                 <key>match</key>
-                <string>\b(?i:(label|goto|if|for|fi|rof))\b</string>
+                <string>\b(?i:(goto|if|for|fi|rof|label))\b</string>
                 <key>name</key>
 
                 <string>constant.other.functions</string>
@@ -73,17 +73,17 @@
 
 		<dict>
 			<key>match</key>
-			<string>((add|sub|mul|div)|(a?)(sin|cos|tan)|(pow|exp|log(b?)|sqrt|int|trunc|mod))(?![_a-zA-Z])</string>
+			<string>(div|log|cos|exp|acos|atan|max|mul|sin|add|min|asin|logb|sqrt|tan|pow|sub)(?![_a-zA-Z])</string>
 			<key>name</key>
 			<string>support.type.sys-types.functions</string>
 		</dict>
 
-            <dict>
-                <key>match</key>
-                <string>(setprec|var|echo|\+|\-|\*|\/|\^|\*\*|_|\%)</string>
-                <key>name</key>
-                <string>constant.numeric</string>
-            </dict>   
+		<dict>
+			<key>match</key>
+			<string>(prec|var|echo|\+|\-|\*|\/|\^|\*\*|_|\%)</string>
+			<key>name</key>
+			<string>constant.numeric</string>
+		</dict>   
 
 
 		<dict>

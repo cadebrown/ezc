@@ -13,3 +13,12 @@ ezcc-1.2.5 (0.8.0-16ubuntu8) trusty; urgency=low
 
  -- Cade Brown <info@chemicaldevelopment.us>  Thu, 17 Nov 2016 15:46:43 -0500
 
+ezcc-1.5.0 (0.8.0-16ubuntu8) trusty; urgency=low
+
+  * Rewrote using regex to search
+    - Most of the old functions are there, with the exception of mod, int, and trunc
+	  They will be implemented soon
+
+ -- Cade Brown <info@chemicaldevelopment.us>  Fri, 18 Nov 2016 21:13:20 -0500
+
+

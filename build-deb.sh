@@ -1,5 +1,5 @@
 #!/bin/bash
-pyinstaller --onefile ezcc.py EZcompiler.py EZlogger.py libBasic.py libLoops.py libMath.py shared_data.py
+pyinstaller --onefile *.py
 
 if [ "$USER" != "root" ]; then
 	echo "Need to be root!"
@@ -9,7 +9,7 @@ fi
 VERSION=$1
 if [ "$VERSION" == "" ]; then
 	echo "Default version"
-	VERSION="0.0.1"
+	VERSION="latest"
 fi
 
 cp dist/ezcc deb-package/usr/bin/ezcc
