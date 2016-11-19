@@ -30,7 +30,7 @@ f_delim = "[ ]+"
 # a valid user defined function (from other files)
 usrf_id = "(@([_a-zA-Z][_a-zA-Z0-9]*))"
 # regex for literal c code
-literal_c = "({(.*)}|(.*);)"
+literal_c = "[ ]*({(.*)}|(.*);)"
 # literals
 consts = "(NEGONE|ZERO|ONE|TWO|FOUR|TEN)"
 
