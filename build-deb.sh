@@ -21,7 +21,13 @@ FL="ezcc_"$VERSION"_amd64.deb"
 
 echo $FL
 
-dpkg-deb --build deb-package $FL && lintian $FL
+chmod 0755 deb-package/usr/
+chmod 0755 deb-package/usr/share/
+chmod 0755 deb-package/usr/share/doc/
+chown root:root deb-package/usr/share/doc/ezcc
+chmod 0755 deb-package/usr/share/doc/ezcc
+
+fakeroot dpkg-deb --build deb-package $FL && lintian $FL
 
 
 
