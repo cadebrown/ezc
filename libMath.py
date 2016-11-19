@@ -1,159 +1,78 @@
-from shared_data import *
+from EZC_types import LibraryFunction, Library
 
-"""
+import re, shared, parser
+import lib_linker
 
-    Math lib for EZC
+this_lib = """
 
-    Contains operators, like +, -, /, ...
+void fsqrt(mpfr_t r, mpfr_t a) { mpfr_sqrt(r, a, GMP_RNDN); }
 
-    Also, most math functions, like log, logb, exp, sqrt, int, etc...
+void fsin(mpfr_t r, mpfr_t a) { mpfr_sin(r, a, GMP_RNDN); }
+void fcos(mpfr_t r, mpfr_t a) { mpfr_cos(r, a, GMP_RNDN); }
+void ftan(mpfr_t r, mpfr_t a) { mpfr_tan(r, a, GMP_RNDN); }
 
-"""
+void fasin(mpfr_t r, mpfr_t a) { mpfr_asin(r, a, GMP_RNDN); }
+void facos(mpfr_t r, mpfr_t a) { mpfr_acos(r, a, GMP_RNDN); }
+void fatan(mpfr_t r, mpfr_t a) { mpfr_atan(r, a, GMP_RNDN); }
 
-# lib setup
-lib_header = """
-
-
-"""
-
-# operators
-char_op = {
-    "+": "Add_Op",
-    "-": "Sub_Op",
-    "*": "Mul_Op",
-    "/": "Div_Op",
-    "^": "Pow_Op",
-    "**": "Pow_Op",
-
-    "%": "Mod_Op",
-
-    "_": "Trunc_Op"
-
+void fexp(mpfr_t r, mpfr_t a) { mpfr_exp(r, a, GMP_RNDN); }
+void flog(mpfr_t r, mpfr_t a) { mpfr_log(r, a, GMP_RNDN); }
+void flogb(mpfr_t r, mpfr_t a, mpfr_t b) {
+	mpfr_t __flogb_tmp; mpfr_init(__flogb_tmp);
+	flog(__flogb_tmp, b);
+	flog(r, a);
+	fdiv(r, r, __flogb_tmp);
+	mpfr_clear(__flogb_tmp);
 }
 
-# strings for functions
-char_st = {
-    "add": "Add",
-    "sub": "Sub",
-    "mul": "Mul",
-    "div": "Div",
-    "mod": "Mod",
-    "pow": "Pow",
-
-    "int": "Int",
-    "trunc": "Trunc",
-
-    "sqrt": "Sqrt",
-    "sin": "Sin",
-    "asin": "Asin",
-    "cos": "Cos",
-    "acos": "Acos",
-    "exp": "Exp",
-    "log": "Log",
-    "logb": "LogB"
-}
-
-class Add(Statement):
-    def get_st(self):
-        return "mpfr_add(%s, %s, %s, GMP_RNDN);\n" % (self.assign, self.args[0], self.args[1])
-
-class Sub(Statement):
-    def get_st(self):
-        return "mpfr_sub(%s, %s, %s, GMP_RNDN);\n" % (self.assign, self.args[0], self.args[1])
-
-class Mul(Statement):
-    def get_st(self):
-        return "mpfr_mul(%s, %s, %s, GMP_RNDN);\n" % (self.assign, self.args[0], self.args[1])
-
-class Div(Statement):
-    def get_st(self):
-        return "mpfr_div(%s, %s, %s, GMP_RNDN);\n" % (self.assign, self.args[0], self.args[1])
-
-class Pow(Statement):
-    def get_st(self):
-        return "mpfr_pow(%s, %s, %s, GMP_RNDN);\n" % (self.assign, self.args[0], self.args[1])
-
-class Int(Statement):
-    def get_st(self):
-        return "mpfr_trunc(%s, %s);\n" % (self.assign, self.args[0])
-
-class Trunc(Statement):
-    def get_st(self):
-        if len(self.args) == 1:
-            return "mpfr_trunc(%s, %s);\n" % (self.assign, self.args[0])
-        else:
-            return [Mod(self.assign, self.args).get_st(), Sub(self.assign, [self.args[0], self.assign]).get_st()]
-
-class Sqrt(Statement):
-    def get_st(self):
-        return "mpfr_sqrt(%s, %s, GMP_RNDN);\n" % (self.assign, self.args[0])
-
-class Sin(Statement):
-    def get_st(self):
-        return "mpfr_sin(%s, %s, GMP_RNDN);\n" % (self.assign, self.args[0])
-
-class Asin(Statement):
-    def get_st(self):
-        return "mpfr_asin(%s, %s, GMP_RNDN);\n" % (self.assign, self.args[0])
-
-class Cos(Statement):
-    def get_st(self):
-        return "mpfr_cos(%s, %s, GMP_RNDN);\n" % (self.assign, self.args[0])
-
-class Acos(Statement):
-    def get_st(self):
-        return "mpfr_acos(%s, %s, GMP_RNDN);\n" % (self.assign, self.args[0])
-
-class Exp(Statement):
-    def get_st(self):
-        return "mpfr_exp(%s, %s, GMP_RNDN);\n" % (self.assign, self.args[0])
-
-class Log(Statement):
-    def get_st(self):
-        return "mpfr_log(%s, %s, GMP_RNDN);\n" % (self.assign, self.args[0])
-
-class LogB(Statement):
-    def get_st(self):
-        tmp_0_name ="tmp_0_" + str(abs(hash(self.assign)))
-        tmp_1_name ="tmp_1_" + str(abs(hash(self.assign)))
-        tmp_0_var = Set(tmp_0_name, "0.0").get_st()
-        tmp_1_var = Set(tmp_1_name, "0.0").get_st()
-        find_la = Log(tmp_0_name, self.args[1]).get_st()
-        find_lb = Log(tmp_1_name, self.args[0]).get_st()
-        find_div = Div(self.assign, (tmp_0_name, tmp_1_name)).get_st()
-        return find_la + find_lb + find_div
-
 """
 
-     Operators
+class Sqrt(LibraryFunction):
+	def __str__(self):
+		return "fsqrt(%s);" % (", ".join(map(str, self.args)))
 
-"""
+class Sin(LibraryFunction):
+	def __str__(self):
+		return "fsin(%s);" % (", ".join(map(str, self.args)))
+class Cos(LibraryFunction):
+	def __str__(self):
+		return "fcos(%s);" % (", ".join(map(str, self.args)))
+class Tan(LibraryFunction):
+	def __str__(self):
+		return "ftan(%s);" % (", ".join(map(str, self.args)))
 
-class Add_Op(Operator):
-    def get_st(self):
-        return Add(self.assign, [self.a, self.b]).get_st()
+class Asin(LibraryFunction):
+	def __str__(self):
+		return "fasin(%s);" % (", ".join(map(str, self.args)))
+class Acos(LibraryFunction):
+	def __str__(self):
+		return "facos(%s);" % (", ".join(map(str, self.args)))
+class Atan(LibraryFunction):
+	def __str__(self):
+		return "fatan(%s);" % (", ".join(map(str, self.args)))
 
-class Sub_Op(Operator):
-    def get_st(self):
-        return Sub(self.assign, [self.a, self.b]).get_st()
+class Exp(LibraryFunction):
+	def __str__(self):
+		return "fexp(%s);" % (", ".join(map(str, self.args)))
+class Log(LibraryFunction):
+	def __str__(self):
+		return "flog(%s);" % (", ".join(map(str, self.args)))
+class Logb(LibraryFunction):
+	def __str__(self):
+		return "flogb(%s);" % (", ".join(map(str, self.args)))
 
-class Mul_Op(Operator):
-    def get_st(self):
-        return Mul(self.assign, [self.a, self.b]).get_st()
 
-class Div_Op(Operator):
-    def get_st(self):
-        return Div(self.assign, [self.a, self.b]).get_st()
-
-class Pow_Op(Operator):
-    def get_st(self):
-        return Pow(self.assign, [self.a, self.b]).get_st()
-
-class Mod_Op(Operator):
-    def get_st(self):
-        return Mod(self.assign, [self.a, self.b]).get_st()
-
-class Trunc_Op(Operator):
-    def get_st(self):
-        return Trunc(self.assign, [self.a, self.b]).get_st()
-
+libMath = Library(this_lib, "0.0.2", {
+	"sqrt": Sqrt, 
+	"sin": Sin, 
+	"asin": Asin, 
+	"cos": Cos, 
+	"acos": Acos, 
+	"tan": Tan, 
+	"atan": Atan, 
+	"exp": Exp, 
+	"log": Log, 
+	"logb": Logb, 
+}, {
+	
+})

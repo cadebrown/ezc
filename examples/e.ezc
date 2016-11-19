@@ -7,7 +7,7 @@ Computes e, euler's number, run `./e.o $bits` to compute $bits of e
 ###
 
 # read in precision
-setprec $1
+prec $1
 
 # set precision to one bit
 toler = .5; toler = toler ^ prec
@@ -16,7 +16,7 @@ toler = .5; toler = toler ^ prec
 e = 1; i_f = 1; prev_sum = e
 
 # loop
-for i 1 10000
+for i 1 1000
     # sum factorials
     i_f = i_f / i
     e = e + i_f
@@ -27,7 +27,6 @@ for i 1 10000
         # break out of loop
         goto end
     fi
-
     # store previous value
     prev_sum = e
 rof

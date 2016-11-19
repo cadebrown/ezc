@@ -30,39 +30,32 @@ if not libs:
 if not os.path.exists("tmp"):
     os.makedirs("tmp")
 
-# these are C lang files
-c_files = []
 
 for src in sources:
     src = src.split("/")[-1]
-    c_files.append("tmp/%s.c" % (src))
 
 log.info("Sources", sources)
+
+
+compiler.init_cmp()
 
 # loops through, compiling and saving
 for i in range(0, len(sources)):
     src = sources[i]
-    out = c_files[i]
-    log.info("Transpiling", "%s to %s" % (src, out))
-    fsrc = open(src, "r")
-    # split on newline
-    lines = fsrc.read().split("\n")
-    read = True
-
-    # close file
-    fsrc.close()
+    log.info("Transpiling", "%s" % (src))
+    fsrc = open(src, "r").read()
 
     # EZC is compiled to C
-    str_cmp = compiler.compile_lines(lines, libs)
+    compiler.add_code(fsrc)
     
     # we write C file
-    fout = open(out, "w+")
-    fout.write(str_cmp)
-    fout.close()
+fout = open("tmp/out.c", "w+")
+fout.write(compiler.get_c_file())
+fout.close()
 
 # Compile the intermediate lang
-cmd = "cc %s -lmpfr -lm -o %s" % (" ".join(c_files), args.o)
-clearcmd = "rm %s" % (" ".join(c_files))
+cmd = "cc %s -lmpfr -lm -o %s" % ("tmp/out.c", args.o)
+clearcmd = "rm %s" % (" ".join("tmp/out.c"))
 log.info("Compilation", cmd)
 compile_proc = Popen(cmd, shell=True)
 compile_proc.wait()

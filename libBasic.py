@@ -1,79 +1,106 @@
-from shared_data import *
+from EZC_types import LibraryFunction, Library
 
-"""
+import re, shared, parser
+import lib_linker
 
-    Basic lib for EZC
+this_lib = """
 
-    This includes most setting variables, and printing, file ops, etc
-
-"""
-
-# lib setup
-lib_header = """
-
-
-"""
-
-# operators
-char_op = {
-
+void prec_literal(int x) {
+	if (x < EZC_PREC) x = EZC_PREC;
+	_prec = x;
+	mpfr_set_default_prec((int)x);
 }
 
-# statements
-char_st = {
-    "setprec": "Prec",
-
-    "set": "Set",
-    
-    "echo": "Echo",
-    "print": "Echo",
-    "var": "Var",
-
-    "file": "File"
+void prec_index(int index) {
+	if (index >= _argc) {
+		prec_literal(EZC_PREC);
+	} else {
+		prec_literal(strtoll(_argv[index], NULL, 10));
+	}
 }
 
-# sets precision
-class Prec(Statement):
-    def get_st(self):
-        c_str = "_prec = %s; " % (self.args[0])
-        if "$" in c_str:
-            num = self.args[0].replace("$", "")
-            c_str = "if (argc > %s) { _prec = strtol(argv[%s], NULL, 10); } else { _prec = 128; } " % (num, num)
-        return "%s mpfr_set_default_prec(_prec); _pprec = (int)(_prec * log(2.0) / log(10.0)); \n\tmpfr_t prec; mpfr_init(prec); mpfr_set_ui(prec, _prec, GMP_RNDN); " % (c_str)
+void add(mpfr_t r, mpfr_t a, mpfr_t b) { mpfr_add(r, a, b, GMP_RNDN); }
+void sub(mpfr_t r, mpfr_t a, mpfr_t b) { mpfr_sub(r, a, b, GMP_RNDN); }
+void mul(mpfr_t r, mpfr_t a, mpfr_t b) { mpfr_mul(r, a, b, GMP_RNDN); }
+void fdiv(mpfr_t r, mpfr_t a, mpfr_t b) { mpfr_div(r, a, b, GMP_RNDN); }
+void fpow(mpfr_t r, mpfr_t a, mpfr_t b) { mpfr_pow(r, a, b, GMP_RNDN); }
 
-# echo string
-class Echo(Statement):
-    def get_st(self):
-        return "printf(\"%s\\n\");" % (" ".join(self.args.replace("\"", "")))
-    
-# prints out var
-class Var(Statement):
-    def get_st(self):
-        self.var = self.args[0]
-        return "mpfr_printf(\"%s : %%.*Rf \\n\", _pprec, %s);" % ((self.var, )*2)
+void echo(char msg[]) { printf("%s\\n", msg); }
+void var(char name[], mpfr_t a) { mpfr_printf(\"%s : %.*Rf \\n\", name, _bprec, a); }
+void set(mpfr_t a, char val[]) { mpfr_set_str(a, val, 10, GMP_RNDN); }
+void fset(mpfr_t a, mpfr_t b) { mpfr_set(a, b, GMP_RNDN); }
 
-# prints var to file
-class File(Statement):
-    def get_st(self):
-        self.var = self.args[0]
-        self.file = "%s.txt" % self.var
-        if len(self.args) > 1:
-            self.file = self.args[1]
-        res = "FILE *%s_fp = fopen(\"%s\", \"w+\"); " % (self.var, self.file)
-        res += "mpfr_fprintf(%s_fp, \"%s : %%.*Rf\", _pprec, %s); " % ((self.var,)*3)
-        res += "fclose(%s_fp); " % (self.var)
-        return res
+void _fmax(mpfr_t r, mpfr_t a, mpfr_t b) { mpfr_max(r, a, b, GMP_RNDN); }
+void _fmin(mpfr_t r, mpfr_t a, mpfr_t b) { mpfr_min(r, a, b, GMP_RNDN); }
+int _fsgn(mpfr_t r) { return mpfr_sgn(r); }
 
-# inits variable
-class Set(Statement):
-    def get_st(self):
-        var_names.add(self.assign)
-        r = ""
-        if is_const(self.args[0]):
-            r += "mpfr_set_str(%s, \"%s\", 10, GMP_RNDN);" % (self.assign, " ".join(self.args))
-        elif self.args[0].startswith("$"):
-            num = self.args[0].replace("$", "")
-            r += "if (argc > %s) { mpfr_set_str(%s, argv[%s], 10, GMP_RNDN); } else { mpfr_set_str(%s, \"0.0\", 10, GMP_RNDN); }" % (num, self.assign, num, self.assign)
-        else:
-            r += "mpfr_set(%s, %s, GMP_RNDN);" % (self.assign, self.args[0])
-        return r
+"""
+
+class Prec(LibraryFunction):
+	def __str__(self):
+		if "args[" in self.args[0]:
+			lib_linker.set_prec("prec_index(%s);" % self.args[0].replace("args[", "").replace("]", ""))
+		else:
+			lib_linker.set_prec("prec_literal(%s);" % (self.args[0]))
+		return ""
+
+class Set(LibraryFunction):
+	def __str__(self):
+		if re.match(parser.valid_const, self.args[1]):
+			return "set(%s, \"%s\");" % (self.args)
+		elif re.match(parser.valid_var, self.args[1]):
+			return "fset(%s, %s);" % (self.args)
+class Var(LibraryFunction):
+	def __str__(self):
+		return "var(\"%s\", %s);" % ((self.args[0], ) * 2)
+class Echo(LibraryFunction):
+	def __str__(self):
+		return "echo(%s);" % (self.args)
+
+class Min(LibraryFunction):
+	def __str__(self):
+		return "_fmin(%s);" % (", ".join(map(str, self.args)))
+class Max(LibraryFunction):
+	def __str__(self):
+		return "_fmax(%s);" % (", ".join(map(str, self.args)))
+
+class Add(LibraryFunction):
+	def __str__(self):
+		return "add(%s);" % (", ".join(map(str, self.args)))
+class Sub(LibraryFunction):
+	def __str__(self):
+		return "sub(%s);" % (", ".join(map(str, self.args)))
+class Mul(LibraryFunction):
+	def __str__(self):
+		return "mul(%s);" % (", ".join(map(str, self.args)))
+class Div(LibraryFunction):
+	def __str__(self):
+		return "fdiv(%s);" % (", ".join(map(str, self.args)))
+class Pow(LibraryFunction):
+	def __str__(self):
+		return "fpow(%s);" % (", ".join(map(str, self.args)))
+
+
+libBasic = Library(this_lib, "0.0.2", {
+	"prec": Prec, 
+	"set": Set,
+	"var": Var,
+	"echo": Echo,
+
+	"min": Min, 
+	"max": Max, 
+
+	"add": Add, 
+	"sub": Sub, 
+	"mul": Mul,
+	"div": Div, 
+	"pow": Pow
+}, {
+	
+	"+": Add,
+	"-": Sub,
+	"*": Mul,
+	"/": Div,
+	"^": Pow,
+	"**": Pow
+})
