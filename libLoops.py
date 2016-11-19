@@ -8,6 +8,7 @@ this_lib = """
 
 """
 
+# used for the for loop
 for_st="""
 for (fset(%s, __start); mpfr_cmp(%s, __stop) == -_fsgn(__step); add(%s, %s, __step)) {
 """
@@ -20,7 +21,7 @@ class For(LibraryFunction):
 	def __str__(self):
 		self.args = list(self.args)
 		import EZcompiler as cmp
-		for_macro = "__start = %s ; __stop = %s; " % (self.args[1], self.args[2])
+		for_macro = "__start = %s : __stop = %s : " % (self.args[1], self.args[2])
 		if len(self.args) > 3:
 			for_macro += "__step = %s" % (self.args[3])
 		else:

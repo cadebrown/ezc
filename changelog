@@ -21,4 +21,27 @@ ezcc-1.5.0 (0.8.0-16ubuntu8) trusty; urgency=low
 
  -- Cade Brown <info@chemicaldevelopment.us>  Fri, 18 Nov 2016 21:13:20 -0500
 
+ezcc-1.6.0 (0.8.0-16ubuntu8) trusty; urgency=low
+
+  * Added regex support, including trunc, and added new multi file feature. needs documentation
+    - Multi file builds are now supported, and you can declare each file as a function (strict SRP)
+	  These are used with the @ sign to denote local function
+
+ -- Cade Brown <info@chemicaldevelopment.us>  Sat, 19 Nov 2016 00:01:30 -0500
+
+ezcc-1.7.0 (0.8.0-16ubuntu8) trusty; urgency=low
+
+  * Added back mod and trunc functions, gamma, factorial, max, min, etc
+    - Mostly in libMath
+  * Added constants
+    - NEGONE, ZERO, ONE, TWO, FOUR, TEN are their numeric values, and need no init
+  * Added new operators
+    - Added operators '!', '√', and '_' for factorial, square root, and trunc/multtrunc
+	  Used with operators on either side, but by convention, use 'a !', '√ a', and 'a _' or 'a _ b'
+    If you do use 'a _', this is equivelent to 'a _ ONE'. the _ returns the largest multiple of b (or ONE) that is less than or equal to a
+
+ -- Cade Brown <info@chemicaldevelopment.us>  Sat, 19 Nov 2016 13:45:30 -0500
+
+
+
 

@@ -65,7 +65,7 @@
 
             <dict>
                 <key>match</key>
-                <string>\b(?i:(goto|if|for|fi|rof|label))\b</string>
+                <string>[ ]*((?:([_a-zA-Z][_a-zA-Z0-9]*)[ ]*=[ ]*[ ]+)?(?:((set|rof|echo|__base|for|prec|label|var|goto|if|fi))((?:[ ,<>]+(?:\$|\-|\+)?[a-zA-Z0-9._]+)+)))</string>
                 <key>name</key>
 
                 <string>constant.other.functions</string>
@@ -73,18 +73,17 @@
 
 		<dict>
 			<key>match</key>
-			<string>(div|log|cos|exp|acos|atan|max|mul|sin|add|min|asin|logb|sqrt|tan|pow|sub)(?![_a-zA-Z])</string>
+			<string>[ ]*((?:([_a-zA-Z][_a-zA-Z0-9]*)[ ]*=[ ]*[ ]+)?(?:((pow|logb|sqrt|tan|asin|sub|min|add|cbrt|mul|trunc|sin|atan|factorial|max|acos|log|cos|exp|div|gamma))((?:[ ,<>]+(?:\$|\-|\+)?[a-zA-Z0-9._]+)+)))</string>
 			<key>name</key>
 			<string>support.type.sys-types.functions</string>
 		</dict>
 
 		<dict>
 			<key>match</key>
-			<string>(prec|var|echo|\+|\-|\*|\/|\^|\*\*|_|\%)</string>
+			<string>(\!|\%|\+|\*|\-|\/|\�\�\�|\*\*|\_|\^)</string>
 			<key>name</key>
 			<string>constant.numeric</string>
 		</dict>   
-
 
 		<dict>
 			<key>match</key>

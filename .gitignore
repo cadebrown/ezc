@@ -1,16 +1,17 @@
 # Generated
-tmp/
+*tmp/
 
 # compiled files
 *.pyc
 *.o
-.vscode/
+*.vscode/
 
-dist/*
-build/*
+*dist/*
+*build/*
 deb-package/usr/bin/ezcc
 deb-package/usr/share/doc/ezcc/changelog.gz
 
 
 # package
 *.deb
+

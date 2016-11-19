@@ -12,7 +12,7 @@ BOLD = '\033[1m'
 UNDERLINE = '\033[4m'
 
 def init():
-    base_print(OKBLUE, "EZCC", "Initializing")
+    base_print(OKBLUE, "EZCC", "")
 
 def base_print(col, task, st):
     print "%s v%s: \n  %s:" % (col+name, WARNING+version+col, task)
@@ -26,6 +26,9 @@ def base_print(col, task, st):
 
 def info(task, st):
     base_print(OKBLUE, task, st)
+
+def warn(task, st):
+    base_print(WARNING, task, st)
 
 def err(task, error):
     base_print(FAIL, task, error)

@@ -1,7 +1,25 @@
+"""
+
+Links libraries, variables, and statements
+
+"""
+
+
 import re
 import shared
 
 libs = []
+
+consts_init = """
+	// constants
+	initset(NEGONE, \"-1\");
+	initset(ZERO, \"0\");
+	initset(ONE, \"1\");
+	initset(TWO, \"2\");
+	initset(FOUR, \"4\");
+	initset(TEN, \"10\");
+
+"""
 
 def register_lib(lib):
 	global libs
@@ -12,10 +30,10 @@ def register_lib(lib):
 	for o in lib.opers:
 		shared.operators[o] = lib.opers[o]
 
-def get_var_inits():
+def get_var_inits(exc=[]):
 	init_st = "\n\tmpfr_t %%s; mpfr_init(%%s);" % ()
-	ret = "\n\t%s" % (shared.prec)
-	for var in shared.var_set:
+	ret = ""
+	for var in shared.var_set.difference(set(exc)):
 		ret += init_st % (var, var ) 
 	return ret
 
@@ -29,3 +47,8 @@ def get_lib_code():
 		res += l.text
 	return res
 
+def reset_vars():
+	shared.var_set = set()
+
+def get_prec_init():
+	return "\n\t%s" % (shared.prec) + consts_init

@@ -1,7 +1,0 @@
-setprec $2
-
-x = $1
-
-z = sqrt x
-
-var z
