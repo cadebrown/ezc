@@ -1,22 +1,20 @@
-ezcc-2.1.0 (0.8.0-16ubuntu8) stable; urgency=med
+ezcc-2 (2.1.0-16ubuntu8) stable; urgency=med
 
   * fixed literal related bugs
-    - fixed a bug where some functions would interpret literals as operators instead as params
-    i.e. `a = cos -1` was giving a compile time exception
+    - fixed a bug where some functions would interpret literals incorrect
+    - i.e. `a = cos -1` was giving a compile time exception
     - fixed a bug with literal allocation
-	sometimes, a seg fault would occur after reaching 10 literals
-
+    - sometimes, a seg fault would occur after reaching 10 literals
   * changed the truncate operator from _ to ~
     - this reverts some of 1.7.0_3
-	now, behaviour is: a = ~ n is the largest integer <= n
-	a = b ~ n is the largest multiple of b <= n
-
+    - now, behaviour is: a = ~ n is the largest integer <= n
+    - a = b ~ n is the largest multiple of b <= n
   * added commandline and stdin input
-    - you can compile and run code without using files, you can just pass it in through stdin
-	however, this does still require read and write priveledges in current directory
+    - you can compile and run code without using files
+    - you can use stdin or the -c argument
+    - still requires read and write in current dir
 
- -- Cade Brown <info@chemicaldevelopment.us>  Sat, 19 Nov 2016 16:51:43 -0500
-
+ -- Cade Brown <info@chemicaldevelopment.us>  Sun, 20 Nov 2016 18:20:15 -0500
 
 ezcc-2.0.0 (0.8.0-16ubuntu8) unstable; urgency=low
 
