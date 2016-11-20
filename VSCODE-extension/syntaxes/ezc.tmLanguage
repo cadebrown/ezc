@@ -65,8 +65,25 @@
 			</array>
 		</dict>
 
+		<!-- User defined function declaration (title) Overrules default functions -->
 
-		<!-- User defined function. Overrules default functions -->
+		<dict>
+			<key>match</key>
+			<string>function ([a-zA-Z_]+)</string>
+			<key>name</key>
+			<string>keyword.control.ezc.funcdef</string>
+		</dict>
+
+		<!-- User defined function declaration (args) Overrules default functions -->
+
+		<dict>
+			<key>match</key>
+			<string>(:)( [a-zA-Z0-9_])*</string>
+			<key>name</key>
+			<string>support.type.sys-types.args</string>
+		</dict>
+
+		<!-- User defined function (call). Overrules default functions -->
 
 		<dict>
 			<key>match</key>
@@ -90,7 +107,7 @@
 
 		<dict>
 			<key>match</key>
-			<string>(\!|\%|\+|\*|\-|\/|\�\�\�|\*\*|\_|\^|\$)</string>
+			<string>(\!|\%|\+|\*|\-|\/|\�\�\�|\*\*|\~|\^|\$)</string>
 			<key>name</key>
             <string>support.function.builtin.call.ezc</string>
 		</dict>   

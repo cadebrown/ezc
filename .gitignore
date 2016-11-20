@@ -5,7 +5,7 @@
 *.pyc
 *.o
 *.vscode/
-
+!VSCODE-extension/.vscode/
 *dist/*
 *build/*
 deb-package/usr/bin/ezcc

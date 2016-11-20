@@ -15,8 +15,8 @@ class Library():
 		return self.text
 
 class LibraryFunction():
-    def __init__(self, *args):
-        self.args = args
+	def __init__(self, *args):
+		self.args = args
 
 	def __str__(self):
 		return self.__class__.__name__ + "(%s);" % (", ".join(self.args))
@@ -93,6 +93,7 @@ int main(int argc, char *argv[]) {
 	// start the commandline args list
 	args = (mpfr_t *)malloc(sizeof(mpfr_t) * sizeof(argc - 1));
 	_consts = (mpfr_t *)malloc(sizeof(mpfr_t) * sizeof(_size_consts));
+	prec_literal(EZC_PREC);
 """
 
 var_inits="""

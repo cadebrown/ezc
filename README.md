@@ -41,6 +41,19 @@ To test it, run `ezcc examples/pi.ezc -o pi.o` (or `~/ezc/ezcc examples/pi.ezc -
 After this, run `./pi.o 1024` and it should print out 1024 bits of pi (3.14159265358979...)
 
 
+# Examples
+
+To compute pi, simply run:
+
+`echo "i = acos -1.0 : var i" | ezcc -e`
+
+or, 
+
+`ezcc -c "i = acos -1.0 : var i"`
+
+Using `-c` or `-e` means you don't need a file, but c reads from the next argument, and e reads from stdin
+
+
 # Support
 
 Tested on Ubuntu 15.04, should work for all Linux/Unix distros.

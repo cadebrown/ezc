@@ -1,6 +1,5 @@
 # sets the precision
 prec $1
-
 # initializes e
 e = 0
 

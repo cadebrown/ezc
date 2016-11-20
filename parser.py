@@ -20,7 +20,7 @@ valid_var = "[_a-zA-Z][_a-zA-Z0-9]*"
 # valid numberical constant
 valid_const = "(\+|\-)?[0-9]+"
 # valid argument to a function
-valid_arg = "(?:\")?(?:\$|\-|\+)?[_a-zA-Z0-9\.]+(?:\")?"
+valid_arg = "(?:\$|\-|\+)?[_a-zA-Z0-9\.]+"
 # valid break regex (between function params)
 break_regex = "[ ,<>]+"
 # splitting arguments
@@ -32,7 +32,7 @@ usrf_id = "(@([_a-zA-Z][_a-zA-Z0-9]*))"
 # regex for literal c code
 literal_c = "[ ]*({(.*)}|(.*);)"
 # literals
-consts = "(_next_const(.*))"
+consts = "(_next_const\(\"(.*)\"\))"
 literal_str = "\".*\""
 
 def is_literal(line):
@@ -65,7 +65,7 @@ def set_regex():
 	for i in shared.operators.keys():
 		operator_escs.append("\\" + "\\".join(iter(i)))
 	# joins the escaped operators
-	olist_regex = "%s" % ("|".join(operator_escs))
+	olist_regex = "(%s)" % ("|".join(operator_escs))
 	# this is valid to assign to (includes = sign)
 	assign_regex = "(%s)[ ]*=[ ]*" % (valid_var)
 	# valid set value, i.e. a = 1.23423
@@ -75,7 +75,7 @@ def set_regex():
 	# this parses a function with no arguments (degenerate functions like rof and fi)
 	function_noarg_regex = "(%s)" % (flist_regex)
 	# operator call
-	operators_regex = "[ ]*((?:%s)(?:((%s)%s)?(%s)(%s(%s))?))" % (assign_regex, valid_arg, f_delim, olist_regex, f_delim, valid_arg)
+	operators_regex = "[ ]*((?:%s)(?:((%s)%s)?(%s)(?![0-9\.])(%s(%s))?))" % (assign_regex, valid_arg, f_delim, olist_regex, f_delim, valid_arg)
 	# a free form call (used for non-norm functions)
 	freeform_regex = "[ ]*(%s) ([. ]*)" % (flist_regex)
 	# user function
@@ -132,6 +132,8 @@ def clean_usrf(call):
 
 # parses a line. This looks for operators, userfunctions, functions, assignment, functions with no arguments, and then freeform(default).
 def parse_line(line):
+	line = line.strip()
+	#print "(%s)" % line
 	if re.findall(operators_regex, line):
 		line = parse_oper(re.findall(operators_regex, line)[0])[1]
 	elif re.findall(usrf_regex, line):
@@ -145,7 +147,8 @@ def parse_line(line):
 	elif re.findall(freeform_regex, line):
 		line = parse_freeform(re.findall(freeform_regex, line)[0])[1]
 	else:
-		log.warn("Parsing", ["\"%s\"" % (line), "Warning: line does not fit normal syntax.", "Interpreting as straight C code"])
-		line = line + ";"
-		print line
+		if line.split():
+			log.warn("Parsing", ["\"%s\"" % (line), "Warning: line does not fit normal syntax.", "Interpreting as straight C code"])
+			line = line + ";"
+			print line
 	return line

@@ -10,7 +10,7 @@ from shared import start, main, end, var_inits
 
 main_code = ""
 
-declare = "#__name__ "
+declare = "function "
 
 user_funcs = ""
 
@@ -27,14 +27,18 @@ def add_code(file_contents):
 	global user_funcs
 	lib_linker.reset_vars()
 	lines = file_contents.split("\n")
-	res = compile_lines(lines)
 	if declare in lines[0]:
+		print lines[0]
+		lines[0] = lines[0].replace(":", "")
 		ctf = lines[0].replace(declare, "").split(" ")
+		lines = lines[1:]
 		name = ctf[0]
 		args = ctf[1:]
 		argss = ", mpfr_t ".join([""] + args)[2:]
+		res = compile_lines(lines)
 		user_funcs += usrf % (name, argss, lib_linker.get_var_inits(args) + res)
 	else:
+		res = compile_lines(lines)
 		main_code += lib_linker.get_var_inits() + res
 
 def compile_lines(lines):

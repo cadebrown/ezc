@@ -1,8 +1,8 @@
 {
     "name": "ezc",
     "displayName": "ezc",
-    "description": "EZC",
-    "version": "1.6.0",
+    "description": "EZC Files",
+    "version": "2.1.0",
     "publisher": "chemdev",
     "engines": {
         "vscode": "^1.5.0"

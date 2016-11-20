@@ -6,11 +6,13 @@ import lib_linker
 
 this_lib = """
 // sets the precision 
+
 void prec_literal(int x) {
 	if (x < EZC_PREC) x = EZC_PREC;
 	_prec = x;
 	mpfr_set_default_prec((int)x);
 }
+
 // sets the precision to a cmdline argument
 void prec_index(int index) {
 	if (index >= _argc) {
@@ -76,7 +78,7 @@ class Prec(LibraryFunction):
 		if "args[" in self.args[0]:
 			lib_linker.set_prec("prec_index(%s);" % self.args[0].replace("args[", "").replace("]", ""))
 		else:
-			lib_linker.set_prec("prec_literal(%s);" % (self.args[0]))
+			lib_linker.set_prec("prec_literal(%s);" % ( re.findall(parser.consts, self.args[0])[0][1] ))
 		return ""
 
 class Set(LibraryFunction):
@@ -111,9 +113,9 @@ class Max(LibraryFunction):
 class Trunc(LibraryFunction):
 	def __str__(self):
 		if len(self.args) == 2:
-			return "ftrunc(%s);" % (", ".join(map(str, self.args)))
+			return "ftrunc(%s, %s);" % (self.args[0], self.args[1])
 		else:
-			return "ftrunc_mult(%s);" % (", ".join(map(str, self.args)))
+			return "ftrunc_mult(%s, %s, %s);" % (self.args[0], self.args[2], self.args[1])
 
 class Add(LibraryFunction):
 	def __str__(self):
@@ -154,7 +156,7 @@ libBasic = Library(this_lib, "0.0.2", {
 	"pow": Pow
 }, {
 	
-#	"_": Trunc,
+	"~": Trunc,
 
 	"+": Add,
 	"-": Sub,

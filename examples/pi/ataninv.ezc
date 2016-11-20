@@ -1,4 +1,4 @@
-#__name__ ataninv r a
+function ataninv: r a
 
 r = 1 / a
 r = atan r
