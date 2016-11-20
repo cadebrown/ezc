@@ -28,7 +28,6 @@ def add_code(file_contents):
 	lib_linker.reset_vars()
 	lines = file_contents.split("\n")
 	if declare in lines[0]:
-		print lines[0]
 		lines[0] = lines[0].replace(":", "")
 		ctf = lines[0].replace(declare, "").split(" ")
 		lines = lines[1:]
