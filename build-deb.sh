@@ -1,5 +1,8 @@
 #!/bin/bash
-pyinstaller --onefile *.py
+
+SRC="ezcc.py compiler_delegate.py EZcompiler.py EZlogger.py libBasic.py lib_linker.py libLoops.py libMath.py parser.py shared.py"
+rm dist/ezcc
+pyinstaller --onefile $SRC
 
 if [ "$USER" != "root" ]; then
 	echo "Need to be root!"

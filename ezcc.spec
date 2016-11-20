@@ -3,7 +3,7 @@
 block_cipher = None
 
 
-a = Analysis(['ezcc.py', 'EZcompiler.py', 'EZlogger.py', 'libBasic.py', 'lib_linker.py', 'libLoops.py', 'libMath.py', 'parser.py', 'shared.py'],
+a = Analysis(['ezcc.py', 'compiler_delegate.py', 'EZcompiler.py', 'EZlogger.py', 'libBasic.py', 'lib_linker.py', 'libLoops.py', 'libMath.py', 'parser.py', 'shared.py'],
              pathex=['/home/cade/projects/ezc'],
              binaries=None,
              datas=None,
