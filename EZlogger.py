@@ -1,6 +1,6 @@
 name = "EZCC"
 
-version = "0.1.0"
+version = "2.0.0"
 
 HEADER = '\033[95m'
 OKBLUE = '\033[94m'

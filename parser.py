@@ -10,7 +10,7 @@ import EZlogger as log
 
 # registers a variable, and checks if it is a valid name and then adds it to the global list of names
 def register_var(varname):
-	if re.findall(valid_var, varname) == [varname] and re.findall(consts, varname) != [varname] and re.findall(literal_str, varname) != [varname]:
+	if re.findall(valid_var, varname) == [varname] and re.findall(valid_const, varname) != [varname] and re.findall(literal_str, varname) != [varname] and "_next_const" not in varname:# and re.findall(const_call, varname) != [varname]:
 		shared.var_set.add(varname)
 		return True
 	return False
@@ -18,9 +18,9 @@ def register_var(varname):
 # valid variable regex
 valid_var = "[_a-zA-Z][_a-zA-Z0-9]*"
 # valid numberical constant
-valid_const = "(\+|\-)?[0-9\.]+"
+valid_const = "(\+|\-)?[0-9]+"
 # valid argument to a function
-valid_arg = "(?:\")?(?:\$|\-|\+)?[a-zA-Z0-9._]+(?:\")?"
+valid_arg = "(?:\")?(?:\$|\-|\+)?[_a-zA-Z0-9\.]+(?:\")?"
 # valid break regex (between function params)
 break_regex = "[ ,<>]+"
 # splitting arguments
@@ -32,7 +32,7 @@ usrf_id = "(@([_a-zA-Z][_a-zA-Z0-9]*))"
 # regex for literal c code
 literal_c = "[ ]*({(.*)}|(.*);)"
 # literals
-consts = "(NEGONE|ZERO|ONE|TWO|FOUR|TEN)"
+consts = "(_next_const(.*))"
 literal_str = "\".*\""
 
 def is_literal(line):
@@ -85,7 +85,9 @@ def set_regex():
 def get_var(text):
 	if "$" in text:
 		return "args[%s]" % (text.replace("$", ""))
-	else:
+	elif re.findall(valid_const, text):
+		return "_next_const(\"%s\")" % text
+	elif not re.findall(consts, text):
 		return "%s" % (text)
 
 # parses a function, and returns [existing, replace]. This is used to replace the call with transpiled c code. This is for all parse_* methods

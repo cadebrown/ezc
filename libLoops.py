@@ -9,7 +9,7 @@ this_lib = """
 
 # used for the for loop
 for_st="""
-for (fset(%s, __start); mpfr_cmp(%s, __stop) == -_fsgn(__step); add(%s, %s, __step)) {
+for (fset(%s, %s); mpfr_cmp(%s, %s) == -_fsgn(%s); add(%s, %s, %s)) {
 """
 
 class If(LibraryFunction):
@@ -20,14 +20,9 @@ class For(LibraryFunction):
 	def __str__(self):
 		self.args = list(self.args)
 		import EZcompiler as cmp
-		for_macro = "__start = %s : __stop = %s : " % (self.args[1], self.args[2])
-		if len(self.args) > 3:
-			for_macro += "__step = %s" % (self.args[3])
-		else:
-			for_macro += "__step = 1.0"
-		inits = "\n\t" + cmp.compile_lines([for_macro])
-		res = "%s " % (inits)
-		res += for_st % ((self.args[0], )*4)
+		if len(self.args) <= 3:
+			self.args = self.args + ["_next_const(\"1.0\")"]
+		res = "\n\t" + for_st % (self.args[0], self.args[1], self.args[0], self.args[2], self.args[3], self.args[0], self.args[0], self.args[3])
 		return res
 
 class End(LibraryFunction):

@@ -44,6 +44,26 @@ start = """
 #include <mpfr.h>
 #include <math.h>
 
+
+int _size_consts = 5, _consts_id = 0, _consts_ov = 0;
+mpfr_t *_consts;
+
+mpfr_ptr _next_const(char _set_val[]) {
+	_consts_id = _consts_id + 1;
+	if (_consts_id >= _size_consts) {
+		_consts_ov = 1;
+		_consts_id %= _size_consts;
+	}
+	if (_consts_ov > 0) {
+		//mpfr_clear(_consts[_consts_id]);
+		mpfr_init(_consts[_consts_id]);
+	}
+	mpfr_set_str(_consts[_consts_id], _set_val, 10, GMP_RNDN);
+	//_consts_id++;
+	return (mpfr_ptr) _consts[_consts_id];
+}
+
+
 // default precision (and minimum)
 int EZC_PREC = 128;
 // macro to get bits instead of digits
@@ -57,7 +77,7 @@ char **_argv;
 mpfr_t *args;
 
 // constants (look for initializations in lib_linker)
-mpfr_t NEGONE, ZERO, ONE, TWO, FOUR, TEN;
+mpfr_t __start, __stop, __step;
 
 """
 
@@ -72,11 +92,21 @@ int main(int argc, char *argv[]) {
 
 	// start the commandline args list
 	args = (mpfr_t *)malloc(sizeof(mpfr_t) * sizeof(argc - 1));
+	_consts = (mpfr_t *)malloc(sizeof(mpfr_t) * sizeof(_size_consts));
+"""
+
+var_inits="""
 	// loop through, and parse each one for a mpfr
 	for (_loop = 1; _loop < argc; ++_loop) {
 		mpfr_init(args[_loop]);
 		mpfr_set_str(args[_loop], argv[_loop], 10, GMP_RNDN);
 	}
+	for (_loop = 0; _loop < _size_consts; ++_loop) {
+		mpfr_init(_consts[_loop]);
+	}
+	mpfr_init(__start);
+	mpfr_init(__start);
+	mpfr_init(__stop);
 
 """
 

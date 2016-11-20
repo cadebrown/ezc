@@ -1,5 +1,5 @@
 #__name__ invfac r a
 
 r = a !
-r = ONE / r
+r = 1.0 / r
 

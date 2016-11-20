@@ -13,6 +13,6 @@ for i 0 1000
 rof
 # print result
 var e
-lge = log e
+should_be_one = log e
 # this should be 1
-var lge
+var should_be_one

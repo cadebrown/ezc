@@ -4,12 +4,14 @@ prec $1
 # initializes pi
 pi = 0
 # pi / 4 = 4 atan(1/5) - atan(1/239)
-FV = 5
-TTN = 239
 # @ataninv a = atan 1 / a
-tmp = @ataninv FV : tmp = tmp * FOUR : pi = pi + tmp
-tmp = @ataninv TTN : pi = pi - tmp
-pi = FOUR * pi
+tmp = @ataninv 5.0 : tmp = 4.0 * tmp : pi = pi + tmp
+tmp = @ataninv 239 : pi = pi - tmp
+pi = 4.0 * pi
 
 var pi
+
+should_be_negone = cos pi
+
+var should_be_negone
 

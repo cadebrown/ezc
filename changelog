@@ -1,3 +1,13 @@
+ezcc-2.0.0 (0.8.0-16ubuntu8) unstable; urgency=low
+
+  * added literals 
+    - now, you can pass in literals instead of consts
+    i.e. `a = cos ONE` is now `a = cos 1.0`
+    - fixed for loops
+    Less buggy, and now uses less memory
+
+ -- Cade Brown <info@chemicaldevelopment.us>  Sat, 19 Nov 2016 16:51:43 -0500
+
 ezcc-1.8.0 (0.8.0-16ubuntu8) trusty; urgency=low
 
   * factorial, gamma

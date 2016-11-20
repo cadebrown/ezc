@@ -10,17 +10,6 @@ import shared
 
 libs = []
 
-consts_init = """
-	// constants
-	initset(NEGONE, \"-1\");
-	initset(ZERO, \"0\");
-	initset(ONE, \"1\");
-	initset(TWO, \"2\");
-	initset(FOUR, \"4\");
-	initset(TEN, \"10\");
-
-"""
-
 def register_lib(lib):
 	global libs
 	libs.append(lib)
@@ -51,4 +40,4 @@ def reset_vars():
 	shared.var_set = set()
 
 def get_prec_init():
-	return "\n\t%s" % (shared.prec) + consts_init
+	return "\n\t%s" % (shared.prec)

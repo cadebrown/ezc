@@ -65,20 +65,7 @@ use it like: `./ezcc $file $file1 . . . -o $output`. Then, run `./$output`
 
 You can define methods, just check
 
-# Structure
-
-This is **not a general purpose language**
-
-## Statements
-
-Comments are denoted by `#`, and multiline comments look like:
-```
-###
-
-Comment
-
-###
-```
+# Documentation
 
 [Functions](http://chemicaldevelopment.us/docs/ezc/functions) for more about functions and statements
 

@@ -6,7 +6,7 @@ import lib_linker
 import EZlogger as log
 
 from parser import parse_line, set_regex, register_var, is_literal, get_c
-from shared import start, main, end
+from shared import start, main, end, var_inits
 
 main_code = ""
 
@@ -65,5 +65,5 @@ def compile_lines(lines):
 	return res
 
 def get_c_file():
-	return start + lib_linker.get_lib_code() + user_funcs + main + lib_linker.get_prec_init() + main_code + end
+	return start + lib_linker.get_lib_code() + user_funcs + main + lib_linker.get_prec_init() + var_inits + main_code + end
 

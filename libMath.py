@@ -44,7 +44,7 @@ void fgamma(mpfr_t r, mpfr_t a) { mpfr_gamma(r, a, GMP_RNDN); }
 // calculates the factorial of a, or gamma(a+1)
 void ffactorial(mpfr_t r, mpfr_t a) { 
 	mpfr_t __tmp; mpfr_init(__tmp);
-	mpfr_add(__tmp, a, ONE, GMP_RNDN);
+	mpfr_add(__tmp, a, _next_const(\"1.0\"), GMP_RNDN);
 	fgamma(r, __tmp);
 	mpfr_clear(__tmp);
 }

@@ -50,6 +50,11 @@ void ftrunc_mult(mpfr_t r, mpfr_t a, mpfr_t b) {
 void echo(char msg[]) { printf("%s\\n", msg); }
 // prints a var
 void var(char name[], mpfr_t a) { mpfr_printf(\"%s : %.*Rf \\n\", name, _bprec, a); }
+// prints a var to file
+void file(char name[], mpfr_t a) { 
+	FILE *fp = fopen(name, \"w+\");
+	mpfr_fprintf(fp, \"%.*Rf \\n\", _bprec, a); 
+}
 // initializes and sets a
 void initset(mpfr_t a, char val[]) { mpfr_init(a); mpfr_set_str(a, val, 10, GMP_RNDN); }
 // sets a to the value of the text in val
@@ -80,18 +85,21 @@ class Set(LibraryFunction):
 			return "set(%s, \"%s\");" % (self.args)
 		elif re.match(parser.valid_var, self.args[1]):
 			return "fset(%s, %s);" % (self.args)
-class Var(LibraryFunction):
-	def __str__(self):
-		if parser.is_literal_string(" ".join(self.args)):
-			return str(Echo(*self.args))
-		else:
-			return "var(\"%s\", %s);" % ((self.args[0], ) * 2)
 class Echo(LibraryFunction):
 	def __str__(self):
 		if parser.is_literal_string(" ".join(self.args)):
 			return "echo(%s);" % (" ".join(self.args))
 		else:
 			return str(Var(" ".join(self.args)))
+class Var(LibraryFunction):
+	def __str__(self):
+		if parser.is_literal_string(" ".join(self.args)):
+			return str(Echo(*self.args))
+		else:
+			return "var(\"%s\", %s);" % ((self.args[0], ) * 2)
+class File(LibraryFunction):
+	def __str__(self):
+		return "file(\"%s.txt\", %s);" % ((self.args[0], ) * 2)
 
 class Min(LibraryFunction):
 	def __str__(self):
@@ -131,6 +139,7 @@ libBasic = Library(this_lib, "0.0.2", {
 	"prec": Prec, 
 	"set": Set,
 	"var": Var,
+	"file": File,
 	"echo": Echo,
 
 	"min": Min, 
@@ -145,7 +154,7 @@ libBasic = Library(this_lib, "0.0.2", {
 	"pow": Pow
 }, {
 	
-	"_": Trunc,
+#	"_": Trunc,
 
 	"+": Add,
 	"-": Sub,
