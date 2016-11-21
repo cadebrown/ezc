@@ -89,16 +89,11 @@ class Set(LibraryFunction):
 			return "fset(%s, %s);" % (self.args)
 class Echo(LibraryFunction):
 	def __str__(self):
-		if parser.is_literal_string(" ".join(self.args)):
-			return "echo(%s);" % (" ".join(self.args))
-		else:
-			return str(Var(" ".join(self.args)))
+		print self.args
+		return "echo(\"%s\");" % (" ".join(self.args))
 class Var(LibraryFunction):
 	def __str__(self):
-		if parser.is_literal_string(" ".join(self.args)):
-			return str(Echo(*self.args))
-		else:
-			return "var(\"%s\", %s);" % ((self.args[0], ) * 2)
+		return "var(\"%s\", %s);" % ((self.args[0], ) * 2)
 class File(LibraryFunction):
 	def __str__(self):
 		return "file(\"%s.txt\", %s);" % ((self.args[0], ) * 2)

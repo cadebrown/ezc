@@ -16,7 +16,7 @@ def register_var(varname):
 	return False
 
 # valid variable regex
-valid_var = "[_a-zA-Z][_a-zA-Z0-9]*"
+valid_var = "[_a-zA-Z\$][_a-zA-Z0-9]*"
 # valid numberical constant
 valid_const = "(\+|\-)?[0-9]+"
 # valid argument to a function

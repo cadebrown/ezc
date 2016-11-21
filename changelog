@@ -1,3 +1,12 @@
+ezcc-2 (2.1.1-16ubuntu8) stable; urgency=med
+
+  * added compiler options to control removing files
+    - rem and remexec
+  * changed default tmp directory to /tmp/
+    - you can still set it with tmpd
+
+ -- Cade Brown <info@chemicaldevelopment.us>  Sun, 20 Nov 2016 19:39:15 -0500
+
 ezcc-2 (2.1.0-16ubuntu8) stable; urgency=med
 
   * fixed literal related bugs

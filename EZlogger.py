@@ -1,6 +1,6 @@
 name = "EZCC"
 
-version = "2.1.0"
+version = "2.1.1"
 
 HEADER = '\033[95m'
 OKBLUE = '\033[94m'
@@ -11,8 +11,10 @@ ENDC = '\033[0m'
 BOLD = '\033[1m'
 UNDERLINE = '\033[4m'
 
+
 def init():
-    base_print(OKBLUE, "EZCC", "")
+    #base_print(OKBLUE, "EZCC", "")
+	x = 1
 
 def base_print(col, task, st):
     print "%s v%s: \n  %s:" % (col+name, WARNING+version+col, task)
