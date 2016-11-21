@@ -10,7 +10,9 @@ this_lib = """
 void prec_literal(int x) {
 	if (x < EZC_PREC) x = EZC_PREC;
 	_prec = x;
-	mpfr_set_default_prec((int)x);
+	printf("%d\\n", (int)_bprec);
+	printf("%d\\n", (int)_prec);
+	mpfr_set_default_prec((int)_bprec);
 }
 
 // sets the precision to a cmdline argument
@@ -51,11 +53,11 @@ void ftrunc_mult(mpfr_t r, mpfr_t a, mpfr_t b) {
 // echos a message
 void echo(char msg[]) { printf("%s\\n", msg); }
 // prints a var
-void var(char name[], mpfr_t a) { mpfr_printf(\"%s : %.*Rf \\n\", name, _bprec, a); }
+void var(char name[], mpfr_t a) { mpfr_printf(\"%s : %.*Rf \\n\", name, _prec, a); }
 // prints a var to file
 void file(char name[], mpfr_t a) { 
 	FILE *fp = fopen(name, \"w+\");
-	mpfr_fprintf(fp, \"%.*Rf \\n\", _bprec, a); 
+	mpfr_fprintf(fp, \"%.*Rf \\n\", _prec, a); 
 }
 // initializes and sets a
 void initset(mpfr_t a, char val[]) { mpfr_init(a); mpfr_set_str(a, val, 10, GMP_RNDN); }

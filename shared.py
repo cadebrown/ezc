@@ -65,9 +65,9 @@ mpfr_ptr _next_const(char _set_val[]) {
 
 
 // default precision (and minimum)
-int EZC_PREC = 128;
+int EZC_PREC = 60;
 // macro to get bits instead of digits
-#define _bprec (int)(_prec * .301029)
+#define _bprec (int)(_prec * 3.32192809)
 
 // variables to use in our program that are hidden to others
 int _prec, _loop, _argc;
@@ -93,7 +93,7 @@ int main(int argc, char *argv[]) {
 	// start the commandline args list
 	args = (mpfr_t *)malloc(sizeof(mpfr_t) * sizeof(argc - 1));
 	_consts = (mpfr_t *)malloc(sizeof(mpfr_t) * sizeof(_size_consts));
-	prec_literal(EZC_PREC);
+	//prec_literal(EZC_PREC);
 """
 
 var_inits="""
