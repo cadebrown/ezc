@@ -39,12 +39,14 @@ var_set = set()
 prec = "prec_literal(EZC_PREC);"
 
 start = """
+#include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <mpfr.h>
 #include <math.h>
 
 
+gmp_randstate_t __rand_state;
 int _size_consts = 5, _consts_id = 0, _consts_ov = 0;
 mpfr_t *_consts;
 
@@ -58,7 +60,7 @@ mpfr_ptr _next_const(char _set_val[]) {
 		//mpfr_clear(_consts[_consts_id]);
 		mpfr_init(_consts[_consts_id]);
 	}
-	mpfr_set_str(_consts[_consts_id], _set_val, 10, GMP_RNDN);
+	mpfr_set_str(_consts[_consts_id], _set_val, 10, MPFR_RNDD);
 	//_consts_id++;
 	return (mpfr_ptr) _consts[_consts_id];
 }
@@ -88,7 +90,14 @@ int main(int argc, char *argv[]) {
 	// set global vars so other functions can use them
 	_argc = argc; _argv = argv;
 	// set the default rounding mode
-	mpfr_set_default_rounding_mode(GMP_RNDN);
+	mpfr_set_default_rounding_mode(MPFR_RNDD);
+
+	// init time
+	srand(time(NULL));
+
+	//Init our random struct
+	gmp_randinit_default(__rand_state);
+	gmp_randseed_ui(__rand_state, rand());
 
 	// start the commandline args list
 	args = (mpfr_t *)malloc(sizeof(mpfr_t) * sizeof(argc - 1));
@@ -100,7 +109,7 @@ var_inits="""
 	// loop through, and parse each one for a mpfr
 	for (_loop = 1; _loop < argc; ++_loop) {
 		mpfr_init(args[_loop]);
-		mpfr_set_str(args[_loop], argv[_loop], 10, GMP_RNDN);
+		mpfr_set_str(args[_loop], argv[_loop], 10, MPFR_RNDD);
 	}
 	for (_loop = 0; _loop < _size_consts; ++_loop) {
 		mpfr_init(_consts[_loop]);

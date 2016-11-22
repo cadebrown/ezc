@@ -9,7 +9,7 @@ from subprocess import Popen, PIPE
 parser = argparse.ArgumentParser(description='Compile EZC Language. v2.1.1 http://github.chemicaldevelopment.us/ezc')
 parser.add_argument('files', metavar='files', type=str, nargs='*', help='files to compile')
 #parser.add_argument('-l', metavar='libs', type=str, nargs='+', help='libraries to include (unstable)')
-parser.add_argument('-o', default="a.o", help='Output file')
+parser.add_argument('-o', default="a.out", help='Output file')
 parser.add_argument('-v', default=2, type=int, help='Verbosity level')
 parser.add_argument('-tmpd', default="/tmp/", help='Tmp directory')
 parser.add_argument('-rem', action='store_true', help='Remove temp files')
@@ -24,6 +24,11 @@ import EZlogger as log
 import compiler_delegate as cmp
 
 log.init(args.v)
+
+is_tmp = args.run or args.c or args.e
+
+if is_tmp:
+	args.o = "/tmp/a.out"
 
 if not isinstance(args.files, list):
 	args.files = [args.files]
@@ -40,7 +45,7 @@ else:
 	cmp.compile_files(args.files, args.o)
 
 
-if args.run or args.c or args.e:
+if is_tmp:
 	args.rem = True
 	args.remexec = True
 	cmp.run_file(args.o)

@@ -41,7 +41,7 @@ def init_all_compile(tmp_folder):
 
 def compile_tmp(out):
 	# Compile the intermediate lang
-	cmd = "gcc %s -lmpfr -lm -o %s" % (tmp_file, out)
+	cmd = "gcc %s -lmpfr -lgmp -lm -o %s" % (tmp_file, out)
 	log.info("Compilation", cmd)
 	compile_proc = Popen(cmd, shell=True)
 	compile_proc.wait()
