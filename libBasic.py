@@ -10,8 +10,6 @@ this_lib = """
 void prec_literal(int x) {
 	if (x < EZC_PREC) x = EZC_PREC;
 	_prec = x;
-	printf("%d\\n", (int)_bprec);
-	printf("%d\\n", (int)_prec);
 	mpfr_set_default_prec((int)_bprec);
 }
 

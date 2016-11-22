@@ -11,27 +11,30 @@ ENDC = '\033[0m'
 BOLD = '\033[1m'
 UNDERLINE = '\033[4m'
 
+verbosity = 0
 
-def init():
-    #base_print(OKBLUE, "EZCC", "")
-	x = 1
+def init(_verbose=0):
+	global verbosity
+	verbosity = _verbose
 
-def base_print(col, task, st):
-    print "%s v%s: \n  %s:" % (col+name, WARNING+version+col, task)
-    
-    if isinstance(st, list):
-        for s in st:
-            print "    %s" % (OKGREEN + s)
-    else:
-        print "    %s" % (OKGREEN + st)
-    print "%s" % (HEADER) 
+def base_print(col, task, st, verbose=0):
+	global verbosity
+	if verbose >= 0 and verbose <= verbosity:
+		print "%s v%s: \n  %s:" % (col+name, WARNING+version+col, task)
+		
+		if isinstance(st, list):
+			for s in st:
+				print "    %s" % (OKGREEN + s)
+		else:
+			print "    %s" % (OKGREEN + st)
+		print "%s" % (HEADER) 
 
-def info(task, st):
-    base_print(OKBLUE, task, st)
+def info(task, st, v=2):
+    base_print(OKBLUE, task, st, v)
 
-def warn(task, st):
-    base_print(WARNING, task, st)
+def warn(task, st, v=1):
+    base_print(WARNING, task, st, v)
 
-def err(task, error):
-    base_print(FAIL, task, error)
+def err(task, error, v=0):
+    base_print(FAIL, task, error, v)
 
