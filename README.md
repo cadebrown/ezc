@@ -18,17 +18,22 @@ You can think of it like a calculator language, but with more functions and more
 
 # Installation
 
-For any debian based system, simply run `curl https://cdn.rawgit.com/ChemicalDevelopment/ezc/master/install-debian.sh | sh -` in the terminal to install
+For any debian based system, simply run 
 
-For any debian based system, simply go to the [latest release](https://github.com/ChemicalDevelopment/ezc/releases/latest), and download the .deb file, and double click it
+`curl https://cdn.rawgit.com/ChemicalDevelopment/ezc/master/install-debian.sh | sh -` 
+
+in the terminal to install
+
+If that doesn't work, go to the [latest release](https://github.com/ChemicalDevelopment/ezc/releases/latest), and download the .deb file, and double click it
 
 For other OSs, I'm working on packaging systems. For now, you can build them following below:
 
+
 # Building
 
-You'll need a few prerequisites: `cc`, and `mpfr`
+You'll need a few prerequisites: `gcc`, and `mpfr` (which should be taken care of when you use `install-legacy.sh` for Debian/MacOS)
 
-For Debian/Ubuntu, run `./install-legacy.sh` to build and install
+For Debian/Ubuntu/MacOS, run `./install-legacy.sh` to build and install
 
 For all OSs:
 
