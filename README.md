@@ -2,7 +2,7 @@
 
 "You don't know SRP unless you know EZC"
 
-Current version: 2.2.5
+Current version: 2.3.0
 
 A intermediate language which is transpiled to C. Multiprecision is built into the language.
 
