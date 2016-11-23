@@ -20,11 +20,11 @@ valid_var = "[_a-zA-Z\$][_a-zA-Z0-9]*"
 # valid numberical constant
 valid_const = "(\+|\-)?[0-9]+"
 # valid argument to a function
-valid_arg = "(?:\$|\-|\+)?[_a-zA-Z0-9\.]+"
+valid_arg = "(?:\$|\-|\+|\")?[_a-zA-Z0-9\.\,]+(?:\")?"
 # valid break regex (between function params)
-break_regex = "[ ,<>]+"
+break_regex = "[ ,<>=]+"
 # splitting arguments
-sp_regex = "[ ]*[ ,]?"
+sp_regex = "[ ]*[ ]?"
 # between functions
 f_delim = "[ ]+"
 # a valid user defined function (from other files)
@@ -75,7 +75,7 @@ def set_regex():
 	# this parses a function with no arguments (degenerate functions like rof and fi)
 	function_noarg_regex = "(%s)" % (flist_regex)
 	# operator call
-	operators_regex = "[ ]*((?:%s)(?:((%s)%s)?(%s)(?![0-9\.])(%s(%s))?))" % (assign_regex, valid_arg, f_delim, olist_regex, f_delim, valid_arg)
+	operators_regex = "[ ]*((?:%s)?(?:((%s)%s)?(%s)(?![0-9\.])(%s(%s))?))" % (assign_regex, valid_arg, f_delim, olist_regex, f_delim, valid_arg)
 	# a free form call (used for non-norm functions)
 	freeform_regex = "[ ]*(%s) ([. ]*)" % (flist_regex)
 	# user function

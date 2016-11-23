@@ -121,5 +121,6 @@ var_inits="""
 """
 
 end="""
+	return 0;
 }
 """

@@ -1,6 +1,3 @@
-from libBasic import libBasic
-from libMath import libMath
-from libLoops import libLoops
 import lib_linker
 
 import EZlogger as log
@@ -19,7 +16,11 @@ usrf = """void ___%s(%s) {
 }"""
 
 def init_cmp():
-	map(lib_linker.register_lib, [libBasic, libMath, libLoops])
+	libs = ["libBasic", "libLoops", "libPrint", "libMath", "libTrig"]
+	res = map(__import__, libs)
+	for r in res:
+		res[res.index(r)] = r.lib
+	map(lib_linker.register_lib, res)
 	set_regex()
 
 def add_code(file_contents):
@@ -48,7 +49,7 @@ def compile_lines(lines):
 	for line in lines:
 		line_num += 1
 		if is_literal(line):
-			log.info("Compiling", ["Line %d" % line_num, "C Code detected", str(get_c(line))])
+			log.info("Compiling", ["Line %d is C code" % line_num, "\"%s\"" % (get_c(line))])
 			res += "\n\t" + get_c(line)
 		else:
 			try:

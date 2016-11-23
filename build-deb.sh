@@ -1,6 +1,8 @@
 #!/bin/bash
 
-SRC="ezcc.py compiler_delegate.py EZcompiler.py EZlogger.py libBasic.py lib_linker.py libLoops.py libMath.py parser.py shared.py"
+SRC="./ezcc.py "./*.py
+echo $SRC
+
 rm dist/ezcc
 pyinstaller --onefile $SRC
 

@@ -4,12 +4,11 @@ import re, parser
 import lib_linker
 
 this_lib = """
-
 """
 
 # used for the for loop
 for_st="""
-for (fset(%s, %s); mpfr_cmp(%s, %s) == -_fsgn(%s); add(%s, %s, %s)) {
+for (fset(%s, %s); mpfr_cmp(%s, %s) == -fsgn(%s); fadd(%s, %s, %s)) {
 """
 
 class If(LibraryFunction):
@@ -37,14 +36,15 @@ class Goto(LibraryFunction):
 		return "goto %s;" % (self.args[0])
 
 
-libLoops = Library(this_lib, "0.0.2", {
+lib = Library(this_lib, "0.0.2", {
 	"label": Label, 
 	"goto": Goto, 
+
 	"if": If, 
 	"for": For, 
+	
 	"fi": End,
 	"rof": End 
-
 }, {
 
 })

@@ -5,6 +5,11 @@ import re, parser
 import lib_linker
 
 this_lib = """
+/*
+
+	libBasic
+
+*/
 // sets the precision 
 void prec_literal(int x) {
 	if (x < EZC_PREC) x = EZC_PREC;
@@ -21,23 +26,35 @@ void prec_index(int index) {
 	}
 }
 // adds a and b, normal floating point
-void add(mpfr_t r, mpfr_t a, mpfr_t b) { mpfr_add(r, a, b, MPFR_RNDD); }
+void fadd(mpfr_t r, mpfr_t a, mpfr_t b) { 
+	mpfr_add(r, a, b, MPFR_RNDD); 
+}
 // subtracts b from a, normal floating point
-void sub(mpfr_t r, mpfr_t a, mpfr_t b) { mpfr_sub(r, a, b, MPFR_RNDD); }
+void fsub(mpfr_t r, mpfr_t a, mpfr_t b) { 
+	mpfr_sub(r, a, b, MPFR_RNDD); 
+}
 // multiplies a and b, normal floating point
-void mul(mpfr_t r, mpfr_t a, mpfr_t b) { mpfr_mul(r, a, b, MPFR_RNDD); }
+void fmul(mpfr_t r, mpfr_t a, mpfr_t b) { 
+	mpfr_mul(r, a, b, MPFR_RNDD); 
+}
 // divides a by b, normal floating point
-void fdiv(mpfr_t r, mpfr_t a, mpfr_t b) { mpfr_div(r, a, b, MPFR_RNDD); }
+void fdiv(mpfr_t r, mpfr_t a, mpfr_t b) { 
+	mpfr_div(r, a, b, MPFR_RNDD);
+}
 // takes a to the bth power, normal floating point
-void fpow(mpfr_t r, mpfr_t a, mpfr_t b) { mpfr_pow(r, a, b, MPFR_RNDD); }
+void fpow(mpfr_t r, mpfr_t a, mpfr_t b) { 
+	mpfr_pow(r, a, b, MPFR_RNDD); 
+}
 
 // computes a - floor(a/b)*b (modulo)
-void ffmod(mpfr_t r, mpfr_t a, mpfr_t b) {
+void fmodulo(mpfr_t r, mpfr_t a, mpfr_t b) {
 	mpfr_fmod(r, a, b, MPFR_RNDD);
 }
 
 // truncates a to the nearest int
-void ftrunc(mpfr_t r, mpfr_t a) { mpfr_trunc(r, a); }
+void ftrunc(mpfr_t r, mpfr_t a) { 
+	mpfr_trunc(r, a); 
+}
 // computes the first multiple of b towards a.
 // Example, ftrunc_mult(r, 5, 10) = 0 because 0 is the largest multiple of ten less than or equal to 5
 // ftrunc_mult(r, 23, 7) = 21, because 21 = 3 * 7
@@ -48,43 +65,32 @@ void ftrunc_mult(mpfr_t r, mpfr_t a, mpfr_t b) {
 	mpfr_clear(__ftrunc_mult_tmp);
 }
 
-// echos a message
-void echo(char msg[]) { printf("%s\\n", msg); }
-// prints a var
-void var(char name[], mpfr_t a) { mpfr_printf(\"%s : %.*Rf \\n\", name, _prec, a); }
-// prints a var to file
-void file(char name[], mpfr_t a) { 
-	FILE *fp = fopen(name, \"w+\");
-	mpfr_fprintf(fp, \"%.*Rf \\n\", _prec, a); 
-}
 // initializes and sets a
-void initset(mpfr_t a, char val[]) { mpfr_init(a); mpfr_set_str(a, val, 10, MPFR_RNDD); }
+void initset(mpfr_t a, char val[]) { 
+	mpfr_init(a); 
+	mpfr_set_str(a, val, 10, MPFR_RNDD); 
+}
 // sets a to the value of the text in val
-void set(mpfr_t a, char val[]) { mpfr_set_str(a, val, 10, MPFR_RNDD); }
+void set(mpfr_t a, char val[]) { 
+	mpfr_set_str(a, val, 10, MPFR_RNDD); 
+}
 // copies a variable
-void fset(mpfr_t a, mpfr_t b) { mpfr_set(a, b, MPFR_RNDD); }
-
-//finds the maximum of a and b
-void frand_1(mpfr_t r) { mpfr_urandomb(r, __rand_state); }
-
-//random number between [0, a)
-void frand(mpfr_t r, mpfr_t a) { 
-	mpfr_urandomb(r, __rand_state);
-	mpfr_mul(r, r, a, MPFR_RNDD);
+void fset(mpfr_t a, mpfr_t b) { 
+	mpfr_set(a, b, MPFR_RNDD); 
 }
 
 //finds the maximum of a and b
-void frandgauss(mpfr_t r) { 
-	mpfr_grandom(r, NULL, __rand_state, MPFR_RNDD); 
+void fmaximum(mpfr_t r, mpfr_t a, mpfr_t b) { 
+	mpfr_max(r, a, b, MPFR_RNDD); 
 }
-
-
-//finds the maximum of a and b
-void _fmax(mpfr_t r, mpfr_t a, mpfr_t b) { mpfr_max(r, a, b, MPFR_RNDD); }
 //finds the minimum of a and b
-void _fmin(mpfr_t r, mpfr_t a, mpfr_t b) { mpfr_min(r, a, b, MPFR_RNDD); }
+void fminimum(mpfr_t r, mpfr_t a, mpfr_t b) { 
+	mpfr_min(r, a, b, MPFR_RNDD); 
+}
 // little function to return the sign of r
-int _fsgn(mpfr_t r) { return mpfr_sgn(r); }
+int fsgn(mpfr_t r) { 
+	return mpfr_sgn(r); 
+}
 
 """
 
@@ -102,35 +108,13 @@ class Set(LibraryFunction):
 			return "set(%s, \"%s\");" % (self.args)
 		elif re.match(parser.valid_var, self.args[1]):
 			return "fset(%s, %s);" % (self.args)
-class Echo(LibraryFunction):
-	def __str__(self):
-		print self.args
-		return "echo(\"%s\");" % (" ".join(self.args))
-class Var(LibraryFunction):
-	def __str__(self):
-		return "var(\"%s\", %s);" % ((self.args[0], ) * 2)
-class File(LibraryFunction):
-	def __str__(self):
-		return "file(\"%s.txt\", %s);" % ((self.args[0], ) * 2)
-
-class Rand(LibraryFunction):
-	def __str__(self):
-		if len(self.args) == 1:
-			return "frand_1(%s);" % (self.args[0])
-		else:
-			return "frand(%s, %s);" % (self.args[0], self.args[1])
-
-class RandGuass(LibraryFunction):
-	def __str__(self):
-		return "frandgauss(%s);" % (self.args[0])
-
 
 class Min(LibraryFunction):
 	def __str__(self):
-		return "_fmin(%s);" % (", ".join(map(str, self.args)))
+		return "fminimum(%s);" % (", ".join(map(str, self.args)))
 class Max(LibraryFunction):
 	def __str__(self):
-		return "_fmax(%s);" % (", ".join(map(str, self.args)))
+		return "fmaximum(%s);" % (", ".join(map(str, self.args)))
 
 class Trunc(LibraryFunction):
 	def __str__(self):
@@ -141,33 +125,27 @@ class Trunc(LibraryFunction):
 
 class Add(LibraryFunction):
 	def __str__(self):
-		return "add(%s);" % (", ".join(map(str, self.args)))
+		return "fadd(%s);" % (", ".join(map(str, self.args)))
 class Sub(LibraryFunction):
 	def __str__(self):
-		return "sub(%s);" % (", ".join(map(str, self.args)))
+		return "fsub(%s);" % (", ".join(map(str, self.args)))
 class Mul(LibraryFunction):
 	def __str__(self):
-		return "mul(%s);" % (", ".join(map(str, self.args)))
+		return "fmul(%s);" % (", ".join(map(str, self.args)))
 class Div(LibraryFunction):
 	def __str__(self):
 		return "fdiv(%s);" % (", ".join(map(str, self.args)))
 class Mod(LibraryFunction):
 	def __str__(self):
-		return "ffmod(%s);" % (", ".join(map(str, self.args)))
+		return "fmodulo(%s);" % (", ".join(map(str, self.args)))
 class Pow(LibraryFunction):
 	def __str__(self):
 		return "fpow(%s);" % (", ".join(map(str, self.args)))
 
 
-libBasic = Library(this_lib, "0.0.2", {
+lib = Library(this_lib, "0.0.2", {
 	"prec": Prec, 
 	"set": Set,
-	"var": Var,
-	"file": File,
-	"echo": Echo,
-
-	"rand": Rand, 
-#	"guass": RandGuass, 
 
 	"min": Min, 
 	"max": Max, 
@@ -182,9 +160,6 @@ libBasic = Library(this_lib, "0.0.2", {
 }, {
 	
 	"~": Trunc,
-
-	"?": Rand,
-	"??": RandGuass,
 
 	"+": Add,
 	"-": Sub,
