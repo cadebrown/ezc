@@ -1,5 +1,5 @@
 #!/bin/bash
-URL='https://github.com/ChemicalDevelopment/ezc/releases/download/2.2.5/ezcc_amd64.deb'
+URL='https://github.com/ChemicalDevelopment/ezc/releases/download/2.3.0/ezcc_amd64.deb'
 FILE=`mktemp`
 echo "URL: $URL"
 echo "FILE: $FILE"
