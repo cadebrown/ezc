@@ -20,14 +20,19 @@ You can think of it like a calculator language, but with more functions and more
 
 For any debian based system, simply run 
 
-`curl https://cdn.rawgit.com/ChemicalDevelopment/ezc/master/install-debian.sh | sh -` 
+`curl https://raw.githubusercontent.com/ChemicalDevelopment/ezc/master/install-debian.sh | sh -`
+
+or, try this one if the above doesn't work: 
+
+`curl https://rawgit.com/ChemicalDevelopment/ezc/master/install-debian.sh | sh -`
 
 in the terminal to install
 
 If that doesn't work, go to the [latest release](https://github.com/ChemicalDevelopment/ezc/releases/latest), and download the .deb file, and double click it
 
-For other OSs, I'm working on packaging systems. For now, you can build them following below:
+For mac OS, you will need to clone and run `./install-legacy.sh` as descibed below
 
+For other OSs, I'm working on packaging systems. For now, you can build them following below:
 
 # Building
 
