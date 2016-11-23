@@ -97,7 +97,7 @@
 
 		<dict>
 			<key>match</key>
-			<string>(\+|\-)?[0-9\.]+|NEGONE|ZERO|ONE|TWO|FOUR|TEN</string>
+			<string>(\+|\-)?[0-9\.]+</string>
 			<key>name</key>
 			<string>constant.numeric</string>
 		</dict>        
@@ -107,7 +107,7 @@
 
 		<dict>
 			<key>match</key>
-			<string>(\!|\%|\+|\*|\-|\/|\�\�\�|\*\*|\~|\^|\$)</string>
+			<string>(\!|\%|\+|\*|\-|\/|\*\*|\~|\^|\$|\?\?|\?|\√\√|\√|\ζ|\!)</string>
 			<key>name</key>
             <string>support.function.builtin.call.ezc</string>
 		</dict>   
@@ -127,7 +127,7 @@
 
 		<dict>
 			<key>match</key>
-			<string>(rof|__base|for|label|goto|if|fi|set|echo|prec|var|:)</string>
+			<string>(rof|__base|for|label|goto|if|fi|set|echo|prec|var|var_raw|int_var|int_var_raw|:|echo|\"\"|echo_raw)</string>
 			<key>name</key>
 			<string>keyword.control.ezc</string>
 		</dict>
@@ -136,7 +136,7 @@
 
 		<dict>
 			<key>match</key>
-			<string>(pow|logb|sqrt|tan|asin|sub|min|add|cbrt|mul|trunc|sin|atan|factorial|max|acos|log|cos|exp|div|gamma)</string>
+			<string>(rand|sec|atan|pow|hypot|sqrt|acosh|zeta|tan|asin|sub|min|add|atanh|cbrt|mul|sin|asinh|goto|factorial|max|cos|log|sinh|asech|asec|cosh|acos|coth|trunc|csch|agm|acoth|cot|tanh|sech|acsch|acsc|exp|csc|logb|div|acot|gamma)</string>
 			<key>name</key>
 			<string>support.function.builtin.call.ezc</string>
 		</dict>  
