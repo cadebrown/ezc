@@ -11,35 +11,27 @@ this_lib = """
 	libPrint
 
 */
-
-// echos a message, with newline
 void echo(char msg[]) { 
 	printf("%s\\n", msg); 
 }
-// echos a message, no added newline
 void echoraw(char msg[]) { 
 	printf("%s", msg); 
 }
 
-// prints a var, with newline and name of the variable
 void var(char name[], mpfr_t a) { 
 	mpfr_printf(\"%s : %.*Rf \\n\", name, _prec, a); 
 }
-// prints a var, no newline
 void varraw(mpfr_t a) { 
 	mpfr_printf(\"%.*Rf\", _prec, a); 
 }
 
-// prints the variable as an integer, truncated
 void intvar(mpfr_t a) { 
 	printf(\"%ld\\n\", mpfr_get_si(a, MPFR_RNDD)); 
 }
-// prints the raw variable
 void intvarraw(mpfr_t a) { 
 	printf(\"%ld\", mpfr_get_si(a, MPFR_RNDD)); 
 }
 
-// prints a var to file, with name as the filename
 void file(char name[], mpfr_t a) { 
 	FILE *fp = fopen(name, \"w+\");
 	mpfr_fprintf(fp, \"%.*Rf \", _prec, a); 

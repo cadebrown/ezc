@@ -10,40 +10,34 @@ this_lib = """
 	libMath
 
 */
-//finds the maximum of a and b
 void frand_1(mpfr_t r) { 
 	mpfr_urandomb(r, __rand_state); 
 }
-//random number between [0, a)
 void frand(mpfr_t r, mpfr_t a) { 
 	mpfr_urandomb(r, __rand_state);
 	mpfr_mul(r, r, a, MPFR_RNDD);
 }
-//finds the maximum of a and b
 void frandgauss(mpfr_t r) { 
 	mpfr_grandom(r, NULL, __rand_state, MPFR_RNDD); 
 }
 
-// square root, i.e. r * r ~ a
 void fsqrt(mpfr_t r, mpfr_t a) { 
-	mpfr_sqrt(r, a, GMP_RNDN); 
+	mpfr_sqrt(r, a, MPFR_RNDD); 
 }
-// cube root, i.e. r * r * r ~ a
 void fcbrt(mpfr_t r, mpfr_t a) { 
-	mpfr_cbrt(r, a, GMP_RNDN); 
+	mpfr_cbrt(r, a, MPFR_RNDD); 
+}
+void fhypot(mpfr_t r, mpfr_t a, mpfr_t b) { 
+	mpfr_hypot(r, a, b, MPFR_RNDD); 
 }
 
-// e ^ x, where e is euler's number (roughly 2.718281828)
 void fexp(mpfr_t r, mpfr_t a) { 
-	mpfr_exp(r, a, GMP_RNDN); 
+	mpfr_exp(r, a, MPFR_RNDD); 
 }
 
-// ln(a), log base eulers number. where e ^ (ln(a)) ~ a
 void flog(mpfr_t r, mpfr_t a) { 
-	mpfr_log(r, a, GMP_RNDN); 
+	mpfr_log(r, a, MPFR_RNDD); 
 }
-// log_(b)(a), log base b of a. where b ^ (log_(b)(a)) ~ a
-// identity: log_(b)(a) = ln(a)/ln(b)
 void flogb(mpfr_t r, mpfr_t a, mpfr_t b) {
 	mpfr_t __flogb_tmp; mpfr_init(__flogb_tmp);
 	flog(__flogb_tmp, b);
@@ -52,16 +46,23 @@ void flogb(mpfr_t r, mpfr_t a, mpfr_t b) {
 	mpfr_clear(__flogb_tmp);
 }
 
-// calculates the gamma function of a, gamma(a)=factorial(a-1)
-void fgamma(mpfr_t r, mpfr_t a) { 
-	mpfr_gamma(r, a, GMP_RNDN); 
+void fagm(mpfr_t r, mpfr_t a, mpfr_t b) {
+	mpfr_agm(r, a, b, MPFR_RNDD);
 }
-// calculates the factorial of a, or gamma(a+1)
+
+
+void fgamma(mpfr_t r, mpfr_t a) { 
+	mpfr_gamma(r, a, MPFR_RNDD); 
+}
 void ffactorial(mpfr_t r, mpfr_t a) { 
 	mpfr_t __tmp; mpfr_init(__tmp);
-	mpfr_add(__tmp, a, _next_const(\"1.0\"), GMP_RNDN);
+	mpfr_add(__tmp, a, _next_const(\"1.0\"), MPFR_RNDD);
 	fgamma(r, __tmp);
 	mpfr_clear(__tmp);
+}
+
+void fzeta(mpfr_t r, mpfr_t a) {
+	mpfr_zeta(r, a, MPFR_RNDD);
 }
 """
 
@@ -81,6 +82,9 @@ class Sqrt(LibraryFunction):
 class Cbrt(LibraryFunction):
 	def __str__(self):
 		return "fcbrt(%s);" % (", ".join(map(str, self.args)))
+class Hypot(LibraryFunction):
+	def __str__(self):
+		return "fhypot(%s);" % (", ".join(map(str, self.args)))
 
 class Exp(LibraryFunction):
 	def __str__(self):
@@ -92,6 +96,11 @@ class Logb(LibraryFunction):
 	def __str__(self):
 		return "flogb(%s);" % (", ".join(map(str, self.args)))
 
+class Agm(LibraryFunction):
+	def __str__(self):
+		return "fagm(%s);" % (", ".join(map(str, self.args)))
+
+
 class Gamma(LibraryFunction):
 	def __str__(self):
 		return "fgamma(%s);" % (", ".join(map(str, self.args)))
@@ -100,13 +109,19 @@ class Factorial(LibraryFunction):
 		return "ffactorial(%s);" % (", ".join(map(str, self.args)))
 
 lib = Library(this_lib, "0.0.2", {
+	"rand": Rand,
+
 	"sqrt": Sqrt, 
 	"cbrt": Cbrt, 
+
+	"hypot": Hypot, 
 
 	"exp": Exp, 
 
 	"log": Log, 
 	"logb": Logb, 
+
+	"agm": Agm,
 	
 	"gamma": Gamma, 
 	"factorial": Factorial, 

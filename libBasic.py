@@ -10,14 +10,12 @@ this_lib = """
 	libBasic
 
 */
-// sets the precision 
 void prec_literal(int x) {
 	if (x < EZC_PREC) x = EZC_PREC;
 	_prec = x;
 	mpfr_set_default_prec((int)_bprec	);
 }
 
-// sets the precision to a cmdline argument
 void prec_index(int index) {
 	if (index >= _argc) {
 		prec_literal(EZC_PREC);
@@ -25,39 +23,29 @@ void prec_index(int index) {
 		prec_literal(strtoll(_argv[index], NULL, 10));
 	}
 }
-// adds a and b, normal floating point
 void fadd(mpfr_t r, mpfr_t a, mpfr_t b) { 
 	mpfr_add(r, a, b, MPFR_RNDD); 
 }
-// subtracts b from a, normal floating point
 void fsub(mpfr_t r, mpfr_t a, mpfr_t b) { 
 	mpfr_sub(r, a, b, MPFR_RNDD); 
 }
-// multiplies a and b, normal floating point
 void fmul(mpfr_t r, mpfr_t a, mpfr_t b) { 
 	mpfr_mul(r, a, b, MPFR_RNDD); 
 }
-// divides a by b, normal floating point
 void fdiv(mpfr_t r, mpfr_t a, mpfr_t b) { 
 	mpfr_div(r, a, b, MPFR_RNDD);
 }
-// takes a to the bth power, normal floating point
 void fpow(mpfr_t r, mpfr_t a, mpfr_t b) { 
 	mpfr_pow(r, a, b, MPFR_RNDD); 
 }
 
-// computes a - floor(a/b)*b (modulo)
 void fmodulo(mpfr_t r, mpfr_t a, mpfr_t b) {
 	mpfr_fmod(r, a, b, MPFR_RNDD);
 }
 
-// truncates a to the nearest int
 void ftrunc(mpfr_t r, mpfr_t a) { 
 	mpfr_trunc(r, a); 
 }
-// computes the first multiple of b towards a.
-// Example, ftrunc_mult(r, 5, 10) = 0 because 0 is the largest multiple of ten less than or equal to 5
-// ftrunc_mult(r, 23, 7) = 21, because 21 = 3 * 7
 void ftrunc_mult(mpfr_t r, mpfr_t a, mpfr_t b) {
 	mpfr_t __ftrunc_mult_tmp; mpfr_init(__ftrunc_mult_tmp);
 	mpfr_fmod(__ftrunc_mult_tmp, a, b, MPFR_RNDD);
@@ -65,29 +53,23 @@ void ftrunc_mult(mpfr_t r, mpfr_t a, mpfr_t b) {
 	mpfr_clear(__ftrunc_mult_tmp);
 }
 
-// initializes and sets a
 void initset(mpfr_t a, char val[]) { 
 	mpfr_init(a); 
 	mpfr_set_str(a, val, 10, MPFR_RNDD); 
 }
-// sets a to the value of the text in val
 void set(mpfr_t a, char val[]) { 
 	mpfr_set_str(a, val, 10, MPFR_RNDD); 
 }
-// copies a variable
 void fset(mpfr_t a, mpfr_t b) { 
 	mpfr_set(a, b, MPFR_RNDD); 
 }
 
-//finds the maximum of a and b
 void fmaximum(mpfr_t r, mpfr_t a, mpfr_t b) { 
 	mpfr_max(r, a, b, MPFR_RNDD); 
 }
-//finds the minimum of a and b
 void fminimum(mpfr_t r, mpfr_t a, mpfr_t b) { 
 	mpfr_min(r, a, b, MPFR_RNDD); 
 }
-// little function to return the sign of r
 int fsgn(mpfr_t r) { 
 	return mpfr_sgn(r); 
 }

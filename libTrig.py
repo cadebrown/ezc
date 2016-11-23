@@ -11,58 +11,87 @@ this_lib = """
 
 */
 
-// sin of a in radians
 void fsin(mpfr_t r, mpfr_t a) { 
 	mpfr_sin(r, a, MPFR_RNDD); 
 }
-// cosecant of a in radians (1/sin(a))
 void fcsc(mpfr_t r, mpfr_t a) { 
 	mpfr_csc(r, a, MPFR_RNDD); 
 }
-// cos of a in radians
 void fcos(mpfr_t r, mpfr_t a) { 
 	mpfr_cos(r, a, MPFR_RNDD); 
 }
-// secant of a in radians (1/cos(a))
 void fsec(mpfr_t r, mpfr_t a) { 
 	mpfr_sec(r, a, MPFR_RNDD); 
 }
-// tan of a in radians (sin(a)/cos(a))
 void ftan(mpfr_t r, mpfr_t a) { 
 	mpfr_tan(r, a, MPFR_RNDD); 
 }
-// cotangent of a, or 1/(tan(a))
 void fcot(mpfr_t r, mpfr_t a) { 
 	mpfr_tan(r, a, MPFR_RNDD); 
 }
 
-// asin of a, returned in radians. asin(sin(a)) ~ a
 void fasin(mpfr_t r, mpfr_t a) { 
 	mpfr_asin(r, a, MPFR_RNDD); 
 }
-// acsc of a, returned in radians. acsc(csc(a)) ~ a
 void facsc(mpfr_t r, mpfr_t a) { 
 	mpfr_ui_div(r, 1, a, MPFR_RNDD);
 	mpfr_asin(r, r, MPFR_RNDD); 
 }
-// acos of a, returned in radians. acos(cos(a)) ~ a
 void facos(mpfr_t r, mpfr_t a) { 
 	mpfr_acos(r, a, MPFR_RNDD); 
 }
-// asec  of a, returned in radians. asec(sec(a)) ~ a
 void fasec(mpfr_t r, mpfr_t a) { 
 	mpfr_ui_div(r, 1, a, MPFR_RNDD);
 	mpfr_acos(r, r, MPFR_RNDD); 
 }
-// atan of a, returned in radians. atan(tan(a)) ~ a
-// note that this can return odd values (such as +Infinity or NaN) at poles (i.e. pi/2+pi*n)
 void fatan(mpfr_t r, mpfr_t a) { 
 	mpfr_atan(r, a, MPFR_RNDD); 
 }
-// acot of a, returned in radians. acot(cot(a)) ~ a
 void facot(mpfr_t r, mpfr_t a) {
 	mpfr_ui_div(r, 1, a, MPFR_RNDD);
 	mpfr_atan(r, r, MPFR_RNDD); 
+}
+
+void fsinh(mpfr_t r, mpfr_t a) {
+	mpfr_sinh(r, a, MPFR_RNDD);
+}
+void fcsch(mpfr_t r, mpfr_t a) {
+	mpfr_csch(r, a, MPFR_RNDD);
+}
+void fcosh(mpfr_t r, mpfr_t a) {
+	mpfr_cosh(r, a, MPFR_RNDD);
+}
+void fsech(mpfr_t r, mpfr_t a) {
+	mpfr_sech(r, a, MPFR_RNDD);
+}
+void fhtanh(mpfr_t r, mpfr_t a) {
+	mpfr_tanh(r, a, MPFR_RNDD);
+}
+void fhcoth(mpfr_t r, mpfr_t a) {
+	mpfr_coth(r, a, MPFR_RNDD);
+}
+
+
+void fasinh(mpfr_t r, mpfr_t a) {
+	mpfr_asinh(r, a, MPFR_RNDD);
+}
+void facsch(mpfr_t r, mpfr_t a) {
+	mpfr_ui_div(r, 1, a, MPFR_RNDD);
+	mpfr_asinh(r, r, MPFR_RNDD);
+}
+void facosh(mpfr_t r, mpfr_t a) {
+	mpfr_acosh(r, a, MPFR_RNDD);
+}
+void fasech(mpfr_t r, mpfr_t a) {
+	mpfr_ui_div(r, 1, a, MPFR_RNDD);
+	mpfr_acosh(r, r, MPFR_RNDD);
+}
+void fatanh(mpfr_t r, mpfr_t a) {
+	mpfr_atanh(r, a, MPFR_RNDD);
+}
+void facoth(mpfr_t r, mpfr_t a) {
+	mpfr_ui_div(r, 1, a, MPFR_RNDD);
+	mpfr_atanh(r, r, MPFR_RNDD);
 }
 
 
@@ -106,6 +135,45 @@ class Acot(LibraryFunction):
 	def __str__(self):
 		return "facot(%s);" % (", ".join(map(str, self.args)))
 
+class Sinh(LibraryFunction):
+	def __str__(self):
+		return "fsinh(%s);" % (", ".join(map(str, self.args)))
+class Csch(LibraryFunction):
+	def __str__(self):
+		return "fcsch(%s);" % (", ".join(map(str, self.args)))
+class Cosh(LibraryFunction):
+	def __str__(self):
+		return "fcosh(%s);" % (", ".join(map(str, self.args)))
+class Sech(LibraryFunction):
+	def __str__(self):
+		return "fsech(%s);" % (", ".join(map(str, self.args)))
+class Tanh(LibraryFunction):
+	def __str__(self):
+		return "ftanh(%s);" % (", ".join(map(str, self.args)))
+class Coth(LibraryFunction):
+	def __str__(self):
+		return "fcoth(%s);" % (", ".join(map(str, self.args)))
+
+class Asinh(LibraryFunction):
+	def __str__(self):
+		return "fasinh(%s);" % (", ".join(map(str, self.args)))
+class Acsch(LibraryFunction):
+	def __str__(self):
+		return "facsch(%s);" % (", ".join(map(str, self.args)))
+class Acosh(LibraryFunction):
+	def __str__(self):
+		return "facosh(%s);" % (", ".join(map(str, self.args)))
+class Asech(LibraryFunction):
+	def __str__(self):
+		return "fasech(%s);" % (", ".join(map(str, self.args)))
+class Atanh(LibraryFunction):
+	def __str__(self):
+		return "fatanh(%s);" % (", ".join(map(str, self.args)))
+class Acoth(LibraryFunction):
+	def __str__(self):
+		return "facoth(%s);" % (", ".join(map(str, self.args)))
+
+
 
 lib = Library(this_lib, "0.0.2", {
 	"sin": Sin, 
@@ -122,7 +190,19 @@ lib = Library(this_lib, "0.0.2", {
 	"atan": Atan,
 	"acot": Acot,
 	
+	"sinh": Sinh, 
+	"csch": Csch, 
+	"cosh": Cosh, 
+	"sech": Sech, 
+	"tanh": Tanh, 
+	"coth": Coth, 
 
+	"asinh": Asinh, 
+	"acsch": Acsch, 
+	"acosh": Acosh, 
+	"asech": Asech, 
+	"atanh": Atanh, 
+	"acoth": Acoth, 
 }, {
 	
 })
