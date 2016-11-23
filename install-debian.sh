@@ -1,8 +1,8 @@
 #!/bin/bash
-URL='https://github.com/ChemicalDevelopment/ezc/releases/download/2.2.5/ezcc_2.2.5_amd64.deb'
+URL='https://github.com/ChemicalDevelopment/ezc/releases/download/2.2.5/ezcc_amd64.deb'
+FILE=`mktemp`
 echo "URL: $URL"
-FILE=`mktemp` 
+echo "FILE: $FILE"
 wget "$URL" -qO $FILE && sudo dpkg -i $FILE && echo "Installed"
-echo "Removing file"
-rm $FILE
+rm $FILE && echo "Removed file"
 
