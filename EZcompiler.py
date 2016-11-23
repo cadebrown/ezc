@@ -1,3 +1,5 @@
+import libBasic, libLoops, libPrint, libMath, libTrig
+
 import lib_linker
 
 import EZlogger as log
