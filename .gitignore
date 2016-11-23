@@ -4,6 +4,7 @@
 # compiled files
 *.pyc
 *.o
+*.out
 *.vscode/
 !VSCODE-extension/.vscode/
 *dist/*
