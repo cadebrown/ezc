@@ -108,6 +108,10 @@ class Factorial(LibraryFunction):
 	def __str__(self):
 		return "ffactorial(%s);" % (", ".join(map(str, self.args)))
 
+class Zeta(LibraryFunction):
+	def __str__(self):
+		return "fzeta(%s);" % (", ".join(map(str, self.args)))
+
 lib = Library(this_lib, "0.0.2", {
 	"rand": Rand,
 
@@ -125,6 +129,9 @@ lib = Library(this_lib, "0.0.2", {
 	
 	"gamma": Gamma, 
 	"factorial": Factorial, 
+
+	"zeta": Zeta, 
+	
 }, {
 	"?": Rand,
 	"??": RandGuass,

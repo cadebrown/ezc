@@ -47,6 +47,9 @@ void fasec(mpfr_t r, mpfr_t a) {
 void fatan(mpfr_t r, mpfr_t a) { 
 	mpfr_atan(r, a, MPFR_RNDD); 
 }
+void fatan2(mpfr_t r, mpfr_t a, mpfr_t b) { 
+	mpfr_atan2(r, a, b, MPFR_RNDD); 
+}
 void facot(mpfr_t r, mpfr_t a) {
 	mpfr_ui_div(r, 1, a, MPFR_RNDD);
 	mpfr_atan(r, r, MPFR_RNDD); 
