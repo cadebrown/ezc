@@ -139,5 +139,8 @@ lib = Library(this_lib, "0.0.2", {
 	"√": Sqrt,
 	"√√": Cbrt,
 
-	"!":Factorial,
+	"!": Factorial,
+
+	"ζ": Zeta,
+	
 })

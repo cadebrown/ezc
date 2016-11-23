@@ -1,3 +1,21 @@
+ezcc-2 (2.2.5-16ubuntu8) stable; urgency=med
+
+  * changed library structure
+    - split libMath into libMath and libTrig
+    - split libBasic into libBasic and libPrint
+  * added many more functions
+    - all hyperbolic, normal, arc functions of sin, cos, csc, sec, tan, cot
+    - zeta function, hypot, agm
+  * added random numbers
+    - use `a = ?` to generate a random number between 0 and 1
+    - use `a = ? b` to generate a random number between 0 and b
+    - use `a = ??` to generate a random number according to std distrobution 
+  * changed logging
+    - more pleasing colors
+    - you can now set verbosity level
+
+ -- Cade Brown <info@chemicaldevelopment.us>  Wed, 23 Nov 2016 00:27:35 -0500
+
 ezcc-2 (2.1.1-16ubuntu8) stable; urgency=med
 
   * added compiler options to control removing files
