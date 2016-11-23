@@ -1,5 +1,0 @@
-function invfac: r a
-
-r = a !
-r = 1.0 / r
-

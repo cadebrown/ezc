@@ -10,10 +10,10 @@ this_lib = """
 	libBasic
 
 */
-void prec_literal(int x) {
+void prec_literal(long long x) {
 	if (x < EZC_PREC) x = EZC_PREC;
 	_prec = x;
-	mpfr_set_default_prec((int)_bprec	);
+	mpfr_set_default_prec((long long)_bprec);
 }
 
 void prec_index(int index) {
@@ -78,8 +78,8 @@ int fsgn(mpfr_t r) {
 
 class Prec(LibraryFunction):
 	def __str__(self):
-		if "args[" in self.args[0]:
-			lib_linker.set_prec("prec_index(%s);" % self.args[0].replace("args[", "").replace("]", ""))
+		if "_get_arg(" in self.args[0]:
+			lib_linker.set_prec("prec_index(%s);" % self.args[0].replace("_get_arg(", "").replace(")", ""))
 		else:
 			lib_linker.set_prec("prec_literal(%s);" % ( re.findall(parser.consts, self.args[0])[0][1] ))
 		return ""

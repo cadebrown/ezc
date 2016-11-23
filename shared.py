@@ -51,72 +51,53 @@ int _size_consts = 5, _consts_id = 0, _consts_ov = 0;
 mpfr_t *_consts;
 
 mpfr_ptr _next_const(char _set_val[]) {
-	_consts_id = _consts_id + 1;
 	if (_consts_id >= _size_consts) {
 		_consts_ov = 1;
 		_consts_id %= _size_consts;
 	}
-	if (_consts_ov > 0) {
-		//mpfr_clear(_consts[_consts_id]);
+	if (_consts_ov == 0) {
 		mpfr_init(_consts[_consts_id]);
 	}
 	mpfr_set_str(_consts[_consts_id], _set_val, 10, MPFR_RNDD);
-	//_consts_id++;
-	return (mpfr_ptr) _consts[_consts_id];
+	return (mpfr_ptr) _consts[_consts_id++];
 }
 
 
-// default precision (and minimum)
 int EZC_PREC = 60;
-// macro to get bits instead of digits
-#define _bprec (int)(_prec * 3.32192809)
+#define _bprec (_prec * 3.32192809)
 
-// variables to use in our program that are hidden to others
 int _prec, _loop, _argc;
-// a pointer so we can read from all methods
 char **_argv;
-// a lits of commandline arguments that are mpfr s
-mpfr_t *args;
+//mpfr_t *args;
 
-// constants (look for initializations in lib_linker)
 mpfr_t __start, __stop, __step;
+
+mpfr_ptr _get_arg(int val) {
+	if (val >= _argc) {
+		return _next_const("0.0");
+	} else {
+		return _next_const(_argv[val]);
+	}
+}
 
 """
 
 
 main="""
-// main method
 int main(int argc, char *argv[]) {
-	// set global vars so other functions can use them
 	_argc = argc; _argv = argv;
-	// set the default rounding mode
 	mpfr_set_default_rounding_mode(MPFR_RNDD);
 
-	// init time
 	srand(time(NULL));
 
-	//Init our random struct
 	gmp_randinit_default(__rand_state);
 	gmp_randseed_ui(__rand_state, rand());
 
-	// start the commandline args list
-	args = (mpfr_t *)malloc(sizeof(mpfr_t) * sizeof(argc - 1));
-	_consts = (mpfr_t *)malloc(sizeof(mpfr_t) * sizeof(_size_consts));
-	//prec_literal(EZC_PREC);
+	//args = (mpfr_t *)malloc(sizeof(mpfr_t) * (argc - 1));
+	_consts = (mpfr_t *)malloc(sizeof(mpfr_t) * _size_consts);
 """
 
 var_inits="""
-	// loop through, and parse each one for a mpfr
-	for (_loop = 1; _loop < argc; ++_loop) {
-		mpfr_init(args[_loop]);
-		mpfr_set_str(args[_loop], argv[_loop], 10, MPFR_RNDD);
-	}
-	for (_loop = 0; _loop < _size_consts; ++_loop) {
-		mpfr_init(_consts[_loop]);
-	}
-	mpfr_init(__start);
-	mpfr_init(__start);
-	mpfr_init(__stop);
 
 """
 

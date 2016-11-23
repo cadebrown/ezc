@@ -10,7 +10,7 @@ import EZlogger as log
 
 # registers a variable, and checks if it is a valid name and then adds it to the global list of names
 def register_var(varname):
-	if re.findall(valid_var, varname) == [varname] and re.findall(valid_const, varname) != [varname] and re.findall(literal_str, varname) != [varname] and "_next_const" not in varname:# and re.findall(const_call, varname) != [varname]:
+	if re.findall(valid_var, varname) == [varname] and re.findall(valid_const, varname) != [varname] and re.findall(literal_str, varname) != [varname] and "_next_const" not in varname and "$" not in varname:# and re.findall(const_call, varname) != [varname]:
 		shared.var_set.add(varname)
 		return True
 	return False
@@ -84,7 +84,7 @@ def set_regex():
 # resolves reference. For example, $3 would give the third commandline argument
 def get_var(text):
 	if "$" in text:
-		return "args[%s]" % (text.replace("$", ""))
+		return "_get_arg(%s)" % (text.replace("$", ""))
 	elif re.findall(valid_const, text):
 		return "_next_const(\"%s\")" % text
 	elif not re.findall(consts, text):

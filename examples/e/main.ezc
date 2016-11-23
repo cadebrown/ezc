@@ -1,15 +1,7 @@
 # sets the precision
 prec $1
 # initializes e
-e = 0
-
-# loops through
-for i 0 1000
-	# @invfac is a local function, in inversefactorial.ezc. It computes 1 / (i!)
-	tmp = @invfac i
-	# sum it up
-	e = e + tmp
-rof
+e = exp 1
 # print result
 var e
 should_be_one = log e
