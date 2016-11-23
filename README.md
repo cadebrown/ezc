@@ -20,13 +20,15 @@ You can think of it like a calculator language, but with more functions and more
 
 For any debian based system, simply go to the [latest release](https://github.com/ChemicalDevelopment/ezc/releases/latest), and download the .deb file, and double click it
 
+For Debian/Ubuntu, run `./install-debian.sh` to install the latest as well
+
 For other OSs, I'm working on packaging systems. For now, you can build them following below:
 
 # Building
 
 You'll need a few prerequisites: `cc`, and `mpfr`
 
-For Debian/Ubuntu/MacOS, run `./install.sh`
+For Debian/Ubuntu, run `./install-legacy.sh` to build and install
 
 For all OSs:
 
@@ -36,9 +38,9 @@ First, clone this repository:
 
 Then, run `./ezcc` and assure that no errors were produced. If the were, please create and [Issue](https://github.com/ChemicalDevelopment/ezc/issues)
 
-Now, run `sudo ./install-compiler.sh`. If you get permissions errors, run `./install-compiler.sh ~/ezc/ none`. If you use the second one, when I use `ezcc`, just replace it with `~/ezc/ezcc`
+Now, run `sudo ./install-legacy.sh`. If you get permissions errors, run `./install-legacy.sh ~/ezc/ none`. If you use the second one, when I use `ezcc`, just replace it with `~/ezc/ezcc`
 
-To test it, run `ezcc examples/pi.ezc -o pi.o` (or `~/ezc/ezcc examples/pi.ezc -o pi.o`) 
+To test it, run `ezcc examples/pi/main.ezc example/pi/ataninv.ezc -o pi.o` (or `~/ezc/ezcc.py examples/pi/main.ezc example/pi/ataninv.ezc -o pi.o`) 
 
 After this, run `./pi.o 1024` and it should print out 1024 bits of pi (3.14159265358979...)
 
