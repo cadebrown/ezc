@@ -148,7 +148,7 @@ def parse_line(line):
 		line = parse_freeform(re.findall(freeform_regex, line)[0])[1]
 	else:
 		if line.split():
-			log.warn("Parsing", ["\"%s\"" % (line), "Warning: line does not fit normal syntax.", "Interpreting as straight C code"])
+			import EZcompiler
+			log.warn("Parsing", ["(Line %d) Error while parsing" % EZcompiler.line_num, "%s" % (line)])
 			line = line + ";"
-			print line
 	return line

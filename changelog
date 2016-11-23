@@ -1,3 +1,24 @@
+ezcc-2 (2.3.0-16ubuntu8) stable; urgency=high
+
+  * fixed memory leaks
+    - changed default number of constants. This can be set with cvars option
+    - changed how we allocate constants so there is no seg fault
+  * added many more functions
+    - improved calling interface
+  * changed logging
+    - more pleasing colors, and style with bold, and etc
+
+ -- Cade Brown <info@chemicaldevelopment.us>  Wed, 23 Nov 2016 16:00:00 -0500
+
+ezcc-2 (2.1.1-16ubuntu8) stable; urgency=med
+
+  * added compiler options to control removing files
+    - rem and remexec
+  * changed default tmp directory to /tmp/
+    - you can still set it with tmpd
+
+ -- Cade Brown <info@chemicaldevelopment.us>  Sun, 20 Nov 2016 19:39:15 -0500
+
 ezcc-2 (2.2.5-16ubuntu8) stable; urgency=med
 
   * changed library structure

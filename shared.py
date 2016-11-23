@@ -47,7 +47,7 @@ start = """
 
 
 gmp_randstate_t __rand_state;
-int _size_consts = 5, _consts_id = 0, _consts_ov = 0;
+int _size_consts = $$_size_consts$$, _consts_id = 0, _consts_ov = 0;
 mpfr_t *_consts;
 
 mpfr_ptr _next_const(char _set_val[]) {
@@ -64,11 +64,10 @@ mpfr_ptr _next_const(char _set_val[]) {
 
 
 int EZC_PREC = 60;
-#define _bprec (_prec * 3.32192809)
+#define _bprec (_prec * 3.3219281)
 
 int _prec, _loop, _argc;
 char **_argv;
-//mpfr_t *args;
 
 mpfr_t __start, __stop, __step;
 
@@ -93,7 +92,6 @@ int main(int argc, char *argv[]) {
 	gmp_randinit_default(__rand_state);
 	gmp_randseed_ui(__rand_state, rand());
 
-	//args = (mpfr_t *)malloc(sizeof(mpfr_t) * (argc - 1));
 	_consts = (mpfr_t *)malloc(sizeof(mpfr_t) * _size_consts);
 """
 

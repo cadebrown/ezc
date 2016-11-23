@@ -107,7 +107,7 @@
 
 		<dict>
 			<key>match</key>
-			<string>(\!|\%|\+|\*|\-|\/|\*\*|\~|\^|\$|\?\?|\?|\√\√|\√|\ζ|\!)</string>
+			<string>(\!|\%|\+|\*\*|\*|\-|\/|\~|\^|\$|\?\?|\?|\√\√|\√|\ζ|\!)</string>
 			<key>name</key>
             <string>support.function.builtin.call.ezc</string>
 		</dict>   
@@ -127,7 +127,7 @@
 
 		<dict>
 			<key>match</key>
-			<string>(rof|__base|for|label|goto|if|fi|set|echo|prec|var|var_raw|int_var|int_var_raw|:|echo|\"\"|echo_raw)</string>
+			<string>(rof|__base|for|label|goto|if|fi|set|echo|prec|int_var_raw|int_var|var_raw|var|:|echo_raw|echo|\"\")</string>
 			<key>name</key>
 			<string>keyword.control.ezc</string>
 		</dict>

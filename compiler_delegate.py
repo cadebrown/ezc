@@ -14,15 +14,20 @@ def remove_file(fn):
 	clear_proc = Popen(clearcmd, shell=True)
 	clear_proc.wait()
 
-def make_tmp_dir():
-	global tmp_file
-	if not os.path.exists(os.path.dirname(tmp_file)):
+def make_tmp_dir(file="__tmp"):
+	global tmp_file; global exec_file
+	if file == "__tmp":
+		file = tmp_file
+	elif file == "__exec":
+		file = exec_file
+	if not os.path.exists(os.path.dirname(file)):
 		try:
-			os.makedirs(os.path.dirname(tmp_file))
+			os.makedirs(os.path.dirname(file))
 		except OSError as exc:
 			log.err("Making tmp directory", str(exc))
 
 def run_file(out):
+	make_tmp_dir("__exec")
 	if "/" not in out:
 		runcmd = "./%s" % (out)
 	else:
@@ -31,17 +36,17 @@ def run_file(out):
 	run_proc = Popen(runcmd, shell=True)
 	run_proc.wait()
 
-def init_all_compile(tmpf, execf):
+def init_all_compile(cmpflags, tmpf, execf):
 	global tmp_file; global exec_file
 	tmp_file = tmpf
 	tmp_exec = execf
 	make_tmp_dir()
-	compiler.init_cmp()
+	compiler.init_cmp(cmpflags)
 
 def compile_tmp(out):
 	# Compile the intermediate lang
 	cmd = "gcc %s -lmpfr -lgmp -lm -o %s" % (tmp_file, out)
-	log.info("Compiling", cmd, 1)
+	log.warn("Compiling", cmd, 1)
 	compile_proc = Popen(cmd, shell=True)
 	compile_proc.wait()
 

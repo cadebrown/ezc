@@ -1,5 +1,6 @@
 # Generated
 *tmp/
+*.spec
 
 # compiled files
 *.pyc
