@@ -18,9 +18,9 @@ You can think of it like a calculator language, but with more functions and more
 
 # Installation
 
-For any debian based system, simply go to the [latest release](https://github.com/ChemicalDevelopment/ezc/releases/latest), and download the .deb file, and double click it
+For any debian based system, simply run `curl https://cdn.rawgit.com/ChemicalDevelopment/ezc/master/install-debian.sh | sh -` in the terminal to install
 
-For Debian/Ubuntu, run `./install-debian.sh` to install the latest as well
+For any debian based system, simply go to the [latest release](https://github.com/ChemicalDevelopment/ezc/releases/latest), and download the .deb file, and double click it
 
 For other OSs, I'm working on packaging systems. For now, you can build them following below:
 
