@@ -20,6 +20,7 @@ mkdir -p deb-package/usr/bin/
 cp dist/ezcc deb-package/usr/bin/ezcc
 gzip -n -9 -c changelog > deb-package/usr/share/doc/ezcc/changelog.gz
 
+
 echo "Copied in, now making deb file"
 
 FL="ezcc_"$VERSION"_amd64.deb"

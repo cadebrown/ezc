@@ -3,9 +3,9 @@ Architecture: amd64
 Section: devel
 Installed-Size: 3821
 Maintainer: Cade Brown <info@chemicaldevelopment.us>
-Depends: gcc, libmpfr-dev, libc6 (>=2.0), libgmp-dev (>=6.1.0)
+Depends: gcc, libc6 (>=2.0), libgmp-dev, libmpfr-dev
 Priority: optional
-Version: 2.3.0su
+Version: 2.3.0n
 Description: EZC Compiler
  Compiles EZC
  github.chemicaldevelopment.us/ezc
