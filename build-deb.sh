@@ -20,8 +20,15 @@ fi
 mkdir -p deb-package/usr/src/ezc/
 #cp dist/ezcc deb-package/usr/bin/ezcc
 cp $SRC deb-package/usr/src/ezc/
-cp $UTIL deb-package/usr/bin/
 gzip -n -9 -c changelog > deb-package/usr/share/doc/ezcc/changelog.gz
+
+#cp $UTIL deb-package/usr/bin/
+for UT in $UTIL
+do
+    O_UTIL=deb-package/usr/bin/$(basename $UT)
+    ./ezcc.py $UT -o $O_UTIL
+	strip $O_UTIL
+done
 
 echo "Copied in, now making deb file"
 
