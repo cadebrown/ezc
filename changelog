@@ -1,3 +1,12 @@
+ezcc-2 (2.5.0-16ubuntu8) stable; urgency=low
+
+  * fixed error print on commandline
+    - when using the c option, the compiler would give an error
+  * changed build system
+    - now copies in python files instead of compiling to executable
+
+ -- Cade Brown <info@chemicaldevelopment.us>  Mon, 12 Dec 2016 18:20:00 -0500
+
 ezcc-2 (2.3.0-16ubuntu8) stable; urgency=high
 
   * fixed memory leaks

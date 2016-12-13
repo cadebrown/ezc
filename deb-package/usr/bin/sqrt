@@ -1,0 +1,5 @@
+#!/bin/ezc -runfile
+setprec $2
+i = sqrt $1
+var_raw i
+echo

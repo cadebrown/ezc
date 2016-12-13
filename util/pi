@@ -1,0 +1,5 @@
+#!/bin/ezc -runfile
+setprec $1
+{mpfr_const_pi(i, MPFR_RNDN)}
+var_raw i
+echo

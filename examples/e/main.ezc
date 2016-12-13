@@ -1,9 +1,0 @@
-# sets the precision
-prec $1
-# initializes e
-e = exp 1
-# print result
-var e
-should_be_one = log e
-# this should be 1
-var should_be_one
