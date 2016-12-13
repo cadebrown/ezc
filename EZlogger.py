@@ -1,6 +1,6 @@
 name = "EZCC"
 
-version = "2.3.0"
+version = "3.0.0"
 
 RESET = '\033[0m'
 
@@ -45,13 +45,14 @@ def print_single(st, offset, c):
 
 def base_print(col, task, st, verbose=0):
 	global verbosity
+	to_print = [task, st]
 	if verbose >= 0 and int(verbose) <= int(verbosity):
-		if isinstance(st, list):
-			for s in st:
-				print_single(s, st.index(s), col)
-		else:
-			print_single(st, 0, col)
+		for s in to_print:
+			print_single(str(s), to_print.index(s), col)
 		print "%s" % (DEFAULT) 
+
+def hello(st, v=3):
+    base_print((BOLD,CYN), name, st, v)
 
 def info(task, st, v=2):
     base_print((LCYN, LGRN), task, st, v)
@@ -60,15 +61,14 @@ def warn(task, st, v=1):
     base_print((LRED, YLW+BOLD), task, st, v)
 
 def err(task, error, v=0):
-    base_print((RED, YLW+UNDR), task, error, v)
+    base_print((RED, YLW+BOLD+UNDR+BLINK), task, error, v)
 
 def init(_verbose=0, _silent=False):
 	global verbosity; global silent
 	verbosity = _verbose
 	silent = _silent
-	if int(verbosity) >= 0 and not silent:
-		print "%s %sv%s%s: \n" % (BOLD+CYN+name, DGRA, LBLU+UNDR+version, RESET)
+	hello(str(version))
 
 def end():
 	if int(verbosity) >= 0 and not silent:
-		print "%s\n" % (DEFAULT)
+		print "%s" % (RESET)

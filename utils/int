@@ -1,5 +1,5 @@
 #!/bin/ezc -runfile
 prec $2
 i = ~ $1
-var_raw i
+int_var_raw i
 echo

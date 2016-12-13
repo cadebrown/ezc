@@ -25,11 +25,15 @@ void varraw(mpfr_t a) {
 	mpfr_printf(\"%.*Rf\", _prec, a); 
 }
 
-void intvar(mpfr_t a) { 
-	printf(\"%ld\\n\", mpfr_get_si(a, MPFR_RNDD)); 
+void intvar(char name[], mpfr_t a) { 
+	mpz_t _t_; mpz_init(_t_);
+	mpfr_get_z(_t_, a, GMP_RNDZ);
+	mpfr_printf(\"%s : %Zd\\n\", name, _t_); 
 }
 void intvarraw(mpfr_t a) { 
-	printf(\"%ld\", mpfr_get_si(a, MPFR_RNDD)); 
+	mpz_t _t_; mpz_init(_t_);
+	mpfr_get_z(_t_, a, GMP_RNDZ);
+	mpfr_printf(\"%Zd\", _t_); 
 }
 
 void file(char name[], mpfr_t a) { 
@@ -55,7 +59,7 @@ class VarRaw(LibraryFunction):
 		return "varraw(%s);" % (self.args[0])
 class IntVar(LibraryFunction):
 	def __str__(self):
-		return "intvar(%s);" % (self.args[0])
+		return "intvar(\"%s\", %s);" % (self.args[0], self.args[0])
 class IntVarRaw(LibraryFunction):
 	def __str__(self):
 		return "intvarraw(%s);" % (self.args[0])

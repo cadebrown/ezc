@@ -51,7 +51,10 @@ def compile_tmp(out):
 	compile_proc.wait()
 
 def addcode(fs):
-	compiler.add_code(fs)
+	try:
+		compiler.add_code(fs)
+	except Exception as e:
+		log.err(e, 0)
 
 def compile_files(sources, out):
 	global tmp_file

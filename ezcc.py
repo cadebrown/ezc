@@ -10,7 +10,7 @@ import compiler_delegate as cmp
 
 defaults = {
 	"o": "a.out",
-	"v": "2",
+	"v": "1",
 }
 
 defaults_tmp = {
@@ -23,7 +23,7 @@ cfl = ["vars"]
 # set args
 parser = argparse.ArgumentParser(description='Compile EZC Language. v2.3.0 http://github.chemicaldevelopment.us/ezc')
 parser.add_argument('files', metavar='files', type=str, nargs='*', help='files to compile')
-parser.add_argument('-args', metavar='args', type=str, nargs='+', help='arguments to run on the executable')
+parser.add_argument('-args', metavar='args', default=[], type=str, nargs='+', help='arguments to run on the executable')
 #parser.add_argument('-l', metavar='libs', type=str, nargs='+', help='libraries to include (unstable)')
 parser.add_argument('-tmp', default="/tmp/out.c", help='Tmp directory')
 parser.add_argument('-o', default="__default__", help='Output file')
@@ -42,7 +42,7 @@ is_tmp = args.run or args.c or args.e or args.runfile
 dargs = vars(args)
 
 if args.runfile:
-	dargs["args"] = args.files[1:]
+	dargs["args"] = list(args.files[1:])
 	del args.files[1:]
 
 
@@ -64,7 +64,7 @@ for fl in cfl:
 	cmpflags[fl] = dargs["c%s" % (fl)]
 
 
-log.info("Flags", ["%s: %s" % (x, cmpflags[x]) for x in cmpflags], 1)
+log.info("Flags", ["%s: %s" % (x, cmpflags[x]) for x in cmpflags])
 
 
 if not isinstance(dargs["files"], list):

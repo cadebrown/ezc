@@ -1,14 +1,25 @@
-ezcc-2 (2.6.0-16ubuntu8) testing; urgency=low
+ezc (3.0.0) unstable; urgency=med
+
+  * fixed utils
+    - util testing increased
+  * updated printing info
+    - now prints logging more appropriately
+  * updated build system
+    - source now included with deb package
+
+ -- Cade Brown <info@chemicaldevelopment.us>  Tue, 13 Dec 2016 16:07:00 -0500
+
+ezc (2.6.0) testing; urgency=low
 
   * added utils
     - all common functions implemented
   * updated accuracy
-    - programs now set their accuracy to the maximum accuracy in their arguments if the argument
+    - programs set num digits to largest argument
 	  called to set precision doesnt exit
 
  -- Cade Brown <info@chemicaldevelopment.us>  Mon, 12 Dec 2016 23:40:00 -0500
 
-ezcc-2 (2.5.0-16ubuntu8) stable; urgency=low
+ezc (2.5.0) stable; urgency=low
 
   * fixed error print on commandline
     - when using the c option, the compiler would give an error
@@ -19,7 +30,7 @@ ezcc-2 (2.5.0-16ubuntu8) stable; urgency=low
 
  -- Cade Brown <info@chemicaldevelopment.us>  Mon, 12 Dec 2016 18:20:00 -0500
 
-ezcc-2 (2.3.0-16ubuntu8) stable; urgency=high
+ezc (2.3.0) stable; urgency=high
 
   * fixed memory leaks
     - changed default number of constants. This can be set with cvars option
@@ -31,7 +42,7 @@ ezcc-2 (2.3.0-16ubuntu8) stable; urgency=high
 
  -- Cade Brown <info@chemicaldevelopment.us>  Wed, 23 Nov 2016 16:00:00 -0500
 
-ezcc-2 (2.1.1-16ubuntu8) stable; urgency=med
+ezc (2.2.0) stable; urgency=med
 
   * added compiler options to control removing files
     - rem and remexec
@@ -40,7 +51,7 @@ ezcc-2 (2.1.1-16ubuntu8) stable; urgency=med
 
  -- Cade Brown <info@chemicaldevelopment.us>  Sun, 20 Nov 2016 19:39:15 -0500
 
-ezcc-2 (2.2.5-16ubuntu8) stable; urgency=med
+ezc (2.1.5-16ubuntu8) stable; urgency=med
 
   * changed library structure
     - split libMath into libMath and libTrig
@@ -58,7 +69,7 @@ ezcc-2 (2.2.5-16ubuntu8) stable; urgency=med
 
  -- Cade Brown <info@chemicaldevelopment.us>  Wed, 23 Nov 2016 00:27:35 -0500
 
-ezcc-2 (2.1.1-16ubuntu8) stable; urgency=med
+ezc (2.1.1) stable; urgency=med
 
   * added compiler options to control removing files
     - rem and remexec
@@ -67,7 +78,7 @@ ezcc-2 (2.1.1-16ubuntu8) stable; urgency=med
 
  -- Cade Brown <info@chemicaldevelopment.us>  Sun, 20 Nov 2016 19:39:15 -0500
 
-ezcc-2 (2.1.0-16ubuntu8) stable; urgency=med
+ezc (1.8.0) stable; urgency=med
 
   * fixed literal related bugs
     - fixed a bug where some functions would interpret literals incorrect
@@ -85,7 +96,7 @@ ezcc-2 (2.1.0-16ubuntu8) stable; urgency=med
 
  -- Cade Brown <info@chemicaldevelopment.us>  Sun, 20 Nov 2016 18:20:15 -0500
 
-ezcc-2.0.0 (0.8.0-16ubuntu8) unstable; urgency=low
+ezc (1.7.0) unstable; urgency=low
 
   * added literals 
     - now, you can pass in literals instead of consts
@@ -95,7 +106,7 @@ ezcc-2.0.0 (0.8.0-16ubuntu8) unstable; urgency=low
 
  -- Cade Brown <info@chemicaldevelopment.us>  Sat, 19 Nov 2016 16:51:43 -0500
 
-ezcc-1.8.0 (0.8.0-16ubuntu8) trusty; urgency=low
+ezc (1.4.0) trusty; urgency=low
 
   * factorial, gamma
     - Factorial (x) can now be computed either by a = factorial b or a = b !
@@ -111,7 +122,7 @@ ezcc-1.8.0 (0.8.0-16ubuntu8) trusty; urgency=low
 
  -- Cade Brown <info@chemicaldevelopment.us>  Sat, 19 Nov 2016 16:51:43 -0500
 
-ezcc-1.7.0 (0.8.0-16ubuntu8) trusty; urgency=low
+ezc (1.3.5) trusty; urgency=low
 
   * Added back mod and trunc functions, gamma, factorial, max, min, etc
     - Mostly in libMath
@@ -124,7 +135,7 @@ ezcc-1.7.0 (0.8.0-16ubuntu8) trusty; urgency=low
 
  -- Cade Brown <info@chemicaldevelopment.us>  Sat, 19 Nov 2016 13:45:30 -0500
 
-ezcc-1.6.0 (0.8.0-16ubuntu8) trusty; urgency=low
+ezc (1.3.0) trusty; urgency=low
 
   * Added regex support, including trunc, and added new multi file feature. needs documentation
     - Multi file builds are now supported, and you can declare each file as a function (strict SRP)
@@ -132,7 +143,7 @@ ezcc-1.6.0 (0.8.0-16ubuntu8) trusty; urgency=low
 
  -- Cade Brown <info@chemicaldevelopment.us>  Sat, 19 Nov 2016 00:01:30 -0500
 
-ezcc-1.5.0 (0.8.0-16ubuntu8) trusty; urgency=low
+ezc (1.3.0) trusty; urgency=low
 
   * Rewrote using regex to search
     - Most of the old functions are there, with the exception of mod, int, and trunc
@@ -140,14 +151,14 @@ ezcc-1.5.0 (0.8.0-16ubuntu8) trusty; urgency=low
 
  -- Cade Brown <info@chemicaldevelopment.us>  Fri, 18 Nov 2016 21:13:20 -0500
 
-ezcc-1.2.5 (0.8.0-16ubuntu8) trusty; urgency=low
+ezcc (1.2.5) trusty; urgency=low
 
   * Added mod, int, and trunc functions
     - mod, int, and trunc functions calculate modulo, integer trunctation, and multiple truncation
 
  -- Cade Brown <info@chemicaldevelopment.us>  Thu, 17 Nov 2016 15:46:43 -0500
 
-ezcc-0.8.0 (0.8.0-16ubuntu8) trusty; urgency=low
+ezcc (0.8.0) trusty; urgency=low
 
   * initial package
     - Updated the initial deb package
