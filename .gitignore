@@ -10,9 +10,9 @@
 !VSCODE-extension/.vscode/
 *dist/*
 *build/*
-deb-package/*
-!deb-package/DEBIAN/*
-!deb-package/usr/share/doc/ezcc/copyright
+!/deb-package/DEBIAN/control
+!/deb-package/usr/share/doc/ezcc/copyright
+/deb-package/*
 #deb-package/bin/*
 #deb-package/usr/share/doc/ezcc/changelog.gz
 
