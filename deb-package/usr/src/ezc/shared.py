@@ -36,11 +36,12 @@ operators = {
 
 var_set = set()
 
-prec = "prec_literal(EZC_PREC);"
+prec = "prec_init();"
 
 start = """
 #include <time.h>
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include <mpfr.h>
 #include <math.h>
@@ -93,6 +94,7 @@ int main(int argc, char *argv[]) {
 	gmp_randseed_ui(__rand_state, rand());
 
 	_consts = (mpfr_t *)malloc(sizeof(mpfr_t) * _size_consts);
+	prec_init();
 """
 
 var_inits="""

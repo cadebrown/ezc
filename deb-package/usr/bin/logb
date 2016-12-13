@@ -1,0 +1,10 @@
+#!/bin/ezc -runfile
+prec $3
+if $2 == 0 
+	t = exp 1
+	i = logb $1 t
+else
+	i = logb $1 $2
+fi
+var_raw i
+echo

@@ -1,5 +1,4 @@
 #!/bin/ezc -runfile
 prec $2
-i = sqrt $1
-var_raw i
-echo
+var $1
+

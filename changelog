@@ -1,3 +1,13 @@
+ezcc-2 (2.6.0-16ubuntu8) testing; urgency=low
+
+  * added utils
+    - all common functions implemented
+  * updated accuracy
+    - programs now set their accuracy to the maximum accuracy in their arguments if the argument
+	  called to set precision doesnt exit
+
+ -- Cade Brown <info@chemicaldevelopment.us>  Mon, 12 Dec 2016 23:40:00 -0500
+
 ezcc-2 (2.5.0-16ubuntu8) stable; urgency=low
 
   * fixed error print on commandline

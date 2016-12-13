@@ -15,6 +15,9 @@ class If(LibraryFunction):
 	def __str__(self):
 		self.args = list(self.args)
 		return "if (mpfr_cmp(%s, %s) %s 0) {" % (self.args[0], self.args[2], self.args[1])
+class Else(LibraryFunction):
+	def __str__(self):
+		return "} else {"
 class For(LibraryFunction):
 	def __str__(self):
 		self.args = list(self.args)
@@ -41,6 +44,7 @@ lib = Library(this_lib, "0.0.2", {
 	"goto": Goto, 
 
 	"if": If, 
+	"else": Else, 
 	"for": For, 
 	
 	"fi": End,

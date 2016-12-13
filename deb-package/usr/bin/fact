@@ -1,5 +1,5 @@
 #!/bin/ezc -runfile
 prec $2
-i = sqrt $1
+i = factorial $1
 var_raw i
 echo

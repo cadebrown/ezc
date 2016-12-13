@@ -1,5 +1,9 @@
 #!/bin/ezc -runfile
 prec $2
-i = sqrt $1
+if $1 == 0 
+    i = ?
+else
+    i = ? $1
+fi
 var_raw i
 echo
