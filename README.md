@@ -52,6 +52,36 @@ To test it, run `ezcc examples/pi/main.ezc example/pi/ataninv.ezc -o pi.o` (or `
 
 After this, run `./pi.o 1024` and it should print out 1024 bits of pi (3.14159265358979...)
 
+# Utilities
+
+As of v3, commandline utilities are included, including all arithmetic (`add`, `sub`, etc.)
+
+As well as basic trig and inverses (of `sin`, `cos`, and `tan`) and others like `fact` (factorial), `gamma`, `zeta`, `pi`, and `e`
+
+You can specify the number of arguments these functions take in EZC, and an optional additional argument which specifies how many digits to compute.
+
+For example, you can run `pi` in bash and it will print out 60 digits. You can run `pi 10000` to print out 10000 digits.
+
+You can also link these through bash execution, so:
+
+`sin $(pi)`
+
+prints out `0.0000...`
+
+If the number of digits is not present, it defaults to the length of the longest argument.
+
+So, to find e + pi, simply run
+
+`add $(e) $(pi)`
+
+Or, to a million digits, 
+
+`add $(e 1000) $(pi 1000)`
+
+The list of all utilities is located in this repo in ./utils/
+
+On your installed system, the compiled versions are listed in `/usr/bin/$UTIL`
+
 
 # Examples
 
@@ -64,6 +94,14 @@ or,
 `ezcc -c "i = acos -1.0 : var i"`
 
 Using `-c` or `-e` means you don't need a file, but c reads from the next argument, and e reads from stdin
+
+You can also use a shebang, namely:
+
+`#!/bin/ezc -runfile`
+
+or, to run locally
+
+`#!./ezcc.py -runfile`
 
 
 # Support
