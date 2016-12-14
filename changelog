@@ -129,7 +129,7 @@ ezc (1.3.5) trusty; urgency=low
   * Added constants
     - NEGONE, ZERO, ONE, TWO, FOUR, TEN are their numeric values, and need no init
   * Added new operators
-    - Added operators '!', '√', and '_' for factorial, square root, and trunc/multtrunc
+    - Added operators '!', '√', and '~' for factorial, square root, and trunc/multtrunc
 	  Used with operators on either side, but by convention, use 'a !', '√ a', and 'a _' or 'a _ b'
     If you do use 'a _', this is equivelent to 'a _ ONE'. the _ returns the largest multiple of b (or ONE) that is less than or equal to a
 

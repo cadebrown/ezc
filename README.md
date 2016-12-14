@@ -1,14 +1,12 @@
 # EZC
 
-"You don't know SRP unless you know EZC"
-
-Current version: 2.3.0
+Current version: 3.0.0
 
 A intermediate language which is transpiled to C. Multiprecision is built into the language.
 
 Made for people who don't want to use low level memory management, but want the speed it provides.
 
-Also, it strictly enforces SRP (or single responsibility principal).
+Includes commandline utilities which are located in /usr/bin (such as `sqrt`, `mul`, `pow`, etc.)
 
 You can think of it like a calculator language, but with more functions and more digits
 
