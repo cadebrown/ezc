@@ -35,6 +35,17 @@ operators = {
 }
 
 var_set = set()
+var_occur = dict()
+
+def add_var(name):
+	if name in var_occur.keys():
+		var_occur[name] += 1
+	else:
+		var_occur[name] = 1
+
+def rem_var(name):
+	if name in var_occur.keys():
+		var_occur[name] -= 1
 
 prec = "prec_init();"
 
@@ -63,8 +74,19 @@ mpfr_ptr _next_const(char _set_val[]) {
 	return (mpfr_ptr) _consts[_consts_id++];
 }
 
+mpfr_ptr _next_const_base(char _set_val[], int base) {
+	if (_consts_id >= _size_consts) {
+		_consts_ov = 1;
+		_consts_id %= _size_consts;
+	}
+	if (_consts_ov == 0) {
+		mpfr_init(_consts[_consts_id]);
+	}
+	mpfr_set_str(_consts[_consts_id], _set_val, base, MPFR_RNDD);
+	return (mpfr_ptr) _consts[_consts_id++];
+}
 
-int EZC_PREC = 60;
+int EZC_PREC = 14;
 #define _bprec (_prec * 3.3219281)
 
 int _prec, _loop, _argc;
@@ -77,6 +99,14 @@ mpfr_ptr _get_arg(int val) {
 		return _next_const("0.0");
 	} else {
 		return _next_const(_argv[val]);
+	}
+}
+
+mpfr_ptr _get_arg_base(int val, int base) {
+	if (val >= _argc) {
+		return _next_const_base("0.0", base);
+	} else {
+		return _next_const_base(_argv[val], base);
 	}
 }
 

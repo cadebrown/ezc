@@ -22,16 +22,19 @@ void prec_index(int index) {
 	}
 }
 void prec_init() {
-	if (_argc > 1) {
-		int _t_max = EZC_PREC, __tmp_i;
-		for (__tmp_i = 1; __tmp_i < _argc; ++__tmp_i) {
-			_t_max = (_t_max > strlen(_argv[__tmp_i])) ? _t_max : strlen(_argv[__tmp_i]); 
+	if (getenv("EZC_PREC") == NULL) {
+		if (_argc > 1) {
+			int _t_max = EZC_PREC, __tmp_i;
+			for (__tmp_i = 1; __tmp_i < _argc; ++__tmp_i) {
+				_t_max = (_t_max > strlen(_argv[__tmp_i])) ? _t_max : strlen(_argv[__tmp_i]); 
+			}
+			prec_literal(_t_max);
+		} else {
+			prec_literal(EZC_PREC);
 		}
-		
-		prec_literal(_t_max);
 	} else {
-		prec_literal(EZC_PREC);
-	}
+		prec_literal(strtol(getenv("EZC_PREC"), NULL, 10));
+	}	
 }
 
 void fadd(mpfr_t r, mpfr_t a, mpfr_t b) { 

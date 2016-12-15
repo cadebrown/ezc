@@ -11,9 +11,12 @@ import EZlogger as log
 # registers a variable, and checks if it is a valid name and then adds it to the global list of names
 def register_var(varname):
 	if re.findall(valid_var, varname) == [varname] and re.findall(valid_const, varname) != [varname] and re.findall(literal_str, varname) != [varname] and "_next_const" not in varname and "$" not in varname:# and re.findall(const_call, varname) != [varname]:
-		shared.var_set.add(varname)
+		shared.add_var(varname)
 		return True
 	return False
+
+def unvar(varname):
+	return varname.replace("_next_const(\"", "").replace("\")", "")
 
 # valid variable regex
 valid_var = "[_a-zA-Z\$][_a-zA-Z0-9]*"

@@ -1,4 +1,4 @@
-from shared import LibraryFunction, Library
+from shared import LibraryFunction, Library, rem_var
 
 import re, parser
 import lib_linker
@@ -18,9 +18,26 @@ void echoraw(char msg[]) {
 	printf("%s", msg); 
 }
 
+void varbraw(mpfr_t a, int base, int size) {
+	if (size < 0) size = 0;
+	if (base < 2) base = 2;
+	if (base > 62) base = 62; 
+	mpfr_out_str(stdout, base, size, a, MPFR_RNDN);
+}
+
+void varb(char name[], mpfr_t a, int base, int size) {
+	if (size < 0) size = 0;
+	if (base < 2) base = 2;
+	if (base > 62) base = 62; 
+	printf(\"%s : \", name); 
+	mpfr_out_str(stdout, base, size, a, MPFR_RNDN);
+	printf("\\n");
+}
+
 void var(char name[], mpfr_t a) { 
 	mpfr_printf(\"%s : %.*Rf \\n\", name, _prec, a); 
 }
+
 void varraw(mpfr_t a) { 
 	mpfr_printf(\"%.*Rf\", _prec, a); 
 }
@@ -44,12 +61,39 @@ void file(char name[], mpfr_t a) {
 
 """
 
+class GetArg(LibraryFunction):
+	def __str__(self):
+		self.args = list(self.args)
+		if len(self.args) < 2:
+			self.args.append("1")
+		if len(self.args) < 3:
+			self.args.append("10")
+		map(rem_var, self.args[1:])
+		self.args = map(parser.unvar, self.args)
+		return "fset(%s, _get_arg_base(%s, %s));" % (self.args[0], self.args[1], self.args[2])
+
 class Echo(LibraryFunction):
 	def __str__(self):
+		map(rem_var, self.args)
+		self.args = map(parser.unvar, self.args)
 		return "echo(\"%s\");" % (" ".join(self.args))
 class EchoRaw(LibraryFunction):
 	def __str__(self):
+		map(rem_var, self.args)
+		self.args = map(parser.unvar, self.args)
 		return "echoraw(\"%s\");" % (" ".join(self.args))
+
+class VarB(LibraryFunction):
+	def __str__(self):
+		self.args = list(self.args)
+		if len(self.args) < 2:
+			self.args.append("10")
+		if len(self.args) < 3:
+			self.args.append("0")
+		map(rem_var, [self.args[1], self.args[2]])
+		_base = parser.unvar(self.args[1])
+		_size = parser.unvar(self.args[2])
+		return "varb(\"%s\", %s, %s, %s);" % (self.args[0], self.args[0], _base, _size)
 
 class Var(LibraryFunction):
 	def __str__(self):
@@ -65,10 +109,13 @@ class IntVarRaw(LibraryFunction):
 		return "intvarraw(%s);" % (self.args[0])
 class File(LibraryFunction):
 	def __str__(self):
-		return "file(\"%s.txt\", %s);" % ((self.args[0], ) * 2)
+		return "file(\"%s.txt\", %s);" % (self.args[0], self.args[0])
 
 
 lib = Library(this_lib, ver, {
+	"get_arg": GetArg,
+
+	"varb": VarB,
 	"var": Var,
 	"var_raw": VarRaw,
 

@@ -22,8 +22,12 @@ def register_lib(lib):
 def get_var_inits(exc=[]):
 	init_st = "\n\tmpfr_t %%s; mpfr_init(%%s);" % ()
 	ret = ""
+	shared.var_set = set()
+	for vv in shared.var_occur:
+		if shared.var_occur[vv] > 0:
+			shared.var_set.add(vv)
 	for var in shared.var_set.difference(set(exc)):
-		ret += init_st % (var, var ) 
+		ret += init_st % (var, var) 
 	return ret
 
 def set_prec(st):
