@@ -1,0 +1,5 @@
+#!/bin/ezc -runfile
+prec $2
+i = rad $1
+var_raw i
+echo

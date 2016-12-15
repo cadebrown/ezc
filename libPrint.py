@@ -95,6 +95,18 @@ class VarB(LibraryFunction):
 		_size = parser.unvar(self.args[2])
 		return "varb(\"%s\", %s, %s, %s);" % (self.args[0], self.args[0], _base, _size)
 
+class VarBRaw(LibraryFunction):
+	def __str__(self):
+		self.args = list(self.args)
+		if len(self.args) < 2:
+			self.args.append("10")
+		if len(self.args) < 3:
+			self.args.append("0")
+		map(rem_var, [self.args[1], self.args[2]])
+		_base = parser.unvar(self.args[1])
+		_size = parser.unvar(self.args[2])
+		return "varbraw(%s, %s, %s);" % (self.args[0], _base, _size)
+
 class Var(LibraryFunction):
 	def __str__(self):
 		return "var(\"%s\", %s);" % (self.args[0], self.args[0])
@@ -116,6 +128,7 @@ lib = Library(this_lib, ver, {
 	"get_arg": GetArg,
 
 	"varb": VarB,
+	"varb_raw": VarBRaw,
 	"var": Var,
 	"var_raw": VarRaw,
 

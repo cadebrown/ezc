@@ -11,48 +11,84 @@ this_lib = """
 
 */
 
+int get_use_deg() {
+	char *x = getenv("EZC_DEG");
+	if (x == NULL) return 0;
+	if ((strcmp(x, "no") == 0) || (strcmp(x, "NO") == 0) || (strcmp(x, "0") == 0) || (strcmp(x, "-1") == 0)) return 0;
+	return 1;
+}
+
+void fdeg(mpfr_t r, mpfr_t a) {
+	mpfr_t __tmp; mpfr_init(__tmp);
+	mpfr_const_pi(__tmp, MPFR_RNDN);
+	mpfr_mul_ui(r, a, 180, MPFR_RNDN);
+	mpfr_div(r, r, __tmp, MPFR_RNDN);
+
+	mpfr_clear(__tmp);
+}
+void frad(mpfr_t r, mpfr_t a) {
+	mpfr_t __tmp; mpfr_init(__tmp);
+	mpfr_const_pi(__tmp, MPFR_RNDN);
+	mpfr_mul(r, a, __tmp, MPFR_RNDN);
+	mpfr_div_ui(r, r, 180, MPFR_RNDN);
+
+	mpfr_clear(__tmp);
+}
 void fsin(mpfr_t r, mpfr_t a) { 
-	mpfr_sin(r, a, MPFR_RNDD); 
+	if (get_use_deg()) { frad(r, a); } else { fset(r, a); }
+	mpfr_sin(r, r, MPFR_RNDD); 
 }
 void fcsc(mpfr_t r, mpfr_t a) { 
-	mpfr_csc(r, a, MPFR_RNDD); 
+	if (get_use_deg()) { frad(r, a); } else { fset(r, a); }
+	mpfr_csc(r, r, MPFR_RNDD); 
 }
 void fcos(mpfr_t r, mpfr_t a) { 
-	mpfr_cos(r, a, MPFR_RNDD); 
+	if (get_use_deg()) { frad(r, a); } else { fset(r, a); }
+	mpfr_cos(r, r, MPFR_RNDD); 
 }
 void fsec(mpfr_t r, mpfr_t a) { 
-	mpfr_sec(r, a, MPFR_RNDD); 
+	if (get_use_deg()) { frad(r, a); } else { fset(r, a); }
+	mpfr_sec(r, r, MPFR_RNDD); 
 }
 void ftan(mpfr_t r, mpfr_t a) { 
-	mpfr_tan(r, a, MPFR_RNDD); 
+	if (get_use_deg()) { frad(r, a); } else { fset(r, a); }
+	mpfr_tan(r, r, MPFR_RNDD); 
 }
 void fcot(mpfr_t r, mpfr_t a) { 
-	mpfr_tan(r, a, MPFR_RNDD); 
+	if (get_use_deg()) { frad(r, a); } else { fset(r, a); }
+	mpfr_cot(r, r, MPFR_RNDD); 
 }
 
 void fasin(mpfr_t r, mpfr_t a) { 
 	mpfr_asin(r, a, MPFR_RNDD); 
+	if (get_use_deg()) fdeg(r, r); 
 }
 void facsc(mpfr_t r, mpfr_t a) { 
 	mpfr_ui_div(r, 1, a, MPFR_RNDD);
 	mpfr_asin(r, r, MPFR_RNDD); 
+	if (get_use_deg()) fdeg(r, r); 
 }
 void facos(mpfr_t r, mpfr_t a) { 
 	mpfr_acos(r, a, MPFR_RNDD); 
+	if (get_use_deg()) fdeg(r, r); 
 }
 void fasec(mpfr_t r, mpfr_t a) { 
 	mpfr_ui_div(r, 1, a, MPFR_RNDD);
 	mpfr_acos(r, r, MPFR_RNDD); 
+	if (get_use_deg()) fdeg(r, r); 
 }
 void fatan(mpfr_t r, mpfr_t a) { 
 	mpfr_atan(r, a, MPFR_RNDD); 
+	if (get_use_deg()) fdeg(r, r); 
 }
 void fatan2(mpfr_t r, mpfr_t a, mpfr_t b) { 
 	mpfr_atan2(r, a, b, MPFR_RNDD); 
+	if (get_use_deg()) fdeg(r, r); 
 }
 void facot(mpfr_t r, mpfr_t a) {
 	mpfr_ui_div(r, 1, a, MPFR_RNDD);
 	mpfr_atan(r, r, MPFR_RNDD); 
+	if (get_use_deg()) fdeg(r, r); 
 }
 
 void fsinh(mpfr_t r, mpfr_t a) {
@@ -77,6 +113,7 @@ void fhcoth(mpfr_t r, mpfr_t a) {
 
 void fasinh(mpfr_t r, mpfr_t a) {
 	mpfr_asinh(r, a, MPFR_RNDD);
+	mpfr_div_ui(r, a, 180, MPFR_RNDN);
 }
 void facsch(mpfr_t r, mpfr_t a) {
 	mpfr_ui_div(r, 1, a, MPFR_RNDD);
@@ -99,6 +136,14 @@ void facoth(mpfr_t r, mpfr_t a) {
 
 
 """
+
+class Deg(LibraryFunction):
+	def __str__(self):
+		return "fdeg(%s);" % (", ".join(map(str, self.args)))
+class Rad(LibraryFunction):
+	def __str__(self):
+		return "frad(%s);" % (", ".join(map(str, self.args)))
+
 
 class Sin(LibraryFunction):
 	def __str__(self):
@@ -179,6 +224,10 @@ class Acoth(LibraryFunction):
 
 
 lib = Library(this_lib, "0.0.2", {
+	"deg": Deg, 
+	"rad": Rad, 
+
+
 	"sin": Sin, 
 	"csc": Csc, 
 	"cos": Cos, 

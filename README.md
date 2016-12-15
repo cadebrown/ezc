@@ -52,6 +52,14 @@ To test it, run `ezcc examples/pi/main.ezc example/pi/ataninv.ezc -o pi.o` (or `
 
 After this, run `./pi.o 1024` and it should print out 1024 bits of pi (3.14159265358979...)
 
+# Environment variables
+
+You can change the way EZC runs.
+
+Run `export EZC_PREC=1000` to set the number of digits to 1000 by default.
+
+Run `export EZC_DEG=1` to use degree mode for trig functions. To disable this, run `export EZC_DEG=0`
+
 # Utilities
 
 As of v3, commandline utilities are included, including all arithmetic (`add`, `sub`, etc.)

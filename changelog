@@ -6,6 +6,17 @@ ezc (3.0.0) unstable; urgency=med
     - now prints logging more appropriately
   * updated build system
     - source now included with deb package
+  * more utils
+    - added base transfer (frombase, tobase)
+    - radian to degree (deg), and degree to radian (rad)
+  * added environment variable
+    - Use export EZC_PREC=1000 to set the number of digits to use default
+    - This is overriden by all other methods to set precision
+    - Use export EZC_DEG=1 to use degrees in all trig functions
+    - Use export EZC_DEG=0 to use continue using radians
+    - If you set nothing, it defaults to radian mode
+  * bug fixes
+    - fixed echo print bug where two newlines were printed
 
  -- Cade Brown <info@chemicaldevelopment.us>  Tue, 13 Dec 2016 16:07:00 -0500
 
