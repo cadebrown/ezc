@@ -1,62 +1,46 @@
 #!/bin/bash
 
 rm -rf deb-package
-DIRS="deb-package/DEBIAN/ deb-package/bin/ deb-package/usr/ deb-package/usr/bin/ deb-package/usr/share/ deb-package/usr/share/doc/ deb-package/usr/share/doc/ezc/ deb-package/usr/src deb-package/usr/src/ezc/ deb-package/usr/src/ezc/utils/"
+
+EXE_PATH=deb-package/usr/bin/
+SRC_PATH=deb-package/usr/src/
+DOC_PATH=deb-package/usr/share/doc/ezc/
+
+EZC_BIN="#\!/bin/bash\\n$SRC_INSTALL_DIR/ezcc.py \"\${@}\""
+
+DIRS="deb-package/DEBIAN/ $DOC_PATH"
 
 for DIR in $DIRS
 do
-    mkdir -p $DIR
+	mkdir -p $DIR
 done
-
-SRC="./ezcc.py "./*.py
-UTILS=./utils/*
 FL="ezcc.deb"
 
-printf "\nSources for compiler: \n"
-for SR in $SRC
-do
-	printf "$(basename $SR) "
-done
-printf "\n\nUtilities included: \n"
-for UTIL in $UTILS
-do
-	printf "$(basename $UTIL) "
-done
-printf "\n"
+# Do generic install
+./install-all.sh $EXE_PATH $SRC_PATH
 
-#VERSION=$1
-#if [ "$VERSION" == "" ]; then
-#	echo "Default version"
-#	VERSION="latest"
-#fi
-
-cp $SRC deb-package/usr/src/ezc/
-cp $UTILS deb-package/usr/src/ezc/utils/
-
-for UTIL in $UTILS
-do
-    O_UTIL=deb-package/usr/bin/$(basename $UTIL)
-    ./ezcc.py $UTIL -o $O_UTIL
-	strip $O_UTIL
-done
-
-cp ezc_bin deb-package/bin/ezc
-cp ezc_bin deb-package/bin/ezcc
+# Replace exe files (bc linking)
+echo $EZC_BIN > $EXE_PATH/ezc
+echo $EZC_BIN > $EXE_PATH/ezcc
 
 echo "Now copying in debian files"
 cp CONTROL deb-package/DEBIAN/control
-cp COPYRIGHT deb-package/usr/share/doc/ezc/copyright
-gzip -n -9 -c changelog > deb-package/usr/share/doc/ezc/changelog.gz
+cp COPYRIGHT $DOC_PATH/copyright
+gzip -n -9 -c changelog > $DOC_PATH/changelog.gz
 
 # neccessary 
-printf "\nChanging file permissions to build deb package\n"
+#printf "\nChanging file permissions to build deb package\n"
 #chmod 0755 $DIRS/*
-chmod 0755 deb-package/usr/src/ezc/utils/*
-chmod 0755 $DIRS
-chmod 0644 deb-package/usr/share/doc/ezc/*
-chmod 0644 deb-package/usr/src/ezc/*.py
-chmod 0755 deb-package/usr/src/ezc/ezcc.py
-chmod 0755 deb-package/usr/bin/*
+#chmod 0755 deb-package/usr/src/ezc/utils/*
+#chmod 0755 $DIRS
+#chmod 0644 deb-package/usr/share/doc/ezc/*
+#chmod 0644 deb-package/usr/src/ezc/*.py
+#chmod 0755 deb-package/usr/src/ezc/ezcc.py
+#chmod 0755 deb-package/usr/bin/*
+chmod -R 0755 deb-package/usr/
+chmod 0755 $EXE_PATH/*
+chmod 0644 $SRC_PATH/*.py
+chmod 0644 $DOC_PATH/*
 
 printf "\nDeb file:\n"
 echo $FL

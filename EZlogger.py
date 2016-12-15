@@ -70,5 +70,5 @@ def init(_verbose=0, _silent=False):
 	hello(str(version))
 
 def end():
-	if int(verbosity) >= 0 and not silent:
+	if int(verbosity) > 0 and not silent:
 		print "%s" % (RESET)
