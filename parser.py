@@ -162,6 +162,8 @@ needed_var = 0
 
 # parses a line. This looks for operators, userfunctions, functions, assignment, functions with no arguments, and then freeform(default).
 def parse_line(line):
+	global needed_var
+	needed_var = 0
 	line = expand_line(line).replace("(", "").replace(")", "").split("\n")
 	res = ""
 	for x in line:
