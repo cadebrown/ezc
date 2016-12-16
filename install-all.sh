@@ -31,7 +31,7 @@ elif [ "$OSTYPE" == "cygwin" ] || [ "$OSTYPE" == "msys" ]; then
 	exit 1
 else
 	echo "Warning: OS not found."
-	exit 1
+	#exit 1
 fi
 
 echo Installing execs in $EXE_INSTALL_DIR
