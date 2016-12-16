@@ -15,28 +15,28 @@ void frand_1(mpfr_t r) {
 }
 void frand(mpfr_t r, mpfr_t a) { 
 	mpfr_urandomb(r, __rand_state);
-	mpfr_mul(r, r, a, MPFR_RNDD);
+	mpfr_mul(r, r, a, EZC_RND);
 }
 void frandgauss(mpfr_t r) { 
-	mpfr_grandom(r, NULL, __rand_state, MPFR_RNDD); 
+	mpfr_grandom(r, NULL, __rand_state, EZC_RND); 
 }
 
 void fsqrt(mpfr_t r, mpfr_t a) { 
-	mpfr_sqrt(r, a, MPFR_RNDD); 
+	mpfr_sqrt(r, a, EZC_RND); 
 }
 void fcbrt(mpfr_t r, mpfr_t a) { 
-	mpfr_cbrt(r, a, MPFR_RNDD); 
+	mpfr_cbrt(r, a, EZC_RND); 
 }
 void fhypot(mpfr_t r, mpfr_t a, mpfr_t b) { 
-	mpfr_hypot(r, a, b, MPFR_RNDD); 
+	mpfr_hypot(r, a, b, EZC_RND); 
 }
 
 void fexp(mpfr_t r, mpfr_t a) { 
-	mpfr_exp(r, a, MPFR_RNDD); 
+	mpfr_exp(r, a, EZC_RND); 
 }
 
 void flog(mpfr_t r, mpfr_t a) { 
-	mpfr_log(r, a, MPFR_RNDD); 
+	mpfr_log(r, a, EZC_RND); 
 }
 void flogb(mpfr_t r, mpfr_t a, mpfr_t b) {
 	mpfr_t __flogb_tmp; mpfr_init(__flogb_tmp);
@@ -47,22 +47,22 @@ void flogb(mpfr_t r, mpfr_t a, mpfr_t b) {
 }
 
 void fagm(mpfr_t r, mpfr_t a, mpfr_t b) {
-	mpfr_agm(r, a, b, MPFR_RNDD);
+	mpfr_agm(r, a, b, EZC_RND);
 }
 
 
 void fgamma(mpfr_t r, mpfr_t a) { 
-	mpfr_gamma(r, a, MPFR_RNDD); 
+	mpfr_gamma(r, a, EZC_RND); 
 }
 void ffactorial(mpfr_t r, mpfr_t a) { 
 	mpfr_t __tmp; mpfr_init(__tmp);
-	mpfr_add(__tmp, a, _next_const(\"1.0\"), MPFR_RNDD);
+	mpfr_add(__tmp, a, _next_const(\"1.0\"), EZC_RND);
 	fgamma(r, __tmp);
 	mpfr_clear(__tmp);
 }
 
 void fzeta(mpfr_t r, mpfr_t a) {
-	mpfr_zeta(r, a, MPFR_RNDD);
+	mpfr_zeta(r, a, EZC_RND);
 }
 """
 

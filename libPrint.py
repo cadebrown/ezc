@@ -22,7 +22,7 @@ void varbraw(mpfr_t a, int base, int size) {
 	if (size < 0) size = 0;
 	if (base < 2) base = 2;
 	if (base > 62) base = 62; 
-	mpfr_out_str(stdout, base, size, a, MPFR_RNDN);
+	mpfr_out_str(stdout, base, size, a, EZC_RND);
 }
 
 void varb(char name[], mpfr_t a, int base, int size) {
@@ -30,7 +30,7 @@ void varb(char name[], mpfr_t a, int base, int size) {
 	if (base < 2) base = 2;
 	if (base > 62) base = 62; 
 	printf(\"%s : \", name); 
-	mpfr_out_str(stdout, base, size, a, MPFR_RNDN);
+	mpfr_out_str(stdout, base, size, a, EZC_RND);
 	printf("\\n");
 }
 

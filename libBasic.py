@@ -38,23 +38,23 @@ void prec_init() {
 }
 
 void fadd(mpfr_t r, mpfr_t a, mpfr_t b) { 
-	mpfr_add(r, a, b, MPFR_RNDD); 
+	mpfr_add(r, a, b, EZC_RND); 
 }
 void fsub(mpfr_t r, mpfr_t a, mpfr_t b) { 
-	mpfr_sub(r, a, b, MPFR_RNDD); 
+	mpfr_sub(r, a, b, EZC_RND); 
 }
 void fmul(mpfr_t r, mpfr_t a, mpfr_t b) { 
-	mpfr_mul(r, a, b, MPFR_RNDD); 
+	mpfr_mul(r, a, b, EZC_RND); 
 }
 void fdiv(mpfr_t r, mpfr_t a, mpfr_t b) { 
-	mpfr_div(r, a, b, MPFR_RNDD);
+	mpfr_div(r, a, b, EZC_RND);
 }
 void fpow(mpfr_t r, mpfr_t a, mpfr_t b) { 
-	mpfr_pow(r, a, b, MPFR_RNDD); 
+	mpfr_pow(r, a, b, EZC_RND); 
 }
 
 void fmodulo(mpfr_t r, mpfr_t a, mpfr_t b) {
-	mpfr_fmod(r, a, b, MPFR_RNDD);
+	mpfr_fmod(r, a, b, EZC_RND);
 }
 
 void fnear(mpfr_t r, mpfr_t a) { 
@@ -62,10 +62,10 @@ void fnear(mpfr_t r, mpfr_t a) {
 }
 void fnear_mult(mpfr_t r, mpfr_t a, mpfr_t b) {
 	mpfr_t _fnear; mpfr_init(_fnear);
-	mpfr_div_ui(_fnear, b, 2, MPFR_RNDN);
-	mpfr_add(r, _fnear, a, MPFR_RNDN);
-	mpfr_fmod(_fnear, r, b, MPFR_RNDN);
-	mpfr_sub(r, r, _fnear, MPFR_RNDN);
+	mpfr_div_ui(_fnear, b, 2, EZC_RND);
+	mpfr_add(r, _fnear, a, EZC_RND);
+	mpfr_fmod(_fnear, r, b, EZC_RND);
+	mpfr_sub(r, r, _fnear, EZC_RND);
 
 }
 
@@ -74,27 +74,27 @@ void ftrunc(mpfr_t r, mpfr_t a) {
 }
 void ftrunc_mult(mpfr_t r, mpfr_t a, mpfr_t b) {
 	mpfr_t __ftrunc_mult_tmp; mpfr_init(__ftrunc_mult_tmp);
-	mpfr_fmod(__ftrunc_mult_tmp, a, b, MPFR_RNDD);
-	mpfr_sub(r, a, __ftrunc_mult_tmp, MPFR_RNDD);
+	mpfr_fmod(__ftrunc_mult_tmp, a, b, EZC_RND);
+	mpfr_sub(r, a, __ftrunc_mult_tmp, EZC_RND);
 	mpfr_clear(__ftrunc_mult_tmp);
 }
 
 void initset(mpfr_t a, char val[]) { 
 	mpfr_init(a); 
-	mpfr_set_str(a, val, 10, MPFR_RNDD); 
+	mpfr_set_str(a, val, 10, EZC_RND); 
 }
 void set(mpfr_t a, char val[]) { 
-	mpfr_set_str(a, val, 10, MPFR_RNDD); 
+	mpfr_set_str(a, val, 10, EZC_RND); 
 }
 void fset(mpfr_t a, mpfr_t b) { 
-	mpfr_set(a, b, MPFR_RNDD); 
+	mpfr_set(a, b, EZC_RND); 
 }
 
 void fmaximum(mpfr_t r, mpfr_t a, mpfr_t b) { 
-	mpfr_max(r, a, b, MPFR_RNDD); 
+	mpfr_max(r, a, b, EZC_RND); 
 }
 void fminimum(mpfr_t r, mpfr_t a, mpfr_t b) { 
-	mpfr_min(r, a, b, MPFR_RNDD); 
+	mpfr_min(r, a, b, EZC_RND); 
 }
 int fsgn(mpfr_t r) { 
 	return mpfr_sgn(r); 

@@ -20,118 +20,118 @@ int get_use_deg() {
 
 void fdeg(mpfr_t r, mpfr_t a) {
 	mpfr_t __tmp; mpfr_init(__tmp);
-	mpfr_const_pi(__tmp, MPFR_RNDN);
-	mpfr_mul_ui(r, a, 180, MPFR_RNDN);
-	mpfr_div(r, r, __tmp, MPFR_RNDN);
+	mpfr_const_pi(__tmp, EZC_RND);
+	mpfr_mul_ui(r, a, 180, EZC_RND);
+	mpfr_div(r, r, __tmp, EZC_RND);
 
 	mpfr_clear(__tmp);
 }
 void frad(mpfr_t r, mpfr_t a) {
 	mpfr_t __tmp; mpfr_init(__tmp);
-	mpfr_const_pi(__tmp, MPFR_RNDN);
-	mpfr_mul(r, a, __tmp, MPFR_RNDN);
-	mpfr_div_ui(r, r, 180, MPFR_RNDN);
+	mpfr_const_pi(__tmp, EZC_RND);
+	mpfr_mul(r, a, __tmp, EZC_RND);
+	mpfr_div_ui(r, r, 180, EZC_RND);
 
 	mpfr_clear(__tmp);
 }
 void fsin(mpfr_t r, mpfr_t a) { 
 	if (get_use_deg()) { frad(r, a); } else { fset(r, a); }
-	mpfr_sin(r, r, MPFR_RNDD); 
+	mpfr_sin(r, r, EZC_RND); 
 }
 void fcsc(mpfr_t r, mpfr_t a) { 
 	if (get_use_deg()) { frad(r, a); } else { fset(r, a); }
-	mpfr_csc(r, r, MPFR_RNDD); 
+	mpfr_csc(r, r, EZC_RND); 
 }
 void fcos(mpfr_t r, mpfr_t a) { 
 	if (get_use_deg()) { frad(r, a); } else { fset(r, a); }
-	mpfr_cos(r, r, MPFR_RNDD); 
+	mpfr_cos(r, r, EZC_RND); 
 }
 void fsec(mpfr_t r, mpfr_t a) { 
 	if (get_use_deg()) { frad(r, a); } else { fset(r, a); }
-	mpfr_sec(r, r, MPFR_RNDD); 
+	mpfr_sec(r, r, EZC_RND); 
 }
 void ftan(mpfr_t r, mpfr_t a) { 
 	if (get_use_deg()) { frad(r, a); } else { fset(r, a); }
-	mpfr_tan(r, r, MPFR_RNDD); 
+	mpfr_tan(r, r, EZC_RND); 
 }
 void fcot(mpfr_t r, mpfr_t a) { 
 	if (get_use_deg()) { frad(r, a); } else { fset(r, a); }
-	mpfr_cot(r, r, MPFR_RNDD); 
+	mpfr_cot(r, r, EZC_RND); 
 }
 
 void fasin(mpfr_t r, mpfr_t a) { 
-	mpfr_asin(r, a, MPFR_RNDD); 
+	mpfr_asin(r, a, EZC_RND); 
 	if (get_use_deg()) fdeg(r, r); 
 }
 void facsc(mpfr_t r, mpfr_t a) { 
-	mpfr_ui_div(r, 1, a, MPFR_RNDD);
-	mpfr_asin(r, r, MPFR_RNDD); 
+	mpfr_ui_div(r, 1, a, EZC_RND);
+	mpfr_asin(r, r, EZC_RND); 
 	if (get_use_deg()) fdeg(r, r); 
 }
 void facos(mpfr_t r, mpfr_t a) { 
-	mpfr_acos(r, a, MPFR_RNDD); 
+	mpfr_acos(r, a, EZC_RND); 
 	if (get_use_deg()) fdeg(r, r); 
 }
 void fasec(mpfr_t r, mpfr_t a) { 
-	mpfr_ui_div(r, 1, a, MPFR_RNDD);
-	mpfr_acos(r, r, MPFR_RNDD); 
+	mpfr_ui_div(r, 1, a, EZC_RND);
+	mpfr_acos(r, r, EZC_RND); 
 	if (get_use_deg()) fdeg(r, r); 
 }
 void fatan(mpfr_t r, mpfr_t a) { 
-	mpfr_atan(r, a, MPFR_RNDD); 
+	mpfr_atan(r, a, EZC_RND); 
 	if (get_use_deg()) fdeg(r, r); 
 }
 void fatan2(mpfr_t r, mpfr_t a, mpfr_t b) { 
-	mpfr_atan2(r, a, b, MPFR_RNDD); 
+	mpfr_atan2(r, a, b, EZC_RND); 
 	if (get_use_deg()) fdeg(r, r); 
 }
 void facot(mpfr_t r, mpfr_t a) {
-	mpfr_ui_div(r, 1, a, MPFR_RNDD);
-	mpfr_atan(r, r, MPFR_RNDD); 
+	mpfr_ui_div(r, 1, a, EZC_RND);
+	mpfr_atan(r, r, EZC_RND); 
 	if (get_use_deg()) fdeg(r, r); 
 }
 
 void fsinh(mpfr_t r, mpfr_t a) {
-	mpfr_sinh(r, a, MPFR_RNDD);
+	mpfr_sinh(r, a, EZC_RND);
 }
 void fcsch(mpfr_t r, mpfr_t a) {
-	mpfr_csch(r, a, MPFR_RNDD);
+	mpfr_csch(r, a, EZC_RND);
 }
 void fcosh(mpfr_t r, mpfr_t a) {
-	mpfr_cosh(r, a, MPFR_RNDD);
+	mpfr_cosh(r, a, EZC_RND);
 }
 void fsech(mpfr_t r, mpfr_t a) {
-	mpfr_sech(r, a, MPFR_RNDD);
+	mpfr_sech(r, a, EZC_RND);
 }
 void fhtanh(mpfr_t r, mpfr_t a) {
-	mpfr_tanh(r, a, MPFR_RNDD);
+	mpfr_tanh(r, a, EZC_RND);
 }
 void fhcoth(mpfr_t r, mpfr_t a) {
-	mpfr_coth(r, a, MPFR_RNDD);
+	mpfr_coth(r, a, EZC_RND);
 }
 
 
 void fasinh(mpfr_t r, mpfr_t a) {
-	mpfr_asinh(r, a, MPFR_RNDD);
-	mpfr_div_ui(r, a, 180, MPFR_RNDN);
+	mpfr_asinh(r, a, EZC_RND);
+	mpfr_div_ui(r, a, 180, EZC_RND);
 }
 void facsch(mpfr_t r, mpfr_t a) {
-	mpfr_ui_div(r, 1, a, MPFR_RNDD);
-	mpfr_asinh(r, r, MPFR_RNDD);
+	mpfr_ui_div(r, 1, a, EZC_RND);
+	mpfr_asinh(r, r, EZC_RND);
 }
 void facosh(mpfr_t r, mpfr_t a) {
-	mpfr_acosh(r, a, MPFR_RNDD);
+	mpfr_acosh(r, a, EZC_RND);
 }
 void fasech(mpfr_t r, mpfr_t a) {
-	mpfr_ui_div(r, 1, a, MPFR_RNDD);
-	mpfr_acosh(r, r, MPFR_RNDD);
+	mpfr_ui_div(r, 1, a, EZC_RND);
+	mpfr_acosh(r, r, EZC_RND);
 }
 void fatanh(mpfr_t r, mpfr_t a) {
-	mpfr_atanh(r, a, MPFR_RNDD);
+	mpfr_atanh(r, a, EZC_RND);
 }
 void facoth(mpfr_t r, mpfr_t a) {
-	mpfr_ui_div(r, 1, a, MPFR_RNDD);
-	mpfr_atanh(r, r, MPFR_RNDD);
+	mpfr_ui_div(r, 1, a, EZC_RND);
+	mpfr_atanh(r, r, EZC_RND);
 }
 
 

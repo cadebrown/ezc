@@ -62,6 +62,8 @@ gmp_randstate_t __rand_state;
 int _size_consts = $$_size_consts$$, _consts_id = 0, _consts_ov = 0;
 mpfr_t *_consts;
 
+#define EZC_RND MPFR_RNDN
+
 mpfr_ptr _next_const(char _set_val[]) {
 	if (_consts_id >= _size_consts) {
 		_consts_ov = 1;
@@ -70,7 +72,7 @@ mpfr_ptr _next_const(char _set_val[]) {
 	if (_consts_ov == 0) {
 		mpfr_init(_consts[_consts_id]);
 	}
-	mpfr_set_str(_consts[_consts_id], _set_val, 10, MPFR_RNDD);
+	mpfr_set_str(_consts[_consts_id], _set_val, 10, EZC_RND);
 	return (mpfr_ptr) _consts[_consts_id++];
 }
 
@@ -82,7 +84,7 @@ mpfr_ptr _next_const_base(char _set_val[], int base) {
 	if (_consts_ov == 0) {
 		mpfr_init(_consts[_consts_id]);
 	}
-	mpfr_set_str(_consts[_consts_id], _set_val, base, MPFR_RNDD);
+	mpfr_set_str(_consts[_consts_id], _set_val, base, EZC_RND);
 	return (mpfr_ptr) _consts[_consts_id++];
 }
 
@@ -116,7 +118,7 @@ mpfr_ptr _get_arg_base(int val, int base) {
 main="""
 int main(int argc, char *argv[]) {
 	_argc = argc; _argv = argv;
-	mpfr_set_default_rounding_mode(MPFR_RNDD);
+	mpfr_set_default_rounding_mode(EZC_RND);
 
 	srand(time(NULL));
 
