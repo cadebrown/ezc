@@ -11,9 +11,6 @@
 
 /deb-package/*
 
-!/deb-package/DEBIAN/control
-!/deb-package/usr/share/doc/ezcc/copyright
-
 # package
 *.deb
 

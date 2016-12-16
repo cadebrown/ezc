@@ -21,3 +21,5 @@ make install
 
 echo "export EZC_LIB="$BUILD_DIR >> ~/.bashrc
 echo "export EZC_LIB="$BUILD_DIR >> ~/.zshrc
+
+rm gmp* mpfr* -rf

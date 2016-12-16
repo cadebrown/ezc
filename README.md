@@ -16,27 +16,13 @@ You can think of it like a calculator language, but with more functions and more
 
 # Installation
 
-For all (*nix) systems, run `git clone http://github.chemicaldevelopment.us/ezc && cd ezc && sudo make` in the terminal to install.
+For all (*nix) systems (Debian, Ubuntu, Raspbian, OSX, FreeBSD, . . .) and maybe (cygwin, mingw, etc...), run `git clone http://github.chemicaldevelopment.us/ezc && cd ezc && make && source ~/.bashrc` in the terminal to install. This only requires some sort of C compiler.
 
-If that fails, run `cd ezc`, then `make install-local`
-
-For any debian based system, simply run 
-
-`curl https://raw.githubusercontent.com/ChemicalDevelopment/ezc/master/install-debian.sh | sh -`
-
-in the terminal to install a release version
-
-If that doesn't work, go to the [latest release](https://github.com/ChemicalDevelopment/ezc/releases/latest), and download the .deb file, and double click it
-
-For mac OS, you will need to clone and run `./install-all.sh` as descibed below
-
-For other OSs, I'm working on packaging systems. For now, you can build them following below:
+If that fails, please open an [issue](https://github.com/ChemicalDevelopment/ezc/issues)
 
 # Building
 
-You'll need a few prerequisites: `gcc`, and `mpfr` (which should be taken care of when you use `install-all.sh` for Debian/Fedora/MacOS)
-
-For Debian/Ubuntu/MacOS/Fedora, run `./install-all.sh` to build and install
+You just need `gcc` (or another c compiler)
 
 For all OSs:
 
