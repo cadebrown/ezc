@@ -88,6 +88,8 @@ def set_regex():
 def get_var(text):
 	if "$" in text:
 		return "_get_arg(%s)" % (text.replace("$", ""))
+	elif re.findall(valid_var, text):
+		return text
 	elif re.findall(valid_const, text):
 		return "_next_const(\"%s\")" % text
 	elif not re.findall(consts, text):
@@ -133,8 +135,8 @@ def clean_free(call):
 def clean_usrf(call):
 	return call[0], call[2], " ".join([call[1], call[3]])
 
-# parses a line. This looks for operators, userfunctions, functions, assignment, functions with no arguments, and then freeform(default).
-def parse_line(line):
+
+def get_statement(line):
 	line = line.strip()
 	#print "(%s)" % line
 	if re.findall(operators_regex, line):
@@ -144,7 +146,7 @@ def parse_line(line):
 	elif re.findall(functions_regex, line):		
 		line = parse_func(re.findall(functions_regex, line)[0])[1]
 	elif re.findall(set_regex, line) and "set" not in line:
-		line = parse_line(line.replace("=", "= set"))
+		line = get_statement(line.replace("=", "= set"))
 	elif re.findall(function_noarg_regex, line):
 		line = parse_func_noarg(re.findall(function_noarg_regex, line)[0])[1]
 	elif re.findall(freeform_regex, line):
@@ -154,4 +156,49 @@ def parse_line(line):
 			import EZcompiler
 			log.warn("Parsing", ["(Line %d) Error while parsing" % EZcompiler.line_num, "%s" % (line)])
 			line = line + ";"
+	return line
+
+needed_var = 0
+
+# parses a line. This looks for operators, userfunctions, functions, assignment, functions with no arguments, and then freeform(default).
+def parse_line(line):
+	line = expand_line(line).replace("(", "").replace(")", "").split("\n")
+	res = ""
+	for x in line:
+		res += get_statement(x) + "\n"
+	return res
+
+def get_nested(line):
+	to_ret = []
+	c_group = ""
+	paren_level = 0
+	has_been_1 = False
+	for char in line:
+		if char == ')':
+			paren_level -= 1
+		if paren_level >= 1:
+			c_group += char
+		if paren_level == 0 and has_been_1:
+			if c_group:
+				to_ret.append(c_group)
+			c_group = ""
+		if char == '(':
+			has_been_1 = True
+			paren_level += 1
+	return to_ret
+
+def expand_line(line):
+	global unexpanded_line; global needed_var
+	#print line
+	#print get_nested(line)
+	if get_nested(line):
+		to_do = get_nested(line)
+		ret = ""
+		for x in range(0, len(to_do)):
+			needed_var += 1
+			tmp_var = "tmp_%d" % (needed_var)
+		
+			line = line.replace(to_do[x], tmp_var, 1)
+			ret += expand_line(tmp_var + " = " + to_do[x]) + "\n"
+		return ret + line
 	return line

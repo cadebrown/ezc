@@ -15,6 +15,9 @@ ezc (3.0.0) unstable; urgency=med
     - Use export EZC_DEG=1 to use degrees in all trig functions
     - Use export EZC_DEG=0 to use continue using radians
     - If you set nothing, it defaults to radian mode
+  * added simple expansion
+    - You can wrap functions into other functions.
+	- Used like sqrt (add 2 3)
   * bug fixes
     - fixed echo print bug where two newlines were printed
 

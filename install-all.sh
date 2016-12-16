@@ -1,7 +1,5 @@
 #!/bin/bash
 
-EZC_BIN="#\!/bin/bash\\n$SRC_INSTALL_DIR/ezcc.py \"\${@}\""
-
 SOURCES=*.py
 UTILS=./utils/*
 
@@ -15,10 +13,13 @@ if [ "$2" == "" ] || [ "$2" == "auto" ]; then
     SRC_INSTALL_DIR=/usr/src/ezc/
 fi
 
+EZC_BIN="#!/bin/bash\\n$SRC_INSTALL_DIR/ezcc.py \"\${@}\""
+
+
 # Install dependencies
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
-	apt install libmpfr-dev libmpfr-doc libmpfr4 libmpfr4-dbg
-	dnf install mpfr mpfr-devel
+	apt install libmpfr-dev
+	dnf install mpfr-devel
 elif [[ "$OSTYPE" == "darwin"* ]]; then
 	brew install gcc48
 	brew install mpfr 
@@ -30,7 +31,7 @@ elif [ "$OSTYPE" == "cygwin" ] || [ "$OSTYPE" == "msys" ]; then
 	exit 1
 else
 	echo "Warning: OS not found."
-	exit 1
+	#exit 1
 fi
 
 echo Installing execs in $EXE_INSTALL_DIR
@@ -44,8 +45,8 @@ do
 done
 
 
-printf $EZC_BIN > $EXE_INSTALL_DIR/ezc
-printf $EZC_BIN > $EXE_INSTALL_DIR/ezcc
+echo -e $EZC_BIN > $EXE_INSTALL_DIR/ezc
+echo -e $EZC_BIN > $EXE_INSTALL_DIR/ezcc
 
 chmod +x $EXE_INSTALL_DIR/ezc
 chmod +x $EXE_INSTALL_DIR/ezcc

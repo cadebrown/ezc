@@ -1,4 +1,4 @@
-#!/bin/ezc -runfile
+#!/usr/bin/ezc -runfile
 prec $2
 i = sin $1
 var_raw i

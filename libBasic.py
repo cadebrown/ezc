@@ -57,6 +57,18 @@ void fmodulo(mpfr_t r, mpfr_t a, mpfr_t b) {
 	mpfr_fmod(r, a, b, MPFR_RNDD);
 }
 
+void fnear(mpfr_t r, mpfr_t a) { 
+	mpfr_round(r, a); 
+}
+void fnear_mult(mpfr_t r, mpfr_t a, mpfr_t b) {
+	mpfr_t _fnear; mpfr_init(_fnear);
+	mpfr_div_ui(_fnear, b, 2, MPFR_RNDN);
+	mpfr_add(r, _fnear, a, MPFR_RNDN);
+	mpfr_fmod(_fnear, r, b, MPFR_RNDN);
+	mpfr_sub(r, r, _fnear, MPFR_RNDN);
+
+}
+
 void ftrunc(mpfr_t r, mpfr_t a) { 
 	mpfr_trunc(r, a); 
 }
@@ -112,6 +124,13 @@ class Max(LibraryFunction):
 	def __str__(self):
 		return "fmaximum(%s);" % (", ".join(map(str, self.args)))
 
+class Near(LibraryFunction):
+	def __str__(self):
+		if len(self.args) == 2:
+			return "fnear(%s, %s);" % (self.args[0], self.args[1])
+		else:
+			return "fnear_mult(%s, %s, %s);" % (self.args[0], self.args[2], self.args[1])
+
 class Trunc(LibraryFunction):
 	def __str__(self):
 		if len(self.args) == 2:
@@ -146,6 +165,7 @@ lib = Library(this_lib, "0.0.2", {
 	"min": Min, 
 	"max": Max, 
 
+	"near": Near, 
 	"trunc": Trunc, 
 
 	"add": Add, 
@@ -155,7 +175,7 @@ lib = Library(this_lib, "0.0.2", {
 	"pow": Pow
 }, {
 	
-	"~": Trunc,
+	"~": Near,
 
 	"+": Add,
 	"-": Sub,

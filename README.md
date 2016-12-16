@@ -24,19 +24,19 @@ or, try this one if the above doesn't work:
 
 `curl https://rawgit.com/ChemicalDevelopment/ezc/master/install-debian.sh | sh -`
 
-in the terminal to install
+in the terminal to install a release/
 
 If that doesn't work, go to the [latest release](https://github.com/ChemicalDevelopment/ezc/releases/latest), and download the .deb file, and double click it
 
-For mac OS, you will need to clone and run `./install-legacy.sh` as descibed below
+For mac OS, you will need to clone and run `./install-all.sh` as descibed below
 
 For other OSs, I'm working on packaging systems. For now, you can build them following below:
 
 # Building
 
-You'll need a few prerequisites: `gcc`, and `mpfr` (which should be taken care of when you use `install-legacy.sh` for Debian/MacOS)
+You'll need a few prerequisites: `gcc`, and `mpfr` (which should be taken care of when you use `install-all.sh` for Debian/Fedora/MacOS)
 
-For Debian/Ubuntu/MacOS, run `./install-legacy.sh` to build and install
+For Debian/Ubuntu/MacOS/Fedora, run `./install-all.sh` to build and install
 
 For all OSs:
 
@@ -44,13 +44,13 @@ First, clone this repository:
 
 `git clone https://github.com/ChemicalDevelopment/ezc.git`
 
-Then, run `./ezcc` and assure that no errors were produced. If the were, please create and [Issue](https://github.com/ChemicalDevelopment/ezc/issues)
+Then, run `./ezcc.py` and assure that no errors were produced. If the were, please create and [Issue](https://github.com/ChemicalDevelopment/ezc/issues)
 
-Now, run `sudo ./install-legacy.sh`. If you get permissions errors, run `./install-legacy.sh ~/ezc/ none`. If you use the second one, when I use `ezcc`, just replace it with `~/ezc/ezcc`
+Now, run `sudo ./install-all.sh`. If you get permissions errors, run `./install-all.sh ~/ezc/bin/ ~/ezc/src/`. If you use the second one, when I use `ezcc`, just replace it with `~/ezc/bin/ezcc`
 
-To test it, run `ezcc examples/pi/main.ezc example/pi/ataninv.ezc -o pi.o` (or `~/ezc/ezcc.py examples/pi/main.ezc example/pi/ataninv.ezc -o pi.o`) 
+To test it, run `ezcc utils/sqrt -o sqrt` (or `~/ezc/bin/ezc utils/sqrt -o sqrt`) 
 
-After this, run `./pi.o 1024` and it should print out 1024 bits of pi (3.14159265358979...)
+After this, run `./sqrt 2 1000` and it should print out 1000 digits of square root of two (1.4142135623730...)
 
 # Environment variables
 
@@ -95,11 +95,11 @@ On your installed system, the compiled versions are listed in `/usr/bin/$UTIL`
 
 To compute pi, simply run:
 
-`echo "i = acos -1.0 : var i" | ezcc -e`
+`echo "i = acos -1 : var i" | ezcc -e`
 
 or, 
 
-`ezcc -c "i = acos -1.0 : var i"`
+`ezcc -c "i = acos -1 : var i"`
 
 Using `-c` or `-e` means you don't need a file, but c reads from the next argument, and e reads from stdin
 
@@ -110,6 +110,8 @@ You can also use a shebang, namely:
 or, to run locally
 
 `#!./ezcc.py -runfile`
+
+See the `examples` folder for a number of examples
 
 
 # Support
@@ -132,9 +134,7 @@ For any other text editor, look up how to install .tmLanguage files (most suppor
 
 # Running
 
-use it like: `./ezcc $file $file1 . . . -o $output`. Then, run `./$output`
-
-You can define methods, just check
+use it like: `./ezcc.py $file $file1 . . . -o $output`. Then, run `./$output`
 
 # Documentation
 

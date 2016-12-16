@@ -1,4 +1,4 @@
-#!/bin/ezc -runfile
+#!/usr/bin/ezc -runfile
 setprec $1
 i = exp 1
 var_raw i
