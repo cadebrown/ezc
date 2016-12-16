@@ -1,0 +1,7 @@
+function fib: R N
+
+T = (1 + (sqrt 5)) / 2
+
+U = (1 - (sqrt 5)) / 2
+
+R = ~ (((T ^ N) - (U ^ N)) / (sqrt 5))

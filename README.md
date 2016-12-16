@@ -95,11 +95,11 @@ On your installed system, the compiled versions are listed in `/usr/bin/$UTIL`
 
 To compute pi, simply run:
 
-`echo "i = acos -1.0 : var i" | ezcc -e`
+`echo "i = acos -1 : var i" | ezcc -e`
 
 or, 
 
-`ezcc -c "i = acos -1.0 : var i"`
+`ezcc -c "i = acos -1 : var i"`
 
 Using `-c` or `-e` means you don't need a file, but c reads from the next argument, and e reads from stdin
 
@@ -110,6 +110,8 @@ You can also use a shebang, namely:
 or, to run locally
 
 `#!./ezcc.py -runfile`
+
+See the `examples` folder for a number of examples
 
 
 # Support
