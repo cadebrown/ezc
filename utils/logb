@@ -1,4 +1,4 @@
-#!/bin/ezc -runfile
+#!/usr/bin/ezc -runfile
 prec $3
 if $2 == 0 
 	t = exp 1

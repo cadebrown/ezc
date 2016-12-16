@@ -1,4 +1,4 @@
-#!/bin/ezc -runfile
+#!/usr/bin/ezc -runfile
 prec $3
 i = $1 % $2
 var_raw i

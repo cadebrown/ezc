@@ -1,7 +1,5 @@
 #!/bin/bash
 
-EZC_BIN="#\!/bin/bash\\n$SRC_INSTALL_DIR/ezcc.py \"\${@}\""
-
 SOURCES=*.py
 UTILS=./utils/*
 
@@ -14,6 +12,8 @@ fi
 if [ "$2" == "" ] || [ "$2" == "auto" ]; then
     SRC_INSTALL_DIR=/usr/src/ezc/
 fi
+
+EZC_BIN="#!/bin/bash\\n$SRC_INSTALL_DIR/ezcc.py \"\${@}\""
 
 # Install dependencies
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
@@ -44,8 +44,8 @@ do
 done
 
 
-printf $EZC_BIN > $EXE_INSTALL_DIR/ezc
-printf $EZC_BIN > $EXE_INSTALL_DIR/ezcc
+echo -e $EZC_BIN > $EXE_INSTALL_DIR/ezc
+echo -e $EZC_BIN > $EXE_INSTALL_DIR/ezcc
 
 chmod +x $EXE_INSTALL_DIR/ezc
 chmod +x $EXE_INSTALL_DIR/ezcc

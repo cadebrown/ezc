@@ -80,6 +80,7 @@ def compile_lines(lines):
 				c_read = to_read
 			except Exception as e:
 				log.err("Compiling", ["(Line %d) Error while parsing" % line_num, line])
+				log.err("Compiling", str(e))
 	return res
 
 def get_c_file():

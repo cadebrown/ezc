@@ -23,15 +23,22 @@ cfl = ["vars"]
 # set args
 parser = argparse.ArgumentParser(description='Compile EZC Language. v2.3.0 http://github.chemicaldevelopment.us/ezc')
 parser.add_argument('files', metavar='files', type=str, nargs='*', help='files to compile')
-parser.add_argument('-args', metavar='args', default=[], type=str, nargs='+', help='arguments to run on the executable')
-#parser.add_argument('-l', metavar='libs', type=str, nargs='+', help='libraries to include (unstable)')
-parser.add_argument('-tmp', default="/tmp/out.c", help='Tmp directory')
 parser.add_argument('-o', default="__default__", help='Output file')
+
 parser.add_argument('-v', default="__default__", type=str, help='Verbosity level')
-parser.add_argument('-rem', action='store_true', help='Remove temp files')
-parser.add_argument('-remexec', action='store_true', help='Remove executable files')
+
+parser.add_argument('-tmp', default="/tmp/out.c", help='Tmp file')
+
+parser.add_argument('-cc', default="gcc", help='C Compiler')
+parser.add_argument('-ccargs', metavar='ccargs', default=[], type=str, nargs='+', help='arguments to run on the c compiler')
+parser.add_argument('-args', metavar='args', default=[], type=str, nargs='+', help='arguments to run on the executable')
+
 parser.add_argument('-run', action='store_true', help='Run executable')
 parser.add_argument('-runfile', action='store_true', help='Run from shebang file')
+
+parser.add_argument('-rem', action='store_true', help='Remove temp files')
+parser.add_argument('-remexec', action='store_true', help='Remove executable files')
+
 parser.add_argument('-c', type=str, help='run commandline')
 parser.add_argument('-e', action='store_true', help='run from stdin')
 # flags
