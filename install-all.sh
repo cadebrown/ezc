@@ -39,7 +39,7 @@ mkdir -p $EXE_INSTALL_DIR
 for UTIL in $UTILS
 do
     O_UTIL=$EXE_INSTALL_DIR/$(basename $UTIL)
-    ./ezcc.py $UTIL -o $O_UTIL -v 0
+    ./ezcc.py $UTIL -o $O_UTIL -v 0 -rem
 	strip $O_UTIL
 done
 
