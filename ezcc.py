@@ -81,7 +81,7 @@ cmp.init_all_compile(cmpflags, dargs["tmp"], dargs["o"])
 
 if dargs["e"]:
 	to_run = "\n".join(sys.stdin)
-	cmp.compile_c_option(to_run, args["o"])
+	cmp.compile_c_option(to_run, dargs["o"])
 elif dargs["c"]:
 	cmp.compile_c_option(dargs["c"], dargs["o"])
 else:

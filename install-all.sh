@@ -15,23 +15,32 @@ fi
 
 EZC_BIN="#!/bin/bash\\n$SRC_INSTALL_DIR/ezcc.py \"\${@}\""
 
-
-# Install dependencies
-if [[ "$OSTYPE" == "linux-gnu" ]]; then
-	apt install libmpfr-dev
-	dnf install mpfr-devel
-elif [[ "$OSTYPE" == "darwin"* ]]; then
-	brew install gcc48
-	brew install mpfr 
-elif [[ "$OSTYPE" == "freebsd"* ]]; then
-	pkg install gcc
-	pkg install mpfr
-elif [ "$OSTYPE" == "cygwin" ] || [ "$OSTYPE" == "msys" ]; then
-	echo "Error! Cygwin not supported"
-	exit 1
+if [[ "$3" == "true" ]]; then
+	echo "Installing MPFR from source"
+	./make-req.sh $EXE_INSTALL_DIR
 else
-	echo "Warning: OS not found."
-	#exit 1
+	# Install dependencies
+	if [[ "$OSTYPE" == "linux-gnu" ]]; then
+		if [[ $(cat /etc/debian_version) ]]; then
+			apt install libmpfr-dev
+		elif [[ $(cat /etc/fedora-release) ]]; then
+			dnf install mpfr-devel
+		fi
+	elif [[ "$OSTYPE" == "darwin"* ]]; then
+		brew install gcc48
+		brew install mpfr 
+	elif [[ "$OSTYPE" == "freebsd"* ]]; then
+		pkg install gcc
+		pkg install mpfr
+	elif [ "$OSTYPE" == "cygwin" ] || [ "$OSTYPE" == "msys" ]; then
+		echo "cygwin may work . . ."
+		echo "building mpfr from source:"
+		./make-req.sh $EXE_INSTALL_DIR
+	else
+		echo "Warning: OS not found."
+		echo "Building MPFR from source"
+		./make-req.sh $EXE_INSTALL_DIR
+	fi
 fi
 
 echo Installing execs in $EXE_INSTALL_DIR

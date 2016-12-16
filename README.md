@@ -16,15 +16,15 @@ You can think of it like a calculator language, but with more functions and more
 
 # Installation
 
+For all (*nix) systems, run `git clone http://github.chemicaldevelopment.us/ezc && cd ezc && sudo make` in the terminal to install.
+
+If that fails, run `cd ezc`, then `make install-local`
+
 For any debian based system, simply run 
 
 `curl https://raw.githubusercontent.com/ChemicalDevelopment/ezc/master/install-debian.sh | sh -`
 
-or, try this one if the above doesn't work: 
-
-`curl https://rawgit.com/ChemicalDevelopment/ezc/master/install-debian.sh | sh -`
-
-in the terminal to install a release/
+in the terminal to install a release version
 
 If that doesn't work, go to the [latest release](https://github.com/ChemicalDevelopment/ezc/releases/latest), and download the .deb file, and double click it
 
