@@ -15,10 +15,11 @@ fi
 
 EZC_BIN="#!/bin/bash\\n$SRC_INSTALL_DIR/ezcc.py \"\${@}\""
 
+
 # Install dependencies
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
-	apt install libmpfr-dev libmpfr-doc libmpfr4 libmpfr4-dbg
-	dnf install mpfr mpfr-devel
+	apt install libmpfr-dev
+	dnf install mpfr-devel
 elif [[ "$OSTYPE" == "darwin"* ]]; then
 	brew install gcc48
 	brew install mpfr 
