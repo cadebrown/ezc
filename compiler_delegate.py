@@ -49,7 +49,7 @@ def get_lib_args():
 	import ezconfig
 	res = ""
 	if log.verbosity <= 1:
-		res += "-fsyntax-only"
+		res += "-fsyntax-only -w"
 	if ezconfig.EZC_LIB:
 		res += ezconfig.EZC_LIB
 	else:
