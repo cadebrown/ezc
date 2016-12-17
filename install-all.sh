@@ -1,6 +1,7 @@
 #!/bin/bash
 
-SOURCES=*.py
+SOURCES=`echo *.py`
+SOURCES=${SOURCES//"ezconfig.py"}
 UTILS=./utils/*
 
 EXE_INSTALL_DIR=$1
