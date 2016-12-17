@@ -30,8 +30,8 @@ parser.add_argument('-v', default="__default__", type=str, help='Verbosity level
 parser.add_argument('-tmp', default="/tmp/out.c", help='Tmp file')
 
 parser.add_argument('-cc', default="gcc", help='C Compiler')
-parser.add_argument('-ccargs', metavar='ccargs', default=[], type=str, nargs='+', help='arguments to run on the c compiler')
-parser.add_argument('-args', metavar='args', default=[], type=str, nargs='+', help='arguments to run on the executable')
+parser.add_argument('-ccargs', default="", help='C Compiler arguments')
+parser.add_argument('-args', default="", help='Arguments ran on executable')
 
 parser.add_argument('-run', action='store_true', help='Run executable')
 parser.add_argument('-runfile', action='store_true', help='Run from shebang file')
@@ -77,7 +77,7 @@ log.info("Flags", ["%s: %s" % (x, cmpflags[x]) for x in cmpflags])
 if not isinstance(dargs["files"], list):
 	dargs["files"] = list(dargs["files"])
 
-cmp.init_all_compile(cmpflags, dargs["tmp"], dargs["o"])
+cmp.init_all_compile(cmpflags, dargs["tmp"], dargs["o"], dargs["ccargs"])
 
 if dargs["e"]:
 	to_run = "\n".join(sys.stdin)
