@@ -44,16 +44,14 @@ def init_all_compile(cmpflags, tmpf, execf):
 	compiler.init_cmp(cmpflags)
 
 def get_lib_args():
-	import os
-	ezcl = os.environ.get('EZC_LIB')
-	if ezcl:
-		#return "-I%s/include/ -L%s/lib/ -l:libmpfr.a -l:libgmp.a" % (ezcl, ezcl)
-		return "-I%s/include/ %s/lib/libmpfr.a %s/lib/libgmp.a" % (ezcl, ezcl, ezcl)
+	import ezconfig
+	if ezconfig.EZC_LIB:
+		return ezconfig.EZC_LIB
 	return "-lmpfr -lgmp"
 
 def compile_tmp(out):
 	# Compile the intermediate lang
-	cmd = "gcc %s %s -lm -o %s" % (tmp_file, get_lib_args(), out)
+	cmd = "cc %s %s -lm -o %s" % (tmp_file, get_lib_args(), out)
 	log.warn("Compiling", cmd, 1)
 	compile_proc = Popen(cmd, shell=True)
 	compile_proc.wait()

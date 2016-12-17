@@ -19,10 +19,10 @@ tar xvf mpfr.tar.xz
 cd mpfr*
 ./configure --disable-shared --enable-static --prefix=$BUILD_DIR --with-gmp=$BUILD_DIR
 make install
+cd ..
 
 export EZC_LIB=$BUILD_DIR
 
-echo "export EZC_LIB="$BUILD_DIR >> ~/.bashrc
+echo "EZC_LIB=\"-I$BUILD_DIR/include/ $BUILD_DIR/lib/libmpfr.a $BUILD_DIR/lib/libgmp.a\"" > $BUILD_DIR/ezconfig.py
 
-cd ..
 rm gmp* mpfr* -Rf
