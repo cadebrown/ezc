@@ -11,4 +11,5 @@ local-noreq:
 global-noreq:
 	-./install-all.sh /usr/bin/ /usr/src/
 
-
+req:
+	-./make-req.sh ~/ezc/

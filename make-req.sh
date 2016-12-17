@@ -12,6 +12,7 @@ tar xfv gmp.tar.xz
 cd gmp*
 ./configure --disable-shared --enable-static --prefix=$BUILD_DIR
 make install
+cd ..
 
 curl $MPFR_TAR > mpfr.tar.xz
 tar xvf mpfr.tar.xz
@@ -19,7 +20,9 @@ cd mpfr*
 ./configure --disable-shared --enable-static --prefix=$BUILD_DIR --with-gmp=$BUILD_DIR
 make install
 
-echo "export EZC_LIB="$BUILD_DIR >> ~/.bashrc
-echo "export EZC_LIB="$BUILD_DIR >> ~/.zshrc
+export EZC_LIB=$BUILD_DIR
 
-rm gmp* mpfr* -rf
+echo "export EZC_LIB="$BUILD_DIR >> ~/.bashrc
+
+cd ..
+rm gmp* mpfr* -Rf

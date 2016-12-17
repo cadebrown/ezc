@@ -47,7 +47,8 @@ def get_lib_args():
 	import os
 	ezcl = os.environ.get('EZC_LIB')
 	if ezcl:
-		return "-I%s/include/ -L%s/lib/ -l:libmpfr.a -l:libgmp.a" % (ezcl, ezcl)
+		#return "-I%s/include/ -L%s/lib/ -l:libmpfr.a -l:libgmp.a" % (ezcl, ezcl)
+		return "-I%s/include/ %s/lib/libmpfr.a %s/lib/libgmp.a" % (ezcl, ezcl, ezcl)
 	return "-lmpfr -lgmp"
 
 def compile_tmp(out):
