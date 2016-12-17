@@ -44,27 +44,28 @@ else
 	fi
 fi
 
+
+echo Installing sources in $EXE_INSTALL_DIR
+
+mkdir -p $SRC_INSTALL_DIR
+cp $SOURCES $SRC_INSTALL_DIR
+
+
 echo Installing execs in $EXE_INSTALL_DIR
 
 mkdir -p $EXE_INSTALL_DIR
 for UTIL in $UTILS
 do
     O_UTIL=$EXE_INSTALL_DIR/$(basename $UTIL)
-    ./ezcc.py $UTIL -o $O_UTIL -v 0 -rem
+    $SRC_INSTALL_DIR/ezcc.py $UTIL -o $O_UTIL -v 0 -rem
 	strip $O_UTIL
 done
-
 
 echo -e $EZC_BIN > $EXE_INSTALL_DIR/ezc
 echo -e $EZC_BIN > $EXE_INSTALL_DIR/ezcc
 
 chmod +x $EXE_INSTALL_DIR/ezc
 chmod +x $EXE_INSTALL_DIR/ezcc
-
-echo Installing sources in $EXE_INSTALL_DIR
-
-mkdir -p $SRC_INSTALL_DIR
-cp $SOURCES $SRC_INSTALL_DIR
 
 echo Installing utils in $UTIL_INSTALL_DIR
 
