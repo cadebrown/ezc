@@ -20,8 +20,14 @@ ezc (3.0.0) unstable; urgency=med
 	- Used like sqrt (add 2 3)
   * bug fixes
     - fixed echo print bug where two newlines were printed
+  * build system updates
+    - building MPFR from source now works
+	- library args at runtime updated
+  * some syntax changes
+    - parsing revamped
+	- custom functions
 
- -- Cade Brown <info@chemicaldevelopment.us>  Tue, 13 Dec 2016 16:07:00 -0500
+ -- Cade Brown <info@chemicaldevelopment.us>  Sat, 17 Dec 2016 22:38:00 -0500
 
 ezc (2.6.0) testing; urgency=low
 

@@ -21,6 +21,8 @@ FL="ezcc.deb"
 # Do generic install
 ./install-all.sh $EXE_PATH $SRC_PATH
 
+rm -rf $SRC_PATH/*.pyc
+
 # Replace exe files (bc this is in whole filesystem)
 echo -e $EZC_BIN > $EXE_PATH/ezc
 echo -e $EZC_BIN > $EXE_PATH/ezcc
@@ -43,5 +45,5 @@ echo $FL
 printf "\n\nReport on .deb file:\n"
 fakeroot dpkg-deb --build deb-package $FL && lintian $FL
 
-rm -rf deb-package
+#rm -rf deb-package
 

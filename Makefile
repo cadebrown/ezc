@@ -19,3 +19,6 @@ uninstall-local:
 
 uninstall-global:
 	-./uninstall.sh /usr/bin/ /usr/src/
+
+deb:
+	-./build-deb.sh
