@@ -182,6 +182,7 @@ def add_code(file_contents):
 	#main += res
 
 def add_compile_lines(lines):
+	
 	parser.set_regex()
 
 	global main; global user_funcs; global is_func

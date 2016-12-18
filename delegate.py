@@ -68,4 +68,3 @@ def transpile(text):
 	outf.write(compiler.get_c_file())
 	outf.close()
 	compile_exec()
-

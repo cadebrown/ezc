@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SOURCES=`echo *.py`
+SOURCES=*.py
 UTILS=./utils/*
 
 echo $SOURCES
@@ -46,11 +46,10 @@ else
 fi
 
 
-echo Installing sources in $EXE_INSTALL_DIR
+echo Installing sources in $SRC_INSTALL_DIR
 
 mkdir -p $SRC_INSTALL_DIR
 cp $SOURCES $SRC_INSTALL_DIR
-
 
 echo Installing execs in $EXE_INSTALL_DIR
 
@@ -67,8 +66,6 @@ echo -e $EZC_BIN > $EXE_INSTALL_DIR/ezcc
 
 chmod +x $EXE_INSTALL_DIR/ezc
 chmod +x $EXE_INSTALL_DIR/ezcc
-
-echo Installing utils in $UTIL_INSTALL_DIR
 
 echo Done copying
 

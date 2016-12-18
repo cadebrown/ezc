@@ -13,3 +13,9 @@ global-noreq:
 
 req:
 	-./make-req.sh ~/ezc/
+
+uninstall:
+	-./uninstall.sh
+
+uninstall-local:
+	-./uninstall.sh ~/ezc/ ~/ezc/
