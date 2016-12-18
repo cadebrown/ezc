@@ -205,13 +205,13 @@ void ezc_varb(mpfr_t a, int base) {
 void ezc_var(mpfr_t a) { 
 	mpfr_printf("%.*Rf\\n",ezc_prec, a); 
 }
-void ezc_intvar(char name[], mpfr_t a) { 
+void ezc_intvar(mpfr_t a) { 
 	mpz_t _t_; mpz_init(_t_);
-	mpfr_get_z(_t_, a, GMP_RNDZ);
-	mpfr_printf("%Zd\\n", name, _t_); 
+	mpfr_get_z(_t_, a, GMP_RNDN);
+	mpfr_printf("%Zd\\n", _t_); 
 }
 
-void ezc_file(char name[], mpfr_t a) { 
+void ezc_file(mpfr_t a, char name[]) { 
 	FILE *fp = fopen(name, "w+");
 	mpfr_fprintf(fp, "%.*Rf ", ezc_prec, a); 
 	fclose(fp);

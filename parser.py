@@ -48,8 +48,8 @@ def set_regex():
 	set_regex = "%s(%s)" % (valid_assign, valid_arg)
 	
 	valid_operator = "(?:%s)?(%s%s)?(%s)(%s%s)?" % (valid_assign, valid_arg, valid_break, olist_regex, valid_break, valid_arg)
-	valid_function = "(?:%s)?(%s)((?:%s%s)*)" % (valid_assign, flist_regex, valid_break, valid_arg)
-	valid_user_function = "(?:%s)?(%s)((?:%s%s)+)" % (valid_assign, valid_ufu, valid_break, valid_arg)
+	valid_function = "(?:%s)?(%s)[ ]+((?:%s%s)*)" % (valid_assign, flist_regex, valid_break, valid_arg)
+	valid_user_function = "(?:%s)?(%s[ ]+)((?:%s%s)*)" % (valid_assign, valid_ufu, valid_break, valid_arg)
 
 	#print valid_operator
 	#print valid_function
@@ -68,12 +68,11 @@ def get_var(text):
 		return "%s" % (text)
 
 def parse_return(call):
-	print call
 	#call = [call[1], (call[0] + call[2]).split()]
 	return get_statement("RETURN = %s" % (call))
 
 def parse_func(call):
-	call = [call[1], (call[0] + call[2]).split()]
+	call = [call[1], ("%s %s" % (call[0], call[2])).split()]
 	return compiler.get_function_translate(call[0], call[1])
 
 def parse_oper(call):

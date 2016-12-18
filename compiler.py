@@ -31,11 +31,11 @@ def c_echo(fname, args):
 
 def c_prec(fname, args):
 	global start
-	if re.findall(parser.valid_get_arg, args[0])[0] == args[0]:
+	if re.findall(parser.valid_get_arg, args[0]) and re.findall(parser.valid_get_arg, args[0])[0] == args[0]:
 		ret = "ezc_prec_index(%s);" % (args[0].replace("$", ""))
-	elif re.findall(parser.valid_const, args[0])[0] == args[0]:
+	elif re.findall(parser.valid_const, args[0]) and re.findall(parser.valid_const, args[0])[0] == args[0]:
 		ret = "ezc_prec_literal(%s);" % (args[0])
-	elif re.findall(parser.valid_var, args[0])[0] == args[0]:
+	elif re.findall(parser.valid_var, args[0]) and re.findall(parser.valid_var, args[0])[0] == args[0]:
 		ret = "ezc_prec_f(%s);" % (args[0])
 	start += ret 
 	return ""
@@ -71,6 +71,17 @@ def c_for_call(op, args):
 			var.add(arg)
 	return "for (ezc_set(%s, %s); mpfr_cmp(%s, %s) == -ezc_sgn(%s); ezc_add(%s, %s, %s)) {" % (args[0], args[1], args[0], args[2], args[3], args[0], args[0], args[3])
 
+def c_file(op, args):
+	if len(args) < 2:
+		args = args + ["ezc.txt"]
+		
+	args[0] = map(parser.get_var, [args[0]])[0]
+	print args
+	global var
+	for arg in args[0:1]:
+		if re.findall(parser.valid_var, arg) and re.findall(parser.valid_var, arg)[0] == arg:
+			var.add(arg)
+	return "ezc_file(%s, \"%s\");" % (args[0], args[1])
 
 def c_endblock(op, args):
 	return "}"
@@ -78,7 +89,7 @@ def c_endblock(op, args):
 
 declare_function = "function "
 
-functions = "if,fi,for,rof,prec,add,sub,mul,div,pow,mod,var,intvar,set,sqrt,cbrt,min,max,near,trunc,rand,fact,echo,hypot,exp,log,logb,agm,gamma,factorial,zeta,deg,rad,sin,cos,tan,asin,acos,atan,csc,sec,cot,acsc,asec,acot,sinh,cosh,tanh,asinh,acosh,atanh,csch,sech,coth,acsch,asech,acoth".split(",")
+functions = "if,fi,for,rof,prec,add,sub,mul,div,pow,mod,var,intvar,file,set,sqrt,cbrt,min,max,near,trunc,rand,fact,echo,hypot,exp,log,logb,agm,gamma,factorial,zeta,deg,rad,sin,cos,tan,asin,acos,atan,csc,sec,cot,acsc,asec,acot,sinh,cosh,tanh,asinh,acosh,atanh,csch,sech,coth,acsch,asech,acoth".split(",")
 operators = "+,-,*,/,^,%,~,?,!,√,ζ".split(",")
 
 op_map_funcs = {
@@ -105,6 +116,7 @@ functions_translate_funcs = {
 	"for": c_for_call,
 	"fi": c_endblock,
 	"rof": c_endblock,
+	"file": c_file,
 }
 
 def get_function_translate(fname, args):
