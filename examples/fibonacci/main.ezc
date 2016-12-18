@@ -1,5 +1,4 @@
 for i 1 (max 15 $1)
-    int_var_raw (@fib i)
-	echo_raw , 
+    var (@fib i)
+	echo , 
 rof
-""

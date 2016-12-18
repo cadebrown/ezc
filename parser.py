@@ -13,7 +13,7 @@ def is_literal(line):
 	return len(re.findall(literal_c, line)) != 0
 
 
-valid_break = "[ ,]*"
+valid_break = "[ ,><=]*"
 valid_get_arg = "\$[0-9]+"
 valid_var = "[_a-zA-Z][_a-zA-Z0-9]*|%s" % (valid_get_arg)
 valid_const = "(?:\+|\-)?[0-9\.]+"
@@ -48,7 +48,7 @@ def set_regex():
 	set_regex = "%s(%s)" % (valid_assign, valid_arg)
 	
 	valid_operator = "(?:%s)?(%s%s)?(%s)(%s%s)?" % (valid_assign, valid_arg, valid_break, olist_regex, valid_break, valid_arg)
-	valid_function = "(?:%s)?(%s)((?:%s%s)+)" % (valid_assign, flist_regex, valid_break, valid_arg)
+	valid_function = "(?:%s)?(%s)((?:%s%s)*)" % (valid_assign, flist_regex, valid_break, valid_arg)
 	valid_user_function = "(?:%s)?(%s)((?:%s%s)+)" % (valid_assign, valid_ufu, valid_break, valid_arg)
 
 	#print valid_operator
@@ -64,7 +64,7 @@ def get_var(text):
 		return text
 	elif re.findall(valid_const, text):
 		return "ezc_next_const(\"%s\")" % text
-	elif not re.findall(consts, text):
+	else:
 		return "%s" % (text)
 
 def parse_return(call):

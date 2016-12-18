@@ -52,9 +52,33 @@ def c_call_optional_call(fname, args):
 def arg_call(op, args):
 	return c_call(op_map_funcs[op], args)
 
+def c_if_call(op, args):
+	args = map(parser.get_var, args)
+	global var
+	for arg in args:
+		if re.findall(parser.valid_var, arg) and re.findall(parser.valid_var, arg)[0] == arg:
+			var.add(arg)
+	return "if (mpfr_cmp(%s, %s) %s 0) {" % (args[0], args[2], args[1])
+
+def c_for_call(op, args):
+	if len(args) <= 3:
+		args = args + ["ezc_next_const(\"1\")"]
+	args = map(parser.get_var, args)
+	print args
+	global var
+	for arg in args:
+		if re.findall(parser.valid_var, arg) and re.findall(parser.valid_var, arg)[0] == arg:
+			var.add(arg)
+	return "for (ezc_set(%s, %s); mpfr_cmp(%s, %s) == -ezc_sgn(%s); ezc_add(%s, %s, %s)) {" % (args[0], args[1], args[0], args[2], args[3], args[0], args[0], args[3])
+
+
+def c_endblock(op, args):
+	return "}"
+
+
 declare_function = "function "
 
-functions = "prec,add,sub,mul,div,pow,mod,var,intvar,set,sqrt,cbrt,min,max,near,trunc,rand,fact,echo,hypot,exp,log,logb,agm,gamma,factorial,zeta,deg,rad,sin,cos,tan,asin,acos,atan,csc,sec,cot,acsc,asec,acot,sinh,cosh,tanh,asinh,acosh,atanh,csch,sech,coth,acsch,asech,acoth".split(",")
+functions = "if,fi,for,rof,prec,add,sub,mul,div,pow,mod,var,intvar,set,sqrt,cbrt,min,max,near,trunc,rand,fact,echo,hypot,exp,log,logb,agm,gamma,factorial,zeta,deg,rad,sin,cos,tan,asin,acos,atan,csc,sec,cot,acsc,asec,acot,sinh,cosh,tanh,asinh,acosh,atanh,csch,sech,coth,acsch,asech,acoth".split(",")
 operators = "+,-,*,/,^,%,~,?,!,√,ζ".split(",")
 
 op_map_funcs = {
@@ -77,6 +101,10 @@ functions_translate_funcs = {
 	"near": c_call_optional_call,
 	"rand": c_call_optional_call,
 	"prec": c_prec,
+	"if": c_if_call,
+	"for": c_for_call,
+	"fi": c_endblock,
+	"rof": c_endblock,
 }
 
 def get_function_translate(fname, args):
