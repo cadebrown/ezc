@@ -7,14 +7,14 @@ BUILD_DIR=$1
 mkdir -p $BUILD_DIR
 cd $BUILD_DIR
 
-#curl $GMP_TAR > gmp.tar.xz
+curl $GMP_TAR > gmp.tar.xz
 tar xfv gmp.tar.xz
 cd gmp*
 ./configure --disable-shared --enable-static --prefix=$BUILD_DIR
 make install
 cd ..
 
-#curl $MPFR_TAR > mpfr.tar.xz
+curl $MPFR_TAR > mpfr.tar.xz
 tar xvf mpfr.tar.xz
 cd mpfr*
 ./configure --disable-shared --enable-static --prefix=$BUILD_DIR --with-gmp=$BUILD_DIR
@@ -23,4 +23,4 @@ cd ..
 
 #export EZC_LIB=$BUILD_DIR
 
-#rm gmp* mpfr* -Rf
+rm gmp* mpfr* -Rf

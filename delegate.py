@@ -29,7 +29,7 @@ def get_lib_args():
 	import ezdata
 	res = "-lm "
 	if ezdata.EZC_LIB:
-		res += " " + ezdata.EZC_LIB
+		res += " " + ezdata.EZC_LIB + " "
 	else:
 		res += " -lmpfr -lgmp"
 	return res
