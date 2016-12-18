@@ -43,7 +43,6 @@ def compile_exec():
 	compile_proc.wait()
 
 def addcode(fs):
-	print fs
 	try:
 		compiler.add_code(fs)
 	except Exception as e:
