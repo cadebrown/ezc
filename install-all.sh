@@ -54,6 +54,10 @@ echo Installing sources in $SRC_INSTALL_DIR
 mkdir -p $SRC_INSTALL_DIR
 cp $SOURCES $SRC_INSTALL_DIR
 
+if [[ "$3" == "true" ]]; then
+	printf "\nEZC_LIB=\"-w -I$SRC_INSTALL_DIR/include/ $SRC_INSTALL_DIR/lib/libmpfr.a $SRC_INSTALL_DIR/lib/libgmp.a\"\n" >> $SRC_INSTALL_DIR/ezdata.py
+fi
+
 echo Installing execs in $EXE_INSTALL_DIR
 
 mkdir -p $EXE_INSTALL_DIR
@@ -69,10 +73,7 @@ echo -e $EZC_BIN > $EXE_INSTALL_DIR/ezcc
 
 chmod +x $EXE_INSTALL_DIR/ezc
 chmod +x $EXE_INSTALL_DIR/ezcc
-if [[ "$3" == "true" ]]; then
 
-	printf "\nEZC_LIB=\"-w -I$SRC_INSTALL_DIR/include/ $SRC_INSTALL_DIR/lib/libmpfr.a $SRC_INSTALL_DIR/lib/libgmp.a\"\n" >> $SRC_INSTALL_DIR/ezdata.py
-fi
 
 echo Done copying
 
