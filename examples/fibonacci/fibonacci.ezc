@@ -1,4 +1,4 @@
-[func] fib| R N
+[fib] N
 
 T = (1 + (sqrt 5)) / 2
 
@@ -6,4 +6,4 @@ U = (1 - (sqrt 5)) / 2
 
 return (~ (((T ^ N) - (U ^ N)) / (sqrt 5)))
 
-[/func]
+[/fib]

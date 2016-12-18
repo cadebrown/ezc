@@ -130,7 +130,7 @@ def parse_line(line):
 		return ""
 
 	global needed_var
-	needed_var = 0
+	#needed_var = 0
 	line = expand_line(line).replace("(", "").replace(")", "").split("\n")
 	res = ""
 	for x in line:

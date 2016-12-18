@@ -32,7 +32,8 @@ void ezc_prec_index(int index) {
 	}
 }
 void ezc_prec_f(mpfr_t x) {
-	ezc_prec_literal(mpfr_get_si(x, EZC_RND));
+	printf(\"%lld\\n\", (long long)mpfr_get_si(x, EZC_RND));
+	//ezc_prec_literal((long long)mpfr_get_si(x, EZC_RND));
 }
 void ezc_prec_init() {
 	if (getenv("EZC_PREC") == NULL) {

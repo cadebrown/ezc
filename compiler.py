@@ -32,12 +32,13 @@ def c_echo(fname, args):
 def c_prec(fname, args):
 	global start
 	if re.findall(parser.valid_get_arg, args[0]) and re.findall(parser.valid_get_arg, args[0])[0] == args[0]:
-		ret = "ezc_prec_index(%s);" % (args[0].replace("$", ""))
+		start += "ezc_prec_index(%s);" % (args[0].replace("$", ""))
+		return ""
 	elif re.findall(parser.valid_const, args[0]) and re.findall(parser.valid_const, args[0])[0] == args[0]:
-		ret = "ezc_prec_literal(%s);" % (args[0])
+		start += "\nezc_prec_literal(%s);" % (args[0])
+		return ""
 	elif re.findall(parser.valid_var, args[0]) and re.findall(parser.valid_var, args[0])[0] == args[0]:
-		ret = "ezc_prec_f(%s);" % (args[0])
-	start += ret 
+		return "ezc_prec_f(%s);" % (args[0])
 	return ""
 
 def c_call_optional_call(fname, args):
