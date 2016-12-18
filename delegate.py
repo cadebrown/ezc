@@ -8,7 +8,6 @@ args = None
 def init(_args):
 	global args
 	args = _args
-	parser.set_regex()
 
 def remove_file(fn):
 	clearcmd = "rm %s" % (fn)

@@ -20,8 +20,12 @@ valid_const = "(?:\+|\-)?[0-9\.]+"
 valid_arg = "(?:%s|%s)" % (valid_var, valid_const)
 literal_c = ".*;"
 
+valid_return = "return (%s)" % (valid_var)
+
 valid_assign = "(%s)[ ]?=[ ]?" % (valid_var)
 
+valid_declare_user_function = "\[func\] ([a-zA-Z0-9_]+)\|((?:\ %s)+)" % (valid_var)
+valid_end_user_function = "\[\/func\]"
 
 # global vars are set in set_regex()
 valid_operator = ""
@@ -32,12 +36,10 @@ valid_user_function = ""
 
 # sets the regex. This should be called after lib_linker.register_lib has been called for all imports
 def set_regex():
-
 	#valid_arg = "[a-z]+"
-	
 	valid_ufu = "\@[_a-zA-Z][_a-zA-Z0-9]*"
 	valid_c = "[ ]*({(.*)}|(.*);)"
-	global valid_operator; global valid_function; global user_valid_function
+	global valid_operator; global valid_function; global valid_user_function
 
 	flist_regex = "%s" % ("|".join(compiler.functions))
 
@@ -65,26 +67,36 @@ def get_var(text):
 	elif not re.findall(consts, text):
 		return "%s" % (text)
 
+def parse_return(call):
+	print call
+	#call = [call[1], (call[0] + call[2]).split()]
+	return get_statement("RETURN = %s" % (call))
+
 def parse_func(call):
 	call = [call[1], (call[0] + call[2]).split()]
-	#call[1] = map(get_var, call[1])
 	return compiler.get_function_translate(call[0], call[1])
 
 def parse_oper(call):
 	call = [call[2], ("%s %s %s" % (call[0], call[1], call[3])).split()]
-	
-	#call[1] = map(get_var, call[1])
-	#print compiler.get_operator_translate(call[0], call[1])	
 	return compiler.get_operator_translate(call[0], call[1])
 
+def parse_user_func(call):
+	print call
+	call = [call[1].replace("@", ""), ("%s %s" % (call[0], call[2])).split()]
+	return compiler.get_user_func_translate(call[0], call[1])
 
 def get_statement(line):
-	global valid_assign
+	global valid_assign; #valid_user_function
+	#print valid_user_function
 	line = re.sub(' +', ' ', line)
-	if re.findall(valid_operator, line):
+	if re.findall(valid_return, line):
+		line = parse_return(re.findall(valid_return, line)[0])
+	elif re.findall(valid_operator, line):
 		line = parse_oper(re.findall(valid_operator, line)[0])
 	elif re.findall(valid_function, line):		
 		line = parse_func(re.findall(valid_function, line)[0])
+	elif re.findall(valid_user_function, line):
+		line = parse_user_func(re.findall(valid_user_function, line)[0])
 	elif re.findall(valid_assign, line) and "set" not in line:
 		line = get_statement(line.replace("=", "= set"))
 	return line
@@ -93,6 +105,19 @@ needed_var = 0
 
 # parses a line. This looks for operators, userfunctions, functions, assignment, functions with no arguments, and then freeform(default).
 def parse_line(line):
+	global valid_declare_user_function; global valid_end_user_function
+	#print valid_declare_user_function
+	#print re.findall(valid_declare_user_function, line)
+	if re.findall(valid_declare_user_function, line):
+		res = re.findall(valid_declare_user_function, line)[0]
+		compiler.user_funcs += "void __%s(mpfr_t RETURN, mpfr_t %s) {" % (res[0], ", mpfr_t ".join(res[1].split()))
+		compiler.is_func = True
+		return ""
+	if re.findall(valid_end_user_function, line):
+		compiler.user_funcs += "}"
+		compiler.is_func = False
+		return ""
+
 	global needed_var
 	needed_var = 0
 	line = expand_line(line).replace("(", "").replace(")", "").split("\n")
