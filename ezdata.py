@@ -13,7 +13,7 @@ gmp_randstate_t ezc_rand_state;
 mpfr_t *ezc_consts;
 
 #define EZC_RND MPFR_RNDN
-#define EZC_MIN_PREC 10
+#define EZC_MIN_PREC 20
 
 long long ezc_prec;
 #define ezc_bprec (long long)(ezc_prec * 3.3219281)

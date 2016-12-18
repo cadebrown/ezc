@@ -82,7 +82,6 @@ def c_file(op, args):
 	return "ezc_file(%s, \"%s\");" % (args[0], args[1])
 
 def c_elseblock(op, args):
-	print args
 	return "} else {"
 
 def c_endblock(op, args):
