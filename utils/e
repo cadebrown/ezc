@@ -1,5 +1,3 @@
 #!/usr/bin/ezc -runfile
 setprec $1
-i = exp 1
-var_raw i
-echo
+var (exp 1)

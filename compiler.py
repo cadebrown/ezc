@@ -40,10 +40,18 @@ def c_call_optional_call(fname, args):
 def arg_call(op, args):
 	return c_call(op_map_funcs[op], args)
 
+
+def get_function_translate(fname, args):
+	global functions_translate_funcs
+	fname = fname.strip()
+	if fname in functions_translate_funcs:
+		return functions_translate_funcs[fname](fname, args)
+	return functions_translate_funcs["__default__"](fname, args)
+
 declare_function = "function "
 
-functions = "prec,add,sub,mul,div,pow,mod,var,set,sqrt,cbrt,min,max,near,trunc,rand,fact,echo,hypot,exp,log,logb,agm,gamma,factorial,zeta,deg,rad,sin,cos,tan,asin,acos,atan,csc,sec,cot,acsc,asec,acot,sinh,cosh,tanh,asinh,acosh,atanh,csch,sech,coth,acsch,asech,acoth".split(",")
-operators = "+,-,+,/,^,%,~,?,!,√,ζ".split(",")
+functions = "prec,add,sub,mul,div,pow,mod,var,intvar,set,sqrt,cbrt,min,max,near,trunc,rand,fact,echo,hypot,exp,log,logb,agm,gamma,factorial,zeta,deg,rad,sin,cos,tan,asin,acos,atan,csc,sec,cot,acsc,asec,acot,sinh,cosh,tanh,asinh,acosh,atanh,csch,sech,coth,acsch,asech,acoth".split(",")
+operators = "+,-,*,/,^,%,~,?,!,√,ζ".split(",")
 
 op_map_funcs = {
 	"+": "add",
@@ -57,17 +65,17 @@ op_map_funcs = {
 	"!": "fact",
 	"√": "sqrt",
 	"ζ": "zeta",
-#	"°": "rad"
 }
 
 functions_translate_funcs = {
 	"__default__": c_call,
 	"echo": c_echo,
-	"logb": c_call_optional_call,
+	"near": c_call_optional_call,
+	"rand": c_call_optional_call,
 	"prec": c_prec,
 }
 operators_translate_funcs = {
-	"__default__": arg_call
+	"__default__": get_function_translate
 }
 
 def get_var_inits():
@@ -76,15 +84,12 @@ def get_var_inits():
 		res += "\n\tmpfr_t %s; mpfr_init(%s);" % (x, x)
 	return res
 
-def get_function_translate(fname, args):
-	if fname in functions_translate_funcs:
-		return functions_translate_funcs[fname](fname, args)
-	return functions_translate_funcs["__default__"](fname, args)
-
 def get_operator_translate(op, args):
+	global operators_translate_funcs
+	op = op.strip()
 	if op in operators_translate_funcs:
 		return operators_translate_funcs[op](op, args)
-	return operators_translate_funcs["__default__"](op, args)
+	return operators_translate_funcs["__default__"](op_map_funcs[op], args)
 
 start="""int main(int argc, char *argv[]) {
 	ezc_init(argc, argv);"""

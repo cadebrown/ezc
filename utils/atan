@@ -1,5 +1,3 @@
 #!/usr/bin/ezc -runfile
 prec $2
-i = atan $1
-var_raw i
-echo
+var (atan $1)

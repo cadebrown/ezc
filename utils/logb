@@ -1,10 +1,7 @@
 #!/usr/bin/ezc -runfile
 prec $3
-if $2 == 0 
-	t = exp 1
-	i = logb $1 t
+if $2 == 0
+	var (log $1)
 else
-	i = logb $1 $2
+	var (logb $1 $2)
 fi
-var_raw i
-echo

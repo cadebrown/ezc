@@ -1,7 +1,7 @@
 #!/usr/bin/ezc -runfile
 prec $2
 if $1 == 0 
-    i = ?
+	var (?)
 else
     i = ? $1
 fi

@@ -1,5 +1,3 @@
 #!/usr/bin/ezc -runfile
 prec $2
-i = ~ $1
-int_var_raw i
-echo
+intvar ($1)

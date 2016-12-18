@@ -109,9 +109,9 @@ void ezc_near_2(mpfr_t r, mpfr_t a) {
 }
 void ezc_near_3(mpfr_t r, mpfr_t a, mpfr_t b) {
 	mpfr_t _fnear; mpfr_init(_fnear);
-	mpfr_div_ui(_fnear, b, 2, EZC_RND);
-	mpfr_add(r, _fnear, a, EZC_RND);
-	mpfr_fmod(_fnear, r, b, EZC_RND);
+	mpfr_div_ui(_fnear, a, 2, EZC_RND);
+	mpfr_add(r, _fnear, b, EZC_RND);
+	mpfr_fmod(_fnear, r, a, EZC_RND);
 	mpfr_sub(r, r, _fnear, EZC_RND);
 
 }

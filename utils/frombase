@@ -1,5 +1,4 @@
 #!/usr/bin/ezc -runfile
 prec $3
 { if (_argc >= 3) { fset(i, _get_arg_base(1, strtol(_argv[2], NULL, 10))); } else { fset(i, _get_arg_base(1, 10)); } }
-var_raw i
-echo
+var i

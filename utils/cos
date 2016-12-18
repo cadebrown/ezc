@@ -1,5 +1,3 @@
 #!/usr/bin/ezc -runfile
 prec $2
-i = cos $1
-var_raw i
-echo
+var (cos $1)
