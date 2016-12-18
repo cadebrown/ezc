@@ -21,7 +21,6 @@ if [[ "$3" == "true" ]]; then
 	echo "Installing MPFR from source"
 	
 	./make-req.sh $SRC_INSTALL_DIR
-	printf "\nEZC_LIB=\"-I$SRC_INSTALL_DIR/include/ $SRC_INSTALL_DIR/lib/libmpfr.a $SRC_INSTALL_DIR/lib/libgmp.a\"\n" >> $SRC_INSTALL_DIR/ezdata.py
 	
 #	exit 0
 else
@@ -70,6 +69,10 @@ echo -e $EZC_BIN > $EXE_INSTALL_DIR/ezcc
 
 chmod +x $EXE_INSTALL_DIR/ezc
 chmod +x $EXE_INSTALL_DIR/ezcc
+if [[ "$3" == "true" ]]; then
+
+	printf "\nEZC_LIB=\"-I$SRC_INSTALL_DIR/include/ $SRC_INSTALL_DIR/lib/libmpfr.a $SRC_INSTALL_DIR/lib/libgmp.a\"\n" >> $SRC_INSTALL_DIR/ezdata.py
+fi
 
 echo Done copying
 
