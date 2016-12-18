@@ -64,7 +64,6 @@ def c_for_call(op, args):
 	if len(args) <= 3:
 		args = args + ["ezc_next_const(\"1\")"]
 	args = map(parser.get_var, args)
-	print args
 	global var
 	for arg in args:
 		if re.findall(parser.valid_var, arg) and re.findall(parser.valid_var, arg)[0] == arg:
@@ -76,7 +75,6 @@ def c_file(op, args):
 		args = args + ["ezc.txt"]
 		
 	args[0] = map(parser.get_var, [args[0]])[0]
-	print args
 	global var
 	for arg in args[0:1]:
 		if re.findall(parser.valid_var, arg) and re.findall(parser.valid_var, arg)[0] == arg:

@@ -19,7 +19,9 @@ EZC_BIN="#!/bin/bash\\n$SRC_INSTALL_DIR/ezcc.py \"\${@}\""
 
 if [[ "$3" == "true" ]]; then
 	echo "Installing MPFR from source"
-	./make-req.sh $EXE_INSTALL_DIR
+	echo "\nEZC_LIB=-I$SRC_INSTALL_DIR/include/ $SRC_INSTALL_DIR/lib/libmpfr.a $SRC_INSTALL_DIR/lib/libgmp.a" >> $SRC_INSTALL_DIR/ezdata.py
+	
+	./make-req.sh $SRC_INSTALL_DIR
 else
 	# Install dependencies
 	if [[ "$OSTYPE" == "linux-gnu" ]]; then
