@@ -24,8 +24,8 @@ valid_return = "return (%s)" % (valid_var)
 
 valid_assign = "(%s)[ ]?=[ ]?" % (valid_var)
 
-valid_declare_user_function = "\[func\] ([a-zA-Z0-9_]+)\|((?:\ %s)+)" % (valid_var)
-valid_end_user_function = "\[\/func\]"
+valid_declare_user_function = "\[([a-zA-Z0-9_]+)\]((?:\ %s)+)" % (valid_var)
+valid_end_user_function = "\[\/([a-zA-Z0-9_]+)\]"
 
 # global vars are set in set_regex()
 valid_operator = ""
