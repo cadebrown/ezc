@@ -23,6 +23,6 @@ cd ..
 
 export EZC_LIB=$BUILD_DIR
 
-echo "EZC_LIB=\"-I$BUILD_DIR/include/ $BUILD_DIR/lib/libmpfr.a $BUILD_DIR/lib/libgmp.a\"" > $BUILD_DIR/ezconfig.py
+echo "EZC_LIB=\"-I$BUILD_DIR/include/ $BUILD_DIR/lib/libmpfr.a $BUILD_DIR/lib/libgmp.a\"" >> $BUILD_DIR/ezdata.py
 
 rm gmp* mpfr* -Rf

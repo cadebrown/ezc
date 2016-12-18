@@ -1,5 +1,3 @@
 #!/usr/bin/ezc -runfile
 prec $2
-i = zeta $1
-var_raw i
-echo
+var (zeta $1)

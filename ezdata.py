@@ -217,6 +217,10 @@ void ezc_file(mpfr_t a, char name[]) {
 	fclose(fp);
 }
 
+void ezc_pi(mpfr_t r) {
+	mpfr_const_pi(r, EZC_RND);
+}
+
 int get_use_deg() {
 	char *x = getenv("EZC_DEG");
 	if (x == NULL) return 0;

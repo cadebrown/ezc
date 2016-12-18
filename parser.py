@@ -12,7 +12,6 @@ import compiler
 def is_literal(line):
 	return len(re.findall(literal_c, line)) != 0
 
-
 valid_break = "[ ,><=]*"
 valid_get_arg = "\$[0-9]+"
 valid_var = "[_a-zA-Z][_a-zA-Z0-9]*|%s" % (valid_get_arg)
@@ -39,7 +38,7 @@ def set_regex():
 	#valid_arg = "[a-z]+"
 	valid_ufu = "\@[_a-zA-Z][_a-zA-Z0-9]*"
 	valid_c = "[ ]*({(.*)}|(.*);)"
-	global valid_operator; global valid_function; global valid_user_function
+	global valid_operator; global valid_function; global valid_user_function; global valid_noarg_function
 
 	flist_regex = "%s" % ("|".join(compiler.functions))
 
@@ -50,6 +49,8 @@ def set_regex():
 	valid_operator = "(?:%s)?(%s%s)?(%s)(%s%s)?" % (valid_assign, valid_arg, valid_break, olist_regex, valid_break, valid_arg)
 	valid_function = "(?:%s)?(%s)[ ]+((?:%s%s)*)" % (valid_assign, flist_regex, valid_break, valid_arg)
 	valid_user_function = "(?:%s)?(%s[ ]+)((?:%s%s)*)" % (valid_assign, valid_ufu, valid_break, valid_arg)
+	valid_noarg_function = "(?:%s)?(%s)" % (valid_assign, flist_regex)
+
 
 	#print valid_operator
 	#print valid_function
@@ -80,9 +81,12 @@ def parse_oper(call):
 	return compiler.get_operator_translate(call[0], call[1])
 
 def parse_user_func(call):
-	print call
 	call = [call[1].replace("@", ""), ("%s %s" % (call[0], call[2])).split()]
 	return compiler.get_user_func_translate(call[0], call[1])
+
+def parse_noarg_func(call):
+	call = [call[1], call[0]]
+	return compiler.get_function_translate(call[0], [call[1]])
 
 def get_statement(line):
 	global valid_assign; #valid_user_function
@@ -96,6 +100,8 @@ def get_statement(line):
 		line = parse_func(re.findall(valid_function, line)[0])
 	elif re.findall(valid_user_function, line):
 		line = parse_user_func(re.findall(valid_user_function, line)[0])
+	elif re.findall(valid_noarg_function, line):
+		line = parse_noarg_func(re.findall(valid_noarg_function, line)[0])
 	elif re.findall(valid_assign, line) and "set" not in line:
 		line = get_statement(line.replace("=", "= set"))
 	return line

@@ -3,7 +3,5 @@ prec $2
 if $1 == 0 
 	var (?)
 else
-    i = ? $1
+	var (? $1)
 fi
-var_raw i
-echo

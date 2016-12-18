@@ -83,13 +83,17 @@ def c_file(op, args):
 			var.add(arg)
 	return "ezc_file(%s, \"%s\");" % (args[0], args[1])
 
+def c_elseblock(op, args):
+	print args
+	return "} else {"
+
 def c_endblock(op, args):
 	return "}"
 
 
 declare_function = "function "
 
-functions = "if,fi,for,rof,prec,add,sub,mul,div,pow,mod,var,intvar,file,set,sqrt,cbrt,min,max,near,trunc,rand,fact,echo,hypot,exp,log,logb,agm,gamma,factorial,zeta,deg,rad,sin,cos,tan,asin,acos,atan,csc,sec,cot,acsc,asec,acot,sinh,cosh,tanh,asinh,acosh,atanh,csch,sech,coth,acsch,asech,acoth".split(",")
+functions = "if,else,fi,for,rof,prec,add,sub,mul,div,pow,mod,var,intvar,file,set,sqrt,cbrt,min,max,near,trunc,rand,fact,echo,hypot,exp,log,logb,agm,gamma,factorial,zeta,pi,deg,rad,sin,cos,tan,asin,acos,atan,csc,sec,cot,acsc,asec,acot,sinh,cosh,tanh,asinh,acosh,atanh,csch,sech,coth,acsch,asech,acoth".split(",")
 operators = "+,-,*,/,^,%,~,?,!,√,ζ".split(",")
 
 op_map_funcs = {
@@ -115,6 +119,7 @@ functions_translate_funcs = {
 	"if": c_if_call,
 	"for": c_for_call,
 	"fi": c_endblock,
+	"else": c_elseblock,
 	"rof": c_endblock,
 	"file": c_file,
 }

@@ -1,8 +1,9 @@
 #!/bin/bash
 
 SOURCES=`echo *.py`
-SOURCES=${SOURCES//"ezconfig.py"}
 UTILS=./utils/*
+
+echo $SOURCES
 
 EXE_INSTALL_DIR=$1
 SRC_INSTALL_DIR=$2
@@ -57,7 +58,7 @@ mkdir -p $EXE_INSTALL_DIR
 for UTIL in $UTILS
 do
     O_UTIL=$EXE_INSTALL_DIR/$(basename $UTIL)
-    $SRC_INSTALL_DIR/ezcc.py $UTIL -o $O_UTIL -v 0 -rem
+    ./ezcc.py $UTIL -o $O_UTIL -v3
 	strip $O_UTIL
 done
 

@@ -1,4 +1,3 @@
 #!/usr/bin/ezc -runfile
 setprec $1
-{mpfr_const_pi(i, MPFR_RNDN)}
-var i
+var (pi)
