@@ -22,6 +22,7 @@ literal_c = ".*;"
 valid_return = "return (%s)" % (valid_var)
 
 valid_assign = "(%s)[ ]?=[ ]?" % (valid_var)
+valid_set = "(%s)[ ]?=[ ]?(%s)" % (valid_var, valid_const)
 
 valid_declare_user_function = "\[([a-zA-Z0-9_]+)\]((?:\ %s)+)" % (valid_var)
 valid_end_user_function = "\[\/([a-zA-Z0-9_]+)\]"
@@ -47,8 +48,8 @@ def set_regex():
 	set_regex = "%s(%s)" % (valid_assign, valid_arg)
 	
 	valid_operator = "(?:%s)?(%s%s)?(%s)(%s%s)?" % (valid_assign, valid_arg, valid_break, olist_regex, valid_break, valid_arg)
-	valid_function = "(?:%s)?(%s)[ ]+((?:%s%s)*)" % (valid_assign, flist_regex, valid_break, valid_arg)
-	valid_user_function = "(?:%s)?(%s[ ]+)((?:%s%s)*)" % (valid_assign, valid_ufu, valid_break, valid_arg)
+	valid_function = "(?:%s)?(%s)[ ]+((?:%s%s)+)" % (valid_assign, flist_regex, valid_break, valid_arg)
+	valid_user_function = "(?:%s)?(%s[ ]+)((?:%s%s)+)" % (valid_assign, valid_ufu, valid_break, valid_arg)
 	valid_noarg_function = "(?:%s)?(%s)" % (valid_assign, flist_regex)
 
 
@@ -56,6 +57,7 @@ def set_regex():
 	#print valid_function
 	#print valid_user_function
 
+c_l = None
 
 # resolves reference. For example, $3 would give the third commandline argument
 def get_var(text):
@@ -77,6 +79,9 @@ def parse_func(call):
 	return compiler.get_function_translate(call[0], call[1])
 
 def parse_oper(call):
+	global c_l		
+	if re.findall(valid_set, c_l) and not call[1]:
+		return get_statement(c_l.replace("=", "= set"))
 	call = [call[2], ("%s %s %s" % (call[0], call[1], call[3])).split()]
 	return compiler.get_operator_translate(call[0], call[1])
 
@@ -89,15 +94,16 @@ def parse_noarg_func(call):
 	return compiler.get_function_translate(call[0], [call[1]])
 
 def get_statement(line):
-	global valid_assign; #valid_user_function
+	global valid_assign; global c_l
 	#print valid_user_function
 	line = re.sub(' +', ' ', line)
+	c_l = line
 	if re.findall(valid_return, line):
 		line = parse_return(re.findall(valid_return, line)[0])
-	elif re.findall(valid_operator, line):
-		line = parse_oper(re.findall(valid_operator, line)[0])
 	elif re.findall(valid_function, line):		
 		line = parse_func(re.findall(valid_function, line)[0])
+	elif re.findall(valid_operator, line):
+		line = parse_oper(re.findall(valid_operator, line)[0])
 	elif re.findall(valid_user_function, line):
 		line = parse_user_func(re.findall(valid_user_function, line)[0])
 	elif re.findall(valid_noarg_function, line):
