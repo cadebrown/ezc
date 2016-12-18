@@ -1,5 +1,0 @@
-[func] SQR| a
-	return (a^2)
-[/func]
-
-var (@SQR $1)
