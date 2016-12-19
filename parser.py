@@ -64,10 +64,11 @@ def set_regex():
 	valid_order_op = []
 	for x in compiler.order_op:
 		#c_pat = "(?:%s%s%s)?((%s%s)(%s)(%s%s%s))(?:%s%s%s)?" % (olist_regex, valid_break, valid_arg,valid_arg_nosign, valid_break, "\\"+"|\\".join(x), valid_break, valid_arg_nosign, valid_break, olist_regex, valid_break, valid_arg)
+		c_first_exception = "(?:=[ ]*)((%s%s)(%s)(%s%s%s))(?:%s%s%s)?" % (valid_arg_sign, valid_break, "\\"+"|\\".join(x), valid_break, valid_arg, valid_break, olist_regex, valid_break, valid_arg)
 		c_pat_sign = "((%s%s)(%s)(%s%s%s))(?:%s%s%s)?" % (valid_arg_sign, valid_break, "\\"+"|\\".join(x), valid_break, valid_arg, valid_break, olist_regex, valid_break, valid_arg)
 		c_pat_sign_prev = "(?:\+|\-)((%s%s)(%s)(%s%s%s))(?:%s%s%s)?" % (valid_arg_sign, valid_break, "\\"+"|\\".join(x), valid_break, valid_arg, valid_break, olist_regex, valid_break, valid_arg)
 		c_pat_nosign = "((%s%s)(%s)(%s%s%s))(?:%s%s%s)?" % (valid_arg_nosign, valid_break, "\\"+"|\\".join(x), valid_break, valid_arg, valid_break, olist_regex, valid_break, valid_arg)
-		valid_order_op.append([c_pat_sign_prev, c_pat_nosign, c_pat_sign])
+		valid_order_op.append([c_first_exception, c_pat_sign_prev, c_pat_nosign, c_pat_sign])
 
 
 c_l = None
