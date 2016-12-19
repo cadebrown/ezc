@@ -1,18 +1,17 @@
-
 local:	
-	-./install-all.sh ~/ezc/ ~/ezc/ true
+	-./install.sh ~/ezc/ ~/ezc/ true
 
 global:
-	-./install-all.sh /usr/bin/ /usr/src/ezc/ true
+	-./install.sh /usr/bin/ /usr/src/ezc/ true
 
 local-noreq:
-	-./install-all.sh ~/ezc/ ~/ezc/
+	-./install.sh ~/ezc/ ~/ezc/
 
 global-noreq:
-	-./install-all.sh /usr/bin/ /usr/src/
+	-./install.sh /usr/bin/ /usr/src/
 
 req:
-	-./make-req.sh ~/ezc/
+	-./build-scripts/mpfr.sh
 
 uninstall-local:
 	-./uninstall.sh ~/ezc/ ~/ezc/
@@ -21,4 +20,7 @@ uninstall-global:
 	-./uninstall.sh /usr/bin/ /usr/src/
 
 deb:
-	-./build-deb.sh
+	-./build-scripts/deb.sh
+
+test-local:
+	-~/ezc/ezcc.py -c "prec 1000:var (sqrt 2)" -v5

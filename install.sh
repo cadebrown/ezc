@@ -7,6 +7,7 @@ echo $SOURCES
 
 EXE_INSTALL_DIR=$1
 SRC_INSTALL_DIR=$2
+I_MPFR=$3
 
 if [ "$1" == "" ] || [ "$1" == "auto" ]; then
     EXE_INSTALL_DIR=/usr/bin/
@@ -17,44 +18,48 @@ fi
 
 EZC_BIN="#!/bin/bash\\n$SRC_INSTALL_DIR/ezcc.py \"\${@}\""
 
-if [[ "$3" == "true" ]]; then
+if [[ "$I_MPFR" == "true" ]]; then
 	echo "Installing MPFR from source"
 	
-	./make-req.sh $SRC_INSTALL_DIR
-	
-#	exit 0
+	./build-scripts/mpfr.sh $SRC_INSTALL_DIR
+elif [[ "$I_MPFR" == "false" ]]; then
+echo "not installing anything, through source or package manager"
 else
 	# Install dependencies
 	if [[ "$OSTYPE" == "linux-gnu" ]]; then
+		echo "Asking for sudo to install packages . . ."
 		if [[ $(cat /etc/debian_version) ]]; then
-			apt install libmpfr-dev
+			sudo apt install libmpfr-dev
 		elif [[ $(cat /etc/fedora-release) ]]; then
-			dnf install mpfr-devel
+			sudo dnf install mpfr-devel
 		fi
 	elif [[ "$OSTYPE" == "darwin"* ]]; then
-		brew install gcc48
-		brew install mpfr 
+		echo "Asking for sudo to install packages . . ."
+		sudo brew install gcc48
+		sudo brew install mpfr 
 	elif [[ "$OSTYPE" == "freebsd"* ]]; then
-		pkg install gcc
-		pkg install mpfr
+		echo "Asking for sudo to install packages . . ."
+		sudo pkg install gcc
+		sudo pkg install mpfr
 	elif [ "$OSTYPE" == "cygwin" ] || [ "$OSTYPE" == "msys" ]; then
 		echo "cygwin may work . . ."
 		echo "building mpfr from source:"
-		./make-req.sh $EXE_INSTALL_DIR
+		I_MPFR="true"
+		./build-scripts/mpfr.sh $SRC_INSTALL_DIR
 	else
 		echo "Warning: OS not found."
 		echo "Building MPFR from source"
-		./make-req.sh $EXE_INSTALL_DIR
+		I_MPFR="true"
+		./build-scripts/mpfr.sh $SRC_INSTALL_DIR
 	fi
 fi
-
 
 echo Installing sources in $SRC_INSTALL_DIR
 
 mkdir -p $SRC_INSTALL_DIR
 cp $SOURCES $SRC_INSTALL_DIR
 
-if [[ "$3" == "true" ]]; then
+if [[ "$I_MPFR" == "true" ]]; then
 	printf "\nEZC_LIB=\"-w -I$SRC_INSTALL_DIR/include/ $SRC_INSTALL_DIR/lib/libmpfr.a $SRC_INSTALL_DIR/lib/libgmp.a\"\n" >> $SRC_INSTALL_DIR/ezdata.py
 fi
 

@@ -19,7 +19,7 @@ done
 FL="ezcc.deb"
 
 # Do generic install
-./install-all.sh $EXE_PATH $SRC_PATH
+./install.sh $EXE_PATH $SRC_PATH false
 
 rm -rf $SRC_PATH/*.pyc
 
@@ -28,9 +28,9 @@ echo -e $EZC_BIN > $EXE_PATH/ezc
 echo -e $EZC_BIN > $EXE_PATH/ezcc
 
 echo "Now copying in debian files"
-cp CONTROL deb-package/DEBIAN/control
-cp COPYRIGHT $DOC_PATH/copyright
-gzip -n -9 -c changelog > $DOC_PATH/changelog.gz
+cp DEBIAN-FILES/control deb-package/DEBIAN/control
+cp DEBIAN-FILES/copyright $DOC_PATH/copyright
+gzip -n -9 -c DEBIAN-FILES/changelog > $DOC_PATH/changelog.gz
 
 # For bundling
 chmod -R 0755 deb-package/usr/

@@ -1,0 +1,11 @@
+
+language: c
+
+install:
+  - sudo apt install -qq libmpfr-dev
+  - make local-noreq
+
+build:
+  - make test-local
+
+

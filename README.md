@@ -16,21 +16,36 @@ You can think of it like a calculator language, but with more functions and more
 
 # Installation
 
+## Global (default)
+
+(this requires `sudo` rights)
+
 This should work for all systems with `curl`, `cc`, and `make`, and has been tested on Ubuntu15/16, OSX (El Capitan), Debian 8, Raspbian (Raspberry pi), and confirmed working.
 
 To install, run copypaste this into your terminal and then hit enter:
 
-`cd /tmp/ && curl https://github.com/ChemicalDevelopment/ezc/archive/master.zip -L > ezc.zip && unzip ezc.zip && cd ezc-master && make`
+`cd /tmp/ && curl https://github.com/ChemicalDevelopment/ezc/archive/master.zip -L > ezc.zip && unzip ezc.zip && cd ezc-master && sudo make global`
 
-(this should take about 5-10 minutes)
+This will prompt for your password, then finish in about 5-10 minutes
 
-Now, go in the install director (~/ezc/) `cd ~/ezc/`, run `ls` to view all the programs associated with it.
+After it has finished, you can test and make sure that it worked by running: `ezcc --help` (to view the compiler help messages), and `pi 10000` (for 10000 digits of pi).
 
-Run `./pi 10000` for 10000 digits of pi.
+If any errors are produced, please open an [issue](https://github.com/ChemicalDevelopment/ezc/issues)
 
-To view compiler help, use `./ezcc -h`
+## Local
 
-If that fails, please open an [issue](https://github.com/ChemicalDevelopment/ezc/issues)
+if for some reason you don't have sudo rights, you can also install locally:
+
+`cd /tmp/ && curl https://github.com/ChemicalDevelopment/ezc/archive/master.zip -L > ezc.zip && unzip ezc.zip && cd ezc-master && make` (this will take about 5-10 minutes)
+
+go in the install directory (`cd ~/ezc/`), run `ls` to view all the programs associated with it.
+
+Run `./ezcc --help` (to view compiler help), and `./pi 10000` (for 10000 digits of pi)
+
+If any errors are produced, please open an [issue](https://github.com/ChemicalDevelopment/ezc/issues)
+
+
+## Using a package manager
 
 For some platforms (Debian Based, Fedora Based, OSX, FreeBSD) you can run:
 
@@ -38,11 +53,13 @@ For some platforms (Debian Based, Fedora Based, OSX, FreeBSD) you can run:
 
 This uses a package manager to download MPFR and GMP so that it doesn't need to be compiled. This will take about 15 - 20 seconds to install, but only for these platforms. If you use a different one, it defaults to the above option.
 
-(**note for OSX users** this second method requires [homebrew](http://brew.sh/) to install)
+(**note for OSX users** this method requires [homebrew](http://brew.sh/) to install)
+
+If any errors are produced, please open an [issue](https://github.com/ChemicalDevelopment/ezc/issues)
 
 # Building
 
-You just need `gcc` (or another c compiler)
+You just need `cc` (or another c compiler), and `git` (you can download zip as well)
 
 For all OSs:
 
@@ -50,13 +67,16 @@ First, clone this repository:
 
 `git clone https://github.com/ChemicalDevelopment/ezc.git`
 
-Then, run `./ezcc.py` and assure that no errors were produced. If the were, please create and [Issue](https://github.com/ChemicalDevelopment/ezc/issues)
+Then, run `./ezcc.py -h` and assure that no errors were produced. If the were, please create and [Issue](https://github.com/ChemicalDevelopment/ezc/issues)
 
-Now, run `sudo ./install-all.sh`. If you get permissions errors, run `./install-all.sh ~/ezc/bin/ ~/ezc/src/`. If you use the second one, when I use `ezcc`, just replace it with `~/ezc/bin/ezcc`
+Now, run `sudo make global`. If you get permissions errors, run `make`
 
-To test it, run `ezcc utils/sqrt -o sqrt` (or `~/ezc/bin/ezc utils/sqrt -o sqrt`) 
+(if you use the second one, run `cd ~/ezc/`, and when I run `ezcc`, you run `./ezcc`. When I run anything, you just add `./` before it)
 
-After this, run `./sqrt 2 1000` and it should print out 1000 digits of square root of two (1.4142135623730...)
+To test it, run `ezcc -c "var (sqrt 2)"` (or `./ezcc -c "var (sqrt 2)`) 
+
+After this, run `sqrt 2` and it should print out digits of square root of two (1.4142135623730...), and it should be equivelant to your output with `ezcc`
+
 
 # Environment variables
 
@@ -88,30 +108,31 @@ So, to find e + pi, simply run
 
 `add $(e) $(pi)`
 
-Or, to a million digits, 
+Or, to a thousand digits, 
 
 `add $(e 1000) $(pi 1000)`
 
 The list of all utilities is located in this repo in ./utils/
 
-On your installed system, the compiled versions are listed in `/usr/bin/$UTIL`
+On your installed system, the compiled versions are listed in `/usr/bin/$UTIL`, and should be accessible with just running the name of the util (i.e. `sqrt 2`)
 
 
 # Examples
 
 To compute pi, simply run:
 
-`echo "i = acos -1 : var i" | ezcc -e`
+`ezcc -c "i = acos -1 : var i"`
 
 or, 
 
-`ezcc -c "i = acos -1 : var i"`
+`echo "i = acos -1 : var i" | ezcc -e`
+
 
 Using `-c` or `-e` means you don't need a file, but c reads from the next argument, and e reads from stdin
 
 You can also use a shebang, namely:
 
-`#!/bin/ezc -runfile`
+`#!/usr/bin/ezc -runfile`
 
 or, to run locally
 
@@ -119,12 +140,6 @@ or, to run locally
 
 See the `examples` folder for a number of examples
 
-
-# Support
-
-Tested on Ubuntu 15.04, should work for all Linux/Unix distros.
-
-Works on OSX
 
 # Syntax highlighting
 
@@ -134,23 +149,7 @@ For Visual Studio Code, run `CTRL+SHIFT+P` and type in `install extensions`. Sea
 
 For any other text editor, look up how to install .tmLanguage files (most support tmLanguage)
 
-# Documentation
-
-[Chemical Development Docs](http://chemicaldevelopment.us/docs/ezc/) is the documentation for EZC
-
-# Running
-
-use it like: `./ezcc.py $file $file1 . . . -o $output`. Then, run `./$output`
-
-# Documentation
-
-[Functions](http://chemicaldevelopment.us/docs/ezc/functions) for more about functions and statements
-
-Check [examples](https://github.com/ChemicalDevelopment/ezc/tree/master/examples), 
-
-or [docs examples](http://chemicaldevelopment.us/docs/ezc/examples) for the docs
-
-# Tutorials
+## Documentation
 
 [Chemical Development Docs](http://chemicaldevelopment.us/docs/ezc/) is the documentation for EZC,
 
