@@ -23,8 +23,9 @@ literal_c = ".*;"
 
 valid_return = "return (%s)" % (valid_var)
 
-valid_assign = "(%s)[ ]?=[ ]?" % (valid_var)
-valid_set = "(%s)[ ]?=[ ]?(%s)" % (valid_var, valid_const)
+valid_assign = "(%s)[ ]*=[ ]*" % (valid_var)
+#print valid_assign
+valid_set = "(%s)[ ]*=[ ]*(%s)" % (valid_var, valid_const)
 
 valid_declare_user_function = "\[([a-zA-Z0-9_]+)\]((?:\ %s)+)" % (valid_var)
 valid_end_user_function = "\[\/([a-zA-Z0-9_]+)\]"
@@ -59,10 +60,10 @@ def set_regex():
 	valid_noarg_function = "(?:%s)?(%s)" % (valid_assign, flist_regex)
 
 	valid_order_op = []
-	for x in compiler.operators:
-		c_pat = "(?:%s%s%s)?((%s%s)(%s)(%s%s%s))(?:%s%s%s)?" % (olist_regex, valid_break, valid_arg,valid_arg_nosign, valid_break, "\\"+x, valid_break, valid_arg_nosign, valid_break, olist_regex, valid_break, valid_arg)
+	for x in compiler.order_op:
+		c_pat = "(?:%s%s%s)?((%s%s)(%s)(%s%s%s))(?:%s%s%s)?" % (olist_regex, valid_break, valid_arg,valid_arg_nosign, valid_break, "\\"+"|\\".join(x), valid_break, valid_arg_nosign, valid_break, olist_regex, valid_break, valid_arg)
 		#c_pat = "(?:(?:\+|\-)%s)((%s%s)(%s)(%s%s))|" % (valid_break, valid_arg, valid_break, "\\"+x, valid_break, valid_arg)
-		
+		#print c_pat
 		valid_order_op.append(c_pat)
 
 	#print valid_operator
@@ -120,7 +121,7 @@ def get_statement(line):
 	elif re.findall(valid_noarg_function, line):
 		line = parse_noarg_func(re.findall(valid_noarg_function, line)[0])
 	elif re.findall(valid_assign, line) and "set" not in line:
-		line = get_statement(line.replace("=", "= set"))
+		line = get_statement(line.replace("=", "= set "))
 		
 	return line
 
@@ -148,7 +149,6 @@ def resolve_operators(line):
 				ret.append(n)
 	if not k_t:
 		ret.append(line)
-	#print ret
 	return ret
 
 # parses a line. This looks for operators, userfunctions, functions, assignment, functions with no arguments, and then freeform(default).

@@ -123,11 +123,11 @@ On your installed system, the compiled versions are listed in `/usr/bin/$UTIL`, 
 
 To compute pi, simply run:
 
-`ezcc -c "i = acos -1 : var i"`
+`ezcc -c "var (pi)"`
 
 or, 
 
-`echo "i = acos -1 : var i" | ezcc -e`
+`echo "var (pi)" | ezcc -e`
 
 
 Using `-c` or `-e` means you don't need a file, but c reads from the next argument, and e reads from stdin
