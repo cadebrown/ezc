@@ -1,18 +1,24 @@
 echo Should be 1.414213
-var (sqrt 2)
+var (√ 2)
 
 echo Should be 55
-var (1+2+3+4+5+6+7+8+9+10)
+intvar (1+2+3+4+5+6+7+8+9+10)
 
-echo Should be 65
-var ((1+2+3/3+3^(1+5%2+6))/(10^2+1))
+#echo Should be 65
+#intvar ((1+2+3/3+3^(1+5%2+6))/(10^2+1))
 
 echo Should be 135
-var (2-3+11-123-52+300)
+intvar (2-3+11-123-52+300)
 
 echo Should be 14
-var (3 + 6 * (5 + 4) / 3 - 7)
+intvar (3 + 6 * (5 + 4) / 3 - 7)
 
 echo Should be 26
-var (2*3+4*5)
+intvar (2*3+4*5)
 
+echo Should be 12
+intvar ((3 !) + (3 !))
+
+
+echo Should be less than 2000
+intvar (0?1000+0?1000)
