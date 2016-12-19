@@ -12,13 +12,15 @@ import compiler
 def is_literal(line):
 	return len(re.findall(literal_c, line)) != 0
 
-valid_break = "[ ,><=]*"
+valid_break = "[ ,><]*"
 valid_get_arg = "\$[0-9]+"
 valid_var = "[_a-zA-Z][_a-zA-Z0-9]*|%s" % (valid_get_arg)
 valid_const = "(?:\-|\+)?[0-9\.]+"
 valid_const_nosign = "[0-9\.]+"
+valid_const_sign = "(?:\-|\+)[0-9\.]+"
 valid_arg = "(?:%s|%s)" % (valid_var, valid_const)
 valid_arg_nosign = "(?:%s|%s)" % (valid_var, valid_const_nosign)
+valid_arg_sign = "(?:%s|%s)" % (valid_var, valid_const_sign)
 literal_c = ".*;"
 
 valid_return = "return (%s)" % (valid_var)
@@ -61,14 +63,12 @@ def set_regex():
 
 	valid_order_op = []
 	for x in compiler.order_op:
-		c_pat = "(?:%s%s%s)?((%s%s)(%s)(%s%s%s))(?:%s%s%s)?" % (olist_regex, valid_break, valid_arg,valid_arg_nosign, valid_break, "\\"+"|\\".join(x), valid_break, valid_arg_nosign, valid_break, olist_regex, valid_break, valid_arg)
-		#c_pat = "(?:(?:\+|\-)%s)((%s%s)(%s)(%s%s))|" % (valid_break, valid_arg, valid_break, "\\"+x, valid_break, valid_arg)
-		#print c_pat
-		valid_order_op.append(c_pat)
+		#c_pat = "(?:%s%s%s)?((%s%s)(%s)(%s%s%s))(?:%s%s%s)?" % (olist_regex, valid_break, valid_arg,valid_arg_nosign, valid_break, "\\"+"|\\".join(x), valid_break, valid_arg_nosign, valid_break, olist_regex, valid_break, valid_arg)
+		c_pat_sign = "((%s%s)(%s)(%s%s%s))(?:%s%s%s)?" % (valid_arg_sign, valid_break, "\\"+"|\\".join(x), valid_break, valid_arg, valid_break, olist_regex, valid_break, valid_arg)
+		c_pat_sign_prev = "(?:\+|\-)((%s%s)(%s)(%s%s%s))(?:%s%s%s)?" % (valid_arg_sign, valid_break, "\\"+"|\\".join(x), valid_break, valid_arg, valid_break, olist_regex, valid_break, valid_arg)
+		c_pat_nosign = "((%s%s)(%s)(%s%s%s))(?:%s%s%s)?" % (valid_arg_nosign, valid_break, "\\"+"|\\".join(x), valid_break, valid_arg, valid_break, olist_regex, valid_break, valid_arg)
+		valid_order_op.append([c_pat_sign_prev, c_pat_nosign, c_pat_sign])
 
-	#print valid_operator
-	#print valid_function
-	#print valid_user_function
 
 c_l = None
 
@@ -85,14 +85,14 @@ def get_var(text):
 
 def parse_return(call):
 	#call = [call[1], (call[0] + call[2]).split()]
-	return get_statement("RETURN = %s" % (call))
+	return get_statement("RETURN = %s" % (call)) + "\n\treturn;"
 
 def parse_func(call):
 	call = [call[1], ("%s %s" % (call[0], call[2])).split()]
 	return compiler.get_function_translate(call[0], call[1])
 
 def parse_oper(call):
-	global c_l		
+	global c_l
 	if re.findall(valid_set, c_l) and not call[1]:
 		return get_statement(c_l.replace("=", "= set"))
 	call = [call[2], ("%s %s %s" % (call[0], call[1], call[3])).split()]
@@ -134,19 +134,22 @@ def parse_op_resolve(match):
 def resolve_operators(line):
 	ret = []
 	k_t = False
-	for pat in valid_order_op:
-		if len(re.findall(pat, line)) >= 1 and not k_t:
-			k_t = True
-			global needed_var
-			needed_var += 1
-			resolve = parse_op_resolve(re.findall(pat,line)[0])
-			var = "tmp_%dv" % (needed_var)
-			st = "%s = %s" % (var, resolve[0])
-			line = line.replace(resolve[0], var, 1)
-			ret.append(st)
-			recurse = resolve_operators(line)
-			for n in recurse:
-				ret.append(n)
+	for pats in valid_order_op:
+		for pat in pats:
+			if len(re.findall(pat, line)) >= 1 and not k_t:
+				k_t = True
+				global needed_var
+				needed_var += 1
+				resolve = parse_op_resolve(re.findall(pat,line)[0])
+				var = "tmp_%dv_" % (needed_var)
+				st = "%s = %s" % (var, resolve[0])
+				line = line.replace(resolve[0], var, 1)
+				ret.append("mpfr_init(%s);" % (var))
+				ret.append(st)
+				recurse = resolve_operators(line)
+				for n in recurse:
+					ret.append(n)
+				ret.append("mpfr_clear (%s);" % (var))
 	if not k_t:
 		ret.append(line)
 	return ret
@@ -154,8 +157,6 @@ def resolve_operators(line):
 # parses a line. This looks for operators, userfunctions, functions, assignment, functions with no arguments, and then freeform(default).
 def parse_line(line):	
 	global valid_declare_user_function; global valid_end_user_function
-	#print valid_declare_user_function
-	#print re.findall(valid_declare_user_function, line)
 	if re.findall(valid_declare_user_function, line):
 		res = re.findall(valid_declare_user_function, line)[0]
 		compiler.user_funcs += "void __%s(mpfr_t RETURN, mpfr_t %s) {" % (res[0], ", mpfr_t ".join(res[1].split()))
@@ -173,18 +174,17 @@ def parse_line(line):
 		needed_var = 0
 
 	#needed_var = 0
-	line_expand = expand_line(line).replace("(", "").replace(")", "").split("\n")
+	line_expand = expand_line(line)
 	to_process = []
 	#to_process = line_expand
 	for x in line_expand:
 		for y in resolve_operators(x):
-			#print y
 			to_process.append(y)
 	res = ""
 	
 	for x in to_process:
 		res += get_statement(x) + "\n"
-		
+	
 	return res
 
 def get_nested(line):
@@ -207,15 +207,28 @@ def get_nested(line):
 	return to_ret
 
 def expand_line(line):
-	global unexpanded_line; global needed_var
+	global unexpanded_line
 	if get_nested(line):
 		to_do = get_nested(line)
-		ret = ""
+		ret = []
+		var_tod = set()
 		for x in range(0, len(to_do)):
+			global needed_var
 			needed_var += 1
-			tmp_var = "tmp_%dv" % (needed_var)
-		
+			tmp_var = "tmp_%dv_" % (needed_var)
+			var_tod.add(tmp_var)
 			line = line.replace(to_do[x], tmp_var, 1)
-			ret += expand_line(tmp_var + " = " + to_do[x]) + "\n"
-		return ret + line
-	return line
+			ret.append("mpfr_init (%s);" % (tmp_var))
+			res_exp = expand_line(tmp_var + " = " + to_do[x])
+			if isinstance(res_exp, list):
+				for xx in res_exp:
+					ret.append(xx)
+			else:
+				ret.append(res_exp)
+		ret.append(line.replace("(", "").replace(")", ""))
+		for vv in var_tod:
+			to_add = "mpfr_clear (%s);" % (tmp_var)
+			if to_add not in ret:
+				ret.append(to_add)
+		return ret
+	return [line]

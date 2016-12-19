@@ -48,7 +48,7 @@ def c_call_optional_call(fname, args):
 	for arg in args:
 		if re.findall(parser.valid_var, arg)[0] == arg:
 			var.add(arg)
-	return "ezc_%s_%d(%s);" % (fname, len(args), ", ".join(args))
+	return "\n\tezc_%s_%d(%s);" % (fname, len(args), ", ".join(args))
 
 def arg_call(op, args):
 	return c_call(op_map_funcs[op], args)
@@ -59,7 +59,7 @@ def c_if_call(op, args):
 	for arg in args:
 		if re.findall(parser.valid_var, arg) and re.findall(parser.valid_var, arg)[0] == arg:
 			var.add(arg)
-	return "if (mpfr_cmp(%s, %s) %s 0) {" % (args[0], args[2], args[1])
+	return "\n\tif (mpfr_cmp(%s, %s) %s 0) {" % (args[0], args[2], args[1])
 
 def c_for_call(op, args):
 	if len(args) <= 3:
@@ -69,7 +69,7 @@ def c_for_call(op, args):
 	for arg in args:
 		if re.findall(parser.valid_var, arg) and re.findall(parser.valid_var, arg)[0] == arg:
 			var.add(arg)
-	return "for (ezc_set(%s, %s); mpfr_cmp(%s, %s) == -ezc_sgn(%s); ezc_add(%s, %s, %s)) {" % (args[0], args[1], args[0], args[2], args[3], args[0], args[0], args[3])
+	return "\n\tfor (ezc_set(%s, %s); mpfr_cmp(%s, %s) == -ezc_sgn(%s); ezc_add(%s, %s, %s)) {" % (args[0], args[1], args[0], args[2], args[3], args[0], args[0], args[3])
 
 def c_file(op, args):
 	if len(args) < 2:
@@ -91,12 +91,12 @@ def c_endblock(op, args):
 
 declare_function = "function "
 
-functions = "if,else,fi,for,rof,prec,add,sub,mul,div,pow,mod,var,intvar,file,set,sqrt,\\√,cbrt,min,max,near,trunc,rand,\\?,fact,echo,hypot,exp,log,logb,agm,gamma,factorial,zeta,\\ζ,pi,deg,rad,sin,cos,tan,asin,acos,atan,csc,sec,cot,acsc,asec,acot,sinh,cosh,tanh,asinh,acosh,atanh,csch,sech,coth,acsch,asech,acoth".split(",")
+functions = "if,else,fi,for,rof,prec,add,sub,mul,div,pow,mod,var,intvar,file,set,sqrt,\\√,cbrt,min,max,near,trunc,rand,fact,echo,hypot,exp,log,logb,agm,gamma,factorial,zeta,\\ζ,pi,deg,rad,sin,cos,tan,asin,acos,atan,csc,sec,cot,acsc,asec,acot,sinh,cosh,tanh,asinh,acosh,atanh,csch,sech,coth,acsch,asech,acoth".split(",")
 
 #operators = "+,-,*,/,^,%,~,?,!,√,ζ".split(",")
-operators = "!,~,^,*,/,÷,%,+,-,~".split(",")
+operators = "!,~,^,*,/,÷,%,+,-,~,?".split(",")
 
-order_op = [group.split(",") for group in "!,,^,,*,/,÷,%,,+,-,,~".split(",,")]
+order_op = [group.split(",") for group in "!,?,~,,^,,*,/,÷,%,,+,-".split(",,")]
 
 op_map_funcs = {
 	"+": "add",
@@ -107,11 +107,12 @@ op_map_funcs = {
 	"^": "pow",
 	"%": "mod",
 	"~": "near",
+	"?": "rand",
 	"!": "fact",
 }
 
 functions_alias = {
-	"?": "rand",
+	#"?": "rand",
 	"ζ": "zeta",
 	"√": "sqrt"
 }
@@ -157,8 +158,9 @@ def get_user_func_translate(ufunc, args):
 def get_var_inits():
 	res = ["", ""]
 	for x in var:
-		res[0] += "\nmpfr_t %s;" % (x)
-		res[1] += "\n\tmpfr_init(%s);" % (x)
+		res[0] += "\n\tmpfr_t %s;" % (x)
+		if not re.findall("tmp_[0-9]+v", x):
+			res[1] += "\n\tmpfr_init(%s);" % (x)
 	return res
 user_funcs=""""""
 
@@ -214,7 +216,7 @@ def add_compile_lines(lines):
 					#print line
 					#print parser.parse_line(line)
 					if ":" in line:
-						res += "%s" % ("\n\t".join(map(parser.parse_line, line.split(":"))))
+						res += "\n\t%s" % ("\n\t".join(map(parser.parse_line, line.split(":"))))
 					else:
 						res += "\n\t%s" % (parser.parse_line(line))
 				c_read = to_read

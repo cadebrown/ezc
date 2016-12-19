@@ -8,7 +8,7 @@ EZC_C="""
 #include <mpfr.h>
 #include <math.h>
 
-int ezc_size_consts = 20, ezc_consts_id = 0, ezc_consts_ov = 0;
+int ezc_size_consts = 30, ezc_consts_id = 0, ezc_consts_ov = 0;
 gmp_randstate_t ezc_rand_state;
 mpfr_t *ezc_consts;
 
@@ -151,6 +151,13 @@ void ezc_rand_1(mpfr_t r) {
 void ezc_rand_2(mpfr_t r, mpfr_t a) { 
 	mpfr_urandomb(r, ezc_rand_state);
 	mpfr_mul(r, r, a, EZC_RND);
+}
+void ezc_rand_3(mpfr_t r, mpfr_t a, mpfr_t b) { 
+	mpfr_t _bma; mpfr_init(_bma);
+	mpfr_sub(_bma, b, a, EZC_RND);
+	ezc_rand_2(r, _bma);
+	mpfr_add(r, r, a, EZC_RND);
+	mpfr_clear(_bma);
 }
 void ezc_randgauss(mpfr_t r) { 
 	mpfr_grandom(r, NULL, ezc_rand_state, EZC_RND); 
