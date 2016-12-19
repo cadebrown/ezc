@@ -1,6 +1,6 @@
 # EZC
 
-[![Coverage Status](https://coveralls.io/repos/github/ChemicalDevelopment/ezc/badge.svg?branch=master)](https://coveralls.io/github/ChemicalDevelopment/ezc?branch=master)
+[![Build Status](https://travis-ci.org/ChemicalDevelopment/ezc.svg?branch=master)](https://travis-ci.org/ChemicalDevelopment/ezc)
 
 Current version: 3.0.0
 
