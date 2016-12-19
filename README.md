@@ -16,9 +16,29 @@ You can think of it like a calculator language, but with more functions and more
 
 # Installation
 
-For all (*nix) systems (Debian, Ubuntu, Raspbian, OSX, FreeBSD, . . .) and maybe (cygwin, mingw, etc...), run `git clone http://github.chemicaldevelopment.us/ezc && cd ezc && make && source ~/.bashrc` in the terminal to install. This only requires some sort of C compiler.
+This should work for all systems with `curl`, `cc`, and `make`, and has been tested on Ubuntu15/16, OSX (El Capitan), Debian 8, Raspbian (Raspberry pi), and confirmed working.
+
+To install, run copypaste this into your terminal and then hit enter:
+
+`cd /tmp/ && curl https://github.com/ChemicalDevelopment/ezc/archive/master.zip -L > ezc.zip && unzip ezc.zip && cd ezc-master && make`
+
+(this should take about 5-10 minutes)
+
+Now, go in the install director (~/ezc/) `cd ~/ezc/`, run `ls` to view all the programs associated with it.
+
+Run `./pi 10000` for 10000 digits of pi.
+
+To view compiler help, use `./ezcc -h`
 
 If that fails, please open an [issue](https://github.com/ChemicalDevelopment/ezc/issues)
+
+For some platforms (Debian Based, Fedora Based, OSX, FreeBSD) you can run:
+
+`cd /tmp/ && curl https://github.com/ChemicalDevelopment/ezc/archive/master.zip -L > ezc.zip && unzip ezc.zip && cd ezc-master && make local-noreq`
+
+This uses a package manager to download MPFR and GMP so that it doesn't need to be compiled. This will take about 15 - 20 seconds to install, but only for these platforms. If you use a different one, it defaults to the above option.
+
+(**note for OSX users** this second method requires [homebrew](http://brew.sh/) to install)
 
 # Building
 
