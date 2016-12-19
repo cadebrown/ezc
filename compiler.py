@@ -91,8 +91,11 @@ def c_endblock(op, args):
 
 declare_function = "function "
 
-functions = "if,else,fi,for,rof,prec,add,sub,mul,div,pow,mod,var,intvar,file,set,sqrt,cbrt,min,max,near,trunc,rand,fact,echo,hypot,exp,log,logb,agm,gamma,factorial,zeta,pi,deg,rad,sin,cos,tan,asin,acos,atan,csc,sec,cot,acsc,asec,acot,sinh,cosh,tanh,asinh,acosh,atanh,csch,sech,coth,acsch,asech,acoth".split(",")
-operators = "+,-,*,/,^,%,~,?,!,√,ζ".split(",")
+functions = "if,else,fi,for,rof,prec,add,sub,mul,div,pow,mod,var,intvar,file,set,sqrt,\\√,cbrt,min,max,near,trunc,rand,\\?,fact,echo,hypot,exp,log,logb,agm,gamma,factorial,zeta,\\ζ,pi,deg,rad,sin,cos,tan,asin,acos,atan,csc,sec,cot,acsc,asec,acot,sinh,cosh,tanh,asinh,acosh,atanh,csch,sech,coth,acsch,asech,acoth".split(",")
+
+# in order of operations
+#operators = "+,-,*,/,^,%,~,?,!,√,ζ".split(",")
+operators = "!,~,^,*,/,%,+,-,~".split(",")
 
 op_map_funcs = {
 	"+": "add",
@@ -102,10 +105,13 @@ op_map_funcs = {
 	"^": "pow",
 	"%": "mod",
 	"~": "near",
-	"?": "rand",
 	"!": "fact",
-	"√": "sqrt",
+}
+
+functions_alias = {
+	"?": "rand",
 	"ζ": "zeta",
+	"√": "sqrt"
 }
 
 functions_translate_funcs = {
@@ -125,6 +131,8 @@ functions_translate_funcs = {
 def get_function_translate(fname, args):
 	global functions_translate_funcs
 	fname = fname.strip()
+	if fname in functions_alias:
+		return get_function_translate(functions_alias[fname], args)
 	if fname in functions_translate_funcs:
 		return functions_translate_funcs[fname](fname, args)
 	return functions_translate_funcs["__default__"](fname, args)
