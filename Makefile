@@ -22,5 +22,8 @@ uninstall-global:
 deb:
 	-./build-scripts/deb.sh
 
+vscode:
+	-./build-scripts/vscode.sh
+
 test-local:
 	-~/ezc/ezcc.py -c "prec 1000:var (sqrt 2)" -v5

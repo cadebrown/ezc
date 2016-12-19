@@ -1,3 +1,3 @@
 #!/bin/bash
-cd ../VSCODE-extension
+cd VSCODE-extension
 vsce publish minor

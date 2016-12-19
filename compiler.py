@@ -91,7 +91,7 @@ def c_endblock(op, args):
 
 declare_function = "function "
 
-functions = "if,else,fi,for,rof,prec,add,sub,mul,div,pow,mod,var,intvar,file,set,sqrt,\\√,cbrt,min,max,near,trunc,rand,fact,echo,hypot,exp,log,logb,agm,gamma,factorial,zeta,\\ζ,pi,deg,rad,sin,cos,tan,asin,acos,atan,csc,sec,cot,acsc,asec,acot,sinh,cosh,tanh,asinh,acosh,atanh,csch,sech,coth,acsch,asech,acoth".split(",")
+functions = "if,else,fi,for,rof,prec,add,sub,mul,div,pow,mod,\",var,intvar,file,set,sqrt,\\√,cbrt,min,max,near,trunc,rand,fact,echo,hypot,exp,log,logb,agm,gamma,factorial,zeta,\\ζ,pi,deg,rad,sin,cos,tan,asin,acos,atan,csc,sec,cot,acsc,asec,acot,sinh,cosh,tanh,asinh,acosh,atanh,csch,sech,coth,acsch,asech,acoth".split(",")
 
 #operators = "+,-,*,/,^,%,~,?,!,√,ζ".split(",")
 operators = "!,~,^,*,/,÷,%,+,-,~,?".split(",")
@@ -114,6 +114,7 @@ op_map_funcs = {
 functions_alias = {
 	#"?": "rand",
 	"ζ": "zeta",
+	"\"": "echo",
 	"√": "sqrt"
 }
 

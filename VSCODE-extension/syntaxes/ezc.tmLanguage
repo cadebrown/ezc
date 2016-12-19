@@ -18,7 +18,7 @@
 
 		<dict>
 			<key>match</key>
-			<string>{.*}|.*;</string>
+			<string>.*;</string>
 			<key>name</key>
 			<string>constant.string</string>
 		</dict>
@@ -78,7 +78,7 @@
 
 		<dict>
 			<key>match</key>
-			<string>(:)( [a-zA-Z0-9_])*</string>
+			<string>\[([a-zA-Z]+)\]((?:\ [a-zA-Z0-9_])+)</string>
 			<key>name</key>
 			<string>support.type.sys-types.args</string>
 		</dict>
@@ -107,7 +107,7 @@
 
 		<dict>
 			<key>match</key>
-			<string>(\!|\%|\+|\*\*|\*|\-|\/|\~|\^|\$|\?\?|\?|\√\√|\√|\ζ|\!)</string>
+			<string>(\!|\%|\+\*|\*|\-|\/|\~|\^|\$|\?|\√|\ζ|\!)</string>
 			<key>name</key>
             <string>support.function.builtin.call.ezc</string>
 		</dict>   
@@ -117,7 +117,7 @@
 
 		<dict>
 			<key>match</key>
-			<string>(=|<|>|=<|==|>=|!=|\$)</string>
+			<string>(<|>|=<|==|>=|!=|\$)</string>
 			<key>name</key>
 			<string>support.keyword.compare</string>
 		</dict>  
@@ -127,7 +127,7 @@
 
 		<dict>
 			<key>match</key>
-			<string>(rof|__base|for|label|goto|if|fi|set|echo|prec|int_var_raw|int_var|var_raw|var|:|echo_raw|echo|\"\")</string>
+			<string>(rof|__base|for|label|goto|if|fi|set|prec|intvar|var|:|echo|\"\")</string>
 			<key>name</key>
 			<string>keyword.control.ezc</string>
 		</dict>
