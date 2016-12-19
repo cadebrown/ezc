@@ -1,5 +1,7 @@
 # EZC
 
+[![Coverage Status](https://coveralls.io/repos/github/ChemicalDevelopment/ezc/badge.svg?branch=master)](https://coveralls.io/github/ChemicalDevelopment/ezc?branch=master)
+
 Current version: 3.0.0
 
 A intermediate language which is transpiled to C. Multiprecision is built into the language.
