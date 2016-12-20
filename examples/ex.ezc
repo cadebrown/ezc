@@ -4,8 +4,8 @@ var (√ 2)
 echo Should be 55
 intvar (1+2+3+4+5+6+7+8+9+10)
 
-#echo Should be 65
-#intvar ((1+2+3/3+3^(1+5%2+6))/(10^2+1))
+echo Should be 65
+intvar ((1+2+3/3+3^(1+5%2+6))/(10^2+1))
 
 echo Should be 135
 intvar (2-3+11-123-52+300)
@@ -17,7 +17,7 @@ echo Should be 26
 intvar (2*3+4*5)
 
 echo Should be 12
-intvar ((3 !) + (3 !))
+intvar ((fact 3) + (fact 3))
 
 
 echo Should be less than 2000
