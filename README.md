@@ -18,7 +18,7 @@ You can think of it like a calculator language, but with more functions and more
 
 (this requires `sudo` rights)
 
-This should work for all systems with `curl`, `cc`, and `make`, and has been tested on Ubuntu15/16, OSX (El Capitan), Debian 8, Raspbian (Raspberry pi), and confirmed working.
+This should work for all systems with `curl`, `cc`, `python`, and `make`, and has been tested on Ubuntu15/16, OSX (El Capitan), Debian 8, Raspbian (Raspberry pi), and confirmed working.
 
 To install, run copypaste this into your terminal and then hit enter:
 
@@ -57,7 +57,7 @@ If any errors are produced, please open an [issue](https://github.com/ChemicalDe
 
 # Building
 
-You just need `cc` (or another c compiler), and `git` (you can download zip as well)
+You just need `cc` (or another c compiler), `python`, and `git` (you can download zip as well)
 
 For all OSs:
 
@@ -86,7 +86,7 @@ Run `export EZC_DEG=1` to use degree mode for trig functions. To disable this, r
 
 # Utilities
 
-As of v3, commandline utilities are included, including all arithmetic (`add`, `sub`, etc.)
+Commandline utilities are included, including all arithmetic (`add`, `sub`, etc.)
 
 As well as basic trig and inverses (of `sin`, `cos`, and `tan`) and others like `fact` (factorial), `gamma`, `zeta`, `pi`, and `e`
 
