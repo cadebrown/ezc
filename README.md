@@ -2,8 +2,6 @@
 
 [![Build Status](https://travis-ci.org/ChemicalDevelopment/ezc.svg?branch=master)](https://travis-ci.org/ChemicalDevelopment/ezc)
 
-Current version: 3.0.0
-
 A intermediate language which is transpiled to C. Multiprecision is built into the language.
 
 Made for people who don't want to use low level memory management, but want the speed it provides.
@@ -12,9 +10,7 @@ Includes commandline utilities which are located in /usr/bin (such as `sqrt`, `m
 
 You can think of it like a calculator language, but with more functions and more digits
 
-[Chemical Development Docs](http://chemicaldevelopment.us/docs/ezc/) is the documentation for EZC
-
-![Screenshot](screenshots/pi_basic.png)
+[EZC Documentation](http://chemicaldevelopment.us/docs/ezc/)
 
 # Installation
 

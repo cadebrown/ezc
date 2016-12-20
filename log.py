@@ -1,6 +1,6 @@
 name = "EZCC"
 
-version = "3.0.0"
+version = "0.9.0"
 
 RESET = '\033[0m'
 

@@ -10,7 +10,7 @@ import delegate, log
 
 
 # set args
-parser = argparse.ArgumentParser(description='Compile EZC Language. v2.3.0 http://github.chemicaldevelopment.us/ezc')
+parser = argparse.ArgumentParser(description='Compile EZC Language. v%s http://github.chemicaldevelopment.us/ezc' % (log.version))
 parser.add_argument('files', metavar='files', type=str, nargs='*', default=[], help='files to compile')
 parser.add_argument('-o', default="a.out", help='Output file')
 
@@ -41,12 +41,7 @@ if args["runfile"]:
 
 log.init(args["v"])
 
-#if not isinstance(dargs["files"], list):
-#	dargs["files"] = list(dargs["files"])
-
 delegate.init(args)
-
-#delegate.compile_files(args["files"])
 
 if args["e"]:
 	to_run = "\n".join(sys.stdin)
@@ -58,6 +53,3 @@ else:
 
 if do_run:
 	delegate.run_exec()
-
-
-#log.end()
