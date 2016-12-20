@@ -45,7 +45,7 @@ def parse_line(line):
 	res = ""
 	
 	for x in to_process:
-		res += get_statement(x) + "\n"
+		res += get_statement(x) + "\n\t"
 	
 	return res
 

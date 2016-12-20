@@ -1,5 +1,6 @@
 #EZC_LIB="-I%s/include/ %s/lib/libmpfr.a %s/lib/libgmp.a"
 EZC_LIB="-lmpfr -lgmp"
+
 EZC_C="""
 #include <time.h>
 #include <stdio.h>
@@ -8,7 +9,7 @@ EZC_C="""
 #include <mpfr.h>
 #include <math.h>
 
-int ezc_size_consts = 30, ezc_consts_id = 0, ezc_consts_ov = 0;
+int ezc_size_consts = 50, ezc_consts_id = 0, ezc_consts_ov = 0;
 gmp_randstate_t ezc_rand_state;
 mpfr_t *ezc_consts;
 
