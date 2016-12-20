@@ -94,9 +94,9 @@ declare_function = "function "
 functions = "if,else,fi,for,rof,prec,add,sub,mul,div,pow,mod,\",var,intvar,file,set,sqrt,\\√,cbrt,min,max,near,trunc,rand,fact,echo,hypot,exp,log,logb,agm,gamma,factorial,zeta,\\ζ,pi,deg,rad,sin,cos,tan,asin,acos,atan,csc,sec,cot,acsc,asec,acot,sinh,cosh,tanh,asinh,acosh,atanh,csch,sech,coth,acsch,asech,acoth".split(",")
 
 #operators = "+,-,*,/,^,%,~,?,!,√,ζ".split(",")
-operators = "!,~,^,*,/,÷,%,+,-,~,?".split(",")
+operators = "~,^,*,/,÷,%,+,-,~,?".split(",")
 
-order_op = [group.split(",") for group in "!,?,~,,^,,*,/,÷,%,,+,-".split(",,")]
+order_op = [group.split(",") for group in "?,~,,^,,*,/,÷,%,,+,-".split(",,")]
 
 op_map_funcs = {
 	"+": "add",
