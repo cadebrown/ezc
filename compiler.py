@@ -159,8 +159,8 @@ def get_user_func_translate(ufunc, args):
 def get_var_inits():
 	res = ["", ""]
 	for x in var:
-		res[0] += "\n\tmpfr_t %s;" % (x)
-		if not re.findall("tmp_[0-9]+v", x):
+		if "_tmp_" not in x:
+			res[0] += "\n\tmpfr_t %s;" % (x)
 			res[1] += "\n\tmpfr_init(%s);" % (x)
 	return res
 user_funcs=""""""

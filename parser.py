@@ -32,7 +32,8 @@ def parse_line(line):
 	to_process = []
 	
 	for l in tmp:
-		to_process.append(l)
+		for ll in resolve_functions(l):
+			to_process.append(ll)
 
 	tmp = [x for x in to_process]
 	to_process = []
@@ -66,6 +67,12 @@ def get_statement(line):
 		line = get_statement(line.replace("=", "= set "))
 	return line
 
+def get_tmp_var():
+	global needed_var
+	res = "_tmp_%d" % (needed_var)
+	needed_var += 1
+	return res
+
 def expand_line(line):
 	global unexpanded_line
 	if get_nested(line):
@@ -73,12 +80,10 @@ def expand_line(line):
 		ret = []
 		var_tod = set()
 		for x in range(0, len(to_do)):
-			global needed_var
-			needed_var += 1
-			tmp_var = "tmp_%dv_" % (needed_var)
+			tmp_var = get_tmp_var()
 			var_tod.add(tmp_var)
 			line = line.replace(to_do[x], tmp_var, 1)
-			ret.append("mpfr_init (%s);" % (tmp_var))
+			ret.append("mpfr_t %s; mpfr_init (%s);" % (tmp_var, tmp_var))
 			res_exp = expand_line(tmp_var + " = " + to_do[x])
 			if isinstance(res_exp, list):
 				for xx in res_exp:
@@ -158,6 +163,13 @@ def parse_op_resolve(match):
 	else:
 		return [match[4], match[6], [match[5], match[7]]]
 
+
+def resolve_functions(line):
+	if len(re.findall("("+valid_function+")", line)) >= 1:
+		result = re.findall("("+valid_function+")", line)
+		return [line]
+	return [line]
+
 def resolve_operators(line):
 	ret = []
 	k_t = False
@@ -165,18 +177,16 @@ def resolve_operators(line):
 		for pat in pats:
 			if len(re.findall(pat, line)) >= 1 and not k_t:
 				k_t = True
-				global needed_var
-				needed_var += 1
 				resolve = parse_op_resolve(re.findall(pat,line)[0])
-				var = "tmp_%dv_" % (needed_var)
-				st = "%s = %s" % (var, resolve[0])
-				line = line.replace(resolve[0], var, 1)
-				ret.append("mpfr_init(%s);" % (var))
+				tmp_var = get_tmp_var()
+				st = "%s = %s" % (tmp_var, resolve[0])
+				line = line.replace(resolve[0], tmp_var, 1)
+				ret.append("mpfr_t %s; mpfr_init(%s);" % (tmp_var, tmp_var))
 				ret.append(st)
 				recurse = resolve_operators(line)
 				for n in recurse:
 					ret.append(n)
-				ret.append("mpfr_clear (%s);" % (var))
+				ret.append("mpfr_clear (%s);" % (tmp_var))
 	if not k_t:
 		ret.append(line)
 	return ret
