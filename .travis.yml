@@ -3,10 +3,10 @@ language: c
 
 install:
   - sudo apt-get install -qq libmpfr-dev
-  - make local-noreq
+  - make global
 
 script:
-  - make check
+  - make check-global
 
 notifications:
   email:

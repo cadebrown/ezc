@@ -9,9 +9,9 @@ import re, regexes
 def is_user_function(line):
 	if re.findall(regexes.valid_declare_user_function, line):
 		res = re.findall(regexes.valid_declare_user_function, line)[0]
-		return "void __%s(mpfr_t RETURN, mpfr_t %s) {" % (res[0], ", mpfr_t ".join(res[1].split()))
+		return ("void __%s(mpfr_t RETURN, mpfr_t %s) {" % (res[0], ", mpfr_t ".join(res[1].split())), res[1])
 	elif re.findall(regexes.valid_end_user_function, line):
-		return "}"
+		return ("}", [])
 
 def __fits(pattern, text):
 	r = re.findall(pattern, text) 
@@ -62,7 +62,19 @@ def get_statement(line):
 
 def get_tmp_var():
 	global needed_var
-	res = "_tmp_%d" % (needed_var)
+	char_map = {
+		"0": "z",
+		"1": "y",
+		"2": "x",
+		"3": "w",
+		"4": "v",
+		"5": "u",
+		"6": "t",
+		"7": "s",
+		"8": "r",
+		"9": "q",
+	}
+	res = "_tmp_%s" % ("".join([char_map[i] for i in str(needed_var)]))
 	needed_var += 1
 	return res
 

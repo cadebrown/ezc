@@ -7,16 +7,10 @@ import resolve
 def init():
 	parser.init(resolve.functions, resolve.operators, resolve.order_op)
 
-def get_var_inits():
-	res = ["", ""]
-	for x in resolve.var:
-		if "_tmp_" not in x:
-			res[0] += "\n\tmpfr_t %s;" % (x)
-			res[1] += "\n\tmpfr_init(%s);" % (x)
-	return res
-
 def get_c_file():
-	return default_file + get_var_inits()[0] + user_funcs + start + get_var_inits()[1] + main + end
+	#return default_file + get_var_inits()[0] + user_funcs + start + get_var_inits()[1] + main + end
+	res = default_file + user_funcs + start + main + end
+	return res
 
 def add_code(file_contents):
 	lines = file_contents.split("\n")
@@ -47,7 +41,8 @@ def add_compile_lines(lines):
 		else:
 			if parser.is_user_function(line):
 				is_func = not is_func
-				user_funcs += parser.is_user_function(line)
+				user_funcs += parser.is_user_function(line)[0]
+				resolve.not_vars = parser.is_user_function(line)[1]
 			else:
 				if "###" in line:
 					line = line[:line.index("###")]

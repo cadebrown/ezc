@@ -12,27 +12,29 @@ def reg_args(args):
 	if isinstance(args, str):
 		return reg_args([args])
 	args = map(parser.get_var, args)
+	ret = []
 	global var
 	for arg in args:
-		if parser.is_valid_arg(arg):
+		if parser.is_valid_arg(arg) and arg not in var and "_tmp_" not in arg and arg not in not_vars and arg not in protected_words:
 			var.add(arg)
-	return args
+			ret.append("mpfr_t %s; mpfr_init(%s);" % (arg, arg))
+	return (args, ret)
+
 def c_noarg_call(fname, args):
 	args = reg_args(args)
-	return "ezc_%s(%s);" % (fname, args[0])
+	return "%sezc_%s(%s);" % ("".join(args[1]), fname, args[0][0])
 def c_call(fname, args):
 	args = reg_args(args)
-	return "ezc_%s(%s);" % (fname, ", ".join(args))
+	return "%sezc_%s(%s);" % ("".join(args[1]), fname, ",".join(args[0]))
 def c_user_call(fname, args):
 	args = reg_args(args)
-	return "__%s(%s);" % (fname, ", ".join(args))
+	return "%s__%s(%s);" % ("".join(args[1]), fname, ", ".join(args[0]))
 def c_echo(fname, args):
 	return "ezc_%s(\"%s\");" % (fname, " ".join(args))
 def c_file(op, args):
 	if len(args) < 2:
 		args = args + ["ezc.txt"]
 	args[0] = parser.get_var(args[0])
-	reg_args([args[0]])
 	return "ezc_file(%s, \"%s\");" % (args[0], args[1])
 def c_prec(fname, args):
 	global start
@@ -45,22 +47,21 @@ def c_prec(fname, args):
 	return ""
 def c_call_optional_call(fname, args):
 	args = reg_args(args)
-	return "\n\tezc_%s_%d(%s);" % (fname, len(args), ", ".join(args))
+	return "%sezc_%s_%d(%s);" % ("".join(args[1]), fname, len(args[0]), ", ".join(args[0]))
 def arg_call(op, args):
 	return c_call(op_map_funcs[op], args)
 def c_if_call(op, args):
 	args = reg_args(args)
-	return "\n\tif (mpfr_cmp(%s, %s) %s 0) {" % (args[0], args[2], args[1])
+	return "%sif (mpfr_cmp(%s, %s) %s 0) {" % ("".join(args[1]), args[0][0], args[0][2], args[0][1])
 def c_for_call(op, args):
 	if len(args) <= 3:
 		args = args + ["ezc_next_const(\"1\")"]
 	args = reg_args(args)
-	return "\n\tfor (ezc_set(%s, %s); mpfr_cmp(%s, %s) == -ezc_sgn(%s); ezc_add(%s, %s, %s)) {" % (args[0], args[1], args[0], args[2], args[3], args[0], args[0], args[3])
+	return "%sfor (ezc_set(%s, %s); mpfr_cmp(%s, %s) == -ezc_sgn(%s); ezc_add(%s, %s, %s)) {" % ("".join(args[1]), args[0][0], args[0][1], args[0][0], args[0][2], args[0][3], args[0][0], args[0][0], args[0][3])
 def c_elseblock(op, args):
 	return "} else {"
 def c_endblock(op, args):
 	return "}"
-
 
 def get_function_translate(fname, args):
 	fname = fname.strip()
@@ -83,8 +84,10 @@ def get_user_func_translate(ufunc, args):
 
 
 var = set()
+not_vars = []
+protected_words = ["RETURN"]
 
-functions = "if,else,fi,for,rof,prec,add,sub,mul,div,pow,mod,\",var,intvar,file,set,sqrt,\\√,cbrt,min,max,near,trunc,rand,fact,echo,hypot,exp,log,logb,agm,gamma,factorial,zeta,\\ζ,pi,deg,rad,sin,cos,tan,asin,acos,atan,csc,sec,cot,acsc,asec,acot,sinh,cosh,tanh,asinh,acosh,atanh,csch,sech,coth,acsch,asech,acoth".split(",")
+functions = "if,else,file,fi,for,rof,prec,add,sub,mul,div,pow,mod,\",var,intvar,set,sqrt,\\√,cbrt,min,max,near,trunc,rand,fact,echo,hypot,exp,log,logb,agm,gamma,factorial,zeta,\\ζ,pi,deg,rad,sin,cos,tan,asin,acos,atan,csc,sec,cot,acsc,asec,acot,sinh,cosh,tanh,asinh,acosh,atanh,csch,sech,coth,acsch,asech,acoth".split(",")
 
 operators = "~,^,*,/,÷,%,+,-,~,?".split(",")
 

@@ -26,4 +26,7 @@ vscode:
 	-./scripts/vscode.sh
 
 check:
-	-python src/ezcc.py example.ezc -run
+	-python src/ezcc.py example.ezc -run -v4
+
+check-global:
+	-ezcc example.ezc -run -v4

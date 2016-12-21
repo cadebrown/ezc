@@ -30,4 +30,4 @@ echo Should be less than 2000
 intvar (0?1000+0?1000)
 
 echo Should be 38
-intvar ((@FUNC 12 25)%(@FUNC 7 1))
+intvar ((@FUNC 12 25) % (@FUNC 7 1))
