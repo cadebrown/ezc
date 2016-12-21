@@ -3,7 +3,7 @@
 def main():
 	import argparse
 	import os, sys
-	from subprocess import Popen, PIPE
+	import subprocess
 
 	sys.dont_write_bytecode=True
 
@@ -20,7 +20,7 @@ def main():
 
 	parser.add_argument('-v', default=0, type=int, help='Verbosity level')
 
-	parser.add_argument('-tmp', default="/tmp/out.c", help='Tmp file')
+	parser.add_argument('-tmp', default="`mktemp /tmp/XXXX.c`", help='Tmp file')
 
 	parser.add_argument('-cc', default="cc", help='C Compiler')
 	parser.add_argument('-ccargs', default="", help='C Compiler arguments')
@@ -36,6 +36,11 @@ def main():
 	parser.add_argument('-cvars', default="10", help='Number of constants used by compiler')
 
 	args = vars(parser.parse_args())
+
+	if "mktemp" in args["tmp"]:
+		#args["tmp"] = os.popen("echo " + args["tmp"]).read()
+		args["tmp"] = subprocess.check_output("echo " + args["tmp"], shell=True).strip()
+		#print ret
 
 	do_run = args["c"] or args["e"] or args["run"] or args["runfile"]
 
