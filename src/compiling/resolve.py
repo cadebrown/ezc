@@ -9,13 +9,17 @@ def get_c_st(ret):
 		return type_resolve_dict[ret[0]](ret[1][0], ret[1][1])
 
 def reg_args(args):
+	if isinstance(args, str):
+		return reg_args([args])
 	args = map(parser.get_var, args)
 	global var
 	for arg in args:
 		if parser.is_valid_arg(arg):
 			var.add(arg)
 	return args
-
+def c_noarg_call(fname, args):
+	args = reg_args(args)
+	return "ezc_%s(%s);" % (fname, args[0])
 def c_call(fname, args):
 	args = reg_args(args)
 	return "ezc_%s(%s);" % (fname, ", ".join(args))
@@ -56,6 +60,7 @@ def c_elseblock(op, args):
 	return "} else {"
 def c_endblock(op, args):
 	return "}"
+
 
 def get_function_translate(fname, args):
 	fname = fname.strip()
@@ -120,6 +125,7 @@ functions_translate_funcs = {
 	"else": c_elseblock,
 	"rof": c_endblock,
 	"file": c_file,
+	"pi": c_noarg_call
 }
 
 

@@ -125,7 +125,6 @@ c_l = None
 
 def parse_return(call):
 	#call = [call[1], (call[0] + call[2]).split()]
-	print call
 	return get_statement("RETURN = %s" % (call))
 
 def parse_func(call):

@@ -25,3 +25,5 @@ deb:
 vscode:
 	-./scripts/vscode.sh
 
+check:
+	-python src/ezcc.py example.ezc -run
