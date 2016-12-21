@@ -68,7 +68,7 @@ Now, run `sudo make global`. If you get permissions errors, run `make`
 
 (if you use the second one, run `cd ~/ezc/`, and when I run `ezcc`, you run `./ezcc`. When I run anything, you just add `./` before it)
 
-To test it, run `ezcc -c "var (sqrt 2)"` (or `./ezcc -c "var (sqrt 2)`) 
+To test it, run `ezcc -c "var (sqrt 2)"` (or `./ezcc -c "var (sqrt 2)"`) 
 
 After this, run `sqrt 2` and it should print out digits of square root of two (1.4142135623730...), and it should be equivelant to your output with `ezcc`
 
