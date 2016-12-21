@@ -1,21 +1,20 @@
 # -*- coding: utf-8 -*-
-import re, parser, log
-import ezdata
 
-is_func = False
+from parsing import parser
 
-default_file=ezdata.EZC_C
-
-var = set()
+def get_c_st(ret):
+	if not isinstance(ret, list) and parser.is_literal(ret):
+		return ret
+	else:
+		return type_resolve_dict[ret[0]](ret[1][0], ret[1][1])
 
 def reg_args(args):
 	args = map(parser.get_var, args)
 	global var
 	for arg in args:
-		if re.findall(parser.valid_var, arg) and re.findall(parser.valid_var, arg)[0] == arg:
+		if parser.is_valid_arg(arg):
 			var.add(arg)
 	return args
-
 
 def c_call(fname, args):
 	args = reg_args(args)
@@ -33,13 +32,13 @@ def c_file(op, args):
 	return "ezc_file(%s, \"%s\");" % (args[0], args[1])
 def c_prec(fname, args):
 	global start
-	if re.findall(parser.valid_get_arg, args[0]) and re.findall(parser.valid_get_arg, args[0])[0] == args[0]:
+	if parser.is_valid_arg(args[0]):
 		start += "\n\tezc_prec_index(%s);" % (args[0].replace("$", ""))
 		return ""
-	elif re.findall(parser.valid_const, args[0]) and re.findall(parser.valid_const, args[0])[0] == args[0]:
+	elif parser.is_valid_const(args[0]):
 		start += "\n\tezc_prec_literal(%s);" % (args[0])
 		return ""
-	elif re.findall(parser.valid_var, args[0]) and re.findall(parser.valid_var, args[0])[0] == args[0]:
+	elif parser.is_valid_var(args[0]):
 		return "\n\tezc_prec_f(%s);" % (args[0])
 	return ""
 def c_call_optional_call(fname, args):
@@ -79,68 +78,8 @@ def get_user_func_translate(ufunc, args):
 	ufunc = ufunc.strip()
 	return c_user_call(ufunc, args)
 
-def get_var_inits():
-	res = ["", ""]
-	for x in var:
-		if "_tmp_" not in x:
-			res[0] += "\n\tmpfr_t %s;" % (x)
-			res[1] += "\n\tmpfr_init(%s);" % (x)
-	return res
-user_funcs=""""""
 
-start="""int main(int argc, char *argv[]) {
-	ezc_init(argc, argv);"""
-
-main = """"""
-
-end = """
-    return 0;
-}
-"""
-
-
-def add_code(file_contents):
-	lines = file_contents.split("\n")
-	add_compile_lines(lines)
-
-def add_compile_lines(lines):
-	parser.set_regex()
-
-	global main; global user_funcs; global is_func
-	to_read = True
-	c_read = True
-	line_num = 0
-	for line in lines:
-		res = ""
-		line_num += 1
-		if parser.is_literal(line):
-			log.info("Compiling", ["(Line %d) is C code" % line_num, "%s" % (get_c(line))])
-			res += "\n\t" + parser.get_c(line)
-		else:
-			try:
-				if "###" in line:
-					line = line[:line.index("###")]
-					to_read = not to_read
-				if "#" in line:
-					line = line[:line.index("#")]
-				if line != "" and (to_read or c_read):
-					if ":" in line:
-						res += "\n\t%s" % ("\n\t".join(map(parser.parse_line, line.split(":"))))
-					else:
-						res += "\n\t%s" % (parser.parse_line(line))
-				c_read = to_read
-			except Exception as e:
-				log.err("Compiling", ["(Line %d) Error while parsing" % line_num, line])
-				log.err("Compiling", str(e))
-				print str(e)
-		if is_func:
-			user_funcs += res
-		else:
-			main += res
-
-def get_c_file():
-	return default_file + get_var_inits()[0] + user_funcs + start + get_var_inits()[1] + main + end
-
+var = set()
 
 functions = "if,else,fi,for,rof,prec,add,sub,mul,div,pow,mod,\",var,intvar,file,set,sqrt,\\√,cbrt,min,max,near,trunc,rand,fact,echo,hypot,exp,log,logb,agm,gamma,factorial,zeta,\\ζ,pi,deg,rad,sin,cos,tan,asin,acos,atan,csc,sec,cot,acsc,asec,acot,sinh,cosh,tanh,asinh,acosh,atanh,csch,sech,coth,acsch,asech,acoth".split(",")
 
@@ -184,3 +123,11 @@ functions_translate_funcs = {
 	"rof": c_endblock,
 	"file": c_file,
 }
+
+
+type_resolve_dict = {
+	"function": get_function_translate,
+	"operator": get_operator_translate,
+	"user_function": get_user_func_translate
+}
+

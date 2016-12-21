@@ -2,8 +2,10 @@
 *tmp/
 *.spec
 
-# compiled files
 *.pyc
+__pycache__
+
+# compiled files
 *.o
 *.out
 *.vscode/
@@ -13,5 +15,3 @@
 
 # package
 *.deb
-
-test

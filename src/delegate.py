@@ -1,13 +1,17 @@
 from subprocess import Popen, PIPE
+
 import os
-import compiler, parser
-import log
+
+from compiling import compiler
+from parsing import parser
+from logging import log
 
 args = None
 
 def init(_args):
 	global args
 	args = _args
+	compiler.init()
 
 def remove_file(fn):
 	clearcmd = "rm %s" % (fn)
@@ -43,10 +47,7 @@ def compile_exec():
 	compile_proc.wait()
 
 def addcode(fs):
-	try:
-		compiler.add_code(fs)
-	except Exception as e:
-		log.err("Adding code", e)
+	compiler.add_code(fs)
 
 def compile_files(sources):
 	global args
