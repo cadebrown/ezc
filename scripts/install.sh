@@ -11,6 +11,8 @@ EXE_INSTALL_DIR=$1
 SRC_INSTALL_DIR=$2
 I_MPFR=$3
 
+echo Operating System Type: $OSTYPE
+
 if [ "$1" == "" ] || [ "$1" == "auto" ]; then
     EXE_INSTALL_DIR=/usr/bin/
 fi
