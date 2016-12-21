@@ -23,7 +23,7 @@ EZC_BIN="#!/bin/bash\\n$SRC_INSTALL_DIR/ezcc.py \"\${@}\""
 if [[ "$I_MPFR" == "true" ]]; then
 	echo "Installing MPFR from source"
 	
-	./build-scripts/mpfr.sh $SRC_INSTALL_DIR
+	./scripts/mpfr.sh $SRC_INSTALL_DIR
 elif [[ "$I_MPFR" == "false" ]]; then
 echo "not installing anything, through source or package manager"
 else
@@ -47,12 +47,12 @@ else
 		echo "cygwin may work . . ."
 		echo "building mpfr from source:"
 		I_MPFR="true"
-		./build-scripts/mpfr.sh $SRC_INSTALL_DIR
+		./scripts/mpfr.sh $SRC_INSTALL_DIR
 	else
 		echo "Warning: OS not found."
 		echo "Building MPFR from source"
 		I_MPFR="true"
-		./build-scripts/mpfr.sh $SRC_INSTALL_DIR
+		./scripts/mpfr.sh $SRC_INSTALL_DIR
 	fi
 fi
 
