@@ -1,6 +1,6 @@
 #!/usr/bin/ezc -runfile
 prec $3
-if $2 == 0
+if ($2) == (0)
 	var (log $1)
 else
 	var (logb $1 $2)
