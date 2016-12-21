@@ -29,4 +29,4 @@ check:
 	-python src/ezcc.py example.ezc -run -v4
 
 check-global:
-	-ezcc example.ezc -run -v4
+	/usr/bin/ezcc example.ezc -run -v4
