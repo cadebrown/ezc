@@ -2,11 +2,10 @@
 language: c
 
 install:
-  - sudo apt-get install -qq libmpfr-dev
   - sudo make global
 
 script:
-  - make check-global
+  - sudo make check-global
 
 notifications:
   email:
