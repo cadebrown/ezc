@@ -1,3 +1,9 @@
+[FUNC] a b
+hey = a - b
+there = a + b
+return (hey^2 + there^2)
+[/FUNC]
+
 echo Should be 1.414213
 var (√ 2)
 
@@ -22,3 +28,6 @@ intvar ((fact 3) + (fact 3))
 
 echo Should be less than 2000
 intvar (0?1000+0?1000)
+
+echo Should be 38
+var ((@FUNC 12 25)%(@FUNC 7 1))

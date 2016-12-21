@@ -45,14 +45,18 @@ def add_compile_lines(lines):
 			log.info("Compiling", ["(Line %d) is C code" % line_num, "%s" % (get_c(line))])
 			res += "\n\t" + parser.get_c(line)
 		else:
-			if "###" in line:
-				line = line[:line.index("###")]
-				to_read = not to_read
-			if "#" in line:
-				line = line[:line.index("#")]
-			if line != "" and (to_read or c_read):
-				res += compile_line(line)
-			c_read = to_read
+			if parser.is_user_function(line):
+				is_func = not is_func
+				user_funcs += parser.is_user_function(line)
+			else:
+				if "###" in line:
+					line = line[:line.index("###")]
+					to_read = not to_read
+				if "#" in line:
+					line = line[:line.index("#")]
+				if line != "" and (to_read or c_read):
+					res += compile_line(line)
+				c_read = to_read
 		if is_func:
 			user_funcs += res
 		else:

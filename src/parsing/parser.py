@@ -7,10 +7,10 @@ Parses function calls, operators, definintions, etc
 import re, regexes
 
 def is_user_function(line):
-	if re.findall(valid_declare_user_function, line):
-		res = re.findall(valid_declare_user_function, line)[0]
+	if re.findall(regexes.valid_declare_user_function, line):
+		res = re.findall(regexes.valid_declare_user_function, line)[0]
 		return "void __%s(mpfr_t RETURN, mpfr_t %s) {" % (res[0], ", mpfr_t ".join(res[1].split()))
-	elif re.findall(valid_end_user_function, line):
+	elif re.findall(regexes.valid_end_user_function, line):
 		return "}"
 
 def __fits(pattern, text):
@@ -31,8 +31,6 @@ def is_literal(line):
 
 # parses a line. This looks for operators, userfunctions, functions, assignment, functions with no arguments, and then freeform(default).
 def parse_line(line):
-	global valid_declare_user_function; global valid_end_user_function
-
 	global needed_var
 	try:
 		_never_use = needed_var
@@ -127,7 +125,8 @@ c_l = None
 
 def parse_return(call):
 	#call = [call[1], (call[0] + call[2]).split()]
-	return get_statement("RETURN = %s" % (call)) + "\n\treturn;"
+	print call
+	return get_statement("RETURN = %s" % (call))
 
 def parse_func(call):
 	call = [call[1], ("%s %s" % (call[0], call[2])).split()]
