@@ -3,7 +3,7 @@ language: c
 
 install:
   - sudo apt-get install -qq libmpfr-dev
-  - make global
+  - sudo make global
 
 script:
   - make check-global
