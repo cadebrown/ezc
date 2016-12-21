@@ -7,25 +7,21 @@ UTILS=./utils/*
 
 echo $SOURCES
 
-EXE_INSTALL_DIR=$1
-SRC_INSTALL_DIR=$2
-I_MPFR=$3
+INSTALL_DIR=$1
+I_MPFR=$2
 
 echo Operating System Type: $OSTYPE
 
 if [ "$1" == "" ] || [ "$1" == "auto" ]; then
     EXE_INSTALL_DIR=/usr/bin/
 fi
-if [ "$2" == "" ] || [ "$2" == "auto" ]; then
-    SRC_INSTALL_DIR=/usr/src/ezc/
-fi
 
-EZC_BIN="#!/bin/bash\\n$SRC_INSTALL_DIR/ezcc.py \"\${@}\""
+EZC_BIN="#!/usr/bin/python \nimport ezcc; ezcc.main()"
 
 if [[ "$I_MPFR" == "true" ]]; then
 	echo "Installing MPFR from source"
 	
-	./scripts/mpfr.sh $SRC_INSTALL_DIR
+	./scripts/mpfr.sh $INSTALL_DIR
 elif [[ "$I_MPFR" == "false" ]]; then
 echo "not installing anything, through source or package manager"
 else
@@ -58,30 +54,29 @@ else
 	fi
 fi
 
-echo Installing sources in $SRC_INSTALL_DIR
+echo Installing sources in $INSTALL_DIR
 
-mkdir -p $SRC_INSTALL_DIR
-cp -Rf ./src/$SOURCES $SRC_INSTALL_DIR
+mkdir -p $INSTALL_DIR
+cp -Rf ./src/$SOURCES $INSTALL_DIR
 
 if [[ "$I_MPFR" == "true" ]]; then
-	printf "\nEZC_LIB=\"-w -I$SRC_INSTALL_DIR/include/ $SRC_INSTALL_DIR/lib/libmpfr.a $SRC_INSTALL_DIR/lib/libgmp.a\"\n" >> $SRC_INSTALL_DIR/ezdata.py
+	printf "\nEZC_LIB=\"-w -I%s/include/ %s/lib/libmpfr.a %s/lib/libgmp.a\" % (EZC_DIR, EZC_DIR, EZC_DIR)\n" >> $SRC_INSTALL_DIR/ezdata.py
 fi
 
-echo Installing execs in $EXE_INSTALL_DIR
+echo Installing execs in $INSTALL_DIR
 
-mkdir -p $EXE_INSTALL_DIR
 for UTIL in $UTILS
 do
-    O_UTIL=$EXE_INSTALL_DIR/$(basename $UTIL)
-    $SRC_INSTALL_DIR/ezcc.py $UTIL -o $O_UTIL -v1
+    O_UTIL=$INSTALL_DIR/$(basename $UTIL)
+    $INSTALL_DIR/ezcc.py $UTIL -o $O_UTIL -v1
 	strip $O_UTIL
 done
 
-echo -e $EZC_BIN > $EXE_INSTALL_DIR/ezc
-echo -e $EZC_BIN > $EXE_INSTALL_DIR/ezcc
+echo -e $EZC_BIN > $INSTALL_DIR/ezc
+echo -e $EZC_BIN > $INSTALL_DIR/ezcc
 
-chmod +x $EXE_INSTALL_DIR/ezc
-chmod +x $EXE_INSTALL_DIR/ezcc
+chmod +x $INSTALL_DIR/ezc
+chmod +x $INSTALL_DIR/ezcc
 
 
 echo Done copying

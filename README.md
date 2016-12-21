@@ -2,11 +2,16 @@
 
 [![Build Status](https://travis-ci.org/ChemicalDevelopment/ezc.svg?branch=master)](https://travis-ci.org/ChemicalDevelopment/ezc)
 
+Tested platforms:
+  * Debian 8
+  * OSX (El Capitan)
+  * Raspbian
+
 A intermediate language which is transpiled to C. Multiprecision is built into the language.
 
 Made for people who don't want to use low level memory management, but want the speed it provides.
 
-Includes commandline utilities which are located in /usr/bin (such as `sqrt`, `mul`, `pow`, etc.)
+Includes commandline utilities (such as `sqrt`, `mul`, `pow`, etc.)
 
 You can think of it like a calculator language, but with more functions and more digits
 
@@ -14,33 +19,27 @@ You can think of it like a calculator language, but with more functions and more
 
 # Installation
 
+If any errors are produced, please open an [issue](https://github.com/ChemicalDevelopment/ezc/issues)
+
 ## Global (default)
 
 (this requires `sudo` rights)
 
-This should work for all systems with `curl`, `cc`, `python`, and `make`, and has been tested on Ubuntu15/16, OSX (El Capitan), Debian 8, Raspbian (Raspberry pi), and confirmed working.
+To install, copypaste this into your terminal and then hit enter:
 
-To install, run copypaste this into your terminal and then hit enter:
-
-`cd /tmp/ && curl https://github.com/ChemicalDevelopment/ezc/archive/master.zip -L > ezc.zip && unzip ezc.zip && cd ezc-master && sudo make global`
+`curl chemdev.space/ezc.sh -L | bash`
 
 This will prompt for your password, then finish in about 5-10 minutes
 
-After it has finished, you can test and make sure that it worked by running: `ezcc --help` (to view the compiler help messages), and `pi 10000` (for 10000 digits of pi).
-
-If any errors are produced, please open an [issue](https://github.com/ChemicalDevelopment/ezc/issues)
+Now, you should be able to run `ezcc -h` from anywhere
 
 ## Local
 
 if for some reason you don't have sudo rights, you can also install locally:
 
-`cd /tmp/ && curl https://github.com/ChemicalDevelopment/ezc/archive/master.zip -L > ezc.zip && unzip ezc.zip && cd ezc-master && make` (this will take about 5-10 minutes)
+`curl chemdev.space/ezc-local.sh -L | bash`
 
-go in the install directory (`cd ~/ezc/`), run `ls` to view all the programs associated with it.
-
-Run `./ezcc --help` (to view compiler help), and `./pi 10000` (for 10000 digits of pi)
-
-If any errors are produced, please open an [issue](https://github.com/ChemicalDevelopment/ezc/issues)
+EZC should be installed in `~/ezc/`
 
 
 ## Using a package manager
@@ -57,9 +56,7 @@ If any errors are produced, please open an [issue](https://github.com/ChemicalDe
 
 # Building
 
-You just need `cc` (or another c compiler), `python`, and `git` (you can download zip as well)
-
-For all OSs:
+You just need `cc`, `python`, `curl`, and `git` (you can download zip as well)
 
 First, clone this repository:
 
@@ -74,6 +71,30 @@ Now, run `sudo make global`. If you get permissions errors, run `make`
 To test it, run `ezcc -c "var (sqrt 2)"` (or `./ezcc -c "var (sqrt 2)`) 
 
 After this, run `sqrt 2` and it should print out digits of square root of two (1.4142135623730...), and it should be equivelant to your output with `ezcc`
+
+
+# Examples
+
+To compute pi, simply run:
+
+`ezcc -c "var (pi)"`
+
+or, 
+
+`echo "var (pi)" | ezcc -e`
+
+
+Using `-c` or `-e` means you don't need a file, but c reads from the next argument, and e reads from stdin
+
+You can also use a shebang, namely:
+
+`#!/usr/bin/ezc -runfile`
+
+or, to run locally
+
+`#!./ezcc.py -runfile`
+
+See the `example.ezc` folder for a number of examples
 
 
 # Environment variables
@@ -113,31 +134,6 @@ Or, to a thousand digits,
 The list of all utilities is located in this repo in ./utils/
 
 On your installed system, the compiled versions are listed in `/usr/bin/$UTIL`, and should be accessible with just running the name of the util (i.e. `sqrt 2`)
-
-
-# Examples
-
-To compute pi, simply run:
-
-`ezcc -c "var (pi)"`
-
-or, 
-
-`echo "var (pi)" | ezcc -e`
-
-
-Using `-c` or `-e` means you don't need a file, but c reads from the next argument, and e reads from stdin
-
-You can also use a shebang, namely:
-
-`#!/usr/bin/ezc -runfile`
-
-or, to run locally
-
-`#!./ezcc.py -runfile`
-
-See the `examples` folder for a number of examples
-
 
 # Syntax highlighting
 

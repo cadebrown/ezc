@@ -1,4 +1,8 @@
 #EZC_LIB="-I%s/include/ %s/lib/libmpfr.a %s/lib/libgmp.a"
+
+import os
+
+EZC_DIR=os.path.dirname(__file__)
 EZC_LIB="-lmpfr -lgmp"
 
 EZC_C="""
