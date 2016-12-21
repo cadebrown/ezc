@@ -1,6 +1,8 @@
 #!/bin/bash
+cd src
+SOURCES=*
+cd ..
 
-SOURCES=*.py
 UTILS=./utils/*
 
 echo $SOURCES
@@ -57,7 +59,7 @@ fi
 echo Installing sources in $SRC_INSTALL_DIR
 
 mkdir -p $SRC_INSTALL_DIR
-cp $SOURCES $SRC_INSTALL_DIR
+cp -Rf ./src/$SOURCES $SRC_INSTALL_DIR
 
 if [[ "$I_MPFR" == "true" ]]; then
 	printf "\nEZC_LIB=\"-w -I$SRC_INSTALL_DIR/include/ $SRC_INSTALL_DIR/lib/libmpfr.a $SRC_INSTALL_DIR/lib/libgmp.a\"\n" >> $SRC_INSTALL_DIR/ezdata.py

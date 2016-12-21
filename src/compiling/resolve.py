@@ -32,12 +32,10 @@ def c_file(op, args):
 	return "ezc_file(%s, \"%s\");" % (args[0], args[1])
 def c_prec(fname, args):
 	global start
-	if parser.is_valid_arg(args[0]):
-		start += "\n\tezc_prec_index(%s);" % (args[0].replace("$", ""))
-		return ""
-	elif parser.is_valid_const(args[0]):
-		start += "\n\tezc_prec_literal(%s);" % (args[0])
-		return ""
+	if parser.is_valid_const(args[0]):
+		return "\n\tezc_prec_literal(%s);" % (args[0])
+	elif parser.is_valid_arg(args[0]):
+		return "\n\tezc_prec_index(%s);" % (args[0].replace("$", ""))
 	elif parser.is_valid_var(args[0]):
 		return "\n\tezc_prec_f(%s);" % (args[0])
 	return ""
