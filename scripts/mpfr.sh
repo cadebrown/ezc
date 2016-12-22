@@ -9,14 +9,14 @@ echo Installing GMP and MPFR in $BUILD_DIR
 mkdir -p $BUILD_DIR
 cd $BUILD_DIR
 
-curl $GMP_TAR > gmp.tar.xz
+curl $GMP_TAR -o gmp.tar.xz
 tar xfv gmp.tar.xz > /dev/null
 cd gmp*
 ./configure --disable-shared --enable-static --prefix=$BUILD_DIR > /dev/null
 make install > /dev/null
 cd ..
 
-curl $MPFR_TAR > mpfr.tar.xz
+curl $MPFR_TAR -o mpfr.tar.xz
 tar xvf mpfr.tar.xz > /dev/null
 cd mpfr*
 ./configure --disable-shared --enable-static --prefix=$BUILD_DIR --with-gmp=$BUILD_DIR  > /dev/null

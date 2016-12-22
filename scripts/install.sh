@@ -13,7 +13,7 @@ I_MPFR=$2
 echo Operating System Type: $OSTYPE
 
 if [ "$1" == "" ] || [ "$1" == "auto" ]; then
-    EXE_INSTALL_DIR=/usr/bin/
+    INSTALL_DIR=/usr/bin/
 fi
 
 EZC_BIN="#!/usr/bin/python \nimport ezcc; ezcc.main()"
@@ -45,12 +45,12 @@ else
 		echo "cygwin may work . . ."
 		echo "building mpfr from source:"
 		I_MPFR="true"
-		./scripts/mpfr.sh $SRC_INSTALL_DIR
+		./scripts/mpfr.sh $INSTALL_DIR
 	else
 		echo "Warning: OS not found."
 		echo "Building MPFR from source"
 		I_MPFR="true"
-		./scripts/mpfr.sh $SRC_INSTALL_DIR
+		./scripts/mpfr.sh $INSTALL_DIR
 	fi
 fi
 
