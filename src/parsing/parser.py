@@ -59,6 +59,7 @@ def parse_line(line):
 		needed_var = 0
 
 	#needed_var = 0
+	line = line.replace(",", " ")
 	to_process = expand_line(line)
 	ret = []
 	for x in to_process:
@@ -74,6 +75,10 @@ def get_statement(line):
 	line = re.sub(' +', ' ', line)
 	c_l = line
 	k_t = True
+	if re.findall(regexes.valid_assign, line) and "set" not in line:
+		if line.count("=") > 1:
+			return get_statement(re.findall(regexes._set_const, line)[0].replace("=", "= set "))
+		#return get_statement(line.replace("=", "= set "))
 	for op in order_parse:
 		if k_t:
 			rr = re.findall(op[0], line)

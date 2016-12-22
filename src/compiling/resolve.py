@@ -10,6 +10,8 @@ def get_c_st(ret):
 	if not isinstance(ret, list) and parser.is_literal(ret):
 		return ret
 	else:
+		if not isinstance(ret, list):
+			return ""
 		return type_resolve_dict[ret[0]](ret[1][0], ret[1][1])
 
 def reg_args(args):
@@ -137,7 +139,7 @@ var = set()
 not_vars = []
 """Specific to not use tmp vars (user functions)"""
 
-protected_words = ["RETURN", "NaN", "INF", "NINF"]
+protected_words = ["RETURN", "NaN", "INF", "NINF", "set"]
 """Constants"""
 
 functions = "if,else,file,fi,for,rof,prec,add,sub,mul,div,pow,mod,\",var,intvar,set,sqrt,\\√,cbrt,min,max,near,trunc,rand,fact,echo,hypot,exp,log,logb,agm,gamma,factorial,zeta,\\ζ,pi,deg,rad,sin,cos,tan,asin,acos,atan,csc,sec,cot,acsc,asec,acot,sinh,cosh,tanh,asinh,acosh,atanh,csch,sech,coth,acsch,asech,acoth".split(",")

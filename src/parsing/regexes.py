@@ -46,3 +46,5 @@ valid_set = "(%s)[ ]*=[ ]*(%s)" % (valid_var, valid_const)
 
 valid_declare_user_function = "\[([a-zA-Z0-9_]+)\]((?:\ %s)+)" % (valid_var)
 valid_end_user_function = "\[\/([a-zA-Z0-9_]+)\]"
+
+_set_const = "[a-zA-Z0-9_]+[ ]*=[ ]*([a-zA-Z0-9_]+[ ]*=[ ]*(?:\+|\-)?[0-9\.]+)"
