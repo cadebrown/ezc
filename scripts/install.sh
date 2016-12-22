@@ -13,7 +13,7 @@ I_MPFR=$2
 echo Operating System Type: $OSTYPE
 
 if [ "$1" == "" ] || [ "$1" == "auto" ]; then
-    INSTALL_DIR=/usr/bin/
+    INSTALL_DIR=~/ezc/
 fi
 
 EZC_BIN="#!/usr/bin/python \nimport ezcc; ezcc.main()"
@@ -60,7 +60,7 @@ mkdir -p $INSTALL_DIR
 cp -Rf ./src/$SOURCES $INSTALL_DIR
 
 if [[ "$I_MPFR" == "true" ]]; then
-	printf "\nEZC_LIB=\"-w -I%%s/include/ %%s/lib/libmpfr.a %%s/lib/libgmp.a\" % (EZC_DIR, EZC_DIR, EZC_DIR)\n" >> $INSTALL_DIR/ezdata.py
+	printf "\nEZC_LIB=\"-w -I%%s/include/ %%s/lib/libmpfr.a %%s/lib/libgmp.a\" %% (EZC_DIR, EZC_DIR, EZC_DIR)\n" >> $INSTALL_DIR/ezdata.py
 fi
 
 echo Installing execs in $INSTALL_DIR

@@ -5,10 +5,10 @@ os:
 language: c
 
 install:
-  - sudo make global
+  - make local
 
 script:
-  - sudo make check-global
+  - make check-local
 
 notifications:
   email:
