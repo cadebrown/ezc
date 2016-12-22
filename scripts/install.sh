@@ -1,6 +1,6 @@
 #!/bin/bash
 cd src
-SOURCES=*.py
+SOURCES=`echo *.py */`
 cd ..
 
 UTILS=./utils/*
@@ -57,7 +57,11 @@ fi
 echo Installing sources in $INSTALL_DIR
 
 mkdir -p $INSTALL_DIR
-cp -Rf ./src/$SOURCES $INSTALL_DIR
+
+for SRC in $SOURCES
+do
+	cp -Rf ./src/$SRC $INSTALL_DIR/$SRC
+done
 
 if [[ "$I_MPFR" == "true" ]]; then
 	printf "\nEZC_LIB=\"-w -I%%s/include/ %%s/lib/libmpfr.a %%s/lib/libgmp.a\" %% (EZC_DIR, EZC_DIR, EZC_DIR)\n" >> $INSTALL_DIR/ezdata.py
@@ -68,6 +72,7 @@ echo Installing execs in $INSTALL_DIR
 for UTIL in $UTILS
 do
     O_UTIL=$INSTALL_DIR/$(basename $UTIL)
+	echo $UTIL
     $INSTALL_DIR/ezcc.py $UTIL -o $O_UTIL -v1
 	strip $O_UTIL
 done
