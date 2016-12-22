@@ -1,0 +1,76 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><title>Python: module compiling.resolve</title>
+<meta charset="utf-8">
+</head><body bgcolor="#f0f0f8">
+
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
+<tr bgcolor="#7799ee">
+<td valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong><a href="compiling.html"><font color="#ffffff">compiling</font></a>.resolve</strong></big></big></font></td
+><td align=right valign=bottom
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/home/cade/projects/ezc/src/compiling/resolve.py">/home/cade/projects/ezc/src/compiling/resolve.py</a></font></td></tr></table>
+    <p><tt>#&nbsp;-*-&nbsp;coding:&nbsp;utf-8&nbsp;-*-</tt></p>
+<p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#aa55cc">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Modules</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="parsing.parser.html">parsing.parser</a><br>
+</td><td width="25%" valign=top></td><td width="25%" valign=top></td><td width="25%" valign=top></td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#eeaa77">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Functions</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#eeaa77"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl><dt><a name="-arg_call"><strong>arg_call</strong></a>(op, args)</dt></dl>
+ <dl><dt><a name="-c_call"><strong>c_call</strong></a>(fname, args)</dt><dd><tt>A&nbsp;typical&nbsp;C&nbsp;call&nbsp;to&nbsp;most&nbsp;functions.</tt></dd></dl>
+ <dl><dt><a name="-c_call_optional_call"><strong>c_call_optional_call</strong></a>(fname, args)</dt><dd><tt>For&nbsp;overloaded&nbsp;methods,&nbsp;the&nbsp;length&nbsp;of&nbsp;arguments&nbsp;change&nbsp;the&nbsp;function&nbsp;called.</tt></dd></dl>
+ <dl><dt><a name="-c_echo"><strong>c_echo</strong></a>(fname, args)</dt><dd><tt>Special&nbsp;case&nbsp;for&nbsp;the&nbsp;`echo`&nbsp;function</tt></dd></dl>
+ <dl><dt><a name="-c_elseblock"><strong>c_elseblock</strong></a>(op, args)</dt></dl>
+ <dl><dt><a name="-c_endblock"><strong>c_endblock</strong></a>(op, args)</dt></dl>
+ <dl><dt><a name="-c_file"><strong>c_file</strong></a>(op, args)</dt><dd><tt>Special&nbsp;case&nbsp;for&nbsp;the&nbsp;`file`&nbsp;function</tt></dd></dl>
+ <dl><dt><a name="-c_for_call"><strong>c_for_call</strong></a>(op, args)</dt></dl>
+ <dl><dt><a name="-c_if_call"><strong>c_if_call</strong></a>(op, args)</dt></dl>
+ <dl><dt><a name="-c_noarg_call"><strong>c_noarg_call</strong></a>(fname, args)</dt><dd><tt>Represents&nbsp;a&nbsp;call&nbsp;to&nbsp;a&nbsp;function&nbsp;with&nbsp;no&nbsp;arguments</tt></dd></dl>
+ <dl><dt><a name="-c_prec"><strong>c_prec</strong></a>(fname, args)</dt><dd><tt>Special&nbsp;case&nbsp;for&nbsp;the&nbsp;`prec`&nbsp;funcion.<br>
+Can&nbsp;take:<br>
+&nbsp;&nbsp;-&nbsp;An&nbsp;expression&nbsp;(`prec&nbsp;(2&nbsp;*&nbsp;100&nbsp;/&nbsp;50)`)<br>
+&nbsp;&nbsp;-&nbsp;A&nbsp;commandline&nbsp;argument&nbsp;(`prec&nbsp;$1`)<br>
+&nbsp;&nbsp;-&nbsp;A&nbsp;constant</tt></dd></dl>
+ <dl><dt><a name="-c_user_call"><strong>c_user_call</strong></a>(fname, args)</dt><dd><tt>Calls&nbsp;a&nbsp;user&nbsp;defined&nbsp;function</tt></dd></dl>
+ <dl><dt><a name="-get_c_st"><strong>get_c_st</strong></a>(ret)</dt><dd><tt>String&nbsp;that&nbsp;is&nbsp;C&nbsp;code&nbsp;from&nbsp;ret<br>
+If&nbsp;ret&nbsp;is&nbsp;literal&nbsp;C&nbsp;code,&nbsp;ret&nbsp;is&nbsp;returned.&nbsp;Otherwise,&nbsp;we&nbsp;resolve&nbsp;the&nbsp;C&nbsp;call.</tt></dd></dl>
+ <dl><dt><a name="-get_function_translate"><strong>get_function_translate</strong></a>(fname, args)</dt><dd><tt>Translates&nbsp;fname&nbsp;into&nbsp;a&nbsp;function,&nbsp;and&nbsp;calls&nbsp;it&nbsp;with&nbsp;args.<br>
+Returns&nbsp;the&nbsp;C&nbsp;code&nbsp;to&nbsp;perform&nbsp;this.<br>
+&nbsp;<br>
+This&nbsp;uses&nbsp;the&nbsp;variables&nbsp;function_alias,&nbsp;functions_translate_funcs&nbsp;to&nbsp;look&nbsp;it&nbsp;up</tt></dd></dl>
+ <dl><dt><a name="-get_operator_translate"><strong>get_operator_translate</strong></a>(op, args)</dt><dd><tt>Similar&nbsp;to&nbsp;get_function_translate,&nbsp;but&nbsp;for&nbsp;operators<br>
+&nbsp;<br>
+This&nbsp;uses&nbsp;op_map_funcs&nbsp;to&nbsp;loop&nbsp;it&nbsp;up</tt></dd></dl>
+ <dl><dt><a name="-get_user_func_translate"><strong>get_user_func_translate</strong></a>(ufunc, args)</dt><dd><tt>Similar&nbsp;to&nbsp;get_function_translate,&nbsp;but&nbsp;for&nbsp;user&nbsp;functions</tt></dd></dl>
+ <dl><dt><a name="-reg_args"><strong>reg_args</strong></a>(args)</dt><dd><tt>Regularizes&nbsp;arguments:<br>
+&nbsp;&nbsp;-&nbsp;Adds&nbsp;init&nbsp;statements&nbsp;if&nbsp;neccessary,&nbsp;and&nbsp;assures&nbsp;that&nbsp;vars&nbsp;qualify</tt></dd></dl>
+</td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#55aa55">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Data</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><strong>functions</strong> = ['if', 'else', 'file', 'fi', 'for', 'rof', 'prec', 'add', 'sub', 'mul', 'div', 'pow', 'mod', '"', 'var', 'intvar', 'set', 'sqrt', '<font color="#c040c0">\\\xe2\x88\x9a</font>', 'cbrt', ...]<br>
+<strong>functions_alias</strong> = {'"': 'echo', '<font color="#c040c0">\xce\xb6</font>': 'zeta', '<font color="#c040c0">\xe2\x88\x9a</font>': 'sqrt'}<br>
+<strong>functions_translate_funcs</strong> = {'__default__': &lt;function c_call&gt;, 'echo': &lt;function c_echo&gt;, 'else': &lt;function c_elseblock&gt;, 'fi': &lt;function c_endblock&gt;, 'file': &lt;function c_file&gt;, 'for': &lt;function c_for_call&gt;, 'if': &lt;function c_if_call&gt;, 'near': &lt;function c_call_optional_call&gt;, 'pi': &lt;function c_noarg_call&gt;, 'prec': &lt;function c_prec&gt;, ...}<br>
+<strong>group</strong> = '+,-'<br>
+<strong>not_vars</strong> = []<br>
+<strong>op_map_funcs</strong> = {'!': 'fact', '%': 'mod', '*': 'mul', '+': 'add', '-': 'sub', '/': 'div', '?': 'rand', '^': 'pow', '~': 'near', '<font color="#c040c0">\xc3\xb7</font>': 'div'}<br>
+<strong>operators</strong> = ['~', '^', '*', '/', '<font color="#c040c0">\xc3\xb7</font>', '%', '+', '-', '~', '?']<br>
+<strong>operators_translate_funcs</strong> = {'__default__': &lt;function get_function_translate&gt;}<br>
+<strong>order_op</strong> = [['?', '~'], ['^'], ['*', '/', '<font color="#c040c0">\xc3\xb7</font>', '%'], ['+', '-']]<br>
+<strong>protected_words</strong> = ['RETURN', 'NaN', 'INF', 'NINF']<br>
+<strong>type_resolve_dict</strong> = {'function': &lt;function get_function_translate&gt;, 'operator': &lt;function get_operator_translate&gt;, 'user_function': &lt;function get_user_func_translate&gt;}<br>
+<strong>var</strong> = set([])</td></tr></table>
+</body></html>
