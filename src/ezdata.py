@@ -23,6 +23,8 @@ mpfr_t *ezc_consts;
 long long ezc_prec;
 #define ezc_bprec (long long)(ezc_prec * 3.3219281)
 
+mpfr_t NaN, INF, NINF;
+
 int _argc;
 char **_argv;
 
@@ -37,8 +39,7 @@ void ezc_prec_index(int index) {
 	}
 }
 void ezc_prec_f(mpfr_t x) {
-	printf(\"%lld\\n\", (long long)mpfr_get_si(x, EZC_RND));
-	//ezc_prec_literal((long long)mpfr_get_si(x, EZC_RND));
+	ezc_prec_literal((long long)mpfr_get_si(x, EZC_RND));
 }
 void ezc_prec_init() {
 	if (getenv("EZC_PREC") == NULL) {
@@ -91,6 +92,10 @@ void ezc_init(int __argc, char *__argv[]) {
 	ezc_prec_init();
 
 	ezc_consts = (mpfr_t *)malloc(sizeof(mpfr_t) * ezc_size_consts);
+
+	mpfr_init(NaN); mpfr_set_nan(NaN);
+	mpfr_init(INF); mpfr_set_inf(INF, 1);
+	mpfr_init(NINF); mpfr_set_inf(NINF, 0);
 }
 void ezc_add(mpfr_t r, mpfr_t a, mpfr_t b) { 
 	mpfr_add(r, a, b, EZC_RND); 

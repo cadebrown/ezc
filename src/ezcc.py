@@ -1,6 +1,12 @@
 #!/usr/bin/python
 
 def main():
+	"""
+	The method that start EZC compiler.
+	Contains:
+	  - Argument parsing
+	  - Interaction with delegate
+	"""
 	import argparse
 	import os, sys
 	import subprocess
@@ -12,7 +18,6 @@ def main():
 	from logging import log
 	import delegate
 
-
 	# set args
 	parser = argparse.ArgumentParser(description='Compile EZC Language. v%s http://github.chemicaldevelopment.us/ezc' % (log.version))
 	parser.add_argument('files', metavar='files', type=str, nargs='*', default=[], help='files to compile')
@@ -20,7 +25,7 @@ def main():
 
 	parser.add_argument('-v', default=0, type=int, help='Verbosity level')
 
-	parser.add_argument('-tmp', default="`mktemp -d \"${TMPDIR:-/tmp}/XXXXX.c\"`", help='Tmp file')
+	parser.add_argument('-tmp', default="`mktemp \"${TMPDIR:-/tmp}/XXXXX.c\"`", help='Tmp file')
 
 	parser.add_argument('-cc', default="cc", help='C Compiler')
 	parser.add_argument('-ccargs', default="", help='C Compiler arguments')

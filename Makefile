@@ -33,3 +33,6 @@ check-local:
 
 check-global:
 	/usr/bin/ezcc example.ezc -run -v4
+
+html:
+	./scripts/html.sh

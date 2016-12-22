@@ -3,12 +3,20 @@
 from parsing import parser
 
 def get_c_st(ret):
+	"""
+	String that is C code from ret
+	If ret is literal C code, ret is returned. Otherwise, we resolve the C call.
+	"""
 	if not isinstance(ret, list) and parser.is_literal(ret):
 		return ret
 	else:
 		return type_resolve_dict[ret[0]](ret[1][0], ret[1][1])
 
 def reg_args(args):
+	"""
+	Regularizes arguments:
+	  - Adds init statements if neccessary, and assures that vars qualify
+	"""
 	if isinstance(args, str):
 		return reg_args([args])
 	args = map(parser.get_var, args)
@@ -21,31 +29,57 @@ def reg_args(args):
 	return (args, ret)
 
 def c_noarg_call(fname, args):
+	"""
+	Represents a call to a function with no arguments
+	"""
 	args = reg_args(args)
 	return "%sezc_%s(%s);" % ("".join(args[1]), fname, args[0][0])
 def c_call(fname, args):
+	"""
+	A typical C call to most functions.
+	"""
 	args = reg_args(args)
 	return "%sezc_%s(%s);" % ("".join(args[1]), fname, ",".join(args[0]))
 def c_user_call(fname, args):
+	"""
+	Calls a user defined function
+	"""
 	args = reg_args(args)
 	return "%s__%s(%s);" % ("".join(args[1]), fname, ", ".join(args[0]))
 def c_echo(fname, args):
+	"""
+	Special case for the `echo` function
+	"""
 	return "ezc_%s(\"%s\");" % (fname, " ".join(args))
 def c_file(op, args):
+	"""
+	Special case for the `file` function
+
+	"""
 	if len(args) < 2:
 		args = args + ["ezc.txt"]
 	args[0] = parser.get_var(args[0])
 	return "ezc_file(%s, \"%s\");" % (args[0], args[1])
 def c_prec(fname, args):
+	"""
+	Special case for the `prec` funcion.
+	Can take:
+	  - An expression (`prec (2 * 100 / 50)`)
+	  - A commandline argument (`prec $1`)
+	  - A constant
+	"""
 	global start
-	if parser.is_valid_const(args[0]):
-		return "\n\tezc_prec_literal(%s);" % (args[0])
-	elif parser.is_valid_arg(args[0]):
+	if parser.is_valid_arg(args[0]) and "$" in args[0]:
 		return "\n\tezc_prec_index(%s);" % (args[0].replace("$", ""))
+	elif parser.is_valid_const(args[0]):
+		return "\n\tezc_prec_literal(%s);" % (args[0])
 	elif parser.is_valid_var(args[0]):
 		return "\n\tezc_prec_f(%s);" % (args[0])
 	return ""
 def c_call_optional_call(fname, args):
+	"""
+	For overloaded methods, the length of arguments change the function called.
+	"""
 	args = reg_args(args)
 	return "%sezc_%s_%d(%s);" % ("".join(args[1]), fname, len(args[0]), ", ".join(args[0]))
 def arg_call(op, args):
@@ -64,6 +98,12 @@ def c_endblock(op, args):
 	return "}"
 
 def get_function_translate(fname, args):
+	"""
+	Translates fname into a function, and calls it with args.
+	Returns the C code to perform this.
+
+	This uses the variables function_alias, functions_translate_funcs to look it up
+	"""
 	fname = fname.strip()
 	if fname in functions_alias:
 		return get_function_translate(functions_alias[fname], args)
@@ -72,6 +112,11 @@ def get_function_translate(fname, args):
 	return functions_translate_funcs["__default__"](fname, args)
 
 def get_operator_translate(op, args):
+	"""
+	Similar to get_function_translate, but for operators
+
+	This uses op_map_funcs to loop it up
+	"""
 	global operators_translate_funcs
 	op = op.strip()
 	if op in operators_translate_funcs:
@@ -79,19 +124,30 @@ def get_operator_translate(op, args):
 	return operators_translate_funcs["__default__"](op_map_funcs[op], args)
 
 def get_user_func_translate(ufunc, args):
+	"""
+	Similar to get_function_translate, but for user functions
+	"""
 	ufunc = ufunc.strip()
 	return c_user_call(ufunc, args)
 
 
 var = set()
+"""Variables registered"""
+
 not_vars = []
-protected_words = ["RETURN"]
+"""Specific to not use tmp vars (user functions)"""
+
+protected_words = ["RETURN", "NaN", "INF", "NINF"]
+"""Constants"""
 
 functions = "if,else,file,fi,for,rof,prec,add,sub,mul,div,pow,mod,\",var,intvar,set,sqrt,\\√,cbrt,min,max,near,trunc,rand,fact,echo,hypot,exp,log,logb,agm,gamma,factorial,zeta,\\ζ,pi,deg,rad,sin,cos,tan,asin,acos,atan,csc,sec,cot,acsc,asec,acot,sinh,cosh,tanh,asinh,acosh,atanh,csch,sech,coth,acsch,asech,acoth".split(",")
+"""Callable functions"""
 
 operators = "~,^,*,/,÷,%,+,-,~,?".split(",")
+"""Callable operators"""
 
 order_op = [group.split(",") for group in "?,~,,^,,*,/,÷,%,,+,-".split(",,")]
+"""Order of operators"""
 
 op_map_funcs = {
 	"+": "add",
@@ -105,16 +161,19 @@ op_map_funcs = {
 	"?": "rand",
 	"!": "fact",
 }
+"""Maps operators to functions"""
 
 operators_translate_funcs = {
 	"__default__": get_function_translate
 }
+"""Translates operators to functions"""
 
 functions_alias = {
 	"ζ": "zeta",
 	"\"": "echo",
 	"√": "sqrt"
 }
+"""Aliases for functions"""
 
 functions_translate_funcs = {
 	"__default__": c_call,
@@ -130,6 +189,7 @@ functions_translate_funcs = {
 	"file": c_file,
 	"pi": c_noarg_call
 }
+"""Type of call for each function"""
 
 
 type_resolve_dict = {
@@ -137,4 +197,4 @@ type_resolve_dict = {
 	"operator": get_operator_translate,
 	"user_function": get_user_func_translate
 }
-
+"""Types to resolve function"""

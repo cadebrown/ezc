@@ -1,4 +1,7 @@
 def init(functions, operators, order_op):
+	"""
+	Initializes regexes given functions, operators, and operators' order_op
+	"""
 		#valid_arg = "[a-z]+"
 	valid_ufu = "\@[_a-zA-Z][_a-zA-Z0-9]*"
 	valid_c = "[ ]*({(.*)}|(.*);)"

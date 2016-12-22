@@ -5,14 +5,23 @@ import ezdata
 import resolve
 
 def init():
+	"""
+	Initialize parsing with functions from resolve module
+	"""
 	parser.init(resolve.functions, resolve.operators, resolve.order_op)
 
 def get_c_file():
-	#return default_file + get_var_inits()[0] + user_funcs + start + get_var_inits()[1] + main + end
-	res = default_file + user_funcs + start + main + end
-	return res
+	"""
+	Return transpiled EZC into C code, which can be compiled by cc
+	This should be called after add_code and right before compile step.
+	"""
+	return default_file + user_funcs + start + main + end
 
 def add_code(file_contents):
+	"""
+	Args:
+		file_contents: Raw string read from file that is to be processed
+	"""
 	lines = file_contents.split("\n")
 	add_compile_lines(lines)
 
@@ -28,6 +37,9 @@ def compile_line(line):
 	return ret
 
 def add_compile_lines(lines):
+	"""
+	Takes an array-like of EZC code which then is translated to C, and added to variables so that it can be compiled by a C compiler.
+	"""
 	global main; global user_funcs; global is_func
 	to_read = True
 	c_read = True
