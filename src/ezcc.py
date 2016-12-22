@@ -20,7 +20,7 @@ def main():
 
 	parser.add_argument('-v', default=0, type=int, help='Verbosity level')
 
-	parser.add_argument('-tmp', default="`mktemp /tmp/XXXX.c`", help='Tmp file')
+	parser.add_argument('-tmp', default="`mktemp -d \"${TMPDIR:-/tmp}/XXXXX.c\"`", help='Tmp file')
 
 	parser.add_argument('-cc', default="cc", help='C Compiler')
 	parser.add_argument('-ccargs', default="", help='C Compiler arguments')

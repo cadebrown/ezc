@@ -1,4 +1,13 @@
-ezc (1.0.0) unstable; urgency=med
+ezc (1.0.0) testing; urgency=high
+
+  * order of operations and expansion
+    - Operators now work, and so does embedded expressions
+  * build system updated
+    - Full project structure, and more dynamic build system
+
+ -- Cade Brown <info@chemicaldevelopment.us>  Sat, 17 Dec 2016 22:38:00 -0500
+
+ezc (0.9.0) unstable; urgency=med
 
   * reverted namespace
     - starting over versioning

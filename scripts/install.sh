@@ -1,6 +1,6 @@
 #!/bin/bash
 cd src
-SOURCES=*
+SOURCES=*.py
 cd ..
 
 UTILS=./utils/*
