@@ -46,6 +46,8 @@ def main():
 		#args["tmp"] = os.popen("echo " + args["tmp"]).read()
 		args["tmp"] = subprocess.check_output("echo " + args["tmp"], shell=True).strip()
 		#print ret
+	if args["tmp"] == '':
+		args["tmp"] = "./out.c"
 
 	do_run = args["c"] or args["e"] or args["run"] or args["runfile"]
 
