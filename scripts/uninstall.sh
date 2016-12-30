@@ -1,6 +1,7 @@
 #!/bin/bash
-
-SOURCES=*.py
+cd src
+SOURCES=`echo *.py */`
+cd ..
 UTILS=./utils/*
 
 echo $SOURCES
@@ -19,7 +20,7 @@ echo Uninstalling sources from $SRC_INSTALL_DIR
 
 for SRC in $SOURCES
 do
-	rm $SRC_INSTALL_DIR"/"$SRC
+	rm -Rf $SRC_INSTALL_DIR"/"$SRC
 done
 
 echo Uninstalling execs from $EXE_INSTALL_DIR

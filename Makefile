@@ -1,14 +1,14 @@
-local:	
+local: uninstall-local
 	-./scripts/install.sh ~/ezc/ ~/ezc/src/ true
 
-global:
+global: uninstall-global
 	-sudo ./scripts/install.sh /usr/bin/ /usr/src/ezc/ true
 
 
-local-noreq:
+local-noreq: uninstall-local
 	-./scripts/install.sh ~/ezc/ ~/ezc/src/
 
-global-noreq:
+global-noreq: uninstall-global
 	-sudo ./scripts/install.sh /usr/bin/ /usr/src/ezc/
 
 
@@ -33,7 +33,7 @@ check:
 	python src/ezcc.py example.ezc -run -v4
 
 check-local:
-	~/ezc/ezcc example.ezc -run -v4
+	~/ezc/ezc example.ezc -run -v4
 
 check-global:
 	/usr/bin/ezcc example.ezc -run -v4
