@@ -2,16 +2,20 @@
 *tmp/
 *.spec
 
+# compiled files
 *.pyc
 __pycache__
-
-# compiled files
 *.o
 *.out
 *.vscode/
 !VSCODE-extension/.vscode/
 
+
+
+# build dirs
 /deb-package/*
+req/
+ezc/
 
 # package
 *.deb
@@ -19,4 +23,4 @@ __pycache__
 docs/*.html
 
 # archive
-ezc.tar.*
+*.tar.*
