@@ -97,6 +97,10 @@ pushd $INSTALL_DIR
 rm -Rf share/
 popd
 
+pushd $SRC_DIR
+echo date=\"`date +'%Y-%m-%d %H:%M:%S %z'`\" >> ezlogging/log.py
+popd
+
 echo "If you got any permissions errors, please open an issue: https://github.com/ChemicalDevelopment/ezc/issues"
 
 echo "Done"

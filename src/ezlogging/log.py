@@ -1,6 +1,10 @@
 name = "EZCC"
 
-version = "0.9.0"
+version = "1.0.0"
+import time
+date=time.strftime("%Y-%m-%d %H:%M:%S %z")
+
+authors=["Cade Brown <cade@chemicaldevelopment.us>"]
 
 RESET = '\033[0m'
 
@@ -44,15 +48,22 @@ def print_single(st, offset, c):
 	print "%s%s>%s" % ("  "*(offset+1), c[0]+BOLD, RESET+c[1] + " " + st)
 
 def base_print(col, task, st, verbose=0):
+	if not isinstance(st, list):
+		base_print(col, task, [st], verbose)
+		return
 	global verbosity
-	to_print = [task, st]
 	if verbose >= 0 and int(verbose) <= int(verbosity):
-		for s in to_print:
-			print_single(str(s), to_print.index(s), col)
+		print_single(task, 0, col)
+		
+		for s in st:
+			print_single(str(s), 1, col)
 		print "%s" % (DEFAULT) 
 
 def hello(st, v=3):
     base_print((BOLD,CYN), name, st, v)
+
+def extra(task, st, v=3):
+    base_print((LBLU, MAG), task, st, v)
 
 def info(task, st, v=2):
     base_print((LCYN, LGRN), task, st, v)
@@ -67,7 +78,8 @@ def init(_verbose=0, _silent=False):
 	global verbosity; global silent
 	verbosity = _verbose
 	silent = _silent
-	hello(str(version))
+	hello(["Version: %s" % (version), "Date: %s" % (date)])
+	extra("Authors", authors)
 
 def end():
 	if int(verbosity) > 0 and not silent:

@@ -45,29 +45,33 @@ def add_compile_lines(lines):
 	c_read = True
 	line_num = 0
 	for line in lines:
-		res = ""
-		line_num += 1
-		if parser.is_literal(line):
-			log.info("Compiling", ["(Line %d) is C code" % line_num, "%s" % (get_c(line))])
-			res += "\n\t" + parser.get_c(line)
-		else:
-			if parser.is_user_function(line):
-				is_func = not is_func
-				user_funcs += parser.is_user_function(line)[0]
-				resolve.not_vars = parser.is_user_function(line)[1]
+		try:
+			res = ""
+			line_num += 1
+			if parser.is_literal(line):
+				log.info("Compiling (Line %d)" % (line_num), ["C code detected", line])
+				res += "\n\t" + line
 			else:
-				if "###" in line:
-					line = line[:line.index("###")]
-					to_read = not to_read
-				if "#" in line:
-					line = line[:line.index("#")]
-				if line != "" and (to_read or c_read):
-					res += compile_line(line)
-				c_read = to_read
-		if is_func:
-			user_funcs += res
-		else:
-			main += res
+				if parser.is_user_function(line):
+					is_func = not is_func
+					user_funcs += parser.is_user_function(line)[0]
+					resolve.not_vars = parser.is_user_function(line)[1]
+				else:
+					if "###" in line:
+						line = line[:line.index("###")]
+						to_read = not to_read
+					if "#" in line:
+						line = line[:line.index("#")]
+					if line != "" and (to_read or c_read):
+						res += compile_line(line)
+					c_read = to_read
+			if is_func:
+				user_funcs += res
+			else:
+				main += res
+		except Exception, e:
+			log.err("Compiling (Line %d)" % (line_num), ["Error while parsing:", str(e)])
+
 
 user_funcs=""""""
 
