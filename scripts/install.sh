@@ -1,7 +1,7 @@
 #!/bin/bash
-cd src
+pushd src
 SOURCES=`echo *.py */`
-cd ..
+popd
 
 UTILS=./utils/*
 
@@ -10,6 +10,7 @@ echo $SOURCES
 INSTALL_DIR=$1
 SRC_DIR=$2
 I_MPFR=$3
+ARCHIVE="ezc.tar.xz"
 
 echo Operating System Type: $OSTYPE
 
@@ -21,13 +22,13 @@ if [ "$2" == "" ] || [ "$2" == "auto" ]; then
     SRC_DIR=~/ezc/src/
 fi
 
-EZC_BIN="#!/usr/bin/python \nimport os; import sys; sys.path.append(\"$SRC_DIR\"); import ezcc; ezcc.main()"
+PA=`python -c "import os.path; print os.path.relpath('$SRC_DIR', '$INSTALL_DIR')"`
+
+EZC_BIN="#!/usr/bin/python \nimport os; import sys; sys.path.append(os.getcwd()+\"/$PA\"); import ezcc; ezcc.main()"
 echo $EZC_BIN
 
 if [[ "$I_MPFR" == "true" ]]; then
-	echo "Installing MPFR from source"
-	
-	./scripts/mpfr.sh $SRC_DIR
+	echo "Going to build MPFR"
 elif [[ "$I_MPFR" == "false" ]]; then
 echo "not installing anything, through source or package manager"
 else
@@ -51,18 +52,25 @@ else
 		echo "cygwin may work . . ."
 		echo "building mpfr from source:"
 		I_MPFR="true"
-		./scripts/mpfr.sh $SRC_DIR
 	else
 		echo "Warning: OS not found."
 		echo "Building MPFR from source"
 		I_MPFR="true"
-		./scripts/mpfr.sh $SRC_DIR
 	fi
 fi
 
-echo Installing sources in $SRC_DIR
 
 mkdir -p $SRC_DIR
+
+if [ "$I_MPFR" == "true" ]; then
+	echo "Installing MPFR from source"
+	./scripts/mpfr.sh $SRC_DIR
+	pushd $SRC_DIR
+	rm -Rf share/
+	popd
+fi
+
+echo Installing sources in $SRC_DIR
 
 for SRC in $SOURCES
 do
@@ -92,5 +100,18 @@ done
 
 echo Done copying
 
+echo Removing uneeded dirs
+
+pushd $INSTALL_DIR
+rm -Rf share/
+popd
+
 echo "If you got any permissions errors, please open an issue: https://github.com/ChemicalDevelopment/ezc/issues"
+
+echo "Creating"
+
+tar cJf $ARCHIVE $INSTALL_DIR
+
 echo "Done"
+
+

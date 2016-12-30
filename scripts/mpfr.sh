@@ -4,6 +4,7 @@ MPFR_TAR=http://www.mpfr.org/mpfr-current/mpfr-3.1.5.tar.xz
 #$1
 BUILD_DIR=$1
 
+
 echo Installing GMP and MPFR in $BUILD_DIR
 
 mkdir -p $BUILD_DIR
@@ -23,6 +24,4 @@ cd mpfr*
 make install > /dev/null
 cd ..
 
-#export EZC_LIB=$BUILD_DIR
-
-rm -Rf gmp* mpfr*
+rm -Rf gmp* mpfr* share/

@@ -6,7 +6,7 @@ language: c
 
 install:
   - make local
-# Thanks macOS :(
+# Thanks macOS :(ac
 #  - sudo make global
 
 script:

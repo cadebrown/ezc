@@ -20,7 +20,7 @@ uninstall-global:
 
 
 req:
-	-./scripts/mpfr.sh
+	-./scripts/mpfr.sh ~/ezc/src/
 
 
 deb:
