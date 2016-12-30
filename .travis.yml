@@ -6,11 +6,12 @@ language: c
 
 install:
   - make local
-  - sudo make global
+# Thanks macOS :(
+#  - sudo make global
 
 script:
   - make check-local
-  - make check-global
+#  - make check-global
 
 notifications:
   email:
