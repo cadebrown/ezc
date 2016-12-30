@@ -27,7 +27,7 @@ echo $EZC_BIN
 if [[ "$I_MPFR" == "true" ]]; then
 	echo "Installing MPFR from source"
 	
-	./scripts/mpfr.sh $INSTALL_DIR
+	./scripts/mpfr.sh $SRC_DIR
 elif [[ "$I_MPFR" == "false" ]]; then
 echo "not installing anything, through source or package manager"
 else
@@ -51,12 +51,12 @@ else
 		echo "cygwin may work . . ."
 		echo "building mpfr from source:"
 		I_MPFR="true"
-		./scripts/mpfr.sh $INSTALL_DIR
+		./scripts/mpfr.sh $SRC_DIR
 	else
 		echo "Warning: OS not found."
 		echo "Building MPFR from source"
 		I_MPFR="true"
-		./scripts/mpfr.sh $INSTALL_DIR
+		./scripts/mpfr.sh $SRC_DIR
 	fi
 fi
 
