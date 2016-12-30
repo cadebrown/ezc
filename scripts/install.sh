@@ -14,14 +14,6 @@ ARCHIVE="ezc.tar.xz"
 
 echo Operating System Type: $OSTYPE
 
-if [ "$1" == "" ] || [ "$1" == "auto" ]; then
-    INSTALL_DIR=~/ezc/
-fi
-
-if [ "$2" == "" ] || [ "$2" == "auto" ]; then
-    SRC_DIR=~/ezc/src/
-fi
-
 PA=`python -c "import os.path; print os.path.relpath('$SRC_DIR', '$INSTALL_DIR')"`
 EZC_BIN="#!/usr/bin/python \nimport os; import sys; sys.path.append(os.path.dirname(os.path.abspath(__file__))+\"/$PA\"); import ezcc; ezcc.main()"
 echo $EZC_BIN
@@ -63,7 +55,7 @@ mkdir -p $SRC_DIR
 
 if [ "$I_MPFR" == "true" ]; then
 	echo "Installing MPFR from source"
-	./scripts/mpfr.sh $SRC_DIR
+	./scripts/req.sh $SRC_DIR
 	pushd $SRC_DIR
 	rm -Rf share/
 	popd

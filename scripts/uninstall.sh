@@ -9,13 +9,6 @@ echo $SOURCES
 EXE_INSTALL_DIR=$1
 SRC_INSTALL_DIR=$2
 
-if [ "$1" == "" ] || [ "$1" == "auto" ]; then
-    EXE_INSTALL_DIR=/usr/bin/
-fi
-if [ "$2" == "" ] || [ "$2" == "auto" ]; then
-    SRC_INSTALL_DIR=/usr/src/ezc/
-fi
-
 echo Uninstalling sources from $SRC_INSTALL_DIR
 
 for SRC in $SOURCES

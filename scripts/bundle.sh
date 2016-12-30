@@ -16,7 +16,7 @@ else
 	TYPE="generic"
 fi
 
-ARHIVE="$TYPE.tar.xz"
+ARCHIVE="$TYPE.tar.xz"
 
 
 
