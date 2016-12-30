@@ -65,7 +65,7 @@ req:
 	-${REQ_SCRIPT} ${SRC}
 
 # bundles into a tar. It figures out the name of the archive
-bundle: install
+bundle:
 	-${BUNDLE_SCRIPT} ${DIR}
 
 # makes a .deb file
