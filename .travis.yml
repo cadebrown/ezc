@@ -5,12 +5,12 @@ os:
 language: c
 
 install:
-  - make local
+  - make install
 # Thanks macOS :(ac
 #  - sudo make global
 
 script:
-  - make check-local
+  - make check
 #  - make check-global
 
 notifications:
