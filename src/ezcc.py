@@ -15,7 +15,7 @@ def main():
 
 	# our other file
 	#import EZlogger as log
-	from logging import log
+	from ezlogging import log
 	import delegate
 
 	# set args

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from parsing import parser
-from logging import log
+from ezlogging import log
 import ezdata
 import resolve
 

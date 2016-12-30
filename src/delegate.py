@@ -4,7 +4,7 @@ import os
 
 from compiling import compiler
 from parsing import parser
-from logging import log
+from ezlogging import log
 
 args = None
 

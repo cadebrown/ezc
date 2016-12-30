@@ -1,23 +1,27 @@
 local:	
-	-./scripts/install.sh ~/ezc/ true
+	-./scripts/install.sh ~/ezc/ ~/ezc/src/ true
 
 global:
-	-sudo ./scripts/install.sh /usr/bin/ true
+	-sudo ./scripts/install.sh /usr/bin/ /usr/src/ezc/ true
+
 
 local-noreq:
-	-./scripts/install.sh ~/ezc/
+	-./scripts/install.sh ~/ezc/ ~/ezc/src/
 
 global-noreq:
-	-sudo ./scripts/install.sh /usr/bin/
+	-sudo ./scripts/install.sh /usr/bin/ /usr/src/ezc/
+
+
+uninstall-local:
+	-./scripts/uninstall.sh ~/ezc/ ~/ezc/src/
+
+uninstall-global:
+	-sudo ./scripts/uninstall.sh /usr/bin/ /usr/src/ezc/
+
 
 req:
 	-./scripts/mpfr.sh
 
-uninstall-local:
-	-./scripts/uninstall.sh ~/ezc/
-
-uninstall-global:
-	-sudo ./scripts/uninstall.sh /usr/bin/
 
 deb:
 	-./scripts/deb.sh
