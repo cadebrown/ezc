@@ -1,9 +1,24 @@
 #!/bin/bash
 # bundles tar
 
-ARCHIVE=$1
-DIR=$2
+DIR=$1
 BASE=`basename $DIR`
+
+if [[ "$OSTYPE" == "linux-gnu" ]]; then
+	TYPE="linux"
+elif [[ "$OSTYPE" == "darwin"* ]]; then
+	TYPE="mac"
+elif [[ "$OSTYPE" == "freebsd"* ]]; then
+	TYPE="bsd"
+elif [ "$OSTYPE" == "cygwin" ] || [ "$OSTYPE" == "msys" ]; then
+	TYPE="cygwin"
+else
+	TYPE="generic"
+fi
+
+ARHIVE="$TYPE.tar.xz"
+
+
 
 echo "Tarring $DIR into $ARCHIVE with base $BASE"
 

@@ -1,81 +1,75 @@
-HERE_DIR="./ezc/"
-HERE_SRC_DIR="${HERE_DIR}/src/"
+###
+# GPLv3
+# To use, set DIR= whatever you want to install binaries. Normally, SRC= should not be used, as it should be $DIR/src/
+# However, installing globally, use `sudo make DIR=/usr/bin/ SRC=/usr/src/ezc/`
+# I've implemented some basic linking, so this will still work.
+# You can also set REQ=false to use a package manager (like brew.sh, apt, dnf, pkg, etc.)
+# Don't worry if you don't have one. If it can't find one, it builds MPFR from source anyway.
+# For info, please email <info@chemicaldevelopment.us>
+###
 
-LOCAL_DIR="~/ezc/"
-LOCAL_SRC_DIR="${LOCAL_DIR}/src"
+# These three are the only ones that should be changed!
+DIR=./ezc/
+SRC=${DIR}/src/
+REQ=true
 
-GLOBAL_DIR="/usr/bin/"
-GLOBAL_SRC_DIR="/usr/src/ezc"
+# Global defaults
+GLOBAL_DIR=/usr/bin/
+GLOBAL_SRC=/usr/src/ezc/
 
-EXAMPLE_FILE="./example.ezc"
+# what file to test
+EX_FILE=example.ezc
+# what flags to run
+EZCC_FLAGS=-run -v5
 
-SCRIPTS="./scripts/"
+# what scripts directory
+SCRIPTS=./scripts/
 
-INSTALL="${SCRIPTS}/install.sh"
-UNINSTALL="${SCRIPTS}/uninstall.sh"
-BUNDLE="${SCRIPTS}/bundle.sh"
+# a bunch of useful macros
+INSTALL_SCRIPT=${SCRIPTS}/install.sh
+UNINSTALL_SCRIPT=${SCRIPTS}/uninstall.sh
+BUNDLE_SCRIPT=${SCRIPTS}/bundle.sh
+DEB_SCRIPT=${SCRIPTS}/deb.sh
+VSCE_SCRIPT=${SCRIPTS}/vsce.sh
+DOCS_SCRIPT=${SCRIPTS}/docs.sh
+REQ_SCRIPT=${SCRIPTS}/req.sh
 
-REQ="$SCRIPTS/mpfr.sh"
+# default is to install with all options
+default: install
+	echo Installed
 
+# install with set values, uninstalling first
+install: uninstall
+	-${INSTALL_SCRIPT} ${DIR} ${SRC} ${REQ}
 
-here: uninstall-here
-	-${INSTALL} ${HERE_DIR} ${HERE_SRC_DIR} true
+# uninstall from DIR and SRC
+uninstall:
+	-${UNINSTALL_SCRIPT} ${DIR} ${SRC}
 
-local: uninstall-local
-	-${INSTALL} ${LOCAL_DIR} ${LOCAL_SRC_DIR} true
+# use this makefile
+global:
+	sudo $(MAKE) DIR=${GLOBAL_DIR} SRC=${GLOBAL_SRC} install
 
-global: uninstall-global
-	-sudo ${INSTALL} ${GLOBAL_DIR} ${LOCAL_SRC_DIR} true
-
-
-here-noreq: uninstall-here
-	-${INSTALL} ${HERE_DIR} ${HERE_SRC_DIR}
-
-local-noreq: uninstall-local
-	-${INSTALL} ${LOCAL_DIR} ${LOCAL_SRC_DIR}
-
-global-noreq: uninstall-global
-	-sudo ${INSTALL} ${GLOBAL_DIR} ${LOCAL_SRC_DIR}
-
-uninstall-here:
-	-${UNINSTALL} ${HERE_DIR} ${HERE_SRC_DIR}
-
-uninstall-local:
-	-${UNINSTALL} ${LOCAL_DIR} ${LOCAL_SRC_DIR}
-
-uninstall-global:
-	-sudo ${UNINSTALL} ${GLOBAL_DIR} ${GLOBAL_SRC_DIR}
-
+# check installation
 check:
-	python src/ezcc.py example.ezc -run -v4
+	${DIR}/ezcc ${EX_FILE} ${EZCC_FLAGS}
 
-check-here:
-	${HERE_DIR}/ezc example.ezc -run -v4
-
-check-local:
-	${LOCAL_DIR}/ezc example.ezc -run -v4
-
-check-global:
-	${GLOBAL_DIR}/ezc example.ezc -run -v4
-
-
+# makes a REQ, and puts it in SRC (so the compiler can get it later)
 req:
-	-${REQ} ./req/
+	-${REQ_SCRIPT} ${SRC}
 
+# bundles into a tar. It figures out the name of the archive
+bundle: install
+	-${BUNDLE_SCRIPT} ${DIR}
 
-bundle: local
-	-./scripts/bundle.sh ezc.tar.xz ~/ezc/
-
+# makes a .deb file
 deb:
-	-./scripts/deb.sh
+	-${DEB_SCRIPT}
 
+# publishes Visual Studio Code Extension (requires GPG key that only I have)
+vsce:
+	-${VSCE_SCRIPT}
 
-
-vscode:
-	-./scripts/vscode.sh
-
-
-
-
-html:
-	./scripts/html.sh
+# makes HTML docs
+docs:
+	-${DOCS_SCRIPT}
