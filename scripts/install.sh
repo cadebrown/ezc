@@ -76,7 +76,7 @@ chmod +x $INSTALL_DIR/ezc
 chmod +x $INSTALL_DIR/ezcc
 
 if [[ "$I_MPFR" == "true" ]]; then
-	printf "\nEZC_LIB=\"-w -I%%s/include/ %%s/lib/libmpfr.a %%s/lib/libgmp.a\" %% (EZC_DIR, EZC_DIR, EZC_DIR)\n" >> $INSTALL_DIR/ezdata.py
+	printf "\nEZC_LIB=\"-w -I%%s/include/ %%s/lib/libmpfr.a %%s/lib/libgmp.a\" %% (EZC_DIR, EZC_DIR, EZC_DIR)\n" >> $SRC_DIR/ezdata.py
 fi
 
 echo Installing execs in $INSTALL_DIR

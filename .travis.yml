@@ -6,9 +6,11 @@ language: c
 
 install:
   - make local
+  - sudo make global
 
 script:
   - make check-local
+  - make check-global
 
 notifications:
   email:
