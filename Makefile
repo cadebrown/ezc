@@ -23,6 +23,9 @@ req:
 	-./scripts/mpfr.sh ~/ezc/src/
 
 
+bundle: local
+	-./scripts/bundle.sh ~/ezc/
+
 deb:
 	-./scripts/deb.sh
 

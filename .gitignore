@@ -17,3 +17,6 @@ __pycache__
 *.deb
 
 docs/*.html
+
+# archive
+ezc.tar.*

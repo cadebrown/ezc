@@ -108,10 +108,6 @@ popd
 
 echo "If you got any permissions errors, please open an issue: https://github.com/ChemicalDevelopment/ezc/issues"
 
-echo "Creating"
-
-tar cJf $ARCHIVE $INSTALL_DIR
-
 echo "Done"
 
 
