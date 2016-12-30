@@ -44,6 +44,10 @@ default: install
 install: uninstall
 	-${INSTALL_SCRIPT} ${DIR} ${SRC} ${REQ} ${KEEP_REQ}
 
+# just update, don't rebuild mpfr
+update:
+	-${INSTALL_SCRIPT} ${DIR} ${SRC} false true
+
 # uninstall from DIR and SRC
 uninstall:
 	-${UNINSTALL_SCRIPT} ${DIR} ${SRC}

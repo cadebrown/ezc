@@ -25,7 +25,7 @@ def main():
 
 	parser.add_argument('-v', default=0, type=int, help='Verbosity level')
 
-	parser.add_argument('-tmp', default="`mktemp \"${TMPDIR:-/tmp}/XXXXX.c\"`", help='Tmp file')
+	parser.add_argument('-tmp', default="`mktemp /tmp/XXXXX`", help='Tmp file')
 
 	parser.add_argument('-cc', default="cc", help='C Compiler')
 	parser.add_argument('-ccargs', default="", help='C Compiler arguments')
@@ -48,6 +48,8 @@ def main():
 		#print ret
 	if args["tmp"] == '':
 		args["tmp"] = "./out.c"
+	if args["tmp"][-2:] != ".c":
+		args["tmp"] = args["tmp"] + ".c"
 
 	do_run = args["c"] or args["e"] or args["run"] or args["runfile"]
 
