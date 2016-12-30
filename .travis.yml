@@ -4,8 +4,11 @@ os:
 
 language: c
 
+# needed
+sudo: required
+
 install:
-  - make install
+  - make bundle
 # Thanks macOS :(ac
 #  - sudo make global
 
