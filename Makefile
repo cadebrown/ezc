@@ -6,12 +6,14 @@
 # You can also set REQ=false to use a package manager (like brew.sh, apt, dnf, pkg, etc.)
 # Don't worry if you don't have one. If it can't find one, it builds MPFR from source anyway.
 # For info, please email <info@chemicaldevelopment.us>
+# If you already have MPFR installed, run make KEEP_REQ=true
 ###
 
 # These three are the only ones that should be changed!
 DIR=./ezc/
 SRC=${DIR}/src/
 REQ=true
+KEEP_REQ=false
 
 # Global defaults
 GLOBAL_DIR=/usr/bin/
@@ -40,7 +42,7 @@ default: install
 
 # install with set values, uninstalling first
 install: uninstall
-	-${INSTALL_SCRIPT} ${DIR} ${SRC} ${REQ}
+	-${INSTALL_SCRIPT} ${DIR} ${SRC} ${REQ} ${KEEP_REQ}
 
 # uninstall from DIR and SRC
 uninstall:
