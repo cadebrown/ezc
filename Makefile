@@ -24,7 +24,7 @@ req:
 
 
 bundle: local
-	-./scripts/bundle.sh ~/ezc/
+	-./scripts/bundle.sh ezc.tar.xz ~/ezc/
 
 deb:
 	-./scripts/deb.sh
