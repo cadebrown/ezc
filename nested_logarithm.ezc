@@ -1,0 +1,20 @@
+###
+
+Nested Logarithm constant:
+
+http://klotza.blogspot.com/2016/10/the-nested-logarithm-constants.html
+
+essentially, compute:
+log(1+log(2+log(3+...)))
+
+###
+
+
+i = 2
+
+var i
+
+i = 3 
+
+var i
+

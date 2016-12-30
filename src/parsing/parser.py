@@ -133,10 +133,11 @@ def expand_line(line):
 			else:
 				ret.append(res_exp)
 		ret.append(line.replace("(", " ").replace(")", " "))
-		for vv in var_tod:
-			to_add = "mpfr_clear (%s);" % (tmp_var)
-			if to_add not in ret:
-				ret.append(to_add)
+		if "for" not in line:
+			for vv in var_tod:
+				to_add = "mpfr_clear (%s);" % (tmp_var)
+				if to_add not in ret:
+					ret.append(to_add)
 		return ret
 	return [line]
 
