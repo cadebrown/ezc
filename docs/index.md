@@ -1,6 +1,6 @@
 ---
 layout: docs
-title: Documentation
+title: EZC Documentation
 ---
 
 EZC is easy C. It comes will all the power of large multiprecision arithmetic (like GMP, MPFR, or mpmath), in a very basic structure while retaining most of the speed of C.

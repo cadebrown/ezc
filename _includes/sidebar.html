@@ -23,6 +23,7 @@
     </div>
 
     <nav class="sidebar-nav">
+
       <a class="sidebar-nav-item{% if page.url == site.baseurl %} active{% endif %}" href="{{ site.baseurl }}">Home</a>
 
       {% comment %}
@@ -38,14 +39,30 @@
           {% endif %}
         {% endif %}
       {% endfor %}
-
-      <a class="sidebar-nav-item" href="/docs/">Documentation</a>
+      
 
       <a class="sidebar-nav-item" href="javascript:copyRelease();">Install Release</a>
       <a class="sidebar-nav-item" href="javascript:copyBuild();">Build Current Version</a>
+
+
+      <a class="sidebar-nav-item" href="{{site.baseurl}}tutorials/">Tutorials</a>
+
+
+      <a class="sidebar-nav-item" href="{{site.baseurl}}docs/">Documentation</a>
+
+      <a class="sidebar-nav-item i1" href="{{site.baseurl}}docs/compiler">Compiler</a>
+      <a class="sidebar-nav-item i1" href="{{site.baseurl}}docs/syntax">Syntax</a>
+      <a class="sidebar-nav-item i1" href="{{site.baseurl}}docs/syntax">Variables</a>
+      <a class="sidebar-nav-item i1" href="{{site.baseurl}}docs/operators">Operators</a>
+      <a class="sidebar-nav-item i1" href="{{site.baseurl}}docs/functions">Functions</a>
+      <a class="sidebar-nav-item i2" href="{{site.baseurl}}docs/functions/all">List of Functions</a>
+      <a class="sidebar-nav-item i2" href="{{site.baseurl}}docs/functions/custom">Custom Functions</a>
+
       <hr>
       <a class="sidebar-nav-item" href="{{ site.repository }}">GitHub project</a>
       <span class="sidebar-nav-item">Newest Release: <a href="{{ site.repository }}/releases/tag/{{site.release}}">{{ site.release }}</a></span>
+
+      
     </nav>
 
     <p>&copy; {{ site.time | date: '%Y' }}. All rights reserved.</p>

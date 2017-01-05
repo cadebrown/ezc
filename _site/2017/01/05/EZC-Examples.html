@@ -62,6 +62,7 @@
     </div>
 
     <nav class="sidebar-nav">
+
       <a class="sidebar-nav-item" href="/ezc/">Home</a>
 
       
@@ -74,7 +75,7 @@
       
         
           
-            <a class="sidebar-nav-item" href="/ezc/about.html">About</a>
+            <a class="sidebar-nav-item" href="/ezc/about/">About</a>
           
         
       
@@ -86,14 +87,70 @@
           
         
       
-
-      <a class="sidebar-nav-item" href="/docs/">Documentation</a>
+        
+          
+        
+      
+        
+          
+        
+      
+        
+          
+        
+      
+        
+          
+        
+      
+        
+          
+        
+      
+        
+          
+        
+      
+        
+          
+        
+      
+        
+          
+        
+      
+        
+          
+        
+      
+        
+          
+        
+      
+      
 
       <a class="sidebar-nav-item" href="javascript:copyRelease();">Install Release</a>
       <a class="sidebar-nav-item" href="javascript:copyBuild();">Build Current Version</a>
+
+
+      <a class="sidebar-nav-item" href="/ezc/tutorials/">Tutorials</a>
+
+
+      <a class="sidebar-nav-item" href="/ezc/docs/">Documentation</a>
+
+      <a class="sidebar-nav-item i1" href="/ezc/docs/compiler">Compiler</a>
+      <a class="sidebar-nav-item i1" href="/ezc/docs/syntax">Syntax</a>
+      <a class="sidebar-nav-item i1" href="/ezc/docs/syntax">Variables</a>
+      <a class="sidebar-nav-item i1" href="/ezc/docs/operators">Operators</a>
+      <a class="sidebar-nav-item i1" href="/ezc/docs/functions">Functions</a>
+      <a class="sidebar-nav-item i2" href="/ezc/docs/functions/all">List of Functions</a>
+      <a class="sidebar-nav-item i2" href="/ezc/docs/functions/custom">Custom Functions</a>
+
       <hr>
       <a class="sidebar-nav-item" href="ChemicalDevelopment/ezc">GitHub project</a>
       <span class="sidebar-nav-item">Newest Release: <a href="ChemicalDevelopment/ezc/releases/tag/1.0.0">1.0.0</a></span>
+
+      
     </nav>
 
     <p>&copy; 2017. All rights reserved.</p>
@@ -107,23 +164,39 @@
   <span class="post-date">05 Jan 2017</span>
   <p>To view digits of pi, run (from commandline):</p>
 
-<p><code class="highlighter-rouge">./ezc -c "prec 1000 : var (pi)"</code></p>
+<div class="language-bash highlighter-rouge"><pre class="highlight"><code>./ezc -c <span class="s2">"prec 1000 : var (pi)"</span>
+</code></pre>
+</div>
 
 <p>For digits of e, run:</p>
 
-<p><code class="highlighter-rouge">./ezc -c "prec 1000 : var (exp 1)"</code></p>
+<div class="language-bash highlighter-rouge"><pre class="highlight"><code>./ezc -c <span class="s2">"prec 1000 : var (exp 1)"</span>
+</code></pre>
+</div>
 
 <p>You can set degree or radian mode like so:</p>
 
-<p><code class="highlighter-rouge">EZC_DEG=0 ./ezc -c "var (sin 90)"</code> (this prints out .89…, i.e. sin of 90 radians)</p>
+<div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="nv">EZC_DEG</span><span class="o">=</span>0 ./ezc -c <span class="s2">"var (sin 90)"</span>
+</code></pre>
+</div>
 
-<p><code class="highlighter-rouge">EZC_DEG=1 ./ezc -c "var (sin 90)"</code> (this prints out 1.0…, i.e. sin of 90 degrees)</p>
+<p>(this prints out .89…, i.e. sin of 90 radians)</p>
+
+<div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="nv">EZC_DEG</span><span class="o">=</span>1 ./ezc -c <span class="s2">"var (sin 90)"</span>
+</code></pre>
+</div>
+
+<p>(this prints out 1.0…, i.e. sin of 90 degrees)</p>
 
 <p>Order of operations works as expected (with parenthetical wrapping), but with added operators.</p>
 
 <p>So,</p>
 
-<p><code class="highlighter-rouge">./ezc -c "var (2*3+-4*5)"</code> prints out -14</p>
+<div class="language-bash highlighter-rouge"><pre class="highlight"><code>./ezc -c <span class="s2">"var (2*3+-4*5)"</span>
+</code></pre>
+</div>
+
+<p>prints out -14</p>
 
 <p><code class="highlighter-rouge">2*3+-4*5</code> is the same as <code class="highlighter-rouge">(2*3)+((-4)*5)</code></p>
 
@@ -135,9 +208,17 @@
 
 <p>See:</p>
 
-<p><code class="highlighter-rouge">./ezc -c "var (-5?3)"</code> prints out a number &gt;= -5 and &lt; 3</p>
+<div class="language-bash highlighter-rouge"><pre class="highlight"><code>./ezc -c <span class="s2">"var (-5?3)"</span>
+</code></pre>
+</div>
 
-<p><code class="highlighter-rouge">./ezc -c "var (-10?1^2)"</code> gets a number between -10 and 1, but then squares that number, so the printed out number is &gt;= 0, and &lt; 100</p>
+<p>prints out a number &gt;= -5 and &lt; 3</p>
+
+<div class="language-bash highlighter-rouge"><pre class="highlight"><code>./ezc -c <span class="s2">"var (-10?1^2)"</span>
+</code></pre>
+</div>
+
+<p>gets a number between -10 and 1, but then squares that number, so the printed out number is &gt;= 0, and &lt; 100</p>
 
 
 </div>

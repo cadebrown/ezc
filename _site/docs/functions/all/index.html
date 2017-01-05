@@ -16,7 +16,7 @@
 
   <title>
     
-      404: Page not found &middot; EZC
+      Function List &middot; EZC
     
   </title>
 
@@ -159,9 +159,163 @@
 
 
     <div class="content container">
-      <div class="page">
-  <h1 class="page-title">404: Page not found</h1>
-  <p class="lead">Sorry, we've misplaced that URL or it's pointing to something that doesn't exist. <a href="/ezc/">Head back home</a> to try finding it again.</p>
+      <div class="post">
+  <h1 class="post-title">Function List</h1>
+  
+
+  <p>Here is a full list of functions in ezC</p>
+
+<table>
+  <tbody>
+    <tr>
+      <td><strong>Function</strong></td>
+      <td><strong>Explanation</strong></td>
+    </tr>
+    <tr>
+      <td><strong>Basic Functions</strong></td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>prec 256</td>
+      <td>Sets global precision in bits</td>
+    </tr>
+    <tr>
+      <td>x = set y</td>
+      <td>sets x to y</td>
+    </tr>
+    <tr>
+      <td>z = min x y</td>
+      <td>minimum of x or y</td>
+    </tr>
+    <tr>
+      <td>z = max x y</td>
+      <td>maximum of x or y</td>
+    </tr>
+    <tr>
+      <td>z = near x y</td>
+      <td>nearest multiple of x to y</td>
+    </tr>
+    <tr>
+      <td>z = add x y</td>
+      <td>Adds x and y</td>
+    </tr>
+    <tr>
+      <td>z = sub x y</td>
+      <td>Subtracts y from x</td>
+    </tr>
+    <tr>
+      <td>z = mul x y</td>
+      <td>Multiplies x by y</td>
+    </tr>
+    <tr>
+      <td>z = div x y</td>
+      <td>Divides x by y</td>
+    </tr>
+    <tr>
+      <td>z = mod x y</td>
+      <td>Returns x modulo y</td>
+    </tr>
+    <tr>
+      <td>z = pow x y</td>
+      <td>x to the power of y</td>
+    </tr>
+    <tr>
+      <td><strong>Printing Functions</strong></td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>echo Hello</td>
+      <td>Prints out all arguments</td>
+    </tr>
+    <tr>
+      <td>var x</td>
+      <td>Prints variable value</td>
+    </tr>
+    <tr>
+      <td>intvar x</td>
+      <td>Prints out x, but as an int</td>
+    </tr>
+    <tr>
+      <td>file x a.txt</td>
+      <td>Prints the value of x into a.txt</td>
+    </tr>
+    <tr>
+      <td><strong>Math Functions</strong></td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>z = rand x y</td>
+      <td>uniform random number in [x, y)</td>
+    </tr>
+    <tr>
+      <td>z = sqrt x</td>
+      <td>square root of x</td>
+    </tr>
+    <tr>
+      <td>z = cbrt x</td>
+      <td>cube root of x</td>
+    </tr>
+    <tr>
+      <td>z = hypot x y</td>
+      <td>hypoteneuse of triangle with sides x and y</td>
+    </tr>
+    <tr>
+      <td>z = exp x</td>
+      <td>euler’s number raised to x</td>
+    </tr>
+    <tr>
+      <td>z = log x</td>
+      <td>natural log of x</td>
+    </tr>
+    <tr>
+      <td>z = logb x y</td>
+      <td>the log base x of y</td>
+    </tr>
+    <tr>
+      <td>z = agm x y</td>
+      <td>arithmetic geometric mean</td>
+    </tr>
+    <tr>
+      <td>z = gamma x</td>
+      <td>the gamma function at x</td>
+    </tr>
+    <tr>
+      <td>z = factorial x</td>
+      <td>factorial of x</td>
+    </tr>
+    <tr>
+      <td>z = zeta x</td>
+      <td>Riemann zeta function of x</td>
+    </tr>
+    <tr>
+      <td><strong>Flow Blocks</strong></td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>if z &gt; x</td>
+      <td>Conditional block that can use &lt;, &gt;, ==</td>
+    </tr>
+    <tr>
+      <td>fi</td>
+      <td>Ends if block</td>
+    </tr>
+    <tr>
+      <td>for i 0 10 2.5</td>
+      <td>Starts i at 0, keeps adding 2.5 while i &lt; 10</td>
+    </tr>
+    <tr>
+      <td>rof</td>
+      <td>Ends for block</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>For trig functions, the list is quite verbose, so I’ll just list them off:</p>
+
+<p>sin, cos, tan, csc, sec, cot, sinh, cosh, tanh, csch, sech, coth</p>
+
+<p>And inverses are available by prepending <code class="highlighter-rouge">a</code> to a function: like asin, acos, etc</p>
+
 </div>
 
     </div>

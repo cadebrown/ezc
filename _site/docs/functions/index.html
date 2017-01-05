@@ -16,7 +16,7 @@
 
   <title>
     
-      404: Page not found &middot; EZC
+      EZC Functions &middot; EZC
     
   </title>
 
@@ -159,9 +159,42 @@
 
 
     <div class="content container">
-      <div class="page">
-  <h1 class="page-title">404: Page not found</h1>
-  <p class="lead">Sorry, we've misplaced that URL or it's pointing to something that doesn't exist. <a href="/ezc/">Head back home</a> to try finding it again.</p>
+      <div class="post">
+  <h1 class="post-title">EZC Functions</h1>
+  
+
+  <p>In ezC, functions are not declared, but are a set of keywords that can be applied like:</p>
+
+<div class="language-fortran highlighter-rouge"><pre class="highlight"><code><span class="n">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">log</span><span class="w"> </span><span class="n">y</span><span class="w">
+</span></code></pre>
+</div>
+
+<p>or</p>
+
+<div class="language-fortran highlighter-rouge"><pre class="highlight"><code><span class="n">echo</span><span class="w"> </span><span class="n">Hello</span><span class="w"> </span><span class="n">World</span><span class="w">
+</span></code></pre>
+</div>
+
+<p>Similar to <a href="../operators/">operators</a>, functions take arguments, and store it in a variable, except for some functions like <code class="highlighter-rouge">echo</code>, <code class="highlighter-rouge">prec</code>, and <code class="highlighter-rouge">var</code></p>
+
+<p>In our examples, <code class="highlighter-rouge">x = log y</code>, it sets <code class="highlighter-rouge">x</code> to the natural logarithm (base e) of <code class="highlighter-rouge">y</code></p>
+
+<p><code class="highlighter-rouge">echo Hello World</code> prints out Hello World to the console</p>
+
+<p><code class="highlighter-rouge">var x</code> prints out the name of the variable, <code class="highlighter-rouge">x</code>, and it’s numerical value.</p>
+
+<p>In fact, all operators are mapped to a function.</p>
+
+<p><code class="highlighter-rouge">x = a + b</code> is the same as <code class="highlighter-rouge">x = add a b</code></p>
+
+<p><code class="highlighter-rouge">x = a ^ b</code> is the same as <code class="highlighter-rouge">x = pow a b</code></p>
+
+<p>etc.</p>
+
+<p>Here’s the global <a href="./all/">list of functions</a></p>
+
+<p>You can also create your own functions, see <a href="./custom/">Custom Functions</a></p>
+
 </div>
 
     </div>

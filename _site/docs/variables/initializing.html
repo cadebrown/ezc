@@ -16,7 +16,7 @@
 
   <title>
     
-      About &middot; EZC
+      Variable Initialization &middot; EZC
     
   </title>
 
@@ -62,6 +62,7 @@
     </div>
 
     <nav class="sidebar-nav">
+
       <a class="sidebar-nav-item" href="/ezc/">Home</a>
 
       
@@ -74,7 +75,7 @@
       
         
           
-            <a class="sidebar-nav-item active" href="/ezc/about.html">About</a>
+            <a class="sidebar-nav-item" href="/ezc/about/">About</a>
           
         
       
@@ -86,14 +87,70 @@
           
         
       
-
-      <a class="sidebar-nav-item" href="/docs/">Documentation</a>
+        
+          
+        
+      
+        
+          
+        
+      
+        
+          
+        
+      
+        
+          
+        
+      
+        
+          
+        
+      
+        
+          
+        
+      
+        
+          
+        
+      
+        
+          
+        
+      
+        
+          
+        
+      
+        
+          
+        
+      
+      
 
       <a class="sidebar-nav-item" href="javascript:copyRelease();">Install Release</a>
       <a class="sidebar-nav-item" href="javascript:copyBuild();">Build Current Version</a>
+
+
+      <a class="sidebar-nav-item" href="/ezc/tutorials/">Tutorials</a>
+
+
+      <a class="sidebar-nav-item" href="/ezc/docs/">Documentation</a>
+
+      <a class="sidebar-nav-item i1" href="/ezc/docs/compiler">Compiler</a>
+      <a class="sidebar-nav-item i1" href="/ezc/docs/syntax">Syntax</a>
+      <a class="sidebar-nav-item i1" href="/ezc/docs/syntax">Variables</a>
+      <a class="sidebar-nav-item i1" href="/ezc/docs/operators">Operators</a>
+      <a class="sidebar-nav-item i1" href="/ezc/docs/functions">Functions</a>
+      <a class="sidebar-nav-item i2" href="/ezc/docs/functions/all">List of Functions</a>
+      <a class="sidebar-nav-item i2" href="/ezc/docs/functions/custom">Custom Functions</a>
+
       <hr>
       <a class="sidebar-nav-item" href="ChemicalDevelopment/ezc">GitHub project</a>
       <span class="sidebar-nav-item">Newest Release: <a href="ChemicalDevelopment/ezc/releases/tag/1.0.0">1.0.0</a></span>
+
+      
     </nav>
 
     <p>&copy; 2017. All rights reserved.</p>
@@ -102,31 +159,41 @@
 
 
     <div class="content container">
-      <div class="page">
-  <h1 class="page-title">About</h1>
-  <p class="message">
-  Any questions, comments, or concerns can be directed to <a href="mailto:info@chemicaldevelopment.us">info@chemicaldevelopment.us</a>
-</p>
+      <div class="post">
+  <h1 class="post-title">Variable Initialization</h1>
+  
 
-<h2 id="about-ezc">About EZC</h2>
+  <h3 id="constant">Constant</h3>
 
-<p>I first had the idea for EZC roughly in June 2016, and it was simple:</p>
+<p>To initialize a variable to a constant, simply type out the constant:</p>
 
-<p>Have a language with simple syntax, yet the ability to handle multiprecision (more precision than a double, or float) efficiently.</p>
+<p><code class="highlighter-rouge">x = 3.14159265358979</code></p>
 
-<p>At the time, I was using GMP, MPFR, and MPC for quick computations (i.e. finding an infinite sum, or limit to a large precision). However, the problem with these libraries is that using them requires C synax, initialization, and some memory management. Not to mention the lack of operators, obfuscated function calls, and rounding.</p>
+<h3 id="variable">Variable</h3>
 
-<p>With EZC, I’ve tried to simplify writing code that deals with multiprecision so that anyone can easily do it.</p>
+<p>You can also use another variable, such as:</p>
 
-<p>For example, to find a third to 1000 digits:</p>
+<p><code class="highlighter-rouge">x = y</code></p>
+
+<h3 id="command-line-arguments">Command Line Arguments</h3>
+
+<p>Additionally, you can read in values from the commandline, using <code class="highlighter-rouge">$</code>. <code class="highlighter-rouge">$1</code> reads in the first argument, <code class="highlighter-rouge">$2</code> reads the second, and so one.</p>
 
 <pre>
-prec 1000
-var (1/3)
+# Prints sum of first two args
+a = $1 : b = $2
+
+sum = a + b
+
+var sum
 </pre>
 
-<p>This prints out <code class="highlighter-rouge">.3333...333</code></p>
+<p>When compiled, as <code class="highlighter-rouge">sum.o</code>, you can use it like so:</p>
 
+<pre>
+&gt; ./sum.o 1.0 2.0
+&gt; sum : 3.00000000 . . .
+</pre>
 
 </div>
 

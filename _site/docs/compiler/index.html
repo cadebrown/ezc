@@ -16,7 +16,7 @@
 
   <title>
     
-      404: Page not found &middot; EZC
+      EZC Compiler Usage &middot; EZC
     
   </title>
 
@@ -159,9 +159,43 @@
 
 
     <div class="content container">
-      <div class="page">
-  <h1 class="page-title">404: Page not found</h1>
-  <p class="lead">Sorry, we've misplaced that URL or it's pointing to something that doesn't exist. <a href="/ezc/">Head back home</a> to try finding it again.</p>
+      <div class="post">
+  <h1 class="post-title">EZC Compiler Usage</h1>
+  
+
+  <p>If you have the github repo, you will run <code class="highlighter-rouge">python src/ezcc.py</code> for the compiler, but for built versions (and releases), use <code class="highlighter-rouge">./ezcc</code></p>
+
+<p>To view help, run <code class="highlighter-rouge">python src/ezcc.py -h</code> or <code class="highlighter-rouge">./ezcc -h</code></p>
+
+<p>That should print out something like:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>usage: ezcc.py [-h] [-o O] [-v V] [-tmp TMP] [-cc CC] [-ccargs CCARGS]
+               [-args ARGS] [-run] [-runfile] [-c C] [-e]
+               [files [files ...]]
+
+Compile EZC Language. vX.X.X http://github.chemicaldevelopment.us/ezc
+
+positional arguments:
+  files           files to compile
+
+optional arguments:
+ . . . 
+</code></pre>
+</div>
+
+<p>So, you can run <code class="highlighter-rouge">python src/ezcc.py file.ezc -o file.out -v5 -cc gcc -run -args "1 2 3"</code> or <code class="highlighter-rouge">./ezcc file.ezc -o file.out -v5 -cc gcc -run -args "1 2 3"</code> to:</p>
+
+<ul>
+  <li>Compile file.ezc to executable file.out, with verbosity level 5, using <code class="highlighter-rouge">gcc</code></li>
+  <li>Run the executable file.out with args 1 2 3, like <code class="highlighter-rouge">./file.out 1 2 3</code></li>
+</ul>
+
+<p>Or, just compile without running: <code class="highlighter-rouge">python src/ezcc.py file.ezc</code></p>
+
+<p>(this saves into <code class="highlighter-rouge">a.o</code> by default)</p>
+
+<p>If you run into any difficulties, open an <a href="https://github.com/ChemicalDevelopment/ezc/issues">issue</a> on github so that I can respond</p>
+
 </div>
 
     </div>

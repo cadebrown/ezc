@@ -16,7 +16,7 @@
 
   <title>
     
-      404: Page not found &middot; EZC
+      Setting Variables &middot; EZC
     
   </title>
 
@@ -159,9 +159,73 @@
 
 
     <div class="content container">
-      <div class="page">
-  <h1 class="page-title">404: Page not found</h1>
-  <p class="lead">Sorry, we've misplaced that URL or it's pointing to something that doesn't exist. <a href="/ezc/">Head back home</a> to try finding it again.</p>
+      <div class="post">
+  <h1 class="post-title">Setting Variables</h1>
+  
+
+  <h3 id="assignment">Assignment</h3>
+
+<p>If you have a variable, <code class="highlighter-rouge">x</code>, you can assign a value by a constant, like <code class="highlighter-rouge">x = 3.05</code>.</p>
+
+<p>You can also assign another variable, such as <code class="highlighter-rouge">x = y</code>.</p>
+
+<p>Additionally, you can use <code class="highlighter-rouge">$</code> to get command line arguments, like <code class="highlighter-rouge">x = $1</code></p>
+
+<h3 id="functions">Functions</h3>
+
+<p>A <a href="/functions/">function</a> can be used to assign a value.</p>
+
+<p>Functions now allow constants</p>
+
+<p>This is valid:</p>
+
+<pre>
+x = log 2.0
+</pre>
+
+<p>And this is valid:</p>
+
+<pre>
+y = 2.0
+x = log y
+</pre>
+
+<p>Some functions take multiple variables, like <code class="highlighter-rouge">logb</code></p>
+
+<pre>
+x = logb 2.0 4.0
+</pre>
+
+<pre>
+a = 2.0
+y = 4.0
+x = logb a y
+</pre>
+
+<h3 id="operators">Operators</h3>
+
+<p><a href="/operators/">Operators</a>, like <code class="highlighter-rouge">+</code>, <code class="highlighter-rouge">-</code>, <code class="highlighter-rouge">*</code>, <code class="highlighter-rouge">/</code>, <code class="highlighter-rouge">**</code> and <code class="highlighter-rouge">^</code> can be used in shorthand.</p>
+
+<p>Each Operator links to a function. The following two lines are equivalent: <code class="highlighter-rouge">z = x + y</code> and <code class="highlighter-rouge">z = add x y</code></p>
+
+<p>You can use operators in the middle of arguments.</p>
+
+<p><code class="highlighter-rouge">VARIABLE = OPA {OPERATOR} OPB</code></p>
+
+<p>which assigns the result to variable</p>
+
+<p>Some operators can use only one, for example:</p>
+
+<p><code class="highlighter-rouge">a = b !</code></p>
+
+<p>for factorial</p>
+
+<p>And some can use either one or two, such as:</p>
+
+<p><code class="highlighter-rouge">a = 1 ~ b</code> is equivalent to <code class="highlighter-rouge">a = ~ b</code></p>
+
+<p>To see a full list of functions, check the documentation on the <a href="/functions/list.html">function list</a></p>
+
 </div>
 
     </div>
