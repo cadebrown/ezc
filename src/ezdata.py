@@ -1,5 +1,5 @@
 #EZC_LIB="-I%s/include/ %s/lib/libmpfr.a %s/lib/libgmp.a"
-
+# store data here, for simple flags, and our starter for EZC
 import os
 
 EZC_DIR=os.path.dirname(__file__)

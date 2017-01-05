@@ -10,9 +10,13 @@
 ###
 
 # These three are the only ones that should be changed!
+# directory to install to
 DIR=./ezc/
+# source directory to store sources into
 SRC=${DIR}/src/
+# whether or not to use a built version of requirements (GMP, MPFR, etc)
 REQ=true
+# if requirements are already built, do we just keep the existing ones?
 KEEP_REQ=false
 
 # Global defaults

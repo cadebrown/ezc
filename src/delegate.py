@@ -56,7 +56,6 @@ def compile_exec():
 	Compiles the executable.
 	There should have already been called transpile, compile_files, or addcode
 	"""
-	# Compile the intermediate lang
 	global args
 	cmd = "%s %s %s %s -o %s" % (args["cc"], args["ccargs"], args["tmp"], get_lib_args(), args["o"])
 	log.info("Compiling", cmd)
