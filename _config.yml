@@ -1,27 +1,25 @@
 # Plugins
-gems:             ['jekyll-paginate', 'jekyll-gist', 'jekyll-github-metadata']
+gems:
+  - 'jekyll-paginate'
+  - 'jekyll-gist'
+  - 'jekyll-github-metadata'
 
 # Dependencies
-highlighter:      rouge
-
-# Permalinks
-permalink:        pretty
+highlighter: rouge
 
 # Setup
-title:            BlackDoc
-tagline:          Black Theme for Jekyll
-description:      "A two-column black theme with a scrolling sidebar. Ideal for sites requiring a master-detail layout, e.g. documentation, cheatsheets, lyrics, notes..."
-url:              https://github.com/karloespiritu/blackdoc
-baseurl:          /
+title: EZC
+tagline: Multiprecision Programming Language
+description: "When 32 bits isn't enough, use EZC"
+url: https://github.com/ChemicalDevelopment/ezc
+baseurl: /
 
 author:
-  name:           'Karlo Espiritu'
-  url:            https://twitter.com/karloespiritu
+  name: 'Cade Brown'
+  url: cade.site
 
-paginate:         5
+paginate: 5
 
-# Custom vars
-version:          1.0.1
+release: 1.0.0
 
-github:
-  repo:           https://github.com/karloespiritu/blackdoc
+repository: ChemicalDevelopment/ezc

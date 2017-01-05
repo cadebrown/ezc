@@ -1,3 +1,16 @@
+<script>
+  function copyToClipboard(text) {
+    window.prompt("1. Open Terminal \n2. Copy and paste this into terminal\n3. Hit `enter`: ", text);
+  }
+  function copyRelease() {
+	  copyToClipboard("cd ~; curl chemdev.space/ezc.sh -L | bash; cd ezc");
+  }
+  function copyBuild() {
+	  copyToClipboard("cd ~; curl chemdev.space/build-ezc.sh -L | bash; cd ezc");
+  }
+</script>
+
+
 <div class="sidebar">
   <div class="container sidebar-sticky">
     <div class="sidebar-about">
@@ -26,10 +39,11 @@
         {% endif %}
       {% endfor %}
 
-      <a class="sidebar-nav-item" href="{{ site.github.repo }}/archive/master.zip">Download</a>
+      <a class="sidebar-nav-item" href="javascript:copyRelease();">Install Release</a>
+      <a class="sidebar-nav-item" href="javascript:copyBuild();">Build Current Version</a>
       <hr>
-      <a class="sidebar-nav-item" href="{{ site.github.repo }}">GitHub project</a>
-      <span class="sidebar-nav-item">Currently v{{ site.version }}</span>
+      <a class="sidebar-nav-item" href="{{ site.repository }}">GitHub project</a>
+      <span class="sidebar-nav-item">Newest Release: <a href="{{ site.repository }}/releases/tag/{{site.release}}">{{ site.release }}</a></span>
     </nav>
 
     <p>&copy; {{ site.time | date: '%Y' }}. All rights reserved.</p>

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+  <head>
+  <link href="http://gmpg.org/xfn/11" rel="profile">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+
+  <!-- Enable responsiveness on mobile devices-->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+
+  <title>
+    
+      EZC &middot; Multiprecision Programming Language
+    
+  </title>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="/public/css/poole.css">
+  <link rel="stylesheet" href="/public/css/syntax.css">
+  <link rel="stylesheet" href="/public/css/blackdoc.css">
+  <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=PT+Sans:400,400italic,700|Abril+Fatface">
+  <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=EB+Garamond">
+  <!-- Icons -->
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/public/apple-touch-icon-144-precomposed.png">
+  <link rel="shortcut icon" href="/public/favicon.ico">
+
+  <!-- RSS -->
+  <link rel="alternate" type="application/rss+xml" title="RSS" href="/atom.xml">
+</head>
+
+
+  <body>
+
+    <script>
+  function copyToClipboard(text) {
+    window.prompt("1. Open Terminal \n2. Copy and paste this into terminal\n3. Hit `enter`: ", text);
+  }
+  function copyRelease() {
+	  copyToClipboard("cd ~; curl chemdev.space/ezc.sh -L | bash; cd ezc");
+  }
+  function copyBuild() {
+	  copyToClipboard("cd ~; curl chemdev.space/build-ezc.sh -L | bash; cd ezc");
+  }
+</script>
+
+
+<div class="sidebar">
+  <div class="container sidebar-sticky">
+    <div class="sidebar-about">
+      <h1>
+        <a href="/">
+          EZC
+        </a>
+      </h1>
+      <p class="lead">When 32 bits isn't enough, use EZC</p>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a class="sidebar-nav-item active" href="/">Home</a>
+
+      
+
+      
+      
+        
+          
+        
+      
+        
+          
+            <a class="sidebar-nav-item" href="/about.html">About</a>
+          
+        
+      
+        
+          
+        
+      
+
+      <a class="sidebar-nav-item" href="javascript:copyRelease();">Install Release</a>
+      <a class="sidebar-nav-item" href="javascript:copyBuild();">Build Current Version</a>
+      <hr>
+      <a class="sidebar-nav-item" href="ChemicalDevelopment/ezc">GitHub project</a>
+      <span class="sidebar-nav-item">Newest Release: <a href="ChemicalDevelopment/ezc/releases/tag/1.0.0">1.0.0</a></span>
+    </nav>
+
+    <p>&copy; 2017. All rights reserved.</p>
+  </div>
+</div>
+
+
+    <div class="content container">
+      <div class="posts">
+    <div class="post">
+    <h1 class="post-title">
+      What is EZC?
+    </h1>
+
+
+    EZC is a programming language with multiprecision builtin by default.
+  </div>
+
+  <!-- Loop through all posts -->
+  
+  <div class="post">
+    <h1 class="post-title">
+      <a href="/2017/01/05/EZC-Examples.html">
+        EZC Examples
+      </a>
+    </h1>
+
+    <span class="post-date">05 Jan 2017</span>
+
+    <p>To view digits of pi, run (from commandline):</p>
+
+<p><code class="highlighter-rouge">./ezc -c "prec 1000 : var (pi)"</code></p>
+
+<p>For digits of e, run:</p>
+
+<p><code class="highlighter-rouge">./ezc -c "prec 1000 : var (exp 1)"</code></p>
+
+<p>You can set degree or radian mode like so:</p>
+
+<p><code class="highlighter-rouge">EZC_DEG=0 ./ezc -c "var (sin 90)"</code> (this prints out .89…, i.e. sin of 90 radians)</p>
+
+<p><code class="highlighter-rouge">EZC_DEG=1 ./ezc -c "var (sin 90)"</code> (this prints out 1.0…, i.e. sin of 90 degrees)</p>
+
+<p>Order of operations works as expected (with parenthetical wrapping), but with added operators.</p>
+
+<p>So,</p>
+
+<p><code class="highlighter-rouge">./ezc -c "var (2*3+-4*5)"</code> prints out -14</p>
+
+<p><code class="highlighter-rouge">2*3+-4*5</code> is the same as <code class="highlighter-rouge">(2*3)+((-4)*5)</code></p>
+
+<p>Operators are added for convenience</p>
+
+<p>For example, you can use the <code class="highlighter-rouge">?</code> operators for random numbers.</p>
+
+<p>The <code class="highlighter-rouge">?</code> operator is above exponents, (i.e. P?EMDAS)</p>
+
+<p>See:</p>
+
+<p><code class="highlighter-rouge">./ezc -c "var (-5?3)"</code> prints out a number &gt;= -5 and &lt; 3</p>
+
+<p><code class="highlighter-rouge">./ezc -c "var (-10?1^2)"</code> gets a number between -10 and 1, but then squares that number, so the printed out number is &gt;= 0, and &lt; 100</p>
+
+
+  </div>
+  
+</div>
+
+
+    </div>
+
+  </body>
+</html>
