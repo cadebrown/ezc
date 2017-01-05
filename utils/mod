@@ -1,3 +1,0 @@
-#!/usr/bin/ezc -runfile
-prec $3
-var ($1 % $2)

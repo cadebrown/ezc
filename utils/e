@@ -1,3 +1,0 @@
-#!/usr/bin/ezc -runfile
-setprec $1
-var (exp 1)

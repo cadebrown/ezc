@@ -1,150 +1,124 @@
-# EZC
+# BlackDoc
 
-[![Build Status](https://travis-ci.org/ChemicalDevelopment/ezc.svg?branch=master)](https://travis-ci.org/ChemicalDevelopment/ezc)
+BlackDoc is a two-column [Jekyll](http://jekyllrb.com) theme that's ideal for websites that require a master-detail layout for viewing of content. It's based on [Poole](http://getpoole.com), the Jekyll butler, and the [Hyde](http://hyde.getpoole.com) theme.
 
-Tested platforms:
-  * Debian 8
-  * OSX (El Capitan)
-  * Raspbian
+![BlackDoc screenshot](https://raw.githubusercontent.com/karloespiritu/blackdoc/master/public/images/blackdoc-screenshot.jpg)
 
-A intermediate language which is transpiled to C. Multiprecision is built into the language.
+## Contents
 
-Made for people who don't want to use low level memory management, but want the speed it provides.
+- [Features](#features)
+- [Quick Start](#quick-start)
+- [Usage](#usage)
+- [Options](#options)
+  - [Sidebar menu](#sidebar-menu)
+  - [Scrolling sidebar content](#scrolling-sidebar-content)
+  - [Themes](#themes)
+  - [Reverse layout](#reverse-layout)
+- [Development](#development)
+- [Author](#author)
+- [License](#license)
+- [Thanks](#thanks)
 
-Includes commandline utilities (such as `sqrt`, `mul`, `pow`, etc.)
+## Features
 
-You can think of it like a calculator language, but with more functions and more digits
+* Now compatible with Jekyll 3.x
+* Two-column layout with scrolling sidebar content
+* Ideal for websites that require  master-detail view of content
 
-[EZC Documentation](http://chemicaldevelopment.us/docs/ezc/)
+## Quick Start
 
-# Installation
+Download the zip file or clone the BlackDoc repo.
 
-If any errors are produced, please open an [issue](https://github.com/ChemicalDevelopment/ezc/issues)
+```bash
+$ git clone git@github.com:karloespiritu/BlackDoc.git mysite
+$ cd mysite
+```
+Make sure you have Ruby 2.0.0 or higher installed.
 
-## Global (default)
+```bash
+$ ruby --version
+ruby 2.x.x
+```
 
-(this requires `sudo` rights)
+Install bundler and install dependencies.
 
-To install, copypaste this into your terminal and then hit enter:
+```bash
+$ gem install bundler
+$ bundle install
+```
 
-`curl chemdev.space/ezc.sh -L | bash`
+Build and run your BlackDoc site.
 
-This will prompt for your password, then finish in about 5-10 minutes
+```bash
+$ jekyll serve
+```
 
-Now, you should be able to run `ezcc -h` from anywhere
+## Usage
 
-## Local
+BlackDoc is a theme built on top of [Poole](https://github.com/poole/poole), which provides a fully furnished Jekyll setup—just download and start the Jekyll server. See [the Poole usage guidelines](https://github.com/poole/poole#usage) for how to install and use Jekyll.
 
-if for some reason you don't have sudo rights, you can also install locally:
 
-`curl chemdev.space/ezc-local.sh -L | bash`
+## Options
 
-EZC should be installed in `~/ezc/`
+BlackDoc includes some customizable options, typically applied via classes on the `<body>` element.
 
 
-## Using a package manager
+### Sidebar menu
 
-For some platforms (Debian Based, Fedora Based, OSX, FreeBSD) you can run:
+Create a list of nav links in the sidebar by assigning each Jekyll page the correct layout in the page's [front-matter](http://jekyllrb.com/docs/frontmatter/).
 
-`cd /tmp/ && curl https://github.com/ChemicalDevelopment/ezc/archive/master.zip -L > ezc.zip && unzip ezc.zip && cd ezc-master && make local-noreq`
+```
+---
+layout: page
+title: About
+---
+```
 
-This uses a package manager to download MPFR and GMP so that it doesn't need to be compiled. This will take about 15 - 20 seconds to install, but only for these platforms. If you use a different one, it defaults to the above option.
+**Why require a specific layout?** Jekyll will return *all* pages, including the `atom.xml`, and with an alphabetical sort order. To ensure the first link is *Home*, we exclude the `index.html` page from this list by specifying the `page` layout.
 
-(**note for OSX users** this method requires [homebrew](http://brew.sh/) to install)
 
-If any errors are produced, please open an [issue](https://github.com/ChemicalDevelopment/ezc/issues)
+### Scrolling sidebar content
 
-# Building
+By default, BlackDoc includes a scrolling sidebar that will display your markdown files in alphabetical order.
 
-You just need `cc`, `python`, `curl`, and `git` (you can download zip as well)
+### Themes
 
-First, clone this repository:
+BlackDoc ships with eight optional themes based on the [base16 color scheme](https://github.com/chriskempson/base16). Apply a theme to change the color scheme (mostly applies to sidebar and links).
 
-`git clone https://github.com/ChemicalDevelopment/ezc.git`
+To use a theme, add anyone of the available theme classes to the `<body>` element in the `default.html` layout, like so:
 
-Then, run `./ezcc.py -h` and assure that no errors were produced. If the were, please create and [Issue](https://github.com/ChemicalDevelopment/ezc/issues)
+```html
+<body class="theme-base-08">
+  ...
+</body>
+```
 
-Now, run `sudo make global`. If you get permissions errors, run `make`
+To create your own theme, look to the Themes section of [included CSS file](https://github.com/karloespiritu/blackdoc/blob/master/public/css/blackdoc.css). Copy any existing theme (they're only a few lines of CSS), rename it, and change the provided colors.
 
-(if you use the second one, run `cd ~/ezc/`, and when I run `ezcc`, you run `./ezcc`. When I run anything, you just add `./` before it)
+### Reverse layout
 
-To test it, run `ezcc -c "var (sqrt 2)"` (or `./ezcc -c "var (sqrt 2)"`) 
+![BlackDoc reverse screenshot](https://raw.githubusercontent.com/karloespiritu/BlackDoc/master/public/images/reverse-screenshot.png)
 
-After this, run `sqrt 2` and it should print out digits of square root of two (1.4142135623730...), and it should be equivelant to your output with `ezcc`
+BlackDoc's page orientation can be reversed with a single class.
 
+```html
+<body class="layout-reverse">
+  ...
+</body>
+```
 
-# Examples
+## Author
 
-To compute pi, simply run:
+**Karlo Espiritu**
+- <https://github.com/karloespiritu>
+- <https://twitter.com/karloespiritu>
 
-`ezcc -c "var (pi)"`
+## License
 
-or, 
+Open sourced under the [MIT license](LICENSE.md).
 
-`echo "var (pi)" | ezcc -e`
+\m/
 
+## Thanks
 
-Using `-c` or `-e` means you don't need a file, but c reads from the next argument, and e reads from stdin
-
-You can also use a shebang, namely:
-
-`#!/usr/bin/ezc -runfile`
-
-or, to run locally
-
-`#!./ezcc.py -runfile`
-
-See the `example.ezc` folder for a number of examples
-
-
-# Environment variables
-
-You can change the way EZC runs.
-
-Run `export EZC_PREC=1000` to set the number of digits to 1000 by default.
-
-Run `export EZC_DEG=1` to use degree mode for trig functions. To disable this, run `export EZC_DEG=0`
-
-# Utilities
-
-Commandline utilities are included, including all arithmetic (`add`, `sub`, etc.)
-
-As well as basic trig and inverses (of `sin`, `cos`, and `tan`) and others like `fact` (factorial), `gamma`, `zeta`, `pi`, and `e`
-
-You can specify the number of arguments these functions take in EZC, and an optional additional argument which specifies how many digits to compute.
-
-For example, you can run `pi` in bash and it will print out 60 digits. You can run `pi 10000` to print out 10000 digits.
-
-You can also link these through bash execution, so:
-
-`sin $(pi)`
-
-prints out `0.0000...`
-
-If the number of digits is not present, it defaults to the length of the longest argument.
-
-So, to find e + pi, simply run
-
-`add $(e) $(pi)`
-
-Or, to a thousand digits, 
-
-`add $(e 1000) $(pi 1000)`
-
-The list of all utilities is located in this repo in ./utils/
-
-On your installed system, the compiled versions are listed in `/usr/bin/$UTIL`, and should be accessible with just running the name of the util (i.e. `sqrt 2`)
-
-# Syntax highlighting
-
-For Sublime text, use the included `ezc.tmLanguage` file.
-
-For Visual Studio Code, run `CTRL+SHIFT+P` and type in `install extensions`. Search for `ezc`. Click install, and when you restart code, all .ezc files will have formatting
-
-For any other text editor, look up how to install .tmLanguage files (most support tmLanguage)
-
-## Documentation
-
-[Chemical Development Docs](http://chemicaldevelopment.us/docs/ezc/) is the documentation for EZC,
-
-and a tutorial is located at [docs tutorial](http://chemicaldevelopment.us/docs/ezc/tutorials)
+Thanks to [@mdo](https://twitter.com/mdo) for creating the awesome [Poole](http://getpoole.com) project.
