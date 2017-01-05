@@ -11,7 +11,7 @@
 
   <title>
     
-      About &middot; EZC
+      Documentation &middot; EZC
     
   </title>
 
@@ -69,7 +69,7 @@
       
         
           
-            <a class="sidebar-nav-item active" href="/about.html">About</a>
+            <a class="sidebar-nav-item" href="/about.html">About</a>
           
         
       
@@ -97,31 +97,39 @@
 
 
     <div class="content container">
-      <div class="page">
-  <h1 class="page-title">About</h1>
-  <p class="message">
-  Any questions, comments, or concerns can be directed to <a href="mailto:info@chemicaldevelopment.us">info@chemicaldevelopment.us</a>
-</p>
+      <div class="post">
+  <h1 class="post-title">Documentation</h1>
+  
 
-<h2 id="about-ezc">About EZC</h2>
+  <p>EZC is easy C. It comes will all the power of large multiprecision arithmetic (like GMP, MPFR, or mpmath), in a very basic structure while retaining most of the speed of C.</p>
 
-<p>I first had the idea for EZC roughly in June 2016, and it was simple:</p>
+<p>EZC does not require the user to know memory management, as that is taken into account.</p>
 
-<p>Have a language with simple syntax, yet the ability to handle multiprecision (more precision than a double, or float) efficiently.</p>
+<p>Some links:</p>
 
-<p>At the time, I was using GMP, MPFR, and MPC for quick computations (i.e. finding an infinite sum, or limit to a large precision). However, the problem with these libraries is that using them requires C synax, initialization, and some memory management. Not to mention the lack of operators, obfuscated function calls, and rounding.</p>
+<ul>
+  <li><a href="https://github.com/ChemicalDevelopment/ezc">Github Repository</a></li>
+</ul>
 
-<p>With EZC, I’ve tried to simplify writing code that deals with multiprecision so that anyone can easily do it.</p>
+<h3 id="basics">Basics</h3>
 
-<p>For example, to find a third to 1000 digits:</p>
+<p><a href="./syntax">Understanding Syntax</a></p>
 
-<pre>
-prec 1000
-var (1/3)
-</pre>
+<p><a href="./variables">Understanding Variables</a></p>
 
-<p>This prints out <code class="highlighter-rouge">.3333...333</code></p>
+<p><a href="./functions">Understanding Functions</a></p>
 
+<p><a href="./operators">Understanding Operators</a></p>
+
+<h3 id="how-to">How to</h3>
+
+<p><a href="./compiler">Using the Compiler</a></p>
+
+<h3 id="tutorialsexamples">Tutorials/Examples</h3>
+
+<p><a href="./tutorials">Tutorials</a></p>
+
+<p><a href="./examples">Examples</a></p>
 
 </div>
 
