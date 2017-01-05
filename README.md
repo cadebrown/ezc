@@ -15,7 +15,7 @@ Includes commandline utilities (such as `sqrt`, `mul`, `pow`, etc.)
 
 You can think of it like a calculator language, but with more functions and more digits
 
-[EZC Documentation](http://chemicaldevelopment.us/docs/ezc/)
+[EZC Documentation](chemicaldevelopment.us/ezc/)
 
 # Installation
 
@@ -145,6 +145,6 @@ For any other text editor, look up how to install .tmLanguage files (most suppor
 
 ## Documentation
 
-[Chemical Development Docs](http://chemicaldevelopment.us/docs/ezc/) is the documentation for EZC,
+[Chemical Development Docs](http://chemicaldevelopment.us/ezc/) is the documentation for EZC,
 
-and a tutorial is located at [docs tutorial](http://chemicaldevelopment.us/docs/ezc/tutorials)
+and a tutorial is located at [docs tutorial](http://chemicaldevelopment.us/ezc)
