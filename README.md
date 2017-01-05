@@ -60,28 +60,26 @@ You just need `cc`, `python`, `curl`, and `git` (you can download zip as well)
 
 First, clone this repository:
 
-`git clone https://github.com/ChemicalDevelopment/ezc.git`
+`git clone http://github.chemicaldevelopment.us/ezc`
 
-Then, run `./ezcc.py -h` and assure that no errors were produced. If the were, please create and [Issue](https://github.com/ChemicalDevelopment/ezc/issues)
+Then, run `python src/ezcc.py -h` and assure that no errors were produced. If the were, please create and [Issue](https://github.com/ChemicalDevelopment/ezc/issues)
 
-Now, run `sudo make global`. If you get permissions errors, run `make`
+Now, run `make`
 
-(if you use the second one, run `cd ~/ezc/`, and when I run `ezcc`, you run `./ezcc`. When I run anything, you just add `./` before it)
+To test it, run `cd ezc`, then `./ezcc -c "var (sqrt 2)"` 
 
-To test it, run `ezcc -c "var (sqrt 2)"` (or `./ezcc -c "var (sqrt 2)"`) 
-
-After this, run `sqrt 2` and it should print out digits of square root of two (1.4142135623730...), and it should be equivelant to your output with `ezcc`
+After this, run `./sqrt 2` and it should print out digits of square root of two (1.4142135623730...)
 
 
 # Examples
 
 To compute pi, simply run:
 
-`ezcc -c "var (pi)"`
+`./ezcc -c "var (pi)"`
 
 or, 
 
-`echo "var (pi)" | ezcc -e`
+`echo "var (pi)" | ./ezcc -e`
 
 
 Using `-c` or `-e` means you don't need a file, but c reads from the next argument, and e reads from stdin
@@ -92,7 +90,7 @@ You can also use a shebang, namely:
 
 or, to run locally
 
-`#!./ezcc.py -runfile`
+`#!./ezcc -runfile`
 
 See the `example.ezc` folder for a number of examples
 
@@ -147,4 +145,4 @@ For any other text editor, look up how to install .tmLanguage files (most suppor
 
 [Chemical Development Docs](http://chemicaldevelopment.us/ezc/) is the documentation for EZC,
 
-and a tutorial is located at [docs tutorial](http://chemicaldevelopment.us/ezc)
+and tutorials are located at [docs tutorial](http://chemicaldevelopment.us/ezc/tutorials)
