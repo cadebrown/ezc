@@ -12,7 +12,7 @@ title: EZC
 tagline: Multiprecision Programming Language
 description: "When 32 bits isn't enough, use EZC"
 url: https://github.com/ChemicalDevelopment/ezc
-baseurl: /
+baseurl: /ezc/
 
 author:
   name: 'Cade Brown'
