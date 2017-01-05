@@ -79,7 +79,3 @@ deb:
 # publishes Visual Studio Code Extension (requires GPG key that only I have)
 vsce:
 	-${VSCE_SCRIPT}
-
-# makes HTML docs
-docs:
-	-${DOCS_SCRIPT}
