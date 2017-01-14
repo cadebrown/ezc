@@ -142,7 +142,7 @@ not_vars = []
 protected_words = ["RETURN", "NaN", "INF", "NINF", "set"]
 """Constants"""
 
-functions = "if,else,file,fi,for,rof,prec,add,sub,mul,div,pow,mod,\",var,intvar,set,sqrt,\\√,cbrt,min,max,near,trunc,rand,fact,echo,hypot,exp,log,logb,agm,gamma,factorial,zeta,\\ζ,pi,deg,rad,sin,cos,tan,asin,acos,atan,csc,sec,cot,acsc,asec,acot,sinh,cosh,tanh,asinh,acosh,atanh,csch,sech,coth,acsch,asech,acoth".split(",")
+functions = "if,else,file,fi,for,rof,prec,add,sub,mul,div,pow,mod,\",var,intvar,set,sqrt,\\√,cbrt,min,max,near,trunc,rand,fact,echo,hypot,exp,log,log,agm,gamma,factorial,zeta,\\ζ,pi,deg,rad,sin,cos,tan,asin,acos,atan,csc,sec,cot,acsc,asec,acot,sinh,cosh,tanh,asinh,acosh,atanh,csch,sech,coth,acsch,asech,acoth".split(",")
 """Callable functions"""
 
 operators = "~,^,*,/,÷,%,+,-,~,?".split(",")
@@ -181,6 +181,7 @@ functions_translate_funcs = {
 	"__default__": c_call,
 	"echo": c_echo,
 	"near": c_call_optional_call,
+	"log": c_call_optional_call,
 	"rand": c_call_optional_call,
 	"prec": c_prec,
 	"if": c_if_call,

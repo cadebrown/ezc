@@ -54,7 +54,7 @@ def main():
 	do_run = args["c"] or args["e"] or args["run"] or args["runfile"]
 
 	if args["runfile"]:
-		args["args"] = list(args["files"][1:])
+		args["args"] = " ".join(args["files"][1:])
 		del args["files"][1:]
 
 	log.init(args["v"])

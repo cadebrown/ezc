@@ -184,13 +184,17 @@ void ezc_hypot(mpfr_t r, mpfr_t a, mpfr_t b) {
 void ezc_exp(mpfr_t r, mpfr_t a) { 
 	mpfr_exp(r, a, EZC_RND); 
 }
-void ezc_log(mpfr_t r, mpfr_t a) { 
+void ezc_log_2(mpfr_t r, mpfr_t a) { 
 	mpfr_log(r, a, EZC_RND); 
 }
-void ezc_logb(mpfr_t r, mpfr_t a, mpfr_t b) {
+void ezc_log_3(mpfr_t r, mpfr_t a, mpfr_t b) {
+	if (mpfr_zero_p(b) != 0) {
+		ezc_log_2(r, a);
+		return;
+	}
 	mpfr_t __flogb_tmp; mpfr_init(__flogb_tmp);
-	ezc_log(__flogb_tmp, b);
-	ezc_log(r, a);
+	ezc_log_2(__flogb_tmp, b);
+	ezc_log_2(r, a);
 	ezc_div(r, r, __flogb_tmp);
 	mpfr_clear(__flogb_tmp);
 }
