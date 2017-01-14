@@ -24,13 +24,12 @@ Here is a full list of functions in ezC
 | intvar x | Prints out x, but as an int |
 | file x a.txt | Prints the value of x into a.txt |
 | **Math Functions**  | | 
-| z = rand x y | uniform random number in [x, y)  |
+| z = rand x [y=0] | uniform random number in [x, y)  |
 | z = sqrt x | square root of x  |
 | z = cbrt x  | cube root of x  |
 | z = hypot x y  | hypoteneuse of triangle with sides x and y  |
 | z = exp x | euler's number raised to x      |
-| z = log x   | natural log of x      |
-| z = logb x y     | the log base x of y |
+| z = log x [y=e]  | logarithm of x      |
 | z = agm x y   | arithmetic geometric mean |
 | z = gamma x    | the gamma function at x |
 | z = factorial x | factorial of x |

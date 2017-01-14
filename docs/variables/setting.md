@@ -30,16 +30,16 @@ y = 2.0
 x = log y
 </pre>
 
-Some functions take multiple variables, like `logb`
+Some functions take multiple variables, like `log`
 
 <pre>
-x = logb 2.0 4.0
+x = log 2.0 4.0
 </pre>
 
 <pre>
 a = 2.0
 y = 4.0
-x = logb a y
+x = log a y
 </pre>
 
 ### Operators
