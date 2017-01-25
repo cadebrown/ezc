@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from parsing import parser
+from parsing import parser, regexes
+
+from ezlogging import log
+import re
+
 
 def get_c_st(ret):
 	"""
@@ -48,11 +52,63 @@ def c_user_call(fname, args):
 	"""
 	args = reg_args(args)
 	return "%s__%s(%s);" % ("".join(args[1]), fname, ", ".join(args[0]))
+def c_prompt(fname, args):
+	"""
+	Special case for the `prompt` function
+	"""
+	rargs = args[1:]
+	args = [args[0]]
+	args = reg_args(args)
+	return "%s\nezc_%s(%s, %s);" % ("".join(args[1]), fname, args[0][0], " ".join(rargs).replace("'", "\""))
 def c_echo(fname, args):
 	"""
 	Special case for the `echo` function
 	"""
 	return "ezc_%s(\"%s\");" % (fname, " ".join(args))
+def c_printf(fname, args):
+	"""
+	Special case for the `printf` function
+	"""
+	global printf_replaces
+	val = " ".join(args).replace("'", "\"")
+
+	s_args = val.split("\"")[1].split("@")[1:]
+	for i in range(0, len(s_args)):
+		s_args[i] = "@"+s_args[i].split(" ")[0]
+
+	p_args = val.split("\"")[-1].split(",")[1:]
+	for i in range(0, len(p_args)):
+		p_args[i] = p_args[i].split(" ")[1]
+
+
+	i = 0
+	for x in re.findall(regexes.valid_printf_varinject, val):
+		p_args = p_args + [x[1]]
+		val = val.replace(x[0], "@F", 1)
+		s_args[i] = "@F"
+		print val
+		print p_args
+		i += 1
+
+
+	if len(p_args) != len(s_args):
+		log.err("Transferring arguments", ["ERROR: Different number of formats and arguments", s_args, p_args])
+
+	for x, f in printf_convert_args:
+		for i in range(0, len(s_args)):
+			if s_args[i] == x:
+				p_args[i] = f(p_args[i])
+
+	val = "\"%s\"" % (val.split("\"")[1])
+	for fr, to in printf_replaces:
+		val = val.replace(fr, to)
+
+	p_args_str = ""
+	if len(p_args) > 0:
+		p_args_str = ", %s" % (", ".join(p_args))
+	
+	ret = "mpfr_%s(%s%s);" % (fname, val, p_args_str)
+	return ret
 def c_file(op, args):
 	"""
 	Special case for the `file` function
@@ -133,6 +189,20 @@ def get_user_func_translate(ufunc, args):
 	return c_user_call(ufunc, args)
 
 
+def printf_Z(val):
+	return "ezc_mpzstr(%s)" % (val)
+
+
+printf_convert_args = [
+	("@Z", printf_Z)
+]
+
+printf_replaces = [
+	("@", "%"),
+	("%F", "%Rf"),
+	("%Z", "%s")	
+]
+
 var = set()
 """Variables registered"""
 
@@ -142,13 +212,13 @@ not_vars = []
 protected_words = ["RETURN", "NaN", "INF", "NINF", "set"]
 """Constants"""
 
-functions = "if,else,file,fi,for,rof,prec,add,sub,mul,div,pow,mod,\",var,intvar,set,sqrt,\\√,cbrt,min,max,near,trunc,rand,fact,echo,hypot,exp,log,log,agm,gamma,factorial,zeta,\\ζ,pi,deg,rad,sin,cos,tan,asin,acos,atan,csc,sec,cot,acsc,asec,acot,sinh,cosh,tanh,asinh,acosh,atanh,csch,sech,coth,acsch,asech,acoth".split(",")
+functions = "free,prompt,if,else,file,fi,for,rof,prec,add,sub,mul,div,pow,mod,\",binom,mpz,var,rawvar,intvar,rawintvar,set,sqrt,\\√,cbrt,min,max,near,trunc,rand,fact,echo,printf,hypot,exp,log,log,agm,gamma,factorial,zeta,\\ζ,pi,deg,rad,sin,cos,tan,asin,acos,atan,csc,sec,cot,acsc,asec,acot,sinh,cosh,tanh,asinh,acosh,atanh,csch,sech,coth,acsch,asech,acoth".split(",")
 """Callable functions"""
 
-operators = "~,^,*,/,÷,%,+,-,~,?".split(",")
+operators = "~,^,choose,!,*,/,÷,%,+,-,~,?".split(",")
 """Callable operators"""
 
-order_op = [group.split(",") for group in "?,~,,^,,*,/,÷,%,,+,-".split(",,")]
+order_op = [group.split(",") for group in "?,!,~,choose,,^,,*,/,÷,%,,+,-".split(",,")]
 """Order of operators"""
 
 op_map_funcs = {
@@ -161,6 +231,7 @@ op_map_funcs = {
 	"%": "mod",
 	"~": "near",
 	"?": "rand",
+	"choose": "binom",
 	"!": "fact",
 }
 """Maps operators to functions"""
@@ -180,6 +251,8 @@ functions_alias = {
 functions_translate_funcs = {
 	"__default__": c_call,
 	"echo": c_echo,
+	"printf": c_printf,
+	"prompt": c_prompt,
 	"near": c_call_optional_call,
 	"log": c_call_optional_call,
 	"rand": c_call_optional_call,

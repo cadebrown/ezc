@@ -59,7 +59,7 @@ def parse_line(line):
 		needed_var = 0
 
 	#needed_var = 0
-	line = line.replace(",", " ")
+	#line = line.replace(",", " ")
 	to_process = expand_line(line)
 	ret = []
 	for x in to_process:
@@ -106,7 +106,7 @@ def get_tmp_var():
 		"8": "r",
 		"9": "q",
 	}
-	res = "_tmp_%s" % ("".join([char_map[i] for i in str(needed_var)]))
+	res = "__tmp_%s" % ("".join([char_map[i] for i in str(needed_var)]))
 	needed_var += 1
 	return res
 

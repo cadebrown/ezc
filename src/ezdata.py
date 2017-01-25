@@ -58,6 +58,21 @@ void ezc_prec_init() {
 		ezc_prec_literal(strtoll(getenv("EZC_PREC"), NULL, 10));
 	}	
 }
+
+void ezc_free(mpfr_t r) {
+	mpfr_clear(r);
+}
+void ezc_prompt(mpfr_t r, char *prompt) {
+	printf("%s: ", prompt);
+	char *entered = (char *)malloc(ezc_prec);
+	if (fgets(entered, sizeof(entered), stdin) == NULL) {
+		printf("\\nERROR while reading");
+	} else {
+		mpfr_set_str(r, entered, 10, EZC_RND);
+	}
+	printf("\\n");
+	free(entered);
+}
 mpfr_ptr ezc_next_const_base(char _set_val[], int base) {
 	if (ezc_consts_id >= ezc_size_consts) {
 		ezc_consts_ov = 1;
@@ -208,13 +223,34 @@ void ezc_fact(mpfr_t r, mpfr_t a) {
 	mpfr_add_ui(r, a, 1, EZC_RND);
 	ezc_gamma(r, r);
 }
+void ezc_binom(mpfr_t r, mpfr_t n, mpfr_t k) {
+	mpfr_t __tmp0; mpfr_init(__tmp0);
+	mpfr_t __tmp1; mpfr_init(__tmp1);
+	ezc_sub(__tmp0, n, k);
+	ezc_fact(__tmp0, __tmp0);
+	ezc_fact(__tmp1, k);
+	ezc_mul(__tmp0, __tmp0, __tmp1);
+	ezc_fact(r, n);
+	ezc_div(r, r, __tmp0);
+	mpfr_clear(__tmp0);
+	mpfr_clear(__tmp1);
+}
 void ezc_zeta(mpfr_t r, mpfr_t a) {
 	mpfr_zeta(r, a, EZC_RND);
+}
+mpz_ptr ezc_mpz(mpz_t r, mpfr_t a) {
+	mpfr_get_z(r, a, EZC_RND);
+	return r;
+}
+char* ezc_mpzstr(mpfr_t r) {
+	mpz_t _t_; mpz_init(_t_);
+	mpfr_get_z(_t_, r, GMP_RNDN);
+	return mpz_get_str(NULL, 10, _t_);
 }
 void ezc_echo(char msg[]) { 
 	printf("%s\\n", msg); 
 }
-void ezc_echoraw(char msg[]) { 
+void ezc_printf(char msg[]) { 
 	printf("%s", msg); 
 }
 void ezc_varb(mpfr_t a, int base) {
@@ -227,12 +263,19 @@ void ezc_varb(mpfr_t a, int base) {
 void ezc_var(mpfr_t a) { 
 	mpfr_printf("%.*Rf\\n",ezc_prec, a); 
 }
+void ezc_rawvar(mpfr_t a) { 
+	mpfr_printf("%.*Rf",ezc_prec, a); 
+}
 void ezc_intvar(mpfr_t a) { 
 	mpz_t _t_; mpz_init(_t_);
 	mpfr_get_z(_t_, a, GMP_RNDN);
 	mpfr_printf("%Zd\\n", _t_); 
 }
-
+void ezc_rawintvar(mpfr_t a) { 
+	mpz_t _t_; mpz_init(_t_);
+	mpfr_get_z(_t_, a, GMP_RNDN);
+	mpfr_printf("%Zd", _t_); 
+}
 void ezc_file(mpfr_t a, char name[]) { 
 	FILE *fp = fopen(name, "w+");
 	mpfr_fprintf(fp, "%.*Rf ", ezc_prec, a); 
