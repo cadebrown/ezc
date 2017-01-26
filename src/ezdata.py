@@ -11,6 +11,31 @@ EZC_DOGFOOD="""
 	return (n choose k) * p^k * (1-p)^(n-k)
 [/binompdf]
 
+[binomcdf] n p k
+	total = 0
+	for i 0 (k+1)
+		total = total + (binompdf n p i)
+	rof
+	return total
+[/binomcdf]
+
+[normalpdf1] x
+	return (1 / (sqrt (2*(pi)))) * (exp (-.5*x^2))
+[/normalpdf1]
+
+[normalpdf] x u o
+	return (1 / o) * (@normalpdf1 (x - u)/o)
+[/normalpdf]
+
+[normalcdf2] a b
+    co = 1 / (sqrt 2)
+	return (.5*((erf (b*co)) - (erf (a*co))))
+[/normalcdf2]
+
+[normalcdf] a b u o
+	return (@normalcdf2 ((a-u)/o) ((b-u)/o))
+[/normalcdf]
+
 """
 
 EZC_C="""
