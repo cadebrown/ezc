@@ -1,33 +1,70 @@
 [FUNC] a b
-hey = a - b
-there = a + b
-return (hey^2 + there^2)
+    hey = a - b
+    there = a + b
+    return (hey^2 + there^2)
 [/FUNC]
 
-echo Should be 1.414213
+###
+
+Printing
+
+How to print?
+
+use `echo` or `"` to print plaintext, and put a newline at the end.
+
+###
+
+# this prints out literal strings
+" Should be 1.414213
+# you can also use var (sqrt 2)
 var (√ 2)
 
-echo Should be 55
+# printf can be used as well, @Z prints as integer, @F prints as float
+printf "Should be @Z \n", (55)
 intvar (1+2+3+4+5+6+7+8+9+10)
 
-echo Should be 65
-intvar ((1+2+3/3+3^(1+5%2+6))/(10^2+1))
+# you can also print more than one specifier, @Z prints integer, whereas @F prints a float
+printf "Should be @Z \n@F \n", (65), (1+2+3/3+3^(1+5%2+6))/(10^2+1)
 
+# or, just use echo
 echo Should be 135
 intvar (2-3+11-123-52+300)
 
-echo Should be 14
+# printf with no specifiers
+printf "Should be 14\n"
 intvar (3 + 6 * (5 + 4) / 3 - 7)
 
-echo Should be 26
+# you can print literals like so
+printf "Should be @Z \n", (26)
 intvar (2*3+4*5)
 
-echo Should be 12
-intvar ((fact 3) + (fact 3))
+# here, we show some basic printf without an argument at the end
+val = (fact 3) + (fact 3)
+# the '@{val}' prints val, but it assumes @F specifier
+printf 'Should be 12\n@{val} \n'
 
-
+# echos
 echo Should be less than 2000
 intvar (0?1000+0?1000)
 
-echo Should be 38
-intvar ((@FUNC 12 25) % (@FUNC 7 1))
+# printf even works with custom functions
+printf "Should be 38 \n@Z \n", (@FUNC 12 25) % (@FUNC 7 1)
+
+
+###
+
+Specialties
+
+These are things that are special to this language
+
+###
+
+n=13
+k=5
+printf 'binomial coefficient of @{n} ,@{k} is @{n choose k} \n'
+# yes, thats right! `choose` is an operator, and you can put it in @{ } to evaluate it
+
+# an example to prompt
+#x = prompt 'Enter a number'
+#printf 'zeta of that is @{(zeta x)}\n'
+

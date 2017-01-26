@@ -1,3 +1,17 @@
+ezc (1.1.0) testing; urgency=med
+
+  * added choose operator
+    - `choose` is now an operator, so use var (5 choose 2)
+  * printf added
+    - similar to C printf, but use @F for floats, and @Z for integers
+	- Also, use @{2 + 3} to print a statement
+  * prompt added
+    - full precision prompt from stdin.
+	- call it like `x = prompt 'Enter a number'`
+
+ -- Cade Brown <info@chemicaldevelopment.us>  Wed, 25 Jan 2017 13:25:44 -0500
+
+
 ezc (1.0.0) testing; urgency=high
 
   * order of operations and expansion
