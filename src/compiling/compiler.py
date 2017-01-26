@@ -4,18 +4,20 @@ from ezlogging import log
 import ezdata
 import resolve
 
+
 def init():
 	"""
 	Initialize parsing with functions from resolve module
 	"""
 	parser.init(resolve.functions, resolve.operators, resolve.order_op)
+	add_code(ezdata.EZC_DOGFOOD)
 
 def get_c_file():
 	"""
 	Return transpiled EZC into C code, which can be compiled by cc
 	This should be called after add_code and right before compile step.
 	"""
-	return default_file + user_funcs + start + main + end
+	return default_file  + user_funcs + start + main + end
 
 def add_code(file_contents):
 	"""
@@ -86,5 +88,4 @@ end = """
 """
 
 is_func = False
-
 default_file=ezdata.EZC_C

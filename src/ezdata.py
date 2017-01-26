@@ -5,6 +5,14 @@ import os
 EZC_DIR=os.path.dirname(__file__)
 EZC_LIB="-lmpfr -lgmp"
 
+EZC_DOGFOOD="""
+
+[binompdf] n p k
+	return (n choose k) * p^k * (1-p)^(n-k)
+[/binompdf]
+
+"""
+
 EZC_C="""
 #include <time.h>
 #include <stdio.h>
@@ -223,7 +231,10 @@ void ezc_fact(mpfr_t r, mpfr_t a) {
 	mpfr_add_ui(r, a, 1, EZC_RND);
 	ezc_gamma(r, r);
 }
-void ezc_binom(mpfr_t r, mpfr_t n, mpfr_t k) {
+void ezc_erf(mpfr_t r, mpfr_t a) {
+	mpfr_erf(r, a, EZC_RND);
+}
+void ezc_binomcoef(mpfr_t r, mpfr_t n, mpfr_t k) {
 	mpfr_t __tmp0; mpfr_init(__tmp0);
 	mpfr_t __tmp1; mpfr_init(__tmp1);
 	ezc_sub(__tmp0, n, k);

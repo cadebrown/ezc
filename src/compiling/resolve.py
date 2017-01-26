@@ -45,13 +45,13 @@ def c_call(fname, args):
 	A typical C call to most functions.
 	"""
 	args = reg_args(args)
-	return "%sezc_%s(%s);" % ("".join(args[1]), fname, ",".join(args[0]))
+	return "%s ezc_%s(%s);" % ("".join(args[1]), fname, ",".join(args[0]))
 def c_user_call(fname, args):
 	"""
 	Calls a user defined function
 	"""
 	args = reg_args(args)
-	return "%s__%s(%s);" % ("".join(args[1]), fname, ", ".join(args[0]))
+	return "%s ezc_%s(%s);" % ("".join(args[1]), fname.replace("@", ""), ", ".join(args[0]))
 def c_prompt(fname, args):
 	"""
 	Special case for the `prompt` function
@@ -212,7 +212,7 @@ not_vars = []
 protected_words = ["RETURN", "NaN", "INF", "NINF", "set"]
 """Constants"""
 
-functions = "free,prompt,if,else,file,fi,for,rof,prec,add,sub,mul,div,pow,mod,\",binom,mpz,var,rawvar,intvar,rawintvar,set,sqrt,\\√,cbrt,min,max,near,trunc,rand,fact,echo,printf,hypot,exp,log,log,agm,gamma,factorial,zeta,\\ζ,pi,deg,rad,sin,cos,tan,asin,acos,atan,csc,sec,cot,acsc,asec,acot,sinh,cosh,tanh,asinh,acosh,atanh,csch,sech,coth,acsch,asech,acoth".split(",")
+functions = "binomcoef,binompdf,erf,free,prompt,if,else,file,fi,for,rof,prec,add,sub,mul,div,pow,mod,\",mpz,var,rawvar,intvar,rawintvar,set,sqrt,\\√,cbrt,min,max,near,trunc,rand,fact,echo,printf,hypot,exp,log,log,agm,gamma,factorial,zeta,\\ζ,pi,deg,rad,sin,cos,tan,asin,acos,atan,csc,sec,cot,acsc,asec,acot,sinh,cosh,tanh,asinh,acosh,atanh,csch,sech,coth,acsch,asech,acoth".split(",")
 """Callable functions"""
 
 operators = "~,^,choose,!,*,/,÷,%,+,-,~,?".split(",")
@@ -231,7 +231,7 @@ op_map_funcs = {
 	"%": "mod",
 	"~": "near",
 	"?": "rand",
-	"choose": "binom",
+	"choose": "binomcoef",
 	"!": "fact",
 }
 """Maps operators to functions"""

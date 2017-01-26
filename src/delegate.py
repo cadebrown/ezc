@@ -7,6 +7,7 @@ from parsing import parser
 from ezlogging import log
 
 args = None
+has_dogfood = False
 
 def init(_args):
 	"""
@@ -16,6 +17,7 @@ def init(_args):
 	global args
 	args = _args
 	compiler.init()
+
 
 def remove_file(fn):
 	"""
@@ -89,6 +91,7 @@ def transpile(text):
 	Transpiles text into C, and compiles
 	"""
 	global args
+	
 	addcode(text)
 	outf = open(args["tmp"], "w+")
 	outf.write(compiler.get_c_file())

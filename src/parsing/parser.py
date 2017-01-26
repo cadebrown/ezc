@@ -12,7 +12,7 @@ def is_user_function(line):
 	"""
 	if re.findall(regexes.valid_declare_user_function, line):
 		res = re.findall(regexes.valid_declare_user_function, line)[0]
-		return ("void __%s(mpfr_t RETURN, mpfr_t %s) {" % (res[0], ", mpfr_t ".join(res[1].split())), res[1])
+		return ("void ezc_%s(mpfr_t RETURN, mpfr_t %s) {" % (res[0].replace("@", ""), ", mpfr_t ".join(res[1].split())), res[1])
 	elif re.findall(regexes.valid_end_user_function, line):
 		return ("}", [])
 
@@ -197,7 +197,7 @@ def parse_oper(call):
 
 def parse_user_func(call):
 	"""Parses a call to a user defined function"""
-	call = [call[1].replace("@", ""), ("%s %s" % (call[0], call[2])).split()]
+	call = [call[1], ("%s %s" % (call[0], call[2])).split()]
 	return ["user_function", [call[0], call[1]]]
 
 def parse_noarg_func(call):
