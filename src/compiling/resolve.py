@@ -72,7 +72,11 @@ def c_printf(fname, args):
 	global printf_replaces
 	val = " ".join(args).replace("'", "\"")
 
+	val = val.replace(",", " \\b,")
+	val = val.replace("\\", " \\b\\")
+
 	s_args = val.split("\"")[1].split("@")[1:]
+
 	for i in range(0, len(s_args)):
 		s_args[i] = "@"+s_args[i].split(" ")[0]
 
@@ -86,8 +90,6 @@ def c_printf(fname, args):
 		p_args = p_args + [x[1]]
 		val = val.replace(x[0], "@F", 1)
 		s_args[i] = "@F"
-		print val
-		print p_args
 		i += 1
 
 
@@ -212,7 +214,7 @@ not_vars = []
 protected_words = ["RETURN", "NaN", "INF", "NINF", "set"]
 """Constants"""
 
-functions = "binomcoef,binompdf,binomcdf,normalpdf,normalcdf,erf,free,prompt,if,else,file,fi,for,rof,prec,add,sub,mul,div,pow,mod,\",mpz,var,rawvar,intvar,rawintvar,set,sqrt,\\√,cbrt,min,max,near,trunc,rand,fact,echo,printf,hypot,exp,log,log,agm,gamma,factorial,zeta,\\ζ,pi,deg,rad,sin,cos,tan,asin,acos,atan,csc,sec,cot,acsc,asec,acot,sinh,cosh,tanh,asinh,acosh,atanh,csch,sech,coth,acsch,asech,acoth".split(",")
+functions = "binomcoef,binompdf,binomcdf,normalpdf,normalcdf,erf,free,prompt,if,else,file,fi,for,rof,prec,add,sub,mul,div,pow,mod,\",mpz,var,rawvar,intvar,rawintvar,set,sqrt,\\√,cbrt,min,max,near,trunc,rand,fact,echo,printf,hypot,exp,log,agm,gamma,factorial,zeta,\\ζ,pi,deg,rad,sin,cos,tan,asin,acos,atan,csc,sec,cot,acsc,asec,acot,sinh,cosh,tanh,asinh,acosh,atanh,csch,sech,coth,acsch,asech,acoth".split(",")
 """Callable functions"""
 
 operators = "~,^,choose,!,*,/,÷,%,+,-,~,?".split(",")

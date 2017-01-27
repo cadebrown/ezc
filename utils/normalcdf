@@ -1,0 +1,6 @@
+#!../src/ezcc.py -runfile
+prec $4
+val = 0
+if (argc <= 2) ezc_normalcdf1(val, ezc_get_arg(1));
+else ezc_normalcdf(val, ezc_get_arg(1), ezc_get_arg(2), ezc_get_arg(3));
+var(val)

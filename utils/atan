@@ -1,3 +1,3 @@
 #!../src/ezcc.py -runfile
 prec $2
-var (atan $1)
+var(atan $1)

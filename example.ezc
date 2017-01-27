@@ -14,6 +14,9 @@ use `echo` or `"` to print plaintext, and put a newline at the end.
 
 ###
 
+# set how many digits
+#prec 1000
+
 # this prints out literal strings
 " Should be 1.414213
 # you can also use var (sqrt 2)
@@ -24,7 +27,7 @@ printf "Should be @Z \n", (55)
 intvar (1+2+3+4+5+6+7+8+9+10)
 
 # you can also print more than one specifier, @Z prints integer, whereas @F prints a float
-printf "Should be @Z \n@F \n", (65), (1+2+3/3+3^(1+5%2+6))/(10^2+1)
+printf "Should be @Z\n@F\n", (65), (1+2+3/3+3^(1+5%2+6))/(10^2+1)
 
 # or, just use echo
 echo Should be 135
@@ -61,17 +64,17 @@ These are things that are special to this language
 
 n=13
 k=5
-printf 'binomial coefficient of @{n} ,@{k} is @{n choose k} \n'
+printf 'binomial coefficient of @{n}, @{k} is @{(n choose k)} \n'
 # yes, thats right! `choose` is an operator, and you can put it in @{ } to evaluate it
 
 # an example to prompt
 #x = prompt 'Enter a number'
-#printf 'zeta of that is @{(zeta x)}\n'
+#printf 'zeta of that is @{(zeta x)
 
 ###
 
 ###
-printf 'bpdf 4 .5 3 is @F \n', (binompdf 4 .5 3)
-printf 'bcdf 4 .5 2 is @F \n', (binomcdf 4 .5 2)
-printf 'npdf 2 4 .5 is @F \n', (normalpdf 2 4 .5)
-printf 'ncdf 5 15 10 2.5 is @F \n', (normalcdf 5 15 10 2.5)
+printf 'bpdf 4, .5, 3 is @F\n', (binompdf 4 .5 3)
+printf 'bcdf 4, .5, 2 is @F\n', (binomcdf 4 .5 2)
+printf 'npdf 2, 4, .5 is @F\n', (normalpdf 2 4 .5)
+printf 'ncdf 5, 15, 10, 2.5 is @F\n', (normalcdf 5 15 10 2.5)

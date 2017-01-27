@@ -2,8 +2,10 @@
 # GPLv3
 # To use, set DIR= whatever you want to install binaries. Normally, SRC= should not be used, as it should be $DIR/src/
 # However, installing globally, use `sudo make DIR=/usr/bin/ SRC=/usr/src/ezc/`
+#
 # I've implemented some basic linking, so this will still work.
 # You can also set REQ=false to use a package manager (like brew.sh, apt, dnf, pkg, etc.)
+#
 # Don't worry if you don't have one. If it can't find one, it builds MPFR from source anyway.
 # For info, please email <info@chemicaldevelopment.us>
 # If you already have MPFR installed, run make KEEP_REQ=true

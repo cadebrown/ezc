@@ -1,11 +1,16 @@
 #!/bin/bash
+#SOURCES=`echo *.py */`
 pushd src
-SOURCES=`echo *.py */`
+SOURCES=`find ./ -type f \( -iname \*.c -o -iname \*.py  -o -iname \*.ezc \)`
 popd
 
 UTILS=./utils/*
 
-echo $SOURCES
+#echo $SOURCES
+
+for SRC in $SOURCES; do
+	echo $SRC
+done
 
 INSTALL_DIR=$1
 SRC_DIR=$2
@@ -67,7 +72,9 @@ echo Installing sources in $SRC_DIR
 
 for SRC in $SOURCES
 do
-	cp -Rf ./src/$SRC $SRC_DIR/$SRC
+	parentname="$(basename "$(dirname "$SRC")")"
+	mkdir -p $SRC_DIR/$parentname
+	cp ./src/$SRC $SRC_DIR/$SRC
 done
 
 echo -e $EZC_BIN > $INSTALL_DIR/ezc
