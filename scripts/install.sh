@@ -27,8 +27,6 @@ echo $EZC_BIN
 if [ "$KEEP_MPFR" != "true" ]; then
 	if [[ "$I_MPFR" == "true" ]]; then
 		echo "Going to build MPFR"
-	elif [[ "$I_MPFR" == "false" ]]; then
-	echo "not installing anything, through source or package manager"
 	else
 		# Install dependencies
 		if [[ "$OSTYPE" == "linux-gnu" ]]; then
@@ -65,6 +63,8 @@ if [ "$KEEP_MPFR" != "true" ]; then
 		pushd $SRC_DIR
 		rm -Rf share/
 		popd
+	else
+
 	fi
 fi
 
