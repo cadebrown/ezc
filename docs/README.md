@@ -7,8 +7,6 @@
 
 To get up and running with a released version, open a terminal (such as `Terminal` on macOS, or `XTerm` in Linux), and run:
 
-
-
 ```bash
 LOCATION=~/.ezc/
 mkdir $LOCATION; cd $LOCATION

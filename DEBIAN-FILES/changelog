@@ -8,6 +8,9 @@ ezc (1.1.0) testing; urgency=med
   * prompt added
     - full precision prompt from stdin.
 	- call it like `x = prompt 'Enter a number'`
+  * Set of statistics functions added
+    - binom[c|p]df normal[c|p]df
+	- These are implemented in EZC_LIB.ezc, using dogfooding
 
  -- Cade Brown <info@chemicaldevelopment.us>  Wed, 25 Jan 2017 13:25:44 -0500
 

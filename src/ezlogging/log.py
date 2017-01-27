@@ -5,7 +5,7 @@ import time
 #time.strftime("%Y-%m-%d %H:%M:%S %z")
 date=time.strftime("%Y-%m-%d %H:%M:%S %z")
 
-authors=["Cade Brown <cade@chemicaldevelopment.us>"]
+authors=["Cade Brown <cade@cade.site>"]
 
 RESET = '\033[0m'
 

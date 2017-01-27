@@ -9,11 +9,12 @@ sudo: required
 
 install:
   - make build
+  - make check
+  - make bundle
 #  - make build
 
 script:
-  - make check
-  - make bundle upload
+  - make upload
   
 #  - make check-global
 
