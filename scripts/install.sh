@@ -63,8 +63,6 @@ if [ "$KEEP_MPFR" != "true" ]; then
 		pushd $SRC_DIR
 		rm -Rf share/
 		popd
-	else
-
 	fi
 fi
 
