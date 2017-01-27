@@ -1,5 +1,5 @@
 os:
-#  - osx
+  - osx
   - linux
 
 language: c
@@ -8,7 +8,7 @@ language: c
 sudo: required
 
 install:
-  - make REQ=false build
+  - make build
 #  - make build
 
 script:
