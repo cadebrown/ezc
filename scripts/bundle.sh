@@ -21,6 +21,6 @@ ARCHIVE="ezc-$TYPE.tar.xz"
 
 echo "Tarring $DIR into $ARCHIVE with base $BASE"
 
-tar cJf $ARCHIVE -C $DIR/.. $BASE
+tar -cJf $ARCHIVE -C $DIR/.. $BASE
 
 echo "Done tarring"
