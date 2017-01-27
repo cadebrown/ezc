@@ -8,10 +8,8 @@ language: c
 sudo: required
 
 install:
-#  - make REQ=false build
-  - make build
-# Thanks macOS :(
-#  - sudo make global
+  - make REQ=false build
+#  - make build
 
 script:
   - make check
@@ -29,7 +27,7 @@ notifications:
 deploy:
   provider: releases
   api_key: '$GITHUB_API_KEY'
-  file: ezc-linux.tar.xz
+  file: ezc-${TRAVIS_OS_NAME}.tar.xz
   skip_cleanup: true
   on:
     repo: ChemicalDevelopment/ezc

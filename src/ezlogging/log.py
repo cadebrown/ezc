@@ -1,7 +1,8 @@
 name = "EZCC"
 
-version = "1.0.0"
+version = "1.1.1"
 import time
+#time.strftime("%Y-%m-%d %H:%M:%S %z")
 date=time.strftime("%Y-%m-%d %H:%M:%S %z")
 
 authors=["Cade Brown <cade@chemicaldevelopment.us>"]
