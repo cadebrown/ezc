@@ -20,7 +20,5 @@ ezc/
 # package
 *.deb
 
-docs/*.html
-
 # archive
 *.tar.*
