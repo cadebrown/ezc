@@ -20,5 +20,8 @@ fi
 
 ARCHIVE=`echo $ARCHIVE`
 
+echo "Uploading archive $ARCHIVE"
+
 echo "Download the tar.xz file here:"
-curl --upload-file $ARCHIVE https://transfer.sh/$ARCHIVE
+
+echo `curl --upload-file $ARCHIVE https://transfer.sh/$ARCHIVE`
