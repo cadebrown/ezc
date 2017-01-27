@@ -32,7 +32,7 @@ if [ "$KEEP_MPFR" != "true" ]; then
 		if [[ "$OSTYPE" == "linux-gnu" ]]; then
 			echo "Asking for sudo to install packages . . ."
 			if [[ $(cat /etc/debian_version) ]]; then
-				sudo apt install libmpfr-dev
+				sudo apt-get install libmpfr-dev
 			elif [[ $(cat /etc/fedora-release) ]]; then
 				sudo dnf install mpfr-devel
 			fi
