@@ -24,4 +24,4 @@ echo "Uploading archive $ARCHIVE"
 
 echo "Download the tar.xz file here:"
 
-echo `curl --upload-file $ARCHIVE https://transfer.sh/$ARCHIVE`
+curl --upload-file $ARCHIVE https://transfer.sh/$ARCHIVE
