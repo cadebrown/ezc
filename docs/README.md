@@ -20,11 +20,11 @@ echo "export PATH=\$PATH:$LOCATION" >> ~/.bashrc; source ~/.bashrc
     Copy to clipboard
 </button>
 
-This installs a prebuilt released version of EZC in a folder called `ezc` in your home folder. However, you don't need to be there to run it.
+This installs a prebuilt released version of EZC in a folder called `.ezc` in your home folder. However, you don't need to be there to run it.
 
 From anywhere, type `ezcc --help` to view help
 
-To get back to the install directory, run `cd ~/ezc/`
+To get back to the install directory, run `cd ~/.ezc/`
 
 ### Global (requires sudo/admin account)
 
@@ -42,7 +42,7 @@ This will build the development branch for all users, and will also build MPFR a
 
 You can create files and compile those to runnable executables.
 
-For example, open `~/ezc/`, and create a file called `test.ezc` inside it.
+For example, open `~/.ezc/`, and create a file called `test.ezc` inside it.
 
 Now, write this:
 
