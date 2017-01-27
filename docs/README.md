@@ -8,7 +8,10 @@
 To get up and running with a released version, open a terminal (such as `Terminal` on macOS, or `XTerm` in Linux), and run:
 
 ```bash
- $ cd ~/ezc/; curl chemdev.space/ezc.sh -L | bash; cd ezc; echo "export PATH=$PATH:~/ezc/" >> ~/.bashrc; bash
+LOCATION=~/.ezc/
+mkdir $LOCATION; cd $LOCATION
+curl chemdev.space/ezc.sh -L | bash; cd ezc
+echo "export PATH=\$PATH:$LOCATION" >> ~/.bashrc; source ~/.bashrc
 ```
 
 This installs a prebuilt released version of EZC in a folder called `ezc` in your home folder. However, you don't need to be there to run it.
