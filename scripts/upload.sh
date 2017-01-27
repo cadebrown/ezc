@@ -15,7 +15,7 @@ fi
 if [[ "$1" == "" ]]; then
 	ARCHIVE=./ezc-*.tar.xz
 else
-	ARCHIVE=$1
+	ARCHIVE="$1"
 fi
 
 ARCHIVE=`echo $ARCHIVE`

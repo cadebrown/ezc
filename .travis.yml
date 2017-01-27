@@ -1,3 +1,11 @@
+deploy:
+  provider: releases
+  api_key: '$GITHUB_API_KEY'
+  file: 'ezc-*.tar.xz'
+  skip_cleanup: true
+  on:
+    tags
+
 os:
   - osx
   - linux
