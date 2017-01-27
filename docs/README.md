@@ -3,19 +3,19 @@
 
 ## Installing
 
-### On your desktop (recommended)
+### In your home folder (recommended)
 
 To get up and running with a released version, open a terminal (such as `Terminal` on macOS, or `XTerm` in Linux), and run:
 
 ```bash
- $ cd ~/Desktop/; curl chemdev.space/ezc.sh -L | bash; cd ezc; echo "export PATH=$PATH:~/Desktop/ezc/" >> ~/.bashrc; bash
+ $ cd ~/ezc/; curl chemdev.space/ezc.sh -L | bash; cd ezc; echo "export PATH=$PATH:~/ezc/" >> ~/.bashrc; bash
 ```
 
-This installs a prebuilt released version of EZC in a folder called `ezc` on your desktop. However, you don't need to be there to run it.
+This installs a prebuilt released version of EZC in a folder called `ezc` in your home folder. However, you don't need to be there to run it.
 
 From anywhere, type `ezcc --help` to view help
 
-To get back to the install directory, run `cd ~/Desktop/ezc/`
+To get back to the install directory, run `cd ~/ezc/`
 
 ### Global (requires sudo/admin account)
 
@@ -33,7 +33,7 @@ This will build the development branch for all users, and will also build MPFR a
 
 You can create files and compile those to runnable executables.
 
-For example, click your `ezc` folder on your desktop, and create a file called `test.ezc` inside it.
+For example, open `~/ezc/`, and create a file called `test.ezc` inside it.
 
 Now, write this:
 
@@ -81,7 +81,7 @@ This is good for quick prototyping.
 Now, to see what all utilities you have, run:
 
 ```bash
- $ cd ~/Desktop/ezc/
+ $ cd ~/ezc/
  $ ls
 ```
 
