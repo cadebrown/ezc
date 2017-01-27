@@ -8,6 +8,7 @@ language: c
 sudo: required
 
 install:
+#  - make REQ=false build
   - make build
 # Thanks macOS :(
 #  - sudo make global
