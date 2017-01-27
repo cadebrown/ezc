@@ -1,11 +1,3 @@
-deploy:
-  provider: releases
-  api_key: '$GITHUB_API_KEY'
-  file: 'ezc-*.tar.xz'
-  skip_cleanup: true
-  on:
-    tags
-
 os:
   - osx
   - linux
@@ -16,7 +8,7 @@ language: c
 sudo: required
 
 install:
-  - make build
+  - make REQ=false build
 # Thanks macOS :(
 #  - sudo make global
 
@@ -32,3 +24,11 @@ notifications:
       - info@chemicaldevelopment.us
     on_success: change
     on_failure: change
+
+deploy:
+  provider: releases
+  api_key: '$GITHUB_API_KEY'
+  file: ezc-$TRAVIS_OS_NAME.tar.xz
+  skip_cleanup: true
+  on:
+    tags
