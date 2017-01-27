@@ -31,4 +31,6 @@ deploy:
   file: ezc-linux.tar.xz
   skip_cleanup: true
   on:
-    tags
+    repo: ChemicalDevelopment/ezc
+    tags: true
+    all_branches: true
