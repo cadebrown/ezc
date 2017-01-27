@@ -8,7 +8,7 @@ language: c
 sudo: required
 
 install:
-  - make REQ=false build
+  - make build
 # Thanks macOS :(
 #  - sudo make global
 
@@ -28,7 +28,7 @@ notifications:
 deploy:
   provider: releases
   api_key: '$GITHUB_API_KEY'
-  file: ezc-$TRAVIS_OS_NAME.tar.xz
+  file: ezc-linux.tar.xz
   skip_cleanup: true
   on:
     tags
