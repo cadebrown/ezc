@@ -8,7 +8,7 @@ language: c
 sudo: required
 
 install:
-  - make REQ=false build bundle
+  - make REQ=false build
 # Thanks macOS :(
 #  - sudo make global
 
