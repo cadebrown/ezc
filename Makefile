@@ -37,14 +37,16 @@ SCRIPTS=./scripts/
 INSTALL_SCRIPT=${SCRIPTS}/install.sh
 UNINSTALL_SCRIPT=${SCRIPTS}/uninstall.sh
 BUNDLE_SCRIPT=${SCRIPTS}/bundle.sh
+UPLOAD_SCRIPT=${SCRIPTS}/upload.sh
 DEB_SCRIPT=${SCRIPTS}/deb.sh
 VSCE_SCRIPT=${SCRIPTS}/vsce.sh
 DOCS_SCRIPT=${SCRIPTS}/docs.sh
 REQ_SCRIPT=${SCRIPTS}/req.sh
 
-# default is to install with all options
-default: install
-	echo Installed
+
+# builds in directory (install)
+build: install
+	echo Built
 
 # install with set values, uninstalling first
 install: uninstall
@@ -71,7 +73,7 @@ req:
 	-${REQ_SCRIPT} ${SRC}
 
 # bundles into a tar. It figures out the name of the archive
-bundle: install
+bundle:
 	-${BUNDLE_SCRIPT} ${DIR}
 
 # makes a .deb file
@@ -81,3 +83,7 @@ deb:
 # publishes Visual Studio Code Extension (requires GPG key that only I have)
 vsce:
 	-${VSCE_SCRIPT}
+
+# uploads and prints a link to the file to download
+upload:
+	-${UPLOAD_SCRIPT}

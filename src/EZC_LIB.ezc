@@ -10,19 +10,19 @@
 	return total
 [/binomcdf]
 
-[normalpdf1] x
+[normalpdf_1] x
 	return (1 / (sqrt (2*(pi)))) * (exp (-.5*x^2))
-[/normalpdf1]
+[/normalpdf_1]
 
 [normalpdf] x u o
-	return (1 / o) * (@normalpdf1 (x - u)/o)
+	return (1 / o) * (@normalpdf_1 (x - u)/o)
 [/normalpdf]
 
-[normalcdf2] a b
+[normalcdf_2] a b
     co = 1 / (sqrt 2)
 	return (.5*((erf (b*co)) - (erf (a*co))))
-[/normalcdf2]
+[/normalcdf_2]
 
 [normalcdf] a b u o
-	return (@normalcdf2 ((a-u)/o) ((b-u)/o))
+	return (@normalcdf_2 ((a-u)/o) ((b-u)/o))
 [/normalcdf]

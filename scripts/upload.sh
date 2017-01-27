@@ -1,8 +1,5 @@
 #!/bin/bash
-# bundles tar
 
-DIR=$1
-BASE=`basename $DIR`
 
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
 	TYPE="linux"
@@ -15,12 +12,13 @@ elif [ "$OSTYPE" == "cygwin" ] || [ "$OSTYPE" == "msys" ]; then
 else
 	TYPE="generic"
 fi
+if [[ "$1" == "" ]]; then
+	ARCHIVE=./ezc-*.tar.xz
+else
+	ARCHIVE=$1
+fi
 
-ARCHIVE="ezc-$TYPE.tar.xz"
+ARCHIVE=`echo $ARCHIVE`
 
-
-echo "Tarring $DIR into $ARCHIVE with base $BASE"
-
-tar cJf $ARCHIVE -C $DIR/.. $BASE
-
-echo "Done tarring"
+echo "Download the tar.xz file here:"
+curl --upload-file $ARCHIVE https://transfer.sh/$ARCHIVE

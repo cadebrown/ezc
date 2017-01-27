@@ -8,12 +8,14 @@ language: c
 sudo: required
 
 install:
-  - make bundle
+  - make build
 # Thanks macOS :(
 #  - sudo make global
 
 script:
   - make check
+  - make bundle upload
+  
 #  - make check-global
 
 notifications:
