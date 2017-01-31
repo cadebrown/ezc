@@ -31,11 +31,8 @@ Look under `Build Jobs`, and click your platform.
 Now, scroll down in the page until it says 
 
 ```bash
-
 Download the file here:
-######################################################################## 100.0%
 https://transfer.sh/XXXXX/ezc-PLATFORM.tar.xz
-
 ```
 
 Copy that link, and then type:
@@ -45,7 +42,12 @@ LINK="PASTEHERE"
 cd ~; curl $LINK > ezc.tar.xz; untar ezc.tar.xz; mv ezc .ezc; cd .ezc
 ```
 
-replacing `"PASTEHERE"` with your link you copied.
+<button class="btn" data-clipboard-text='LINK="PASTEHERE"; cd ~; curl $LINK > ezc.tar.xz; tar xfv ezc.tar.xz; mv ezc .ezc; cd .ezc'>
+    Copy to clipboard
+</button>
+
+
+replacing `PASTEHERE` with your link you copied.
 
 
 ### Global (requires sudo/admin account)
@@ -53,7 +55,12 @@ replacing `"PASTEHERE"` with your link you copied.
 If you'd like to install globally for all users, run:
 
 ```bash
- $ curl chemdev.space/build-ezc-global.sh -L | bash
+curl chemdev.space/build-ezc-global.sh -L | bash
 ```
+
+<button class="btn" data-clipboard-text='curl chemdev.space/build-ezc-global.sh -L | bash'>
+    Copy to clipboard
+</button>
+
 
 This will build the development branch for all users, and will also build MPFR and GMP from source.
