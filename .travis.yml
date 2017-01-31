@@ -24,13 +24,3 @@ notifications:
       - info@chemicaldevelopment.us
     on_success: change
     on_failure: change
-
-deploy:
-  provider: releases
-  api_key: '$GITHUB_API_KEY'
-  file: ezc-${TRAVIS_OS_NAME}.tar.xz
-  skip_cleanup: true
-  on:
-    repo: ChemicalDevelopment/ezc
-    tags: true
-    all_branches: true
