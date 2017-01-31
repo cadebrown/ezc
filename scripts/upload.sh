@@ -1,5 +1,6 @@
 #!/bin/bash
-
+RED='\033[0;31m'
+NC='\033[0m'
 
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
 	TYPE="linux"
@@ -22,9 +23,9 @@ ARCHIVE=`echo $ARCHIVE`
 
 echo "Uploading archive $ARCHIVE"
 
-printf "\n\nDownload the file here:\n\n"
+printf "\n\n${RED}Download the file here:\n\n"
 
 
-curl --upload-file $ARCHIVE https://transfer.sh/$ARCHIVE
+curl --progress-bar --upload-file $ARCHIVE https://transfer.sh/$ARCHIVE
 
-printf "\n\nDone\n\n"
+printf "${NC}\n\nDone\n\n"
