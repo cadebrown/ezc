@@ -16,10 +16,10 @@ for DIR in $DIRS
 do
 	mkdir -p $DIR
 done
-FL="ezcc.deb"
+FL="ezc.deb"
 
 # Do generic install
-./install.sh $EXE_PATH $SRC_PATH false
+./scripts/install.sh $EXE_PATH $SRC_PATH false
 
 rm -rf $SRC_PATH/*.pyc
 

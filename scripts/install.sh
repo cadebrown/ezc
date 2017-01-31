@@ -17,6 +17,9 @@ SRC_DIR=$2
 I_MPFR=$3
 KEEP_MPFR=$4
 ARCHIVE="ezc.tar.xz"
+mkdir -p $SRC_DIR
+mkdir -p $INSTALL_DIR
+
 
 echo Operating System Type: $OSTYPE
 
@@ -55,7 +58,6 @@ if [ "$KEEP_MPFR" != "true" ]; then
 		fi
 	fi
 
-	mkdir -p $SRC_DIR
 
 	if [ "$I_MPFR" == "true" ]; then
 		echo "Installing MPFR from source"
@@ -92,7 +94,7 @@ do
     O_UTIL=$INSTALL_DIR/$(basename $UTIL)
 	echo $UTIL
     $INSTALL_DIR/ezc $UTIL -o $O_UTIL -v1
-	#strip $O_UTIL
+	strip $O_UTIL
 done
 
 
