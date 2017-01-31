@@ -12,11 +12,12 @@ install:
   # this will fail and say the build has cancelled
   - make check
   - make bundle
+  - make package
 #  - make build
 
 script:
   - make upload
-  
+  - make upload-package
 #  - make check-global
 
 notifications:
