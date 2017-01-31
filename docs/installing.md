@@ -8,7 +8,7 @@ To get up and running with a released version, open a terminal (such as `Termina
 ```bash
 LOCATION=~/.ezc/
 mkdir $LOCATION; cd $LOCATION
-curl chemdev.space/ezc.sh -L | bash; cd ezc
+curl chemdev.space/ezc.sh -L | bash
 echo "export PATH=\$PATH:$LOCATION" >> ~/.bashrc; source ~/.bashrc
 ```
 

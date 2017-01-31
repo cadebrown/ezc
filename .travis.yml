@@ -9,6 +9,7 @@ sudo: required
 
 install:
   - make build
+  # this will fail and say the build has cancelled
   - make check
   - make bundle
 #  - make build

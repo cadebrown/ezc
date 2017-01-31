@@ -1,10 +1,21 @@
 ###
 # GPLv3
+#
+# For a full local install and upload, run `make build bundle upload`
+#
+# To build from source and build dependencies, run `make build`.
+# This will install in ./ezc/
+#
+# For a global install, run `sudo make global`
+#
 # To use, set DIR= whatever you want to install binaries. Normally, SRC= should not be used, as it should be $DIR/src/
 # However, installing globally, use `sudo make DIR=/usr/bin/ SRC=/usr/src/ezc/`
 #
 # I've implemented some basic linking, so this will still work.
 # You can also set REQ=false to use a package manager (like brew.sh, apt, dnf, pkg, etc.)
+#
+# To make a package (.deb, .rpm, etc), run `make package`
+# to build and upload the package, run `make package upload-package`
 #
 # Don't worry if you don't have one. If it can't find one, it builds MPFR from source anyway.
 # For info, please email <info@chemicaldevelopment.us>
@@ -38,7 +49,8 @@ INSTALL_SCRIPT=${SCRIPTS}/install.sh
 UNINSTALL_SCRIPT=${SCRIPTS}/uninstall.sh
 BUNDLE_SCRIPT=${SCRIPTS}/bundle.sh
 UPLOAD_SCRIPT=${SCRIPTS}/upload.sh
-DEB_SCRIPT=${SCRIPTS}/deb.sh
+PACKAGE_SCRIPT=${SCRIPTS}/package.sh
+UPLOAD_PACKAGE_SCRIPT=${SCRIPTS}/uploadpackage.sh
 VSCE_SCRIPT=${SCRIPTS}/vsce.sh
 DOCS_SCRIPT=${SCRIPTS}/docs.sh
 REQ_SCRIPT=${SCRIPTS}/req.sh
@@ -76,9 +88,13 @@ req:
 bundle:
 	-${BUNDLE_SCRIPT} ${DIR}
 
-# makes a .deb file
-deb:
-	-${DEB_SCRIPT}
+# makes a .deb, .rpm, .app, .pkg etc
+package:
+	-${PACKAGE_SCRIPT}
+
+# uploads package
+upload-package:
+	-${UPLOAD_PACKAGE_SCRIPT}
 
 # publishes Visual Studio Code Extension (requires GPG key that only I have)
 vsce:

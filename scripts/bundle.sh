@@ -2,7 +2,6 @@
 # bundles tar
 
 DIR=$1
-BASE=`basename $DIR`
 
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
 	TYPE="linux"
@@ -18,9 +17,12 @@ fi
 
 ARCHIVE="ezc-$TYPE.tar.xz"
 
+echo "Tarring $DIR into $ARCHIVE"
+TO=$PWD
+echo "PWD: $TO"
 
-echo "Tarring $DIR into $ARCHIVE with base $BASE"
-
-tar -cJf $ARCHIVE -C $DIR/.. $BASE
+pushd $DIR
+tar cvzf $TO/$ARCHIVE ./
+popd
 
 echo "Done tarring"
