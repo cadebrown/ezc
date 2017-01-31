@@ -1,6 +1,8 @@
 ###
 # GPLv3
 #
+# To develop, run `sudo make dev`
+#
 # For a full local install and upload, run `make build bundle upload`
 #
 # To build from source and build dependencies, run `make build`.
