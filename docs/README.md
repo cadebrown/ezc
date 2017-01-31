@@ -1,8 +1,6 @@
 # Quick start
 
-# Running
-
-### Files
+## Files
 
 You can create files and compile those to runnable executables.
 
@@ -36,7 +34,7 @@ Now, back in your terminal, make sure you are in the same directory as the file 
  The square root of your number is 1.41421356237309504879
 ```
 
-### Passing as an argument
+## Passing as an argument
 
 You don't need a file to compile, use:
 
@@ -49,7 +47,7 @@ This compiles whatever you put right after the `-c` argument, and then executes 
 
 This is good for quick prototyping.
 
-## Utilities
+# Utilities
 
 Now, to see what all utilities you have, run:
 
@@ -83,8 +81,3 @@ If you'd like to set a precision at once:
 ```bash
  $ export EZC_PREC=100
 ```
-
-# Using the compiler in the CLI (Command Line Interface)
-
-
-TODO
