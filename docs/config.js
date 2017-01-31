@@ -13,6 +13,9 @@ self.$config = {
     // chinese doc
     {
       title: 'Installing', path: '/installing'
+    },
+    {
+      title: 'Dev Workflow', path: '/workflow'
     }
   ]
 }

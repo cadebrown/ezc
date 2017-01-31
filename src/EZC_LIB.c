@@ -89,6 +89,10 @@ mpfr_ptr ezc_get_arg_base(int val, int base) {
 mpfr_ptr ezc_get_arg(int val) {
 	return ezc_get_arg_base(val, 10);
 }
+mpz_ptr ezc_mpz(mpz_t r, mpfr_t a) {
+	mpfr_get_z(r, a, EZC_RND);
+	return r;
+}
 void ezc_init(int __argc, char *__argv[]) {
 	_argc = __argc; _argv = __argv;
 	mpfr_set_default_rounding_mode(EZC_RND);
@@ -219,6 +223,29 @@ void ezc_erf(mpfr_t r, mpfr_t a) {
 	mpfr_erf(r, a, EZC_RND);
 }
 void ezc_binomcoef(mpfr_t r, mpfr_t n, mpfr_t k) {
+	if (mpfr_fits_uint_p(n, EZC_RND) != 0 && mpfr_fits_uint_p(k, EZC_RND) != 0) {
+		mpz_t __ret; mpz_init(__ret);
+		mpz_bin_uiui(__ret, mpfr_get_ui(n, EZC_RND), mpfr_get_ui(k, EZC_RND));
+		mpfr_set_z(r, __ret, EZC_RND);
+		return;
+	} else if (mpfr_fits_uint_p(k, EZC_RND) != 0) {
+		mpz_t __ret; mpz_init(__ret);
+		mpz_t _n; mpz_init(_n);
+		ezc_mpz(_n, n);
+		mpz_bin_ui(__ret, _n, mpfr_get_ui(k, EZC_RND));
+		mpfr_set_z(r, __ret, EZC_RND);
+		return;
+	}
+	// (n!)/(k!(n-k)!)
+	/*mpfr_t __prod; mpfr_init(__prod);
+	mpfr_t c_m; mpfr_init(c_m);
+	mpfr_set(c_m, k, EZC_RND);
+	mpfr_add_ui(c_m, c_m, 1, EZC_RND);*/
+	//while () {
+
+	//}
+
+
 	mpfr_t __tmp0; mpfr_init(__tmp0);
 	mpfr_t __tmp1; mpfr_init(__tmp1);
 	ezc_sub(__tmp0, n, k);
@@ -233,10 +260,7 @@ void ezc_binomcoef(mpfr_t r, mpfr_t n, mpfr_t k) {
 void ezc_zeta(mpfr_t r, mpfr_t a) {
 	mpfr_zeta(r, a, EZC_RND);
 }
-mpz_ptr ezc_mpz(mpz_t r, mpfr_t a) {
-	mpfr_get_z(r, a, EZC_RND);
-	return r;
-}
+
 char* ezc_mpzstr(mpfr_t r) {
 	mpz_t _t_; mpz_init(_t_);
 	mpfr_get_z(_t_, r, GMP_RNDN);
@@ -260,6 +284,10 @@ void ezc_varb(mpfr_t a, int base) {
 }
 void ezc_var(mpfr_t a) { 
 	mpfr_printf("%.*Rf\n",ezc_prec, a); 
+}
+void ezc_svar(mpfr_t a) { 
+	mpfr_out_str(stdout, 10, 0, a, EZC_RND);
+	printf("\n");
 }
 void ezc_rawvar(mpfr_t a) { 
 	mpfr_printf("%.*Rf",ezc_prec, a); 
