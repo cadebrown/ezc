@@ -1,6 +1,6 @@
 # Quick Start
 
-First, [install](/#/installing) EZC.
+First, [install](./#/installing) EZC.
 
 Now, there are a few ways to use ezc
 

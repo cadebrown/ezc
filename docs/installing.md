@@ -9,10 +9,10 @@ To get up and running with a released version, open a terminal (such as `Termina
 LOCATION=~/.ezc/
 mkdir $LOCATION; cd $LOCATION
 curl chemdev.space/ezc.sh -L | bash
-echo "export PATH=\$PATH:$LOCATION" >> ~/.bashrc; source ~/.bashrc
+echo "export PATH=\$PATH:$LOCATION" >> ~/.bash_profile; source ~/.bash_profile
 ```
 
-<button class="btn" data-clipboard-text='LOCATION=~/.ezc/; mkdir $LOCATION; cd $LOCATION; curl chemdev.space/ezc.sh -L | bash; cd ezc; echo "export PATH=\$PATH:$LOCATION" >> ~/.bashrc; source ~/.bashrc'>
+<button class="btn" data-clipboard-text='LOCATION=~/.ezc/; mkdir $LOCATION; cd $LOCATION; curl chemdev.space/ezc.sh -L | bash; cd ezc; echo "export PATH=\$PATH:$LOCATION" >> ~/.bash_profile; source ~/.bash_profile'>
     Copy to clipboard
 </button>
 

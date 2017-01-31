@@ -1,4 +1,4 @@
-# EZC
+# EZC 1.2.2
 
 ## What is EZC?
 
@@ -36,4 +36,11 @@ This is primarily for programmers who want to explore new constants, and match c
 This is an easy way to prototype a summation, and then see if it matches up with your existing data, or even calculate a billion digits of a constant.
 
 This language isn't for everyone. It is meant to be easy, but it is not meant for GUIs, elaborate printing, writing libraries in, or anything like that. It is meant to be a calculator like language which is performant, and easy to distribute on any operating system with python and a c compiler.
+
+
+## How can I use it?
+
+Well, just follow the [quick start guide](./#/quickstart), and go along!
+
+It is mainly terminal based, but I plan to make an IDE in the future.
 

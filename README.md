@@ -1,6 +1,10 @@
-# EZC 1.2.2
+# EZC
 
 [![Build Status](https://travis-ci.org/ChemicalDevelopment/ezc.svg?branch=master)](https://travis-ci.org/ChemicalDevelopment/ezc)
+
+To see usage and more, see [docs folder](./docs/), or the [docs website](http://chemicaldevelopment.us/ezc/)
+
+This readme is more for developing and technical details
 
 Tested platforms:
   * Debian 8
