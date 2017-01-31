@@ -1,3 +1,14 @@
+ezc (1.2.0) testing; urgency=med
+
+  * bug fixes
+    - parsing, and dogfood libs
+  * added docs in docs/
+  * changed included libaries to EZC_LIB.c and EZC_LIB.ezc
+    - used to build the files
+
+ -- Cade Brown <info@chemicaldevelopment.us>  Tue, 30 Jan 2017 23:00:00 -0500
+
+
 ezc (1.1.0) testing; urgency=med
 
   * added choose operator

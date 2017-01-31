@@ -55,7 +55,7 @@ replacing `PASTEHERE` with your link you copied.
 If you'd like to install globally for all users, run:
 
 ```bash
-<span style="color:red">curl chemdev.space/build-ezc-global.sh -L | bash</span>
+curl chemdev.space/build-ezc-global.sh -L | bash
 ```
 
 <button class="btn" data-clipboard-text='curl chemdev.space/build-ezc-global.sh -L | bash'>

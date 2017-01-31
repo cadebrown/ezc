@@ -1,83 +1,39 @@
-# Quick start
+# EZC
 
-## Files
+## What is EZC?
 
-You can create files and compile those to runnable executables.
+EZC is programming language meant to enable fast calculations of multiprecision floats, but with loose syntax, and without memory management.
 
-For example, open `~/.ezc/`, and create a file called `test.ezc` inside it.
+It is sort of like a calculator language, but with for, if, function definitions, and more advanced features.
 
-Now, write this:
+The main advantage of EZC is the ability to change the precision, so the programmer is not limited to 64 bit, or roughly 20 digit double.
 
-``` bash
-prec $1
-x = prompt 'Enter a number'
-printf 'The square root of your number is \n'
-var (sqrt x)
-```
+Also, the EZC std libraries have many functions dealing with more advanced functionality than even `math.h` or most system math libraries have.
 
-Now, back in your terminal, make sure you are in the same directory as the file you've created, and run (when it asks for a number, type one and hit `Enter`)
-
-``` bash
- $ ezcc test.ezc -o test.o -v5
-   > EZCC
-    > Version: X.X.X
-    > Date: 20XX-01-26 21:12:21 -0500
-
-  > Authors
-    > Cade Brown <cade@chemicaldevelopment.us>
-
-  > Compiling
-    > cc  /tmp/rpthB.c -lm  -lmpfr -lgmp  -o test.o
-
- $ ./test.o
- Enter a number: 2 <Enter>
- The square root of your number is 1.41421356237309504879
-```
-
-## Passing as an argument
-
-You don't need a file to compile, use:
-
-``` bash
- $ ezcc -c "var (sqrt 2)"
- 1.41421356237309504879
-```
-
-This compiles whatever you put right after the `-c` argument, and then executes it, showing you the result.
-
-This is good for quick prototyping.
-
-# Utilities
-
-Now, to see what all utilities you have, run:
-
-```bash
- $ cd ~/ezc/
- $ ls
-```
-
-These utilities, like `add`, are commandline based, so you don't have to compile them.
-
-You use them like so (typing in lines that start with `$` into terminal):
+EZC supports all trigonometric functions to full precision, many obscure functions (Gamma, Zeta, Bessel, etc), as well as extensions of common functions to all real numbers, such as factorial (via Gamma function).
 
 
-```bash
- $ ./add 2 3
- 5.00000000000000000000
- $ ./sqrt 2
- 1.41421356237309504879
- $ ./sqrt 2 100
- 1.4142135623730950488016887242096980785696718753769480731766797379907324784621070388503875343276415727
- $ ./pi 
- 3.14159265358979323846
- $ ./pi 100
- 3.1415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170678
-```
+### What can it do?
 
-So, for each utilities (ran with `./NAME`), you can also put an argument after the last one to set the number of digits.
+It can calculate sums and equations very fast.
 
-If you'd like to set a precision at once:
+For example, to calculate the square root of 2 to 100000000 digits (100 million, or 10^8)
 
-```bash
- $ export EZC_PREC=100
-```
+ * EZC takes 14.09 s
+ * python's Decimal class takes so long it wont finish
+ * python package mpmath takes at least 2 minutes
+ * gmpy2 seems to outperform at roughly 9.6 s
+
+The base for EZC is written in C, and in fact, EZC is translated to C then compiled, so you can inject C code for full performance.
+
+Also, many custom functions, such as binomcdf, normalcdf, etc are implemented in EZC.
+
+
+### Who is it for?
+
+This is primarily for programmers who want to explore new constants, and match correlations.
+
+This is an easy way to prototype a summation, and then see if it matches up with your existing data, or even calculate a billion digits of a constant.
+
+This language isn't for everyone. It is meant to be easy, but it is not meant for GUIs, elaborate printing, writing libraries in, or anything like that. It is meant to be a calculator like language which is performant, and easy to distribute on any operating system with python and a c compiler.
+
