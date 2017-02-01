@@ -61,7 +61,7 @@ if [ "$KEEP_MPFR" != "true" ]; then
 
 	if [ "$I_MPFR" == "true" ]; then
 		echo "Installing MPFR from source"
-		./scripts/req.sh $SRC_DIR
+		bash ./scripts/req.sh $SRC_DIR
 		pushd $SRC_DIR
 		rm -Rf share/
 		popd
