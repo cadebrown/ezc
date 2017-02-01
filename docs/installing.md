@@ -1,6 +1,18 @@
 
 ## Installing
 
+### Supported Platforms
+
+Tested and working:
+
+  * Ubuntu 16.10
+  * Raspbian Dev
+  * macOS El Capitan
+  * FreeBSD 11
+
+Although, FreeBSD needs a little help to get there. See [#FreeBSD](/#/installing?id=bsd)
+
+
 ### Release (stable) versions
 
 To get up and running with a released version, open a terminal (such as `Terminal` on macOS, or `XTerm` in Linux), and run:
@@ -8,11 +20,11 @@ To get up and running with a released version, open a terminal (such as `Termina
 ```bash
 LOCATION=~/.ezc/
 mkdir $LOCATION; cd $LOCATION
-curl chemdev.space/ezc.sh -L | bash
+curl chemdev.space/ezc.sh -L | sh
 echo "export PATH=\$PATH:$LOCATION" >> ~/.bash_profile; source ~/.bash_profile
 ```
 
-<button class="btn" data-clipboard-text='LOCATION=~/.ezc/; mkdir $LOCATION; cd $LOCATION; curl chemdev.space/ezc.sh -L | bash; cd ezc; echo "export PATH=\$PATH:$LOCATION" >> ~/.bash_profile; source ~/.bash_profile'>
+<button class="btn" data-clipboard-text='LOCATION=~/.ezc/; mkdir $LOCATION; cd $LOCATION; curl chemdev.space/ezc.sh -L | sh; cd ezc; echo "export PATH=\$PATH:$LOCATION" >> ~/.bash_profile; source ~/.bash_profile'>
     Copy to clipboard
 </button>
 
@@ -55,12 +67,34 @@ replacing `PASTEHERE` with your link you copied.
 If you'd like to install globally for all users, run:
 
 ```bash
-curl chemdev.space/build-ezc-global.sh -L | bash
+curl chemdev.space/build-ezc-global.sh -L | sh
 ```
 
-<button class="btn" data-clipboard-text='curl chemdev.space/build-ezc-global.sh -L | bash'>
+<button class="btn" data-clipboard-text='curl chemdev.space/build-ezc-global.sh -L |ash'>
     Copy to clipboard
 </button>
 
 
 This will build the development branch for all users, and will also build MPFR and GMP from source.
+
+
+## Special Platforms
+
+### BSD
+
+You will need python, so run:
+
+Simply: `pkg install python`
+
+Also, use this slightly customized script to work when bash isn't present
+
+```bash
+LOCATION=~/.ezc/
+mkdir $LOCATION; cd $LOCATION
+curl chemdev.space/ezc.sh -L | sh
+echo "export PATH=\$PATH:$LOCATION" >> ~/.profile; source ~/.profile
+```
+
+<button class="btn" data-clipboard-text='LOCATION=~/.ezc/; mkdir $LOCATION; cd $LOCATION; curl chemdev.space/ezc.sh -L | sh; echo "export PATH=\$PATH:$LOCATION" >> ~/.profile; source ~/.profile'>
+    Copy to clipboard
+</button>
