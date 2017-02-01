@@ -3,7 +3,7 @@
 # Install dependencies
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
 	if [[ $(cat /etc/debian_version) ]]; then
-		./scripts/deb.sh "${@}"
+		bash  ./scripts/deb.sh "${@}"
 	elif [[ $(cat /etc/fedora-release) ]]; then
 		echo "Fedora/RPM not supported"
 		# todo add .rpm package

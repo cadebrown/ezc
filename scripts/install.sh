@@ -24,7 +24,7 @@ mkdir -p $INSTALL_DIR
 echo Operating System Type: $OSTYPE
 
 PA=`python -c "import os.path; print os.path.relpath('$SRC_DIR', '$INSTALL_DIR')"`
-EZC_BIN="#!/usr/bin/python \nimport os; import sys; sys.path.append(os.path.dirname(os.path.abspath(__file__))+\"/$PA\"); import ezcc; ezcc.main()"
+EZC_BIN="#!/bin/sh \npython \$PWD/src/ezcc.py \${@}"
 echo $EZC_BIN
 
 if [ "$KEEP_MPFR" != "true" ]; then

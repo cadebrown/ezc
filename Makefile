@@ -46,6 +46,8 @@ EZCC_FLAGS=-run -v5
 # what scripts directory
 SCRIPTS=./scripts/
 
+BASH_SHELL=bash
+
 # a bunch of useful macros
 INSTALL_SCRIPT=${SCRIPTS}/install.sh
 UNINSTALL_SCRIPT=${SCRIPTS}/uninstall.sh
@@ -64,15 +66,15 @@ build: install
 
 # install with set values, uninstalling first
 install: uninstall
-	-${INSTALL_SCRIPT} ${DIR} ${SRC} ${REQ} ${KEEP_REQ}
+	-${BASH_SHELL} ${INSTALL_SCRIPT} ${DIR} ${SRC} ${REQ} ${KEEP_REQ}
 
 # just update, don't rebuild mpfr
 update:
-	-${INSTALL_SCRIPT} ${DIR} ${SRC} false true
+	-${BASH_SHELL} ${INSTALL_SCRIPT} ${DIR} ${SRC} false true
 
 # uninstall from DIR and SRC
 uninstall:
-	-${UNINSTALL_SCRIPT} ${DIR} ${SRC}
+	-${BASH_SHELL} ${UNINSTALL_SCRIPT} ${DIR} ${SRC}
 
 # use this makefile
 global:
@@ -84,24 +86,24 @@ check:
 
 # makes a REQ, and puts it in SRC (so the compiler can get it later)
 req:
-	-${REQ_SCRIPT} ${SRC}
+	-${BASH_SHELL} ${REQ_SCRIPT} ${SRC}
 
 # bundles into a tar. It figures out the name of the archive
 bundle:
-	-${BUNDLE_SCRIPT} ${DIR}
+	-${BASH_SHELL} ${BUNDLE_SCRIPT} ${DIR}
 
 # makes a .deb, .rpm, .app, .pkg etc
 package:
-	-${PACKAGE_SCRIPT}
+	-${BASH_SHELL} ${PACKAGE_SCRIPT}
 
 # uploads package
 upload-package:
-	-${UPLOAD_PACKAGE_SCRIPT}
+	-${BASH_SHELL} ${UPLOAD_PACKAGE_SCRIPT}
 
 # publishes Visual Studio Code Extension (requires GPG key that only I have)
 vsce:
-	-${VSCE_SCRIPT}
+	-${BASH_SHELL} ${VSCE_SCRIPT}
 
 # uploads and prints a link to the file to download
 upload:
-	-${UPLOAD_SCRIPT}
+	-${BASH_SHELL} ${UPLOAD_SCRIPT}

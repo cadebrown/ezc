@@ -18,6 +18,8 @@ elif [[ "$OSTYPE" == *"BSD" ]]; then
 	echo "Asking for sudo to install packages . . ."
 	pkg install gcc
 	pkg install mpfr
+	pkg install python
+	pkg install bash
 elif [ "$OSTYPE" == "cygwin" ] || [ "$OSTYPE" == "msys" ]; then
 	echo "cygwin wont work for dev machine"
 	exit -1

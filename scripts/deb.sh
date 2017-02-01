@@ -19,7 +19,7 @@ done
 FL="ezc.deb"
 
 # Do generic install
-./scripts/install.sh $EXE_PATH $SRC_PATH false
+bash ./scripts/install.sh $EXE_PATH $SRC_PATH false
 
 rm -rf $SRC_PATH/*.pyc
 
