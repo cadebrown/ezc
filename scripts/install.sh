@@ -43,7 +43,7 @@ if [ "$KEEP_MPFR" != "true" ]; then
 			echo "Asking for sudo to install packages . . ."
 			sudo brew install gcc48
 			sudo brew install mpfr 
-		elif [[ "$OSTYPE" == "freebsd"* ]]; then
+		elif [[ "$OSTYPE" == *"BSD" ]]; then
 			echo "Asking for sudo to install packages . . ."
 			sudo pkg install gcc
 			sudo pkg install mpfr

@@ -7,7 +7,7 @@ if [[ "$OSTYPE" == "linux-gnu" ]]; then
 	TYPE="linux"
 elif [[ "$OSTYPE" == "darwin"* ]]; then
 	TYPE="mac"
-elif [[ "$OSTYPE" == "freebsd"* ]]; then
+elif [[ "$OSTYPE" == *"BSD" ]]; then
 	TYPE="bsd"
 elif [ "$OSTYPE" == "cygwin" ] || [ "$OSTYPE" == "msys" ]; then
 	TYPE="cygwin"

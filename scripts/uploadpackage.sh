@@ -13,6 +13,9 @@ if [[ "$OSTYPE" == "linux-gnu" ]]; then
 		echo "RPM not supported"
 		exit -1
 	fi
+elif [[ "$OSTYPE" == *"BSD" ]]; then
+	echo "BSD not supported"
+	exit -1
 elif [[ "$OSTYPE" == "darwin"* ]]; then
 	# todo add .app
 	echo "macOS not supported"

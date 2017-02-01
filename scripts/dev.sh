@@ -14,7 +14,7 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
 	echo "Need homebrew"
 	brew install gcc48
 	brew install mpfr 
-elif [[ "$OSTYPE" == "freebsd"* ]]; then
+elif [[ "$OSTYPE" == *"BSD" ]]; then
 	echo "Asking for sudo to install packages . . ."
 	pkg install gcc
 	pkg install mpfr

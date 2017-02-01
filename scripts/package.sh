@@ -8,6 +8,8 @@ if [[ "$OSTYPE" == "linux-gnu" ]]; then
 		echo "Fedora/RPM not supported"
 		# todo add .rpm package
 	fi
+elif [[ "$OSTYPE" == *"BSD" ]]; then
+	echo "BSD not supported"
 elif [[ "$OSTYPE" == "darwin"* ]]; then
 	# todo add .app
 	echo "macOS not supported"

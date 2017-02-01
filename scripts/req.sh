@@ -11,14 +11,14 @@ cd $BUILD_DIR
 
 curl $GMP_TAR > gmp.tar.xz
 tar xfv gmp.tar.xz > /dev/null
-cd gmp*
+cd gmp-*
 ./configure --disable-shared --enable-static --prefix=$BUILD_DIR > /dev/null
 make install > /dev/null
 cd ..
 
 curl $MPFR_TAR > mpfr.tar.xz
 tar xvf mpfr.tar.xz > /dev/null
-cd mpfr*
+cd mpfr-*
 ./configure --disable-shared --enable-static --prefix=$BUILD_DIR --with-gmp=$BUILD_DIR  > /dev/null
 make install > /dev/null
 cd ..
