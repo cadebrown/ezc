@@ -24,7 +24,7 @@ mkdir -p $INSTALL_DIR
 echo Operating System Type: $OSTYPE
 
 PA=`python -c "import os.path; print os.path.relpath('$SRC_DIR', '$INSTALL_DIR')"`
-EZC_BIN="#!/bin/sh \npython $(dirname $(readlink -f \$0))/src/ezcc.py \"\${@}\" \n"
+EZC_BIN="#!/bin/sh \npython \$(dirname \$(readlink -f \$0))/src/ezcc.py \"\${@}\" \n"
 
 echo $EZC_BIN
 
