@@ -89,12 +89,9 @@ Simply: `pkg install python`
 Also, use this slightly customized script to work when bash isn't present
 
 ```bash
-LOCATION=~/.ezc/
-mkdir $LOCATION; cd $LOCATION
 curl chemdev.space/ezc.sh -L | sh
-echo "export PATH=\$PATH:$LOCATION" >> ~/.profile; source ~/.profile
 ```
 
-<button class="btn" data-clipboard-text='LOCATION=~/.ezc/; mkdir $LOCATION; cd $LOCATION; curl chemdev.space/ezc.sh -L | sh; echo "export PATH=\$PATH:$LOCATION" >> ~/.profile; source ~/.profile'>
+<button class="btn" data-clipboard-text='curl chemdev.space/ezc.sh -L | sh'>
     Copy to clipboard
 </button>

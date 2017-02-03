@@ -33,6 +33,8 @@ SRC=${DIR}/src/
 REQ=true
 # if requirements are already built, do we just keep the existing ones?
 KEEP_REQ=false
+# make utils?
+UTILS=false
 
 # Global defaults
 GLOBAL_DIR=/usr/bin/
@@ -66,11 +68,11 @@ build: install
 
 # install with set values, uninstalling first
 install: uninstall
-	-${BASH_SHELL} ${INSTALL_SCRIPT} ${DIR} ${SRC} ${REQ} ${KEEP_REQ}
+	-${BASH_SHELL} ${INSTALL_SCRIPT} ${DIR} ${SRC} ${REQ} ${KEEP_REQ} ${UTILS}
 
 # just update, don't rebuild mpfr
 update:
-	-${BASH_SHELL} ${INSTALL_SCRIPT} ${DIR} ${SRC} false true
+	-${BASH_SHELL} ${INSTALL_SCRIPT} ${DIR} ${SRC} false true ${UTILS}
 
 # uninstall from DIR and SRC
 uninstall:

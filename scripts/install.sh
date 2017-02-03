@@ -1,8 +1,10 @@
-#!/bin/bash
+#!/bin/sh
 #SOURCES=`echo *.py */`
 pushd src
 SOURCES=`find ./ -type f \( -iname \*.c -o -iname \*.py  -o -iname \*.ezc \)`
 popd
+
+MKFILE="Makefile.distribute"
 
 UTILS=./utils/*
 
@@ -16,17 +18,20 @@ INSTALL_DIR=$1
 SRC_DIR=$2
 I_MPFR=$3
 KEEP_MPFR=$4
+MAKE_UTILS=$5
+
 ARCHIVE="ezc.tar.xz"
 mkdir -p $SRC_DIR
 mkdir -p $INSTALL_DIR
 
-
 echo Operating System Type: $OSTYPE
 
 PA=`python -c "import os.path; print os.path.relpath('$SRC_DIR', '$INSTALL_DIR')"`
-EZC_BIN="#!/bin/sh \npython \$(dirname \$(readlink -f \$0))/src/ezcc.py \"\${@}\" \n"
+EZC_BIN="#!/bin/sh \npython \$(dirname \$0)/src/ezcc.py \"\${@}\" \n"
 
 echo $EZC_BIN
+
+cp $MKFILE $SRC_DIR/Makefile
 
 if [ "$KEEP_MPFR" != "true" ]; then
 	if [[ "$I_MPFR" == "true" ]]; then
@@ -88,23 +93,25 @@ if [ "$I_MPFR" == "true" ] || [ "$KEEP_MPFR" == "true" ]; then
 	printf "\nEZC_LIB=\"-w -I%%s/include/ %%s/lib/libmpfr.a %%s/lib/libgmp.a\" %% (EZC_DIR, EZC_DIR, EZC_DIR)\n" >> $SRC_DIR/ezdata.py
 fi
 
-echo Installing execs in $INSTALL_DIR
 
-for UTIL in $UTILS
-do
-    O_UTIL=$INSTALL_DIR/$(basename $UTIL)
-	echo $UTIL
-    $INSTALL_DIR/ezc $UTIL -o $O_UTIL -v1
-	strip $O_UTIL
-done
+if [ "$MAKE_UTILS" == "true" ]; then
+	echo Installing execs in $INSTALL_DIR
 
+	for UTIL in $UTILS
+	do
+		O_UTIL=$INSTALL_DIR/$(basename $UTIL)
+		echo $UTIL
+		$INSTALL_DIR/ezc $UTIL -o $O_UTIL -v1
+		strip $O_UTIL
+	done
 
-echo Done copying
-
+	echo Done copying
+fi
 echo Removing uneeded dirs
 
 pushd $INSTALL_DIR
 rm -Rf share/
+rm a.out
 popd
 
 pushd $SRC_DIR

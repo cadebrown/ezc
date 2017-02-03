@@ -23,4 +23,4 @@ cd mpfr-*
 make install > /dev/null
 cd ..
 
-rm -Rf gmp* mpfr* share/
+rm -Rf gmp* mpfr* share/ lib/*.la
