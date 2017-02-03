@@ -4,8 +4,6 @@ pushd src
 SOURCES=`find ./ -type f \( -iname \*.c -o -iname \*.py  -o -iname \*.ezc \)`
 popd
 
-MKFILE="Makefile.distribute"
-
 UTILS=./utils/*
 
 #echo $SOURCES
@@ -30,8 +28,6 @@ PA=`python -c "import os.path; print os.path.relpath('$SRC_DIR', '$INSTALL_DIR')
 EZC_BIN="#!/bin/sh \npython \$(dirname \$0)/src/ezcc.py \"\${@}\" \n"
 
 echo $EZC_BIN
-
-cp $MKFILE $SRC_DIR/Makefile
 
 if [ "$KEEP_MPFR" != "true" ]; then
 	if [[ "$I_MPFR" == "true" ]]; then
