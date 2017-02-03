@@ -18,13 +18,10 @@ Although, FreeBSD needs a little help to get there. See [#FreeBSD](/#/installing
 To get up and running with a released version, open a terminal (such as `Terminal` on macOS, or `XTerm` in Linux), and run:
 
 ```bash
-LOCATION=~/.ezc/
-mkdir $LOCATION; cd $LOCATION
-curl chemdev.space/ezc.sh -L | sh
-echo "export PATH=\$PATH:$LOCATION" >> ~/.bash_profile; source ~/.bash_profile
+export TYPE=build; curl chemdev.space/ezc.sh -L | sh
 ```
 
-<button class="btn" data-clipboard-text='LOCATION=~/.ezc/; mkdir $LOCATION; cd $LOCATION; curl chemdev.space/ezc.sh -L | sh; cd ezc; echo "export PATH=\$PATH:$LOCATION" >> ~/.bash_profile; source ~/.bash_profile'>
+<button class="btn" data-clipboard-text='curl chemdev.space/ezc.sh -L | sh'>
     Copy to clipboard
 </button>
 
@@ -36,30 +33,12 @@ To get back to the install directory, run `cd ~/.ezc/`
 
 ### Development version
 
-To install the current version (most recent) that is unstable, and probably has bugs, you'll visit the [travis CI site](https://travis-ci.org/ChemicalDevelopment/ezc)
-
-Look under `Build Jobs`, and click your platform.
-
-Now, scroll down in the page until it says 
-
 ```bash
-Download the file here:
-https://transfer.sh/XXXXX/ezc-PLATFORM.tar.xz
+export TYPE=build; export RELEASE=dev;curl chemdev.space/ezc.sh -L | sh
 ```
-
-Copy that link, and then type:
-
-```bash
-LINK="PASTEHERE"
-cd ~; curl $LINK > ezc.tar.xz; untar ezc.tar.xz; mv ezc .ezc; cd .ezc
-```
-
-<button class="btn" data-clipboard-text='LINK="PASTEHERE"; cd ~; curl $LINK > ezc.tar.xz; tar xfv ezc.tar.xz; mv ezc .ezc; cd .ezc'>
+<button class="btn" data-clipboard-text='export TYPE=build; export RELEASE=dev;curl chemdev.space/ezc.sh -L | sh'>
     Copy to clipboard
 </button>
-
-
-replacing `PASTEHERE` with your link you copied.
 
 
 ### Global (requires sudo/admin account)
@@ -67,31 +46,18 @@ replacing `PASTEHERE` with your link you copied.
 If you'd like to install globally for all users, run:
 
 ```bash
-curl chemdev.space/build-ezc-global.sh -L | sh
+export PROFILE=/etc/profile.d/ezc.sh; export LOCATION=/usr/local/ezc/; curl chemdev.space/ezc.sh -L | sh
 ```
 
-<button class="btn" data-clipboard-text='curl chemdev.space/build-ezc-global.sh -L |ash'>
+<button class="btn" data-clipboard-text='export PROFILE=/etc/profile.d/ezc.sh; export LOCATION=/usr/local/ezc/; curl chemdev.space/ezc.sh -L | sh'>
     Copy to clipboard
 </button>
-
-
-This will build the development branch for all users, and will also build MPFR and GMP from source.
 
 
 ## Special Platforms
 
 ### BSD
 
-You will need python, so run:
+For building the master branch, you will need python: `pkg install python`
 
-Simply: `pkg install python`
-
-Also, use this slightly customized script to work when bash isn't present
-
-```bash
-curl chemdev.space/ezc.sh -L | sh
-```
-
-<button class="btn" data-clipboard-text='curl chemdev.space/ezc.sh -L | sh'>
-    Copy to clipboard
-</button>
+However, using the default install for built releases should include a bundled python version with a subset of all python.
