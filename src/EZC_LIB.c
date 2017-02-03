@@ -5,6 +5,7 @@
 #include <mpfr.h>
 #include <math.h>
 
+//testing
 int ezc_size_consts = 50, ezc_consts_id = 0, ezc_consts_ov = 0;
 gmp_randstate_t ezc_rand_state;
 mpfr_t *ezc_consts;

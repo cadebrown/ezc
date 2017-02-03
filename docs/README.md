@@ -1,4 +1,4 @@
-# EZC 1.2.3
+# EZC 1.2.4
 
 ## What is EZC?
 

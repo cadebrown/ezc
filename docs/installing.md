@@ -10,7 +10,7 @@ Tested and working:
   * macOS El Capitan
   * FreeBSD 11
 
-Although, FreeBSD needs a little help to get there. See [#FreeBSD](/#/installing?id=bsd)
+Although, FreeBSD needs a little help to get there. See [#FreeBSD](./#/installing?id=bsd)
 
 
 ### Release (stable) versions
@@ -34,9 +34,9 @@ To get back to the install directory, run `cd ~/.ezc/`
 ### Development version
 
 ```bash
-export TYPE=build; export RELEASE=dev;curl chemdev.space/ezc.sh -L | sh
+export TYPE=build; export RELEASE=dev; curl chemdev.space/ezc.sh -L | sh
 ```
-<button class="btn" data-clipboard-text='export TYPE=build; export RELEASE=dev;curl chemdev.space/ezc.sh -L | sh'>
+<button class="btn" data-clipboard-text='export TYPE=build; export RELEASE=dev; curl chemdev.space/ezc.sh -L | sh'>
     Copy to clipboard
 </button>
 

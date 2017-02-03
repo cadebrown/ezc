@@ -37,6 +37,8 @@ def main():
 	parser.add_argument('-c', type=str, help='run commandline')
 	parser.add_argument('-e', action='store_true', help='run from stdin')
 
+	parser.add_argument('-gsl', '--genstaticlib', action='store_true', help='Generates a static library')
+
 	# flags
 	parser.add_argument('-cvars', default="10", help='Number of constants used by compiler')
 
@@ -60,6 +62,9 @@ def main():
 	log.init(args["v"])
 
 	delegate.init(args)
+
+	if args["genstaticlib"] or (delegate.get_built_static_hash() != delegate.get_live_static_hash()):
+		delegate.gen_static_lib()
 
 	if args["e"]:
 		to_run = "\n".join(sys.stdin)

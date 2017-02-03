@@ -10,14 +10,34 @@ def init():
 	Initialize parsing with functions from resolve module
 	"""
 	parser.init(resolve.functions, resolve.operators, resolve.order_op)
-	add_code(ezdata.EZC_DOGFOOD)
+	reset()
+	
+def reset():
+	global start, main, end, default_file, user_funcs
+	start = ""
+	main =  """
+
+int main(int argc, char *argv[]) {
+	ezc_init(argc, argv);
+	
+"""
+	end = """
+	return 0;
+}
+"""
+	default_file = ""
+	user_funcs = ""
 
 def get_c_file():
 	"""
 	Return transpiled EZC into C code, which can be compiled by cc
 	This should be called after add_code and right before compile step.
 	"""
-	return default_file  + user_funcs + start + main + end
+	return includes + default_file + user_funcs + start + main + end
+
+def add_c_code(file_contents):
+	global default_file
+	default_file += file_contents
 
 def add_code(file_contents):
 	"""
@@ -75,17 +95,19 @@ def add_compile_lines(lines):
 			log.err("Compiling (Line %d)" % (line_num), ["Error while parsing:", str(e)])
 
 
+includes = """
+
+#include <mpfr.h>
+
+"""
+
 user_funcs=""""""
 
-start="""int main(int argc, char *argv[]) {
-	ezc_init(argc, argv);"""
+start=""""""
 
 main = """"""
 
-end = """
-    return 0;
-}
-"""
+end = """"""
 
 is_func = False
-default_file=ezdata.EZC_C
+default_file=""

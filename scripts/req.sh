@@ -25,4 +25,4 @@ cd ..
 
 rm -Rf gmp* mpfr* share/ lib/*.la
 
-strip --strip-unneeded lib/*.a
+strip lib/*.a

@@ -4,13 +4,14 @@
 
 # compiled files
 *.pyc
+*.pyo
 __pycache__
 *.o
 *.out
 *.vscode/
 !VSCODE-extension/.vscode/
 
-
+*.hash
 
 # build dirs
 /deb-package/*

@@ -3,7 +3,7 @@
 #
 # To develop, run `sudo make dev`
 #
-# For a full local install and upload, run `make build utils bundle upload`
+# For a full local install and upload, run `make build build-utils bundle upload`
 #
 # To build from source and build dependencies, run `make build`.
 # This will install in ./ezc/
@@ -66,7 +66,7 @@ build: install
 	echo Built
 
 # install with set values, uninstalling first
-install: uninstall
+install:
 	-${BASH_SHELL} ${INSTALL_SCRIPT} ${DIR} ${SRC} ${REQ} ${KEEP_REQ}
 
 clean:
@@ -76,7 +76,7 @@ clean:
 update:
 	-${BASH_SHELL} ${INSTALL_SCRIPT} ${DIR} ${SRC} false true
 
-utils:
+build-utils:
 	-${BASH_SHELL} ${UTILS_SCRIPT} ${DIR}
 
 # uninstall from DIR and SRC

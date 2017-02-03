@@ -1,6 +1,6 @@
 name = "EZCC"
 
-version = "1.2.3"
+version = "1.2.4"
 import time
 #time.strftime("%Y-%m-%d %H:%M:%S %z")
 date=time.strftime("%Y-%m-%d %H:%M:%S %z")

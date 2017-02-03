@@ -1,5 +1,12 @@
 ezc (1.2.3) testing; urgency=med
 
+  * smaller distribution sizes
+    - stripped executables, and optional util building
+ -- Cade Brown <info@chemicaldevelopment.us>  Fri, 3 Feb 2017 15:51:20 -0500
+
+
+ezc (1.2.3) testing; urgency=med
+
   * bug fixes
     - updated `choose` to work with ints
 

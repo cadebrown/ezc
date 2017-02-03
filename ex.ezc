@@ -1,0 +1,8 @@
+var 3
+
+[FF] a
+	return (5^a)
+[/FF]
+
+var (@FF 2)
+
