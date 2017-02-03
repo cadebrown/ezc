@@ -50,7 +50,7 @@ BASH_SHELL=bash
 
 # a bunch of useful macros
 INSTALL_SCRIPT=${SCRIPTS}/install.sh
-UTILS_SCRIPT=${SCRIPTS}/utils.sh
+COPY_UTILS_SCRIPT=${SCRIPTS}/copyutils.sh
 UNINSTALL_SCRIPT=${SCRIPTS}/uninstall.sh
 BUNDLE_SCRIPT=${SCRIPTS}/bundle.sh
 UPLOAD_SCRIPT=${SCRIPTS}/upload.sh
@@ -76,8 +76,8 @@ clean:
 update:
 	-${BASH_SHELL} ${INSTALL_SCRIPT} ${DIR} ${SRC} false true
 
-build-utils:
-	-${BASH_SHELL} ${UTILS_SCRIPT} ${DIR}
+copy-utils:
+	-${BASH_SHELL} ${COPY_UTILS_SCRIPT} ${DIR}
 
 # uninstall from DIR and SRC
 uninstall:

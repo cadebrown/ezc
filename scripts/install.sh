@@ -74,6 +74,8 @@ do
 	cp ./src/$SRC $SRC_DIR/$SRC
 done
 
+cp ./scripts/makeutils.sh $INSTALL_DIR/utils.sh
+
 echo -e $EZC_BIN > $INSTALL_DIR/ezc
 echo -e $EZC_BIN > $INSTALL_DIR/ezcc
 
