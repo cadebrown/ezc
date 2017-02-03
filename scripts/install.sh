@@ -4,8 +4,6 @@ pushd src
 SOURCES=`find ./ -type f \( -iname \*.c -o -iname \*.py  -o -iname \*.ezc \)`
 popd
 
-UTILS=./utils/*
-
 #echo $SOURCES
 
 for SRC in $SOURCES; do
@@ -16,7 +14,6 @@ INSTALL_DIR=$1
 SRC_DIR=$2
 I_MPFR=$3
 KEEP_MPFR=$4
-MAKE_UTILS=$5
 
 mkdir -p $SRC_DIR
 mkdir -p $INSTALL_DIR
@@ -87,20 +84,6 @@ if [ "$I_MPFR" == "true" ] || [ "$KEEP_MPFR" == "true" ]; then
 	printf "\nEZC_LIB=\"-w -I%%s/include/ %%s/lib/libmpfr.a %%s/lib/libgmp.a\" %% (EZC_DIR, EZC_DIR, EZC_DIR)\n" >> $SRC_DIR/ezdata.py
 fi
 
-
-if [ "$MAKE_UTILS" == "true" ]; then
-	echo Installing execs in $INSTALL_DIR
-
-	for UTIL in $UTILS
-	do
-		O_UTIL=$INSTALL_DIR/$(basename $UTIL)
-		echo $UTIL
-		$INSTALL_DIR/ezc $UTIL -o $O_UTIL -v1
-		strip --strip-unneeded $O_UTIL
-	done
-
-	echo Done copying
-fi
 echo Removing uneeded dirs
 
 pushd $INSTALL_DIR

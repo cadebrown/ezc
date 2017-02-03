@@ -3,7 +3,7 @@
 #
 # To develop, run `sudo make dev`
 #
-# For a full local install and upload, run `make build bundle upload`
+# For a full local install and upload, run `make build utils bundle upload`
 #
 # To build from source and build dependencies, run `make build`.
 # This will install in ./ezc/
@@ -33,8 +33,6 @@ SRC=${DIR}/src/
 REQ=true
 # if requirements are already built, do we just keep the existing ones?
 KEEP_REQ=false
-# make utils?
-UTILS=false
 
 # Global defaults
 GLOBAL_DIR=/usr/bin/
@@ -52,6 +50,7 @@ BASH_SHELL=bash
 
 # a bunch of useful macros
 INSTALL_SCRIPT=${SCRIPTS}/install.sh
+UTILS_SCRIPT=${SCRIPTS}/utils.sh
 UNINSTALL_SCRIPT=${SCRIPTS}/uninstall.sh
 BUNDLE_SCRIPT=${SCRIPTS}/bundle.sh
 UPLOAD_SCRIPT=${SCRIPTS}/upload.sh
@@ -68,11 +67,14 @@ build: install
 
 # install with set values, uninstalling first
 install: uninstall
-	-${BASH_SHELL} ${INSTALL_SCRIPT} ${DIR} ${SRC} ${REQ} ${KEEP_REQ} ${UTILS}
+	-${BASH_SHELL} ${INSTALL_SCRIPT} ${DIR} ${SRC} ${REQ} ${KEEP_REQ}
 
 # just update, don't rebuild mpfr
 update:
-	-${BASH_SHELL} ${INSTALL_SCRIPT} ${DIR} ${SRC} false true ${UTILS}
+	-${BASH_SHELL} ${INSTALL_SCRIPT} ${DIR} ${SRC} false true
+
+utils:
+	-${BASH_SHELL} ${UTILS_SCRIPT} ${DIR}
 
 # uninstall from DIR and SRC
 uninstall:
