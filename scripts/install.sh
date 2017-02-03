@@ -18,7 +18,6 @@ I_MPFR=$3
 KEEP_MPFR=$4
 MAKE_UTILS=$5
 
-ARCHIVE="ezc.tar.xz"
 mkdir -p $SRC_DIR
 mkdir -p $INSTALL_DIR
 
@@ -47,7 +46,6 @@ if [ "$KEEP_MPFR" != "true" ]; then
 			sudo brew install mpfr 
 		elif [[ "$OSTYPE" == *"BSD" ]]; then
 			echo "Asking for sudo to install packages . . ."
-			sudo pkg install gcc
 			sudo pkg install mpfr
 		elif [ "$OSTYPE" == "cygwin" ] || [ "$OSTYPE" == "msys" ]; then
 			echo "cygwin may work . . ."
@@ -98,7 +96,7 @@ if [ "$MAKE_UTILS" == "true" ]; then
 		O_UTIL=$INSTALL_DIR/$(basename $UTIL)
 		echo $UTIL
 		$INSTALL_DIR/ezc $UTIL -o $O_UTIL -v1
-		strip $O_UTIL
+		strip --strip-unneeded $O_UTIL
 	done
 
 	echo Done copying

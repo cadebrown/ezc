@@ -24,3 +24,5 @@ make install > /dev/null
 cd ..
 
 rm -Rf gmp* mpfr* share/ lib/*.la
+
+strip --strip-unneeded lib/*.a
