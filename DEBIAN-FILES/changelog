@@ -1,7 +1,16 @@
+ezc (1.3.0) testing; urgency=high
+
+  * included linker
+    - faster compile times, since we now recompile an object files
+    - can link with existing C executables by including their name
+
+ -- Cade Brown <info@chemicaldevelopment.us>  Fri, 3 Feb 2017 18:24:32 -0500
+
 ezc (1.2.3) testing; urgency=med
 
   * smaller distribution sizes
     - stripped executables, and optional util building
+
  -- Cade Brown <info@chemicaldevelopment.us>  Fri, 3 Feb 2017 15:51:20 -0500
 
 
