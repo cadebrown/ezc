@@ -69,6 +69,9 @@ build: install
 install: uninstall
 	-${BASH_SHELL} ${INSTALL_SCRIPT} ${DIR} ${SRC} ${REQ} ${KEEP_REQ}
 
+clean:
+	rm -rf ./ezc/
+
 # just update, don't rebuild mpfr
 update:
 	-${BASH_SHELL} ${INSTALL_SCRIPT} ${DIR} ${SRC} false true
