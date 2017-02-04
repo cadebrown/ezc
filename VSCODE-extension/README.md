@@ -4,5 +4,6 @@ A intermediate language which is transpiled to C. Multiprecision is built into t
 
 Made for people who don't want to use low level memory management, but want the speed it provides.
 
-[Chemical Development Docs](http://chemicaldevelopment.us/docs/ezc/) is the documentation for EZC
+[EZC Documentation](http://chemicaldevelopment.us/ezc/)
 
+[Github repository](http://github.chemicaldevelopment.us/ezc/)

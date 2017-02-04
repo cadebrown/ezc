@@ -1,6 +1,6 @@
 # Workflow
 
-If you've installed EZC, you will want to start running it outside of the terminal.
+If you've installed EZC, you may want to start running it outside of the terminal.
 
 For this tutorial, I will use VSCODE.
 
@@ -8,9 +8,11 @@ You can get it [here](https://code.visualstudio.com/)
 
 ## Set up
 
+### VSCODE
+
 To set up your workflow, install VS Code.
 
-Now, open your folder with `test.ezc` in it. Press `Ctrl+Shift+B`.
+Now, open a folder and create a file `test.ezc` in it. Press `Ctrl+Shift+B`.
 
 Click on `Configure Task Runner`, and then search `Others`
 
@@ -35,6 +37,18 @@ Now, delete all of the lines in the generated file, and paste this in:
     Copy to clipboard
 </button>
 
+### Optional: syntax highlighting
+
+If you'd like syntax highlighting
+
+
+## Running
+
 Now, to run your file, just use `Ctrl+Shift+B`
 
+Viola!
+
+Caveats:
+
+  * things that require input, like `prompt` do not work
 

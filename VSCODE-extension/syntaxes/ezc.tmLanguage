@@ -65,20 +65,12 @@
 			</array>
 		</dict>
 
-		<!-- User defined function declaration (title) Overrules default functions -->
-
-		<dict>
-			<key>match</key>
-			<string>function ([a-zA-Z_]+)</string>
-			<key>name</key>
-			<string>keyword.control.ezc.funcdef</string>
-		</dict>
 
 		<!-- User defined function declaration (args) Overrules default functions -->
 
 		<dict>
 			<key>match</key>
-			<string>\[([a-zA-Z]+)\]((?:\ [a-zA-Z0-9_])+)</string>
+			<string>\[([a-zA-Z_0-9]+)\]((?:\ [a-zA-Z0-9_])+)</string>
 			<key>name</key>
 			<string>support.type.sys-types.args</string>
 		</dict>
@@ -87,7 +79,7 @@
 
 		<dict>
 			<key>match</key>
-			<string>(@[a-zA-Z]+)</string>
+			<string>(@(\{)?[a-zA-Z_0-9]+)(.*\})?</string>
 			<key>name</key>
 			<string>support.type.sys-types.functions</string>
 		</dict>
@@ -107,7 +99,7 @@
 
 		<dict>
 			<key>match</key>
-			<string>(\!|\%|\+\*|\*|\-|\/|\~|\^|\$|\?|\√|\ζ|\!)</string>
+			<string>(\~|\^|choose|\!|\*|\/|\÷|\%|\+|\-|\~|\?)</string>
 			<key>name</key>
             <string>support.function.builtin.call.ezc</string>
 		</dict>   
@@ -136,7 +128,7 @@
 
 		<dict>
 			<key>match</key>
-			<string>(rand|sec|atan|pow|hypot|sqrt|acosh|zeta|tan|asin|sub|min|add|atanh|cbrt|mul|sin|asinh|goto|factorial|max|cos|log|sinh|asech|asec|cosh|acos|coth|trunc|csch|agm|acoth|cot|tanh|sech|acsch|acsc|exp|csc|logb|div|acot|gamma)</string>
+			<string>(svar|binomcoef|binompdf|binomcdf|binomcdf_1|normalpdf|normalcdf|erf|free|prompt|if|else|file|fi|for|rof|prec|add|sub|mul|div|pow|mod|\"|mpz|var|rawvar|intvar|rawintvar|set|sqrt|\√|cbrt|min|max|near|trunc|rand|fact|echo|printf|hypot|exp|log|agm|gamma|factorial|zeta|\ζ|pi|deg|rad|sin|cos|tan|asin|acos|atan|csc|sec|cot|acsc|asec|acot|sinh|cosh|tanh|asinh|acosh|atanh|csch|sech|coth|acsch|asech|acoth)</string>
 			<key>name</key>
 			<string>support.function.builtin.call.ezc</string>
 		</dict>  

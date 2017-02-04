@@ -19,7 +19,6 @@ printf 'The square root of your number is \n'
 var (sqrt x)
 ```
 
-
 <button class="btn" data-clipboard-text="prec $1
 x = prompt 'Enter a number'
 printf 'The square root of your number is \n'
@@ -44,6 +43,7 @@ Now, back in your terminal, make sure you are in the same directory as the file 
 
  $ ./test.o
  Enter a number: 2 <Enter>
+
  The square root of your number is 1.41421356237309504879
 ```
 
@@ -62,35 +62,30 @@ This is good for quick prototyping.
 
 # Utilities
 
-Now, to see what all utilities you have, run:
+First, [install utilities](/#/installing?id=utils)
+
+Now, you should be able to run `add 2 3`, which results in `5.000...`
+
+The full list of utils can be found [in the github repo](https://github.com/ChemicalDevelopment/ezc/tree/master/utils)
+
+## Chaining
+
+To chain together utilities, use shell substition. Wrap things in `$()` together.
+
+For example: `add $(pi) $(e)` will add e and pi, resulting in `5.8598744...`
+
+## Precision
+
+You can also use a precision: `sqrt 2 1000` prints the square root of 2 to 1000 digits.
+
+Simply append the number of digits after the last argument
+
+If you'd like to set a default precision, run:
 
 ```bash
- $ cd ~/ezc/
- $ ls
+export EZC_PREC=100
 ```
+<button class="btn" data-clipboard-text="export EZC_PREC=100">
+    Copy to clipboard
+</button>
 
-These utilities, like `add`, are commandline based, so you don't have to compile them.
-
-You use them like so (typing in lines that start with `$` into terminal):
-
-
-```bash
- $ ./add 2 3
- 5.00000000000000000000
- $ ./sqrt 2
- 1.41421356237309504879
- $ ./sqrt 2 100
- 1.4142135623730950488016887242096980785696718753769480731766797379907324784621070388503875343276415727
- $ ./pi 
- 3.14159265358979323846
- $ ./pi 100
- 3.1415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170678
-```
-
-So, for each utilities (ran with `./NAME`), you can also put an argument after the last one to set the number of digits.
-
-If you'd like to set a precision at once:
-
-```bash
- $ export EZC_PREC=100
-```
