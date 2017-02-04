@@ -39,7 +39,15 @@ Now, delete all of the lines in the generated file, and paste this in:
 
 ### Optional: syntax highlighting
 
-If you'd like syntax highlighting
+If you'd like syntax highlighting, just open vscode, press `Ctrl+P`, and run:
+
+```
+ext install ezc
+```
+
+<button class="btn" data-clipboard-text='ext install ezc'>
+    Copy to clipboard
+</button>
 
 
 ## Running
