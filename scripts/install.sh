@@ -1,7 +1,7 @@
 #!/bin/sh
 #SOURCES=`echo *.py */`
 pushd src
-SOURCES=`find ./ -type f \( -iname \*.c -o -iname \*.py  -o -iname \*.ezc \)`
+SOURCES=`find ./ -type f \( -iname \*.c -o -iname \*.py  -o -iname \*.ezc  -o -iname \*.h \)`
 popd
 
 #echo $SOURCES
