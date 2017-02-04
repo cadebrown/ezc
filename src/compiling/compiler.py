@@ -97,12 +97,7 @@ def add_compile_lines(lines):
 
 includes = """
 
-#include <time.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <mpfr.h>
-#include <math.h>
+#include "EZC.h"
 
 """
 

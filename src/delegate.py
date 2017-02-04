@@ -107,7 +107,7 @@ def get_lib_args():
 	if ezdata.EZC_LIB:
 		res += " " + ezdata.EZC_LIB + " "
 	else:
-		res += " -lmpfr -lgmp"
+		res += " -lmpfr -lgmp "
 	return res
 
 def compile_exec(file=None, out=None):

@@ -4,7 +4,7 @@ import os
 
 EZC_DIR=os.path.dirname(__file__)
 
-EZC_LIB="-lmpfr -lgmp".format(EZC_DIR)
+EZC_LIB="-lmpfr -lgmp  -I{0}/lib/".format(EZC_DIR)
 
 EZC_DOGFOOD=open(EZC_DIR + "/EZC_LIB.ezc").read()
 
