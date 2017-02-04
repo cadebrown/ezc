@@ -67,6 +67,7 @@ fi
 
 echo Installing sources in $SRC_DIR
 
+
 for SRC in $SOURCES
 do
 	parentname="$(basename "$(dirname "$SRC")")"
@@ -74,6 +75,7 @@ do
 	cp ./src/$SRC $SRC_DIR/$SRC
 done
 
+./scripts/copyutils.sh $INSTALL_DIR
 cp ./scripts/makeutils.sh $INSTALL_DIR/utils.sh
 
 echo -e $EZC_BIN > $INSTALL_DIR/ezc

@@ -1,0 +1,3 @@
+#!../src/ezcc.py -runfile
+prec $2
+var(tan $1)
