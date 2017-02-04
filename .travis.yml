@@ -8,7 +8,7 @@ language: c
 sudo: required
 
 install:
-  - make build build-utils
+  - make build
   # this will fail and say the build has cancelled
   - make check
   - make bundle package
