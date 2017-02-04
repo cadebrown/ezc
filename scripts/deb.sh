@@ -20,12 +20,22 @@ FL="ezc.deb"
 
 # Do generic install
 bash ./scripts/install.sh $EXE_PATH $SRC_PATH false
-
 rm -rf $SRC_PATH/*.pyc
 
 # Replace exe files (bc this is in whole filesystem)
 echo -e $EZC_BIN > $EXE_PATH/ezc
 echo -e $EZC_BIN > $EXE_PATH/ezcc
+
+pushd $EXE_PATH
+	rm utils.sh
+	for X in ./utils/*
+	do
+		O=$(basename $X .ezc)
+		python ../src/ezcc.py $X -o $O
+		strip --strip-unneeded $O
+	done
+	rm -Rf utils/
+popd
 
 echo "Now copying in debian files"
 cp DEBIAN-FILES/control deb-package/DEBIAN/control
