@@ -53,6 +53,8 @@ def parse_line(line):
 	Returns a line which is parsed into an intermediate format similar to to a syntax tree
 	"""
 	global needed_var
+	global full_line
+	full_line = line
 	try:
 		_never_use = needed_var
 	except:
@@ -232,6 +234,7 @@ def resolve_operators(line):
 				ret.append("mpfr_clear (%s);" % (tmp_var))
 	if not k_t:
 		ret.append(line)
+	print ret
 	return ret
 
 
@@ -241,4 +244,4 @@ def init(functions, operators, order_op):
 	regexes.init(functions, operators, order_op)
 	global order_parse
 	order_parse = [(regexes.valid_return, parse_return), (regexes.valid_function, parse_func), (regexes.valid_operator, parse_oper), (regexes.valid_user_function, parse_user_func), (regexes.valid_noarg_function, parse_noarg_func)]
-	
+full_line = None

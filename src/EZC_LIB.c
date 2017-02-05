@@ -267,9 +267,6 @@ char* ezc_mpzstr(mpfr_t r) {
 	mpfr_get_z(_t_, r, GMP_RNDN);
 	return mpz_get_str(NULL, 10, _t_);
 }
-char* ezc_mpfrstr(mpfr_t r) {
-	return mpfr_get_str(NULL, NULL, 10, 0, r, EZC_RND);
-}
 void ezc_echo(char msg[]) { 
 	printf("%s\n", msg); 
 }

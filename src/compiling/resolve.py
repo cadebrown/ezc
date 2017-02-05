@@ -34,6 +34,24 @@ def reg_args(args):
 			ret.append("mpfr_t %s; mpfr_init(%s);" % (arg, arg))
 	return (args, ret)
 
+
+def reg_args_printf(args):
+	"""
+	Regularizes arguments:
+	  - Adds init statements if neccessary, and assures that vars qualify
+	"""
+	if isinstance(args, str):
+		return reg_args([args])
+	args = map(parser.get_var, args)
+	ret = []
+	global var
+	for arg in args:
+		if parser.is_valid_arg(arg):
+			var.add(arg)
+			ret.append("mpfr_t %s; mpfr_init(%s);" % (arg, arg))
+	return (args, ret)
+
+
 def c_noarg_call(fname, args):
 	"""
 	Represents a call to a function with no arguments
@@ -70,47 +88,25 @@ def c_printf(fname, args):
 	Special case for the `printf` function
 	"""
 	global printf_replaces
-	val = " ".join(args).replace("'", "\"")
 
-	val = val.replace(",", " \\b,")
-	val = val.replace("\\", " \\b\\")
+	args = reg_args(args)
 
-	s_args = val.split("\"")[1].split("@")[1:]
+	full_line = parser.full_line.replace("'", "\"")
 
-	for i in range(0, len(s_args)):
-		s_args[i] = "@"+s_args[i].split(" ")[0]
+	string_print = full_line.split("\"")[1]
 
-	p_args = val.split("\"")[-1].split(",")[1:]
-	for i in range(0, len(p_args)):
-		p_args[i] = p_args[i].split(" ")[1]
+	fmt_args = [x[0] for x in string_print.split("@")[1:]]
+	print_args = args[0]
 
+	ci = 0
+	for x in fmt_args:
+		string_print = string_print.replace("@" + x, printf_convert_fmt[x], 1)
+		print_args[ci] = printf_convert_args[x](print_args[ci])
+		ci += 1
 
-	i = 0
-	for x in re.findall(regexes.valid_printf_varinject, val):
-		p_args = p_args + [x[1]]
-		val = val.replace(x[0], "@F", 1)
-		s_args[i] = "@F"
-		i += 1
-
-
-	if len(p_args) != len(s_args):
-		log.err("Transferring arguments", ["ERROR: Different number of formats and arguments", s_args, p_args])
-
-	for x, f in printf_convert_args:
-		for i in range(0, len(s_args)):
-			if s_args[i] == x:
-				p_args[i] = f(p_args[i])
-
-	val = "\"%s\"" % (val.split("\"")[1])
-	for fr, to in printf_replaces:
-		val = val.replace(fr, to)
-
-	p_args_str = ""
-	if len(p_args) > 0:
-		p_args_str = ", %s" % (", ".join(p_args))
-	
-	ret = "mpfr_%s(%s%s);" % (fname, val, p_args_str)
+	ret = "%smpfr_%s(\"%s\"%s);" % ("".join(args[1]), fname, string_print, "".join([", "+x for x in print_args]))
 	return ret
+
 def c_file(op, args):
 	"""
 	Special case for the `file` function
@@ -145,6 +141,7 @@ def c_call_optional_call(fname, args):
 def arg_call(op, args):
 	return c_call(op_map_funcs[op], args)
 def c_if_call(op, args):
+	print args
 	args = reg_args(args)
 	return "%sif (mpfr_cmp(%s, %s) %s 0) {" % ("".join(args[1]), args[0][0], args[0][2], args[0][1])
 def c_for_call(op, args):
@@ -194,16 +191,19 @@ def get_user_func_translate(ufunc, args):
 def printf_Z(val):
 	return "ezc_mpzstr(%s)" % (val)
 
+def printf_F(val):
+	return "ezc_prec, %s" % (val)
 
-printf_convert_args = [
-	("@Z", printf_Z)
-]
 
-printf_replaces = [
-	("@", "%"),
-	("%F", "%Rf"),
-	("%Z", "%s")	
-]
+printf_convert_fmt= {
+	"F": "%.*Rf",
+	"Z": "%s"
+}
+printf_convert_args = {
+	"F": printf_F,
+	"Z": printf_Z
+}
+
 
 var = set()
 """Variables registered"""

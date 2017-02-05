@@ -7,6 +7,8 @@
 
 mpfr_t NaN, INF, NINF;
 
+int ezc_prec;
+
 void ezc_prec_literal(long long x);
 void ezc_prec_index(int index);
 void ezc_prec_f(mpfr_t x);
@@ -55,7 +57,6 @@ void ezc_binomcoef(mpfr_t r, mpfr_t n, mpfr_t k);
 void ezc_zeta(mpfr_t r, mpfr_t a);
 
 char* ezc_mpzstr(mpfr_t r);
-char* ezc_mpfrstr(mpfr_t r);
 void ezc_echo(char msg[]);
 void ezc_printf(char msg[]);
 void ezc_varb(mpfr_t a, int base);
