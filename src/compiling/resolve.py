@@ -34,24 +34,6 @@ def reg_args(args):
 			ret.append("mpfr_t %s; mpfr_init(%s);" % (arg, arg))
 	return (args, ret)
 
-
-def reg_args_printf(args):
-	"""
-	Regularizes arguments:
-	  - Adds init statements if neccessary, and assures that vars qualify
-	"""
-	if isinstance(args, str):
-		return reg_args([args])
-	args = map(parser.get_var, args)
-	ret = []
-	global var
-	for arg in args:
-		if parser.is_valid_arg(arg):
-			var.add(arg)
-			ret.append("mpfr_t %s; mpfr_init(%s);" % (arg, arg))
-	return (args, ret)
-
-
 def c_noarg_call(fname, args):
 	"""
 	Represents a call to a function with no arguments
@@ -74,10 +56,12 @@ def c_prompt(fname, args):
 	"""
 	Special case for the `prompt` function
 	"""
-	rargs = args[1:]
-	args = [args[0]]
+	full_line = parser.full_line.replace("'", "\"")
+	pstring = full_line.split("\"")[1]
+
 	args = reg_args(args)
-	return "%s\nezc_%s(%s, %s);" % ("".join(args[1]), fname, args[0][0], " ".join(rargs).replace("'", "\""))
+
+	return "%s\nezc_%s(%s, \"%s\");" % ("".join(args[1]), fname, args[0][0], pstring)
 def c_echo(fname, args):
 	"""
 	Special case for the `echo` function
@@ -96,14 +80,13 @@ def c_printf(fname, args):
 	string_print = full_line.split("\"")[1]
 
 	fmt_args = [x[0] for x in string_print.split("@")[1:]]
-	print_args = args[0]
+	print_args = [x for x in args[0] if x != ""]
 
 	ci = 0
 	for x in fmt_args:
 		string_print = string_print.replace("@" + x, printf_convert_fmt[x], 1)
 		print_args[ci] = printf_convert_args[x](print_args[ci])
 		ci += 1
-
 	ret = "%smpfr_%s(\"%s\"%s);" % ("".join(args[1]), fname, string_print, "".join([", "+x for x in print_args]))
 	return ret
 
@@ -141,7 +124,6 @@ def c_call_optional_call(fname, args):
 def arg_call(op, args):
 	return c_call(op_map_funcs[op], args)
 def c_if_call(op, args):
-	print args
 	args = reg_args(args)
 	return "%sif (mpfr_cmp(%s, %s) %s 0) {" % ("".join(args[1]), args[0][0], args[0][2], args[0][1])
 def c_for_call(op, args):
@@ -194,13 +176,17 @@ def printf_Z(val):
 def printf_F(val):
 	return "ezc_prec, %s" % (val)
 
+def printf_f(val):
+	return "10, %s" % (val)
 
 printf_convert_fmt= {
 	"F": "%.*Rf",
+	"f": "%.*Rf",
 	"Z": "%s"
 }
 printf_convert_args = {
 	"F": printf_F,
+	"f": printf_f,
 	"Z": printf_Z
 }
 
@@ -214,13 +200,13 @@ not_vars = []
 protected_words = ["RETURN", "NaN", "INF", "NINF", "set"]
 """Constants"""
 
-functions = "svar,binomcoef,binompdf,binomcdf,binomcdf_1,normalpdf,normalcdf,erf,free,prompt,if,else,file,fi,for,rof,prec,add,sub,mul,div,pow,mod,\",mpz,var,rawvar,intvar,rawintvar,set,sqrt,\\√,cbrt,min,max,near,trunc,rand,fact,echo,printf,hypot,exp,log,agm,gamma,factorial,zeta,\\ζ,pi,deg,rad,sin,cos,tan,asin,acos,atan,csc,sec,cot,acsc,asec,acot,sinh,cosh,tanh,asinh,acosh,atanh,csch,sech,coth,acsch,asech,acoth".split(",")
+functions = "getprec,time,wait,stime,etime,svar,binomcoef,binompdf,binomcdf,binomcdf_1,normalpdf,normalcdf,erf,free,prompt,if,else,file,fi,for,rof,prec,add,sub,mul,div,pow,mod,\",mpz,var,rawvar,intvar,rawintvar,set,sqrt,\\√,cbrt,min,max,near,trunc,rand,fact,echo,printf,hypot,exp,log,agm,gamma,factorial,zeta,\\ζ,pi,deg,rad,sin,cos,tan,asin,acos,atan,csc,sec,cot,acsc,asec,acot,sinh,cosh,tanh,asinh,acosh,atanh,csch,sech,coth,acsch,asech,acoth".split(",")
 """Callable functions"""
 
-operators = "~,^,choose,!,*,/,÷,%,+,-,~,?".split(",")
+operators = "~,^,choose,*,/,÷,%,+,-,~,?".split(",")
 """Callable operators"""
 
-order_op = [group.split(",") for group in "?,!,~,choose,,^,,*,/,÷,%,,+,-".split(",,")]
+order_op = [group.split(",") for group in "?,~,choose,,^,,*,/,÷,%,,+,-".split(",,")]
 """Order of operators"""
 
 op_map_funcs = {
@@ -234,7 +220,6 @@ op_map_funcs = {
 	"~": "near",
 	"?": "rand",
 	"choose": "binomcoef",
-	"!": "fact",
 }
 """Maps operators to functions"""
 

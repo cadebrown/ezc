@@ -1,4 +1,4 @@
-# EZC 1.3.0
+# EZC 1.3.2
 
 ## What is EZC?
 
@@ -19,12 +19,12 @@ It can calculate sums and equations very fast.
 
 For example, to calculate the square root of 2 to 100000000 digits (100 million, or 10^8)
 
- * EZC takes 14.09 s
+ * EZC takes 10.25 s
  * python's Decimal class takes so long it wont finish
  * python package mpmath takes at least 2 minutes
  * gmpy2 seems to outperform at roughly 9.6 s
 
-The base for EZC is written in C, and in fact, EZC is translated to C then compiled, so you can inject C code for full performance.
+The base for EZC is written in C, and in fact, EZC is translated to C then compiled. Additionally, you can write c code and interface with that in EZC.
 
 Also, many custom functions, such as binomcdf, normalcdf, etc are implemented in EZC.
 

@@ -31,7 +31,10 @@ def get_built_static_hash():
 		hfl.close()
 		return ret
 	else:
-		os.makedirs(os.path.dirname(filename))
+		try:
+			os.makedirs(os.path.dirname(ezdata.EZC_STATIC_LIB_HASH))
+		except:
+			pass
 		return str(-1)
 
 def gen_static_lib():
@@ -121,10 +124,16 @@ def compile_exec(file=None, out=None):
 	if out is None:
 		out = args["o"]
 	_linked = ""
+	_cfiles = ""
 	for x in args["files"]:
-		if x[-4:] != ".ezc":
+		if x[-4:] == ".ezc":
+			pass
+		elif x[-2:] == ".c":
+			_cfiles += " {0}".format(x)
+		else:
 			_linked += " {0}".format(x)
-	cmd = "%s -w %s %s %s %s %s -o %s" % (args["cc"], args["ccargs"], get_ezc_lib_args(), _linked, file, get_lib_args(), out)
+
+	cmd = "%s -w %s %s %s %s %s %s -o %s" % (args["cc"], args["ccargs"], get_ezc_lib_args(), _linked, _cfiles, file, get_lib_args(), out)
 	log.info("Compiling", cmd)
 	compile_proc = Popen(cmd, shell=True)
 	compile_proc.wait()

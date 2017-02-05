@@ -1,3 +1,13 @@
+/*
+
+C 2017 ChemicalDevelopment (GPL v3)
+
+EZC.h 1.3.2
+
+Contains header for EZC.c
+*/
+
+
 #include <time.h>
 #include <stdio.h>
 #include <string.h>
@@ -7,12 +17,21 @@
 
 mpfr_t NaN, INF, NINF;
 
-int ezc_prec;
+long long ezc_prec;
+
+void ezc_getprec(mpfr_t r);
 
 void ezc_prec_literal(long long x);
 void ezc_prec_index(int index);
 void ezc_prec_f(mpfr_t x);
 void ezc_prec_init();
+
+void ezc_stime();
+void ezc_etime();
+void ezc_time(mpfr_t r);
+
+void ezc_wait(mpfr_t w);
+
 
 void ezc_free(mpfr_t r);
 void ezc_prompt(mpfr_t r, char *prompt);

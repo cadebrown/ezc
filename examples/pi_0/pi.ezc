@@ -1,0 +1,39 @@
+###
+
+Example 0: PI
+
+calculating pi using a few different methods.
+
+Notice that the builtin ones normally use the same method (since they are special values), so most system math functions are the same.
+
+###
+
+# at least 20
+prec (max 20 $1)
+
+stime
+	x = (pi)
+etime
+t1 = (time)
+
+mpfr_free_cache();
+stime
+	x = (acos -1)
+etime
+t2 = (time)
+
+mpfr_free_cache();
+stime
+	x = 4*(atan 1)
+etime
+t3 = (time)
+
+mpfr_free_cache();
+stime
+	# this is the slowest because it is calculating -.5 factorial. Very expensive
+	x = (fact -.5)^2
+etime
+t4 = (time)
+
+# print the results
+printf (t1) (t2) (t3) (t4) -> "builtin @f, acos @f, atan @f, fact @f\n"

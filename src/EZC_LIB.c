@@ -1,11 +1,15 @@
-#include <time.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <mpfr.h>
-#include <math.h>
+/*
 
-//testing
+C 2017 ChemicalDevelopment (GPL v3)
+
+EZC.c 1.3.2
+
+Contains development library for ezc.
+
+*/
+
+#include "EZC.h"
+
 int ezc_size_consts = 50, ezc_consts_id = 0, ezc_consts_ov = 0;
 gmp_randstate_t ezc_rand_state;
 mpfr_t *ezc_consts;
@@ -20,6 +24,31 @@ mpfr_t NaN, INF, NINF;
 
 int _argc;
 char **_argv;
+
+struct timeval start, stop;
+
+void ezc_stime() {
+	gettimeofday(&start, NULL);
+}
+void ezc_etime() {
+	gettimeofday(&stop, NULL);
+}
+void ezc_wait(mpfr_t w) {
+	struct timespec ts;
+	double _wv =  mpfr_get_d(w, EZC_RND);
+	ts.tv_sec = (int)_wv;
+	ts.tv_nsec = (int)(1000000000.0*(_wv - ((long)_wv)));
+	nanosleep(&ts, NULL);
+}
+
+void ezc_time(mpfr_t r) {
+	mpfr_set_d(r, ((double)(stop.tv_usec - start.tv_usec) / 1000000 + (double)(stop.tv_sec - start.tv_sec)), EZC_RND);
+}
+
+
+void ezc_getprec(mpfr_t x) {
+	mpfr_set_si(x, ezc_prec, EZC_RND);
+}
 
 void ezc_prec_literal(long long x) {
 	if (x < EZC_MIN_PREC) x = EZC_MIN_PREC;

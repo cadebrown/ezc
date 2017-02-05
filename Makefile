@@ -50,6 +50,7 @@ BASH_SHELL=bash
 
 # a bunch of useful macros
 INSTALL_SCRIPT=${SCRIPTS}/install.sh
+CHECK_SCRIPT=${SCRIPTS}/check.sh
 COPY_UTILS_SCRIPT=${SCRIPTS}/copyutils.sh
 UNINSTALL_SCRIPT=${SCRIPTS}/uninstall.sh
 BUNDLE_SCRIPT=${SCRIPTS}/bundle.sh
@@ -89,7 +90,7 @@ global:
 
 # check installation
 check:
-	${DIR}/ezcc ${EX_FILE} ${EZCC_FLAGS}
+	${BASH_SHELL} ${CHECK_SCRIPT}
 
 # makes a REQ, and puts it in SRC (so the compiler can get it later)
 req:

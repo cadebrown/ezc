@@ -234,7 +234,6 @@ def resolve_operators(line):
 				ret.append("mpfr_clear (%s);" % (tmp_var))
 	if not k_t:
 		ret.append(line)
-	print ret
 	return ret
 
 
