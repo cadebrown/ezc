@@ -98,7 +98,7 @@ check:
 
 # bundles software
 distrib:
-	${BASH_SHELL} ${DIR} ${CC}
+	${BASH_SHELL} ${DISTRIB_SCRIPT} ${DIR} ${CC}
 
 # makes a REQ, and puts it in SRC (so the compiler can get it later)
 req:
