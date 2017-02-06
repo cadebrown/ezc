@@ -39,6 +39,7 @@ GLOBAL_DIR=/usr/bin/
 GLOBAL_SRC=/usr/src/ezc/
 
 EZCC=$(realpath ${DIR}/ezc)
+CC=/usr/bin/cc
 
 # what file to test
 EX_FILE=example.ezc
@@ -53,6 +54,7 @@ BASH_SHELL=bash
 # a bunch of useful macros
 INSTALL_SCRIPT=${SCRIPTS}/install.sh
 CHECK_SCRIPT=${SCRIPTS}/check.sh
+DISTRIB_SCRIPT=${SCRIPTS}/distrib.sh
 COPY_UTILS_SCRIPT=${SCRIPTS}/copyutils.sh
 UNINSTALL_SCRIPT=${SCRIPTS}/uninstall.sh
 BUNDLE_SCRIPT=${SCRIPTS}/bundle.sh
@@ -93,6 +95,10 @@ global:
 # check installation
 check:
 	${BASH_SHELL} ${CHECK_SCRIPT} ${EZCC}
+
+# bundles software
+distrib:
+	${BASH_SHELL} ${DIR} ${CC}
 
 # makes a REQ, and puts it in SRC (so the compiler can get it later)
 req:

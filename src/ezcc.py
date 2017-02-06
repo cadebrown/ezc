@@ -17,6 +17,8 @@ def main():
 	#import EZlogger as log
 	from ezlogging import log
 	import delegate
+	import ezdata
+
 
 	# set args
 	parser = argparse.ArgumentParser(description='Compile EZC Language. v%s http://github.chemicaldevelopment.us/ezc' % (log.version))
@@ -25,9 +27,9 @@ def main():
 
 	parser.add_argument('-v', default=0, type=int, help='Verbosity level')
 
-	parser.add_argument('-tmp', default="`mktemp /tmp/XXXXX`", help='Tmp file')
+	parser.add_argument('-tmp', default=ezdata.tmp, help='Tmp file')
 
-	parser.add_argument('-cc', default="cc", help='C Compiler')
+	parser.add_argument('-cc', default=ezdata.cc, help='C Compiler')
 	parser.add_argument('-ccargs', default="", help='C Compiler arguments')
 	parser.add_argument('-args', default="", help='Arguments ran on executable')
 
