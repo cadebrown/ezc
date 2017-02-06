@@ -38,6 +38,8 @@ KEEP_REQ=false
 GLOBAL_DIR=/usr/bin/
 GLOBAL_SRC=/usr/src/ezc/
 
+EZCC=$(realpath ${DIR}/ezc)
+
 # what file to test
 EX_FILE=example.ezc
 # what flags to run
@@ -90,7 +92,7 @@ global:
 
 # check installation
 check:
-	${BASH_SHELL} ${CHECK_SCRIPT}
+	${BASH_SHELL} ${CHECK_SCRIPT} ${EZCC}
 
 # makes a REQ, and puts it in SRC (so the compiler can get it later)
 req:

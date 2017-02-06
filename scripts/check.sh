@@ -8,7 +8,7 @@ echo "Checking $EXAMPLES"
 for EX in $EXAMPLES
 do
 	pushd $EX
-		make check EZCC=../../ezc/ezc
+		make check EZCC=$1
 		rc=$?; if [[ $rc != 0 ]]; then exit $rc; fi
 	popd
 done

@@ -79,33 +79,14 @@ def c_printf(fname, args):
 
 	string_print = full_line.split("\"")[1]
 
-	fmt_args = []
-	for x in string_print.split("@")[1:]:
-		if x[0] == '[':
-			ls = x.split("]")[0].replace("[", "").split(",")
-			#x = x.replace('[', "").replace("]", "").split(",")
-			x = x[0:x.index("]")+1]
-			fmt_args.append((x, ls[0], ls[1:]))
-		else:
-			for fmt in sorted(printf_convert_fmt.keys(), key=len, reverse=True):
-				if x.startswith(fmt):
-					fmt_args.append((fmt, fmt, (None, )))
-
-	#fmt_args = [x[0] for x in string_print.split("@")[1:]]
+	fmt_args = [x[0] for x in string_print.split("@")[1:]]
 	print_args = [x for x in args[0] if x != ""]
 
 	ci = 0
-	for fmt in fmt_args:
-		string_print = string_print.replace("@" + fmt[0], printf_convert_fmt[fmt[1]], 1)
-		
-		to_call = fmt[2]
-		if len(to_call) == 0 or to_call[0] is None:
-			print_args[ci] = printf_convert_args[fmt[1]](print_args[ci])
-		else:
-			print_args[ci] = printf_convert_args[fmt[1]](print_args[ci], to_call)
-
+	for x in fmt_args:
+		string_print = string_print.replace("@" + x, printf_convert_fmt[x], 1)
+		print_args[ci] = printf_convert_args[x](print_args[ci])
 		ci += 1
-
 	ret = "%smpfr_%s(\"%s\"%s);" % ("".join(args[1]), fname, string_print, "".join([", "+x for x in print_args]))
 	return ret
 
@@ -189,28 +170,22 @@ def get_user_func_translate(ufunc, args):
 	return c_user_call(ufunc, args)
 
 
-def printf_Z(val, settings=[]):
-	return "ezc_mpzstr({0})".format(val)
+def printf_Z(val):
+	return "ezc_mpzstr(%s)" % (val)
 
-def printf_F(val, settings=["ezc_prec"]):
-	return "{0}, {1}".format(settings[0], val)
+def printf_F(val):
+	return "ezc_prec, %s" % (val)
 
-def printf_f(val, settings=[10]):
-	return "{0}, {1}".format(settings[0], val)
-
-def printf_sf(val, settings=[10]):
-	return "{0}, {1}".format(settings[0], val)
-
+def printf_f(val):
+	return "10, %s" % (val)
 
 printf_convert_fmt= {
 	"F": "%.*Rf",
-	"sf": "%.*Re",
 	"f": "%.*Rf",
 	"Z": "%s"
 }
 printf_convert_args = {
 	"F": printf_F,
-	"sf": printf_sf,
 	"f": printf_f,
 	"Z": printf_Z
 }
