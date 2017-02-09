@@ -3,7 +3,7 @@
 
 DIR=$1
 
-PLATFORM = $(./scripts/platform.sh)
+PLATFORM=$(./scripts/platform.sh)
 
 ARCHIVE="ezc-${PLATFORM}.tar.xz"
 

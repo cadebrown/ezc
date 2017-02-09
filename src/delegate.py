@@ -43,6 +43,9 @@ def gen_static_lib():
 	from compiling import compiler
 	compiler.init()
 
+	_ezclib = "" + ezdata.EZC_LIB
+	ezdata.EZC_LIB = ezdata.EZC_GSLLIB
+
 	compiler.start = ""
 	compiler.main = ""
 	compiler.end = ""
@@ -50,7 +53,8 @@ def gen_static_lib():
 	compiler.add_c_code(ezdata.EZC_C)
 	compiler.add_code(ezdata.EZC_DOGFOOD)
 
-	_cca = " -fPIC -c "
+	#_cca = " -fPIC -c "
+	_cca = " -c "
 
 	args["ccargs"] += _cca
 	
@@ -73,6 +77,9 @@ def gen_static_lib():
 	hashwrite.close()
 
 	compiler.reset()
+
+	ezdata.EZC_LIB = _ezclib
+	
 
 def remove_file(fn):
 	"""
@@ -106,12 +113,7 @@ def get_lib_args():
 	"""
 	Returns the c compiler's linking options for gmp and mpfr
 	"""
-	res = "-lm "
-	if ezdata.EZC_LIB:
-		res += " " + ezdata.EZC_LIB + " "
-	else:
-		res += " -lmpfr -lgmp "
-	return res
+	return ezdata.EZC_LIB
 
 def compile_exec(file=None, out=None):
 	"""

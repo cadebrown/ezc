@@ -23,7 +23,6 @@ PLATFORM=$(./scripts/platform.sh)
 
 echo Operating System Type: $PLATFORM
 
-PA=`python -c "import os.path; print os.path.relpath('$SRC_DIR', '$INSTALL_DIR')"`
 EZC_BIN="#!/bin/sh \npython \$(dirname \$0)/src/ezcc.py \"\${@}\" \n"
 
 echo $EZC_BIN

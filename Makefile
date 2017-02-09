@@ -39,7 +39,10 @@ GLOBAL_DIR=/usr/bin/
 GLOBAL_SRC=/usr/src/ezc/
 
 EZCC=$(realpath ${DIR}/ezc)
-CC=/usr/bin/cc
+
+CC=/usr/bin/tcc
+PY=/usr/bin/python
+PYDIR=/usr/lib/python2.7 
 
 # what file to test
 EX_FILE=example.ezc
@@ -85,7 +88,7 @@ check:
 
 # bundles software
 distrib:
-	${SH} ${SCRIPTS}/distrib.sh ${DIR} ${CC}
+	${SH} ${SCRIPTS}/distrib.sh ${DIR} ${CC} ${PY} ${PYDIR}
 
 # makes a REQ, and puts it in SRC (so the compiler can get it later)
 req:

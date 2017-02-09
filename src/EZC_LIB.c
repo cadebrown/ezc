@@ -266,6 +266,7 @@ void ezc_binomcoef(mpfr_t r, mpfr_t n, mpfr_t k) {
 		mpfr_set_z(r, __ret, EZC_RND);
 		return;
 	}
+	// todo add better algo
 	// (n!)/(k!(n-k)!)
 	/*mpfr_t __prod; mpfr_init(__prod);
 	mpfr_t c_m; mpfr_init(c_m);
