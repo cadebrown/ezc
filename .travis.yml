@@ -12,7 +12,6 @@ install:
   # this will fail and say the build has cancelled
   - make check
   - make bundle package
-#  - make build
 
 script:
   - make upload

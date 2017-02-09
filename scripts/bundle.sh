@@ -1,29 +1,19 @@
-#!/bin/bash
+#!/bin/sh
 # bundles tar
 
 DIR=$1
 
-if [[ "$OSTYPE" == "linux-gnu" ]]; then
-	TYPE="linux"
-elif [[ "$OSTYPE" == "darwin"* ]]; then
-	TYPE="mac"
-elif [[ "$OSTYPE" == *"BSD" ]]; then
-	TYPE="bsd"
-elif [ "$OSTYPE" == "cygwin" ] || [ "$OSTYPE" == "msys" ]; then
-	TYPE="cygwin"
-else
-	TYPE="generic"
-fi
+PLATFORM = $(./scripts/platform.sh)
 
-ARCHIVE="ezc-$TYPE.tar.xz"
+ARCHIVE="ezc-${PLATFORM}.tar.xz"
 
 echo "Tarring $DIR into $ARCHIVE"
 TO=$PWD
 echo "PWD: $TO"
 
-pushd $DIR
+cd $DIR
 tar cvzf $TO/$ARCHIVE ./
-popd
+cd $TO
 
 echo "Done tarring"
 

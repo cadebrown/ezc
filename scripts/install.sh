@@ -1,8 +1,8 @@
 #!/bin/sh
 #SOURCES=`echo *.py */`
-pushd src
+cd src
 SOURCES=`find ./ -type f \( -iname \*.c -o -iname \*.py  -o -iname \*.ezc  -o -iname \*.h \)`
-popd
+cd ..
 
 #echo $SOURCES
 
@@ -18,7 +18,10 @@ KEEP_MPFR=$4
 mkdir -p $SRC_DIR
 mkdir -p $INSTALL_DIR
 
-echo Operating System Type: $OSTYPE
+PLATFORM=$(./scripts/platform.sh)
+
+
+echo Operating System Type: $PLATFORM
 
 PA=`python -c "import os.path; print os.path.relpath('$SRC_DIR', '$INSTALL_DIR')"`
 EZC_BIN="#!/bin/sh \npython \$(dirname \$0)/src/ezcc.py \"\${@}\" \n"
@@ -26,28 +29,26 @@ EZC_BIN="#!/bin/sh \npython \$(dirname \$0)/src/ezcc.py \"\${@}\" \n"
 echo $EZC_BIN
 
 if [ "$KEEP_MPFR" != "true" ]; then
-	if [[ "$I_MPFR" == "true" ]]; then
+	if [ "$I_MPFR" = "true" ]; then
 		echo "Going to build MPFR"
 	else
 		# Install dependencies
-		if [[ "$OSTYPE" == "linux-gnu" ]]; then
-			echo "Asking for sudo to install packages . . ."
-			if [[ $(cat /etc/debian_version) ]]; then
+		if [ "$PLATFORM" = "linux" ]; then
+			if [ $(cat /etc/debian_version) ]; then
+				echo "Asking for sudo to install packages . . ."
 				sudo apt-get install libmpfr-dev
-			elif [[ $(cat /etc/fedora-release) ]]; then
+			elif [ $(cat /etc/fedora-release) ]; then
+				echo "Asking for sudo to install packages . . ."
 				sudo dnf install mpfr-devel
 			fi
-		elif [[ "$OSTYPE" == "darwin"* ]]; then
+
+		elif [ "$PLATFORM" = "mac" ]; then 
 			echo "Asking for sudo to install packages . . ."
 			sudo brew install gcc48
 			sudo brew install mpfr 
-		elif [[ "$OSTYPE" == *"BSD" ]]; then
-			echo "Asking for sudo to install packages . . ."
-			sudo pkg install mpfr
-		elif [ "$OSTYPE" == "cygwin" ] || [ "$OSTYPE" == "msys" ]; then
-			echo "cygwin may work . . ."
-			echo "building mpfr from source:"
-			I_MPFR="true"
+		elif [ "$PLATFORM" = "bsd" ]; then 
+			echo "Asking for su to install packages . . ."
+			su -c "pkg install mpfr"
 		else
 			echo "Warning: OS not found."
 			echo "Building MPFR from source"
@@ -55,13 +56,13 @@ if [ "$KEEP_MPFR" != "true" ]; then
 		fi
 	fi
 
-
-	if [ "$I_MPFR" == "true" ]; then
+	if [ "$I_MPFR" = "true" ]; then
 		echo "Installing MPFR from source"
-		bash ./scripts/req.sh $SRC_DIR
-		pushd $SRC_DIR
+		./scripts/req.sh $SRC_DIR
+		FROM=$PWD
+		cd $SRC_DIR
 		rm -Rf share/
-		popd
+		cd $FROM
 	fi
 fi
 
@@ -78,27 +79,28 @@ done
 ./scripts/copyutils.sh $INSTALL_DIR
 cp ./scripts/makeutils.sh $INSTALL_DIR/utils.sh
 
-echo -e $EZC_BIN > $INSTALL_DIR/ezc
-echo -e $EZC_BIN > $INSTALL_DIR/ezcc
+echo $EZC_BIN > $INSTALL_DIR/ezc
+echo $EZC_BIN > $INSTALL_DIR/ezcc
 
 chmod +x $INSTALL_DIR/ezc
 chmod +x $INSTALL_DIR/ezcc
 
-if [ "$I_MPFR" == "true" ] || [ "$KEEP_MPFR" == "true" ]; then
+if [ "$I_MPFR" = "true" ] || [ "$KEEP_MPFR" = "true" ]; then
 	printf "\nEZC_LIB=\"-w -I%%s/include/ %%s/lib/libmpfr.a %%s/lib/libgmp.a\" %% (EZC_DIR, EZC_DIR, EZC_DIR)\n" >> $SRC_DIR/ezdata.py
 fi
 
 echo Removing uneeded dirs
 
-pushd $INSTALL_DIR
+FROM=$PWD
+cd $INSTALL_DIR
 rm -Rf share/
 rm a.out
-popd
+cd $FROM
 
-pushd $SRC_DIR
+cd $SRC_DIR
 DTFMT=`date +'%Y-%m-%d %H:%M:%S %z'`
 printf "\ndate=\"$DTFMT\"" >> ezlogging/log.py
-popd
+cd $FROM
 
 echo "If you got any permissions errors, please open an issue: https://github.com/ChemicalDevelopment/ezc/issues"
 

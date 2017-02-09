@@ -1,31 +1,34 @@
-#!/bin/bash
-RED='\033[0;31m'
+#!/bin/sh
+RED='\033[31m'
 NC='\033[0m'
-BOLD='\e[1m'
+BOLD='\033[1m'
 
-# Install dependencies
-if [[ "$OSTYPE" == "linux-gnu" ]]; then
-	if [[ $(cat /etc/debian_version) ]]; then
+PLATFORM=$(./scripts/platform.sh)
+
+if [ "$PLATFORM" = "linux" ]; then
+	if [ $(cat /etc/debian_version) ]; then
 		ARCHIVE="ezc.deb"
-	elif [[ $(cat /etc/fedora-release) ]]; then
-		# todo add .rpm package
+	elif [ $(cat /etc/fedora-release) ]; then
 		ARCHIVE="ezc.rpm"
+
 		echo "RPM not supported"
 		exit -1
 	fi
-elif [[ "$OSTYPE" == *"BSD" ]]; then
+elif [ "$PLATFORM" == "mac" ]; then
+	ARCHIVE="ezc.app"
+
+	echo "macOS not supported"
+	exit -1
+elif [ "$PLATFORM" == "bsd" ]; then
 	echo "BSD not supported"
 	exit -1
-elif [[ "$OSTYPE" == "darwin"* ]]; then
-	# todo add .app
-	echo "macOS not supported"
-	ARCHIVE="ezc.app"
-	exit -1
 else
+	echo "Cant find the OS"
 	exit -1
 fi
 
-ARCHIVE=`echo $ARCHIVE`
+
+ARCHIVE=$(echo $ARCHIVE)
 
 echo "Uploading archive $ARCHIVE"
 

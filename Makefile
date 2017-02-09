@@ -49,22 +49,9 @@ EZCC_FLAGS=-run -v5
 # what scripts directory
 SCRIPTS=./scripts/
 
-BASH_SHELL=bash
+SH=/bin/sh
 
 # a bunch of useful macros
-INSTALL_SCRIPT=${SCRIPTS}/install.sh
-CHECK_SCRIPT=${SCRIPTS}/check.sh
-DISTRIB_SCRIPT=${SCRIPTS}/distrib.sh
-COPY_UTILS_SCRIPT=${SCRIPTS}/copyutils.sh
-UNINSTALL_SCRIPT=${SCRIPTS}/uninstall.sh
-BUNDLE_SCRIPT=${SCRIPTS}/bundle.sh
-UPLOAD_SCRIPT=${SCRIPTS}/upload.sh
-PACKAGE_SCRIPT=${SCRIPTS}/package.sh
-UPLOAD_PACKAGE_SCRIPT=${SCRIPTS}/uploadpackage.sh
-VSCE_SCRIPT=${SCRIPTS}/vsce.sh
-DOCS_SCRIPT=${SCRIPTS}/docs.sh
-REQ_SCRIPT=${SCRIPTS}/req.sh
-
 
 # builds in directory (install)
 build: install
@@ -72,21 +59,21 @@ build: install
 
 # install with set values, uninstalling first
 install:
-	-${BASH_SHELL} ${INSTALL_SCRIPT} ${DIR} ${SRC} ${REQ} ${KEEP_REQ}
+	-${SH} ${SCRIPTS}/install.sh ${DIR} ${SRC} ${REQ} ${KEEP_REQ}
 
 clean:
 	rm -rf ./ezc/
 
 # just update, don't rebuild mpfr
 update:
-	-${BASH_SHELL} ${INSTALL_SCRIPT} ${DIR} ${SRC} false true
+	-${SH} ${SCRIPTS}/install.sh ${DIR} ${SRC} false true
 
-copy-utils:
-	-${BASH_SHELL} ${COPY_UTILS_SCRIPT} ${DIR}
+copyutils:
+	-${SH} ${SCRIPTS}/copyutils.sh ${DIR}
 
 # uninstall from DIR and SRC
 uninstall:
-	-${BASH_SHELL} ${UNINSTALL_SCRIPT} ${DIR} ${SRC}
+	-${SH} ${SCRIPT}/uninstall.sh ${DIR} ${SRC}
 
 # use this makefile
 global:
@@ -94,32 +81,32 @@ global:
 
 # check installation
 check:
-	${BASH_SHELL} ${CHECK_SCRIPT} ${EZCC}
+	${SH} ${SCRIPTS}/check.sh ${EZCC}
 
 # bundles software
 distrib:
-	${BASH_SHELL} ${DIR} ${CC}
+	${SH} ${SCRIPTS}/distrib.sh ${DIR} ${CC}
 
 # makes a REQ, and puts it in SRC (so the compiler can get it later)
 req:
-	-${BASH_SHELL} ${REQ_SCRIPT} ${SRC}
+	-${SH} ${SCRIPTS}/req.sh ${SRC}
 
 # bundles into a tar. It figures out the name of the archive
 bundle:
-	-${BASH_SHELL} ${BUNDLE_SCRIPT} ${DIR}
+	-${SH} ${SCRIPTS}/bundle.sh ${DIR}
 
 # makes a .deb, .rpm, .app, .pkg etc
 package:
-	-${BASH_SHELL} ${PACKAGE_SCRIPT}
+	-${SH} ${SCRIPTS}/package.sh
 
 # uploads package
 upload-package:
-	-${BASH_SHELL} ${UPLOAD_PACKAGE_SCRIPT}
+	-${SH} ${SCRIPTS}/uploadpackage.sh
 
 # publishes Visual Studio Code Extension (requires GPG key that only I have)
 vsce:
-	-${BASH_SHELL} ${VSCE_SCRIPT}
+	-${SH} ${SCRIPTS}/vsce.sh
 
 # uploads and prints a link to the file to download
 upload:
-	-${BASH_SHELL} ${UPLOAD_SCRIPT}
+	-${SH} ${SCRIPTS}/upload.sh

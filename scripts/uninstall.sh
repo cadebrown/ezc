@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 cd src
 SOURCES=`echo *.py */`
 cd ..

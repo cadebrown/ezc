@@ -1,18 +1,20 @@
-#!/bin/bash
+#!/bin/sh
 
-# Install dependencies
-if [[ "$OSTYPE" == "linux-gnu" ]]; then
-	if [[ $(cat /etc/debian_version) ]]; then
+PLATFORM=$(./scripts/platform.sh)
+
+if [ "$PLATFORM" = "linux" ]; then
+	if [ $(cat /etc/debian_version) ]; then
 		bash  ./scripts/deb.sh "${@}"
-	elif [[ $(cat /etc/fedora-release) ]]; then
+	elif [ $(cat /etc/fedora-release) ]; then
 		echo "Fedora/RPM not supported"
-		# todo add .rpm package
 	fi
-elif [[ "$OSTYPE" == *"BSD" ]]; then
-	echo "BSD not supported"
-elif [[ "$OSTYPE" == "darwin"* ]]; then
-	# todo add .app
+elif [ "$PLATFORM" == "mac" ]; then
 	echo "macOS not supported"
+elif [ "$PLATFORM" == "bsd" ]; then
+	echo "BSD not supported"
 else
+	echo "Cant find the OS"
 	exit -1
 fi
+
+
