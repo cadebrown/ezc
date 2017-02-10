@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from parsing import parser, regexes
-
 from ezlogging import log
+
 import re
 
 
@@ -25,7 +25,7 @@ def reg_args(args):
 	"""
 	if isinstance(args, str):
 		return reg_args([args])
-	args = map(parser.get_var, args)
+	args = list(map(parser.get_var, args))
 	ret = []
 	global var
 	global var_lvl

@@ -22,16 +22,17 @@ def main():
 
 	# set args
 	parser = argparse.ArgumentParser(description='Compile EZC Language. v%s http://github.chemicaldevelopment.us/ezc' % (log.version))
+
 	parser.add_argument('files', metavar='files', type=str, nargs='*', default=[], help='files to compile')
 	parser.add_argument('-o', default="a.out", help='Output file')
 
 	parser.add_argument('-v', default=0, type=int, help='Verbosity level')
 
-	parser.add_argument('-tmp', default=ezdata.tmp, help='Tmp file')
+	parser.add_argument('-tmp', default=ezdata.tmp, type=str, help='Tmp file')
 
-	parser.add_argument('-cc', default=ezdata.cc, help='C Compiler')
-	parser.add_argument('-ccargs', default="", help='C Compiler arguments')
-	parser.add_argument('-args', default="", help='Arguments ran on executable')
+	parser.add_argument('-cc', default=ezdata.cc, type=str, help='C Compiler')
+	parser.add_argument('-ccargs', default="", type=str, help='C Compiler arguments')
+	parser.add_argument('-args', default="", type=str, help='Arguments ran on executable')
 
 	parser.add_argument('-run', action='store_true', help='Run executable')
 	parser.add_argument('-runfile', action='store_true', help='Run from shebang file')
@@ -46,12 +47,11 @@ def main():
 
 	args = vars(parser.parse_args())
 
-	if "mktemp" in args["tmp"]:
-		#args["tmp"] = os.popen("echo " + args["tmp"]).read()
-		args["tmp"] = subprocess.check_output("echo " + args["tmp"], shell=True).strip()
-		#print ret
+	print (args)
+
 	if args["tmp"] == '':
 		args["tmp"] = "./out.c"
+
 	if args["tmp"][-2:] != ".c":
 		args["tmp"] = args["tmp"] + ".c"
 

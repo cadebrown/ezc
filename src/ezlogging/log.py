@@ -1,6 +1,7 @@
 name = "EZCC"
 
 version = "1.3.2"
+
 import time
 #time.strftime("%Y-%m-%d %H:%M:%S %z")
 date=time.strftime("%Y-%m-%d %H:%M:%S %z")
@@ -46,7 +47,7 @@ verbosity = 0
 silent = False
 
 def print_single(st, offset, c):
-	print "%s%s>%s" % ("  "*(offset+1), c[0]+BOLD, RESET+c[1] + " " + st)
+	print ("{0}{1}>{2}".format("  "*(offset+1), c[0]+BOLD, RESET+c[1] + " " + st))
 
 def base_print(col, task, st, verbose=0):
 	if not isinstance(st, list):
@@ -58,7 +59,7 @@ def base_print(col, task, st, verbose=0):
 		
 		for s in st:
 			print_single(str(s), 1, col)
-		print "%s" % (DEFAULT) 
+		print ("{0}".format(DEFAULT))
 
 def hello(st, v=3):
     base_print((BOLD,CYN), name, st, v)
@@ -84,4 +85,4 @@ def init(_verbose=0, _silent=False):
 
 def end():
 	if int(verbosity) > 0 and not silent:
-		print "%s" % (RESET)
+		print ("{0}".format(RESET))

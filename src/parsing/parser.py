@@ -4,7 +4,9 @@ Parses function calls, operators, definintions, etc
 
 """
 
-import re, regexes
+import re
+
+from parsing import regexes
 
 def is_user_function(line):
 	"""
@@ -67,7 +69,7 @@ def parse_line(line):
 	for x in to_process:
 		for y in resolve_operators(x):
 			ret.append(y)
-	return map(get_statement, ret)
+	return list(map(get_statement, ret))
 
 def get_statement(line):
 	"""

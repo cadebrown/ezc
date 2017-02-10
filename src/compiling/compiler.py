@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
+import ezdata
+
+from compiling import resolve
 from parsing import parser
 from ezlogging import log
-import ezdata
-import resolve
 
 
 def init():
@@ -97,7 +98,7 @@ def add_compile_lines(lines):
 				user_funcs += res
 			else:
 				main += res
-		except Exception, e:
+		except Exception as e:
 			log.err("Compiling (Line %d)" % (line_num), ["Error while parsing:", str(e)])
 
 
