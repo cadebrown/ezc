@@ -5,7 +5,7 @@ import os
 EZC_DIR=os.path.dirname(__file__)
 
 EZC_LIB="-lm -lmpfr -lgmp -L{0}/lib/ -I{0}/include/".format(EZC_DIR)
-EZC_GSLLIB="-L{0}/lib/ -I{0}/include/".format(EZC_DIR)
+EZC_GSLLIB=" -L{0}/lib/ -I{0}/include/".format(EZC_DIR)
 
 cc = "cc"
 tmp = "`mktemp /tmp/XXXXX`"

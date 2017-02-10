@@ -8,11 +8,6 @@ COPYPYDIR=$4
 
 # copy a c compiler
 if [ "$COPYCC" != "" ]; then
-	if [ test -e $COPYCC ]; then
-
-	else
-		$COPYCC=$(which cc)
-	fi
 	cp $COPYCC $DIR/src/cc
 	printf "\ncc = '{0}/cc'.format(EZC_DIR)\n" >> $DIR/src/ezdata.py
 fi
