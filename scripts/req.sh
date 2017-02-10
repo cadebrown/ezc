@@ -13,15 +13,15 @@ cd $BUILD_DIR
 curl $GMP_TAR > gmp.tar.xz
 tar xfv gmp.tar.xz  >/dev/null 2>&1
 cd gmp-*
-./configure --disable-shared --enable-fat --enable-static --prefix=$BUILD_DIR  >/dev/null 2>&1
-make install  >/dev/null 2>&1
+./configure --disable-shared --enable-fat --enable-static --prefix=$BUILD_DIR
+make install
 cd ..
 
 curl $MPFR_TAR > mpfr.tar.xz
 tar xvf mpfr.tar.xz  >/dev/null 2>&1
 cd mpfr-*
-./configure --disable-shared --enable-fat --enable-static --prefix=$BUILD_DIR --with-gmp=$BUILD_DIR >/dev/null 2>&1
-make install >/dev/null 2>&1
+./configure --disable-shared --enable-fat --enable-static --prefix=$BUILD_DIR --with-gmp=$BUILD_DIR
+make install
 cd ..
 
 rm -Rf gmp* mpfr* share/ lib/*.la
