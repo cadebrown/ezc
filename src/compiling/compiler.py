@@ -55,6 +55,7 @@ def compile_line(line):
 		to_proc = [line]
 	for x in to_proc:
 		for y in parser.parse_line(x):
+			resolve.is_func = is_func
 			ret += "\n\t%s" % (resolve.get_c_st(y))
 	return ret
 

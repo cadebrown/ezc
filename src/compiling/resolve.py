@@ -28,11 +28,34 @@ def reg_args(args):
 	args = map(parser.get_var, args)
 	ret = []
 	global var
+	global var_lvl
+	global var_lvl_func
+	global c_lvl
 	for arg in args:
 		if parser.is_valid_arg(arg) and arg not in var and "_tmp_" not in arg and arg not in not_vars and arg not in protected_words:
 			var.add(arg)
+			var_lvl[arg] = c_lvl
 			ret.append("mpfr_t %s; mpfr_init(%s);" % (arg, arg))
 	return (args, ret)
+
+def go_up_lvl():
+	global c_lvl
+	c_lvl += 1
+
+def go_down_lvl():
+	global c_lvl
+	global var_lvl
+	global var
+	global var_lvl_func
+	_tovar = var.copy()
+	for arg in var:
+		#if arg in var_lvl_func:
+		var_lvl_func[arg] = []
+		if var_lvl[arg] == c_lvl:
+			_tovar.remove(arg)
+	var = _tovar
+	c_lvl -= 1
+
 
 def c_noarg_call(fname, args):
 	"""
@@ -144,15 +167,18 @@ def arg_call(op, args):
 	return c_call(op_map_funcs[op], args)
 def c_if_call(op, args):
 	args = reg_args(args)
+	go_up_lvl()
 	return "%sif (mpfr_cmp(%s, %s) %s 0) {" % ("".join(args[1]), args[0][0], args[0][2], args[0][1])
 def c_for_call(op, args):
 	if len(args) <= 3:
 		args = args + ["ezc_next_const(\"1\")"]
 	args = reg_args(args)
+	go_up_lvl()
 	return "%sfor (ezc_set(%s, %s); mpfr_cmp(%s, %s) == -ezc_sgn(%s); ezc_add(%s, %s, %s)) {" % ("".join(args[1]), args[0][0], args[0][1], args[0][0], args[0][2], args[0][3], args[0][0], args[0][0], args[0][3])
 def c_elseblock(op, args):
 	return "} else {"
 def c_endblock(op, args):
+	go_down_lvl()
 	return "}"
 
 def get_function_translate(fname, args):
@@ -217,6 +243,12 @@ printf_convert_args = {
 
 
 var = set()
+var_lvl = {}
+var_lvl_func = {}
+c_lvl = 0
+
+is_func = False
+
 """Variables registered"""
 
 not_vars = []

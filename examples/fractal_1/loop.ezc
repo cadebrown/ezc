@@ -1,0 +1,82 @@
+###
+
+Example 1: fractal
+
+Mandelbrot fractal!
+
+Run like:
+
+./fractal.o X Y ZOOM TRIALS
+
+And it will generate a picture of the mandelbrot fractal centered at X+Yi zoomed in to ZOOM and iterated with TRIALS
+
+
+###
+
+centerx = $1
+centery = $2
+
+zoom = $3
+trials = $4
+
+prec (max 20 $5)
+
+if (zoom) == (0)
+	zoom = 1
+fi
+
+if (trials) == (0)
+	trials = 50
+fi
+
+# complex function z**2+c
+[z2c] ra rb a b x y
+	atmp = (a*a-b*b) + x
+	btmp = (2*a*b) + y
+	ra = atmp
+	rb = btmp
+[/z2c]
+
+
+[mand] sa sb iter
+	ta = sa
+	tb = sb
+	tmp = 0
+	for k 0 iter
+		tmp = (@z2c ta tb ta tb sa sb)
+	rof
+	return (ta^2 + tb^2 - 4)
+[/mand]
+
+# at least 20
+prec (max 20 $1)
+
+N=10
+
+for i 0 (N+1)
+	for j 0 (i+1)
+		printf (j) -> "@Z "
+	rof
+	printf "\n"
+rof
+
+
+for i (N-1) (-1) (-1)
+	for j 0 (i+1)
+		printf (j) -> "@Z "
+	rof
+	printf "\n"
+rof
+
+v = .05/zoom
+
+for i (centery-1.0/zoom) (centery+1.0/zoom) (2*v)
+	for j (centerx-2.0/zoom) (centerx+2.0/zoom) (v)
+		if (@mand j i trials) < (0)
+			printf (j) -> "*"
+		else
+			printf (j) -> " "
+		fi
+	rof
+	printf "\n"
+rof
