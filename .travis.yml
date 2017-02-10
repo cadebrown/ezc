@@ -7,6 +7,9 @@ language: c
 # needed
 sudo: required
 
+compiler:
+  - gcc
+
 install:
   - make build
   # this will fail and say the build has cancelled

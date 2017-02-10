@@ -40,7 +40,7 @@ GLOBAL_SRC=/usr/src/ezc/
 
 EZCC=$(realpath ${DIR}/ezc)
 
-CC=/usr/bin/tcc
+CC=/usr/bin/gcc
 PY=/usr/bin/python
 PYDIR=/usr/lib/python2.7 
 
