@@ -1,6 +1,6 @@
 #!/bin/sh
 
-GMP_TAR="https://gmplib.org/download/gmp/gmp-6.1.1.tar.xz"
+GMP_TAR="https://gmplib.org/download/gmp/gmp-6.1.2.tar.xz"
 MPFR_TAR="http://www.mpfr.org/mpfr-current/mpfr-3.1.5.tar.xz"
 
 BUILD_DIR=$(readlink -f $1)
@@ -13,14 +13,14 @@ cd $BUILD_DIR
 curl $GMP_TAR > gmp.tar.xz
 tar xfv gmp.tar.xz  >/dev/null 2>&1
 cd gmp-*
-./configure --disable-shared --enable-fat --enable-static --prefix=$BUILD_DIR
+./configure --disable-shared --enable-fat --enable-static --prefix=$BUILD_DIR >/dev/null 2>&1
 make install
 cd ..
 
 curl $MPFR_TAR > mpfr.tar.xz
 tar xvf mpfr.tar.xz  >/dev/null 2>&1
 cd mpfr-*
-./configure --disable-shared --enable-fat --enable-static --prefix=$BUILD_DIR --with-gmp=$BUILD_DIR
+./configure --disable-shared --enable-fat --enable-static --prefix=$BUILD_DIR --with-gmp=$BUILD_DIR >/dev/null 2>&1
 make install
 cd ..
 
