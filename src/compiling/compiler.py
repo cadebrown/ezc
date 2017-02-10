@@ -104,6 +104,8 @@ def add_compile_lines(lines):
 
 includes = """
 
+#include "EZC.h"
+
 #include <time.h>
 #include <stdio.h>
 #include <string.h>

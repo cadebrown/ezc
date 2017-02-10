@@ -5,8 +5,8 @@ import tempfile
 
 EZC_DIR=os.path.dirname(__file__)
 
-EZC_LIB="-lm -lmpfr -lgmp -L{0}/lib/ -I{0}/include/".format(EZC_DIR)
-EZC_GSLLIB=" -L{0}/lib/ -I{0}/include/".format(EZC_DIR)
+EZC_LIB=" -fcommon -lm -lmpfr -lgmp -L{0}/lib/ -I{0}/include/".format(EZC_DIR)
+EZC_GSLLIB=" -fcommon -L{0}/lib/ -I{0}/include/".format(EZC_DIR)
 
 cc = "cc"
 tmp = tempfile.mktemp('.c')
