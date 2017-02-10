@@ -29,14 +29,51 @@ def reg_args(args):
 	ret = []
 	global var
 	global var_lvl
-	global var_lvl_func
 	global c_lvl
+
 	for arg in args:
-		if parser.is_valid_arg(arg) and arg not in var and "_tmp_" not in arg and arg not in not_vars and arg not in protected_words:
+		if parser.is_valid_arg(arg) and "_tmp_" not in arg and arg not in not_vars and arg not in protected_words and (arg not in var):
 			var.add(arg)
-			var_lvl[arg] = c_lvl
+			if arg not in var_lvl:
+				var_lvl[arg] = c_lvl
 			ret.append("mpfr_t %s; mpfr_init(%s);" % (arg, arg))
 	return (args, ret)
+
+def go_in_func():
+	global _c_lvl; global c_lvl
+	global _var_lvl; global var_lvl
+	global _var; global var
+
+	var_tmp = var.copy()
+	var = _var.copy()
+	_var = var_tmp
+
+	var_lvl_tmp = var_lvl.copy()
+	var_lvl = _var_lvl.copy()
+	_var_lvl = var_lvl_tmp
+	
+	c_lvl_tmp = c_lvl + 0
+	c_lvl = _c_lvl + 0
+	_c_lvl = c_lvl_tmp
+
+
+def go_out_func():
+	global _c_lvl; global c_lvl
+	global _var_lvl; global var_lvl
+	global _var; global var
+
+	var_tmp = var.copy()
+	var = _var.copy()
+	_var = set()
+
+	var_lvl_tmp = var_lvl.copy()
+	var_lvl = _var_lvl.copy()
+	_var_lvl = {}
+	
+	c_lvl_tmp = c_lvl + 0
+	c_lvl = _c_lvl + 0
+	_c_lvl = 0
+
 
 def go_up_lvl():
 	global c_lvl
@@ -46,13 +83,11 @@ def go_down_lvl():
 	global c_lvl
 	global var_lvl
 	global var
-	global var_lvl_func
 	_tovar = var.copy()
 	for arg in var:
-		#if arg in var_lvl_func:
-		var_lvl_func[arg] = []
 		if var_lvl[arg] == c_lvl:
 			_tovar.remove(arg)
+
 	var = _tovar
 	c_lvl -= 1
 
@@ -244,8 +279,12 @@ printf_convert_args = {
 
 var = set()
 var_lvl = {}
-var_lvl_func = {}
 c_lvl = 0
+
+_var = set()
+_var_lvl = {}
+_c_lvl = 0
+
 
 is_func = False
 

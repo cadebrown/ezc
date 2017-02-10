@@ -6,7 +6,7 @@ Mandelbrot fractal!
 
 Run like:
 
-./fractal.o X Y ZOOM TRIALS
+./fractal.o X Y ZOOM TRIALS[ PREC]
 
 And it will generate a picture of the mandelbrot fractal centered at X+Yi zoomed in to ZOOM and iterated with TRIALS
 
@@ -37,12 +37,11 @@ fi
 	rb = btmp
 [/z2c]
 
-
 [mand] sa sb iter
 	ta = sa
 	tb = sb
 	tmp = 0
-	for k 0 iter
+	for i 0 iter
 		tmp = (@z2c ta tb ta tb sa sb)
 	rof
 	return (ta^2 + tb^2 - 4)

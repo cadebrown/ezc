@@ -63,7 +63,7 @@ def add_compile_lines(lines):
 	"""
 	Takes an array-like of EZC code which then is translated to C, and added to variables so that it can be compiled by a C compiler.
 	"""
-	global main; global user_funcs; global is_func
+	global main; global user_funcs; global is_func; global current_func
 	to_read = True
 	c_read = True
 	line_num = 0
@@ -77,6 +77,11 @@ def add_compile_lines(lines):
 			else:
 				if parser.is_user_function(line):
 					is_func = not is_func
+					if is_func:
+						resolve.go_in_func()
+					else:
+						resolve.go_out_func()
+					current_func = parser.is_user_function(line)[2]
 					user_funcs += parser.is_user_function(line)[0]
 					resolve.not_vars = parser.is_user_function(line)[1]
 				else:
@@ -116,4 +121,6 @@ main = """"""
 end = """"""
 
 is_func = False
+current_func = None
+
 default_file=""

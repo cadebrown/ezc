@@ -12,9 +12,9 @@ def is_user_function(line):
 	"""
 	if re.findall(regexes.valid_declare_user_function, line):
 		res = re.findall(regexes.valid_declare_user_function, line)[0]
-		return ("void ezc_%s(mpfr_t RETURN, mpfr_t %s) {" % (res[0].replace("@", ""), ", mpfr_t ".join(res[1].split())), res[1])
+		return ("void ezc_%s(mpfr_t RETURN, mpfr_t %s) {" % (res[0].replace("@", ""), ", mpfr_t ".join(res[1].split())), res[1].split(), res[0].replace("@", ""))
 	elif re.findall(regexes.valid_end_user_function, line):
-		return ("}", [])
+		return ("}", [], None)
 
 def __fits(pattern, text):
 	"""
