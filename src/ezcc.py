@@ -47,8 +47,6 @@ def main():
 
 	args = vars(parser.parse_args())
 
-	print (args)
-
 	if args["tmp"] == '':
 		args["tmp"] = "./out.c"
 
