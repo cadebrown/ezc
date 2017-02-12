@@ -26,7 +26,7 @@
 
 # These three are the only ones that should be changed!
 # directory to install to
-DIR=./ezc/
+DIR=${PWD}/ezc/
 # source directory to store sources into
 SRC=${DIR}/src/
 # whether or not to use a built version of requirements (GMP, MPFR, etc)
@@ -38,7 +38,7 @@ KEEP_REQ=false
 GLOBAL_DIR=/usr/bin/
 GLOBAL_SRC=/usr/src/ezc/
 
-EZCC=$(realpath ${DIR}/ezc)
+EZCC=${DIR}/ezc
 
 CC=/usr/bin/cc
 PY=/usr/bin/python

@@ -12,8 +12,8 @@
 # run with `EZCC=ezcc` to test a non-git version
 EZCC=python ../../src/ezcc.py
 
-EZC_SRC=$(wildcard *.ezc)
-C_SRC=$(wildcard *.c)
+EZC_SRC=fractal.ezc
+C_SRC=
 
 PREC=2500
 FLAGS=-v1

@@ -3,7 +3,7 @@
 import os
 import tempfile
 
-EZC_DIR=os.path.dirname(__file__)
+EZC_DIR=os.path.dirname(os.path.realpath(__file__))
 
 EZC_LIB=" -fcommon -lm -lmpfr -lgmp -L{0}/lib/ -I{0}/include/".format(EZC_DIR)
 EZC_GSLLIB=" -fcommon -L{0}/lib/ -I{0}/include/".format(EZC_DIR)
