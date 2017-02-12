@@ -23,7 +23,7 @@ PLATFORM=$(./scripts/platform.sh)
 
 echo Operating System Type: $PLATFORM
 
-EZC_BIN=$"#!/bin/sh \npython \$(dirname \$0)/src/ezcc.py \"\${@}\" \n"
+EZC_BIN="#!/bin/sh \npython \$(dirname \$0)/src/ezcc.py \"\${@}\" \n"
 
 echo $EZC_BIN
 
@@ -78,8 +78,8 @@ done
 ./scripts/copyutils.sh $INSTALL_DIR
 cp ./scripts/makeutils.sh $INSTALL_DIR/utils.sh
 
-echo $EZC_BIN > $INSTALL_DIR/ezc
-echo $EZC_BIN > $INSTALL_DIR/ezcc
+printf $EZC_BIN > $INSTALL_DIR/ezc
+printf $EZC_BIN > $INSTALL_DIR/ezcc
 
 chmod +x $INSTALL_DIR/ezc
 chmod +x $INSTALL_DIR/ezcc
