@@ -2,7 +2,7 @@
 
 C 2017 ChemicalDevelopment (GPL v3)
 
-EZC.c 1.3.2
+EZC.c 1.4.0
 
 Contains development library for ezc.
 

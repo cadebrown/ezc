@@ -5,7 +5,7 @@ Installed-Size: 112
 Maintainer: Cade Brown <info@chemicaldevelopment.us>
 Depends: gcc, libc6, libgmp-dev, libmpfr-dev, python
 Priority: optional
-Version: 1.3.0
+Version: 1.4.0
 Description: Compiler for EZC and included utilities
  Compiles EZC
  github.chemicaldevelopment.us/ezc

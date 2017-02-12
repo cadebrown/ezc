@@ -1,3 +1,14 @@
+###
+
+C 2017 ChemicalDevelopment (GPL v3)
+
+EZC.c 1.4.0
+
+Contains development library for ezc.
+
+###
+
+
 [binompdf] n p k
 	return (n choose k) * p^k * (1-p)^(n-k)
 [/binompdf]

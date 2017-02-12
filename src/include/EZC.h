@@ -2,7 +2,7 @@
 
 C 2017 ChemicalDevelopment (GPL v3)
 
-EZC.h 1.3.2
+EZC.h 1.4.0
 
 Contains header for EZC.c
 */

@@ -21,6 +21,12 @@ You can think of it like a calculator language, but with more functions and more
 
 [EZC Documentation](http://chemicaldevelopment.us/ezc/)
 
+# Status
+
+Currently working on implementing in C/cpp!
+
+(long ways)
+
 # Installation
 
 If any errors are produced, please open an [issue](https://github.com/ChemicalDevelopment/ezc/issues)
