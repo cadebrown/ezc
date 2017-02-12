@@ -33,9 +33,9 @@ def init(functions, operators, order_op):
 valid_break = "[ ,><=]*"
 valid_get_arg = "\$[0-9]+"
 valid_var = "[_a-zA-Z][_a-zA-Z0-9]*|%s" % (valid_get_arg)
-valid_const = "(?:\-|\+)?[0-9\.]+"
-valid_const_nosign = "[0-9\.]+"
-valid_const_sign = "(?:\-|\+)[0-9\.]+"
+valid_const = "(?:\-|\+)?[0-9\.]+(?:e[0-9]+)?"
+valid_const_nosign = "[0-9\.][0-9\.]+(?:e[0-9]+)?"
+valid_const_sign = "(?:\-|\+)[0-9\.]+(?:e[0-9]+)?"
 valid_arg = "(?:%s|%s)" % (valid_var, valid_const)
 valid_arg_nosign = "(?:%s|%s)" % (valid_var, valid_const_nosign)
 valid_arg_sign = "(?:%s|%s)" % (valid_var, valid_const_sign)
