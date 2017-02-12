@@ -23,7 +23,7 @@ PLATFORM=$(./scripts/platform.sh)
 
 echo Operating System Type: $PLATFORM
 
-EZC_BIN="#!/bin/sh \npython \$(dirname \$0)/src/ezcc.py \"\${@}\" \n"
+EZC_BIN=$(printf "#!/bin/sh \npython \$(dirname \$0)/src/ezcc.py \"\${@}\" \n")
 
 echo $EZC_BIN
 
