@@ -16,17 +16,19 @@ def main():
 	# our other file
 	#import EZlogger as log
 	from ezlogging import log
+	import ezlogging
 	import delegate
 	import ezdata
+	import parsing
 
 
 	# set args
-	parser = argparse.ArgumentParser(description='Compile EZC Language. v%s http://github.chemicaldevelopment.us/ezc' % (log.version))
+	parser = argparse.ArgumentParser(description='Compile EZC Language. v{0} http://github.chemicaldevelopment.us/ezc'.format(ezlogging.version))
 
 	parser.add_argument('files', metavar='files', type=str, nargs='*', default=[], help='files to compile')
 	parser.add_argument('-o', default="a.out", help='Output file')
 
-	parser.add_argument('-v', default=0, type=int, help='Verbosity level')
+	parser.add_argument('-v', default=2, type=int, help='Verbosity level')
 
 	parser.add_argument('-tmp', default=ezdata.tmp, type=str, help='Tmp file')
 
@@ -63,19 +65,22 @@ def main():
 
 	delegate.init(args)
 
-	if args["genstaticlib"] or (delegate.get_built_static_hash() != delegate.get_live_static_hash()):
-		delegate.gen_static_lib()
+	try:
+		if args["genstaticlib"] or (delegate.get_built_static_hash() != delegate.get_live_static_hash()):
+			delegate.gen_static_lib()
+		if args["e"]:
+			to_run = "\n".join(sys.stdin)
+			delegate.transpile(to_run)
+		elif args["c"]:
+			delegate.transpile(args["c"])
+		else:
+			delegate.compile_files(args["files"])
 
-	if args["e"]:
-		to_run = "\n".join(sys.stdin)
-		delegate.transpile(to_run)
-	elif args["c"]:
-		delegate.transpile(args["c"])
-	else:
-		delegate.compile_files(args["files"])
+		if do_run:
+			delegate.run_exec()
 
-	if do_run:
-		delegate.run_exec()
+	except parsing.EZCSyntaxError as e:
+		log.err("Compiling", str(e))
 
 	pass
 

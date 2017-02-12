@@ -1,44 +1,23 @@
 # -*- coding: utf-8 -*-
 import ezdata
 
+import compiling
 from compiling import resolve
+
+import parsing
 from parsing import parser
+
 from ezlogging import log
-
-
-def init():
-	"""
-	Initialize parsing with functions from resolve module
-	"""
-	parser.init(resolve.functions, resolve.operators, resolve.order_op)
-	reset()
-	
-def reset():
-	global start, main, end, default_file, user_funcs
-	start = ""
-	main =  """
-
-int main(int argc, char *argv[]) {
-	ezc_init(argc, argv);
-	
-"""
-	end = """
-	return 0;
-}
-"""
-	default_file = ""
-	user_funcs = ""
 
 def get_c_file():
 	"""
 	Return transpiled EZC into C code, which can be compiled by cc
 	This should be called after add_code and right before compile step.
 	"""
-	return includes + default_file + user_funcs + start + main + end
+	return compiling.includes + compiling.default_file + compiling.user_funcs + compiling.start + compiling.main + compiling.end
 
 def add_c_code(file_contents):
-	global default_file
-	default_file += file_contents
+	compiling.default_file += file_contents
 
 def add_code(file_contents):
 	"""
@@ -56,7 +35,6 @@ def compile_line(line):
 		to_proc = [line]
 	for x in to_proc:
 		for y in parser.parse_line(x):
-			resolve.is_func = is_func
 			ret += "\n\t%s" % (resolve.get_c_st(y))
 	return ret
 
@@ -64,66 +42,36 @@ def add_compile_lines(lines):
 	"""
 	Takes an array-like of EZC code which then is translated to C, and added to variables so that it can be compiled by a C compiler.
 	"""
-	global main; global user_funcs; global is_func; global current_func
 	to_read = True
 	c_read = True
-	line_num = 0
+	compiling.line_num = 0
 	for line in lines:
-		try:
-			res = ""
-			line_num += 1
-			if parser.is_literal(line):
-				log.info("Compiling (Line %d)" % (line_num), ["C code detected", line])
-				res += "\n\t" + line
-			else:
-				if parser.is_user_function(line):
-					is_func = not is_func
-					if is_func:
-						resolve.go_in_func()
-					else:
-						resolve.go_out_func()
-					current_func = parser.is_user_function(line)[2]
-					user_funcs += parser.is_user_function(line)[0]
-					resolve.not_vars = parser.is_user_function(line)[1]
+		res = ""
+		compiling.line_num += 1
+		if parser.is_literal(line):
+			cinfo = parsing.EZCInfo("C Code detected", line, compiling.line_num)
+			log.info("Compiling", str(cinfo))
+			res += "\n\t" + line
+		else:
+			if parser.is_user_function(line):
+				compiling.is_func = not compiling.is_func
+				if compiling.is_func:
+					resolve.go_in_func()
 				else:
-					if "###" in line:
-						line = line[:line.index("###")]
-						to_read = not to_read
-					if "#" in line:
-						line = line[:line.index("#")]
-					if line != "" and (to_read or c_read):
-						res += compile_line(line)
-					c_read = to_read
-			if is_func:
-				user_funcs += res
+					resolve.go_out_func()
+				compiling.current_func = parser.is_user_function(line)[2]
+				compiling.user_funcs += parser.is_user_function(line)[0]
+				compiling.not_vars = parser.is_user_function(line)[1]
 			else:
-				main += res
-		except Exception as e:
-			log.err("Compiling (Line %d)" % (line_num), ["Error while parsing:", str(e)])
-
-
-includes = """
-
-#include "EZC.h"
-
-#include <time.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <mpfr.h>
-#include <math.h>
-
-"""
-
-user_funcs=""""""
-
-start=""""""
-
-main = """"""
-
-end = """"""
-
-is_func = False
-current_func = None
-
-default_file=""
+				if "###" in line:
+					line = line[:line.index("###")]
+					to_read = not to_read
+				if "#" in line:
+					line = line[:line.index("#")]
+				if line != "" and (to_read or c_read):
+					res += compile_line(line)
+				c_read = to_read
+		if compiling.is_func:
+			compiling.user_funcs += res
+		else:
+			compiling.main += res

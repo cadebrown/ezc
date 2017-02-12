@@ -1,88 +1,65 @@
-name = "EZCC"
+import ezlogging
+import sys
 
-version = "1.4.0"
+def print_title(title, color=ezlogging.CYAN):
+	if title != "":
+		sys.stdout.write(color + title)
 
-import time
-#time.strftime("%Y-%m-%d %H:%M:%S %z")
-date=time.strftime("%Y-%m-%d %H:%M:%S %z")
-
-authors=["Cade Brown <cade@cade.site>"]
-
-RESET = '\033[0m'
-
-DEFAULT = '\033[39m'
-WHT = '\033[97m'
-BLK = '\033[30m'
-
-RED = '\033[31m'
-LRED = '\033[91m'
-
-GRN = '\033[32m'
-LGRN = '\033[92m'
-
-YLW = '\033[33m'
-LYLW = '\033[93m'
-
-BLU = '\033[34m'
-LBLU = '\033[94m'
-
-MAG = '\033[35m'
-LMAG = '\033[95m'
-
-CYN = '\033[36m'
-LCYN = '\033[96m'
-
-LGRA = '\033[37m'
-DGRA = '\033[90m'
-
-
-BOLD = '\033[1m'
-DIM = '\033[2m'
-UNDR = '\033[4m'
-BLINK = '\033[5m'
-INV = '\033[7m'
-HIDE = '\033[8m'
-
-verbosity = 0
-silent = False
-
-def print_single(st, offset, c):
-	print ("{0}{1}>{2}".format("  "*(offset+1), c[0]+BOLD, RESET+c[1] + " " + st))
-
-def base_print(col, task, st, verbose=0):
-	if not isinstance(st, list):
-		base_print(col, task, [st], verbose)
-		return
-	global verbosity
-	if verbose >= 0 and int(verbose) <= int(verbosity):
-		print_single(task, 0, col)
+def print_message(message, color=ezlogging.DEFAULT, indent=1):
+	if message != "":
+		for i in range(0, indent):
+			sys.stdout.write("  ")
+		sys.stdout.write(color + message)
+		sys.stdout.write("\n")
 		
-		for s in st:
-			print_single(str(s), 1, col)
-		print ("{0}".format(DEFAULT))
 
-def hello(st, v=3):
-    base_print((BOLD,CYN), name, st, v)
+def print_messages(messages, color=ezlogging.DEFAULT, indent=1):
+	if isinstance(messages, list):
+		newmessages = []
+		for msglines in messages:
+			for msg in msglines.split('\n'):
+				newmessages.append(msg)
+		messages = newmessages
+	else:
+		if len(messages.split("\n")) > 1:
+			newmessages = []
+			for msg in messages.split('\n'):
+				newmessages.append(msg)
+			messages = newmessages
+	if isinstance(messages, list):
+		print_reset()
+		for msg in messages:
+			print_message(msg, color, indent)
+	else:
+		sys.stdout.write(color + ": " + messages)
 
-def extra(task, st, v=3):
-    base_print((LBLU, MAG), task, st, v)
+def print_reset():
+	sys.stdout.write("\n")
+	sys.stdout.write(ezlogging.RESET)
 
-def info(task, st, v=2):
-    base_print((LCYN, LGRN), task, st, v)
+def print_base(title, message, colors=[ezlogging.CYAN, ezlogging.DEFAULT]):
+	print_title(title, colors[0])
+	print_messages(message, colors[1])
+	print_reset()
 
-def warn(task, st, v=1):
-    base_print((LRED, YLW+BOLD), task, st, v)
+def err(title, message):
+	print_base(title, message, [ezlogging.RED + ezlogging.BOLD + ezlogging.BLINK, ezlogging.RBOLD + ezlogging.LGRAY])
 
-def err(task, error, v=0):
-    base_print((RED, YLW+BOLD+UNDR+BLINK), task, error, v)
+def warn(title, message):
+	if ezlogging.verbosity >= 1:
+		print_base(title, message, [ezlogging.LYELLOW + ezlogging.BOLD, ezlogging.RBOLD + ezlogging.DGRAY])
 
-def init(_verbose=0, _silent=False):
-	global verbosity; global silent
-	verbosity = _verbose
-	silent = _silent
-	hello(["Version: %s" % (version), "Date: %s" % (date)])
-	extra("Authors", authors)
+def info(title, message):
+	if ezlogging.verbosity >= 2:
+		print_base(title, message, [ezlogging.BLUE + ezlogging.BOLD, ezlogging.RBOLD + ezlogging.DEFAULT])
 
-def end():
-	if int(verbosity) > 0 and not silent:
-		print ("{0}".format(RESET))
+def extra(title, message):
+	if ezlogging.verbosity >= 3:
+		print_base(title, message, [ezlogging.CYAN, ezlogging.DIM + ezlogging.DEFAULT])
+
+def init(verbose):
+	ezlogging.verbosity = verbose
+	info(ezlogging.name, ezlogging.version)
+	extra("Date", ezlogging.date)
+	extra("Authors", ezlogging.authors)
+

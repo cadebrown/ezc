@@ -6,6 +6,9 @@ from parsing import parser
 from ezlogging import log
 import ezdata
 
+import compiling
+from compiling import compiler
+
 args = None
 has_dogfood = False
 
@@ -40,8 +43,7 @@ def get_built_static_hash():
 def gen_static_lib():
 	global args
 	
-	from compiling import compiler
-	compiler.init()
+	
 
 	_ezclib = "" + ezdata.EZC_LIB
 	ezdata.EZC_LIB = ezdata.EZC_GSLLIB
@@ -151,8 +153,7 @@ def compile_files(sources):
 	A list of file names
 	"""
 	global args
-	from compiling import compiler
-	compiler.init()
+	
 	
 	# loops through, compiling and saving
 	for src in sources:
@@ -172,7 +173,7 @@ def transpile(text):
 	"""
 	global args
 	from compiling import compiler
-	compiler.init()
+	
 
 	addcode(text, compiler)
 	outf = open(args["tmp"], "w+")
