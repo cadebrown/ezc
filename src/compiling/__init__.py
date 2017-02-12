@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import resolve
+import compiling.resolve
 
 import parsing
 

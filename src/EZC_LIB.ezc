@@ -22,7 +22,7 @@ Contains development library for ezc.
 [/binomcdf]
 
 [normalpdf_1] x
-	return (1 / (sqrt (2*(pi)))) * (exp (-.5*x^2))
+	return ((exp ((-.5)*x^2)) / (sqrt (2*(pi))))
 [/normalpdf_1]
 
 [normalpdf] x u o

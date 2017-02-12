@@ -42,15 +42,13 @@ def get_built_static_hash():
 
 def gen_static_lib():
 	global args
-	
-	
 
 	_ezclib = "" + ezdata.EZC_LIB
 	ezdata.EZC_LIB = ezdata.EZC_GSLLIB
 
-	compiler.start = ""
-	compiler.main = ""
-	compiler.end = ""
+	compiling.start = ""
+	compiling.main = ""
+	compiling.end = ""
 
 	compiler.add_c_code(ezdata.EZC_C)
 	compiler.add_code(ezdata.EZC_DOGFOOD)
@@ -78,7 +76,7 @@ def gen_static_lib():
 	hashwrite.write(get_live_static_hash())
 	hashwrite.close()
 
-	compiler.reset()
+	compiling.reset()
 
 	ezdata.EZC_LIB = _ezclib
 	

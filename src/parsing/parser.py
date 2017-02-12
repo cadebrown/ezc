@@ -87,6 +87,8 @@ def get_statement(line):
 				line = op[1](rr[0])
 	if k_t and re.findall(parsing.valid_assign, line) and "set" not in line:
 		line = get_statement(line.replace("=", "= set "))
+	if isinstance(line, str) and line != "" and line[-1] != ";":
+		return ""
 	return line
 
 def get_tmp_var():
