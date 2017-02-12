@@ -19,8 +19,7 @@ def get_c_st(ret):
 		if ret == "":
 			return ""
 		if not isinstance(ret, list):
-			return get_c_st([ret])
-
+			return ret
 		return compiling.type_resolve_dict[ret[0]](ret[1][0], ret[1][1])
 	return ret
 

@@ -9,6 +9,8 @@ from parsing import parser
 
 from ezlogging import log
 
+import re
+
 def get_c_file():
 	"""
 	Return transpiled EZC into C code, which can be compiled by cc
@@ -29,10 +31,7 @@ def add_code(file_contents):
 
 def compile_line(line):
 	ret = ""
-	if ":" in line:
-		to_proc = line.split(":")
-	else:
-		to_proc = [line]
+	to_proc = re.split("(?<!\\\\)\\;", line)
 	for x in to_proc:
 		for y in parser.parse_line(x):
 			ret += "\n\t%s" % (resolve.get_c_st(y))

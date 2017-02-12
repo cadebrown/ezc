@@ -51,7 +51,7 @@ valid_const_sign = "(?:\-|\+)[0-9\.]+(?:e[0-9]+)?"
 valid_arg = "(?:%s|%s)" % (valid_var, valid_const)
 valid_arg_nosign = "(?:%s|%s)" % (valid_var, valid_const_nosign)
 valid_arg_sign = "(?:%s|%s)" % (valid_var, valid_const_sign)
-literal_c = ".*;|\{.*\}"
+literal_c = "\{.*\}"
 
 valid_arg_end = "[a-zA-Z0-9\._]"
 

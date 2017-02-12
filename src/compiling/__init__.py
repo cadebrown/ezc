@@ -57,10 +57,10 @@ protected_words = ["RETURN", "NaN", "INF", "NINF", "set"]
 functions = "getprec,time,wait,stime,etime,svar,binomcoef,binompdf,binomcdf,binomcdf_1,normalpdf,normalcdf,erf,free,prompt,if,else,file,fi,for,rof,prec,add,sub,mul,div,pow,mod,\",mpz,var,rawvar,intvar,rawintvar,set,sqrt,\\√,cbrt,min,max,near,trunc,rand,fact,echo,printf,hypot,exp,log,agm,gamma,factorial,zeta,\\ζ,pi,deg,rad,sin,cos,tan,asin,acos,atan,csc,sec,cot,acsc,asec,acot,sinh,cosh,tanh,asinh,acosh,atanh,csch,sech,coth,acsch,asech,acoth".split(",")
 """Callable functions"""
 
-operators = "~,^,choose,*,/,÷,%,+,-,~,?".split(",")
+operators = "~,^,choose,*,/,%,+,-,~,?".split(",")
 """Callable operators"""
 
-order_op = [group.split(",") for group in "?,~,choose,,^,,*,/,÷,%,,+,-".split(",,")]
+order_op = [group.split(",") for group in "?,~,choose,,^,,*,/,%,,+,-".split(",,")]
 """Order of operators"""
 
 op_map_funcs = {
@@ -68,7 +68,6 @@ op_map_funcs = {
 	"-": "sub",
 	"*": "mul",
 	"/": "div",
-	"÷": "div",
 	"^": "pow",
 	"%": "mod",
 	"~": "near",
