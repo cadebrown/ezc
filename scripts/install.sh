@@ -78,8 +78,8 @@ done
 ./scripts/copyutils.sh $INSTALL_DIR
 cp ./scripts/makeutils.sh $INSTALL_DIR/utils.sh
 
-printf $EZC_BIN > $INSTALL_DIR/ezc
-printf $EZC_BIN > $INSTALL_DIR/ezcc
+echo -e $EZC_BIN > $INSTALL_DIR/ezc
+echo -e $EZC_BIN > $INSTALL_DIR/ezcc
 
 chmod +x $INSTALL_DIR/ezc
 chmod +x $INSTALL_DIR/ezcc
