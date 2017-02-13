@@ -111,7 +111,7 @@ mpfr_ptr ezc_next_const(char _set_val[]) {
 }
 mpfr_ptr ezc_get_arg_base(int val, int base) {
 	if (val >= _argc) {
-		return ezc_next_const_base("0.0", base);
+		return NaN;
 	} else {
 		return ezc_next_const_base(_argv[val], base);
 	}
@@ -137,6 +137,17 @@ void ezc_init(int __argc, char *__argv[]) {
 	mpfr_init(NaN); mpfr_set_nan(NaN);
 	mpfr_init(INF); mpfr_set_inf(INF, 1);
 	mpfr_init(NINF); mpfr_set_inf(NINF, 0);
+}
+int ezc_cmp(mpfr_t r, mpfr_t a) {
+	int _ret = mpfr_cmp(r, a);
+	if (mpfr_erangeflag_p() != 0) {
+		if (mpfr_nan_p(a) && mpfr_nan_p(r)) {
+			return 0;
+		} else {
+			return 1;
+		}
+	}
+	return _ret;
 }
 void ezc_add(mpfr_t r, mpfr_t a, mpfr_t b) { 
 	mpfr_add(r, a, b, EZC_RND); 

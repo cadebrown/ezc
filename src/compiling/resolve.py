@@ -190,7 +190,7 @@ def arg_call(op, args):
 def c_if_call(op, args):
 	args = reg_args(args)
 	go_up_lvl()
-	return "%sif (mpfr_cmp(%s, %s) %s 0) {" % ("".join(args[1]), args[0][0], args[0][2], args[0][1])
+	return "%sif (ezc_cmp(%s, %s) %s 0) {" % ("".join(args[1]), args[0][0], args[0][2], args[0][1])
 def c_for_call(op, args):
 	if len(args) <= 3:
 		args = args + ["ezc_next_const(\"1\")"]

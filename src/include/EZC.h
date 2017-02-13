@@ -41,6 +41,9 @@ mpfr_ptr ezc_get_arg_base(int val, int base);
 mpfr_ptr ezc_get_arg(int val);
 mpz_ptr ezc_mpz(mpz_t r, mpfr_t a);
 void ezc_init(int __argc, char *__argv[]);
+
+void ezc_isnan(mpfr_t r, mpfr_t a);
+
 void ezc_add(mpfr_t r, mpfr_t a, mpfr_t b);
 void ezc_sub(mpfr_t r, mpfr_t a, mpfr_t b);
 void ezc_mul(mpfr_t r, mpfr_t a, mpfr_t b);

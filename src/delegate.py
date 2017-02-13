@@ -43,6 +43,9 @@ def get_built_static_hash():
 def gen_static_lib():
 	global args
 
+	remove_file(ezdata.EZC_STATIC_LIB)
+	remove_file(ezdata.EZC_STATIC_LIB_HASH)
+
 	_ezclib = "" + ezdata.EZC_LIB
 	ezdata.EZC_LIB = ezdata.EZC_GSLLIB
 
