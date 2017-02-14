@@ -40,10 +40,10 @@ To get back to the install directory, run `cd ~/.ezc/`
 For the cutting edge version, you'll be building EZC:
 
 ```bash
-export PLATFORM=build; export VERSION=dev; curl -L chemdev.space/ezc.sh | sh
+PLATFORM=build VERSION=dev curl -L chemdev.space/ezc.sh | sh
 ```
 
-<button class="btn" data-clipboard-text='export PLATFORM=build; export VERSION=dev; curl -L chemdev.space/ezc.sh | sh'>
+<button class="btn" data-clipboard-text='PLATFORM=build VERSION=dev curl -L chemdev.space/ezc.sh | sh'>
     Copy to clipboard
 </button>
 
@@ -53,10 +53,10 @@ export PLATFORM=build; export VERSION=dev; curl -L chemdev.space/ezc.sh | sh
 If you'd like to install globally for all users, run:
 
 ```bash
-export PROFILE=/etc/profile.d/ezc.sh; export LOCATION=/usr/local/ezc/; curl -L chemdev.space/ezc.sh | sudo sh
+PROFILE=/etc/profile.d/ezc.sh LOCATION=/usr/local/ezc/ curl -L chemdev.space/ezc.sh | sudo sh
 ```
 
-<button class="btn" data-clipboard-text='export PROFILE=/etc/profile.d/ezc.sh; export LOCATION=/usr/local/ezc/; curl -L chemdev.space/ezc.sh | sudo sh'>
+<button class="btn" data-clipboard-text='PROFILE=/etc/profile.d/ezc.sh LOCATION=/usr/local/ezc/ curl -L chemdev.space/ezc.sh | sudo sh'>
     Copy to clipboard
 </button>
 
@@ -112,11 +112,11 @@ Essentially, you need to run this in your path file:
 For your shell, prepend this to your install command which should start with `curl`, so for zsh, you would run:
 
 ``` bash
-export PATHFILE=~/.zshrc; curl chemdev.space/ezc.sh -L | sh
+PATHFILE=~/.zshrc curl chemdev.space/ezc.sh -L | sh
 ```
 
 | Shell | Command | Copy it |
 | ------------- |:-------------:| -----:|
-| `all shells` | `export PATHFILE=/etc/profile.d/ezc.sh; ` | <button class="btn" data-clipboard-text='export PATHFILE=/etc/profile.d/ezc.sh;  '>Copy</button> | 
-| `bash` | `export PATHFILE=~/.bashrc; ` | <button class="btn" data-clipboard-text='export PATHFILE=~/.bashrc; '>Copy</button> | 
-| `zsh` | `export PATHFILE=~/.zshrc; ` | <button class="btn" data-clipboard-text='export PATHFILE=~/.zshrc; '>Copy</button> | 
+| `all shells` | `PATHFILE=/etc/profile.d/ezc.sh` | <button class="btn" data-clipboard-text='PATHFILE=/etc/profile.d/ezc.sh '>Copy</button> | 
+| `bash` | `PATHFILE=~/.bashrc ` | <button class="btn" data-clipboard-text='PATHFILE=~/.bashrc '>Copy</button> | 
+| `zsh` | `PATHFILE=~/.zshrc ` | <button class="btn" data-clipboard-text='PATHFILE=~/.zshrc '>Copy</button> | 
