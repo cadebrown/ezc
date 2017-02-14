@@ -19,6 +19,7 @@ def init(_args):
 	"""
 	global args
 	args = _args
+	compiler.init()
 
 	if not os.path.isfile(ezdata.EZC_STATIC_LIB) and not args["genstaticlib"]:
 		gen_static_lib()

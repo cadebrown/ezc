@@ -4,7 +4,6 @@ def init(functions, operators, order_op):
 	"""
 		#valid_arg = "[a-z]+"
 	valid_ufu = "\@[_a-zA-Z][_a-zA-Z0-9]*"
-	valid_c = "[ ]*({(.*)}|(.*);)"
 	global valid_operator; global valid_function; global valid_user_function; global valid_noarg_function; global valid_order_op
 
 	flist_regex = "%s" % ("|".join(functions))
@@ -33,13 +32,13 @@ def init(functions, operators, order_op):
 valid_break = "[ ,><=]*"
 valid_get_arg = "\$[0-9]+"
 valid_var = "[_a-zA-Z][_a-zA-Z0-9]*|%s" % (valid_get_arg)
-valid_const = "(?:\-|\+)?[0-9\.]+"
-valid_const_nosign = "[0-9\.]+"
-valid_const_sign = "(?:\-|\+)[0-9\.]+"
+valid_const = "(?:\-|\+)?[0-9\.]+(?:e[0-9]+)?"
+valid_const_nosign = "[0-9\.]+(?:e[0-9]+)?"
+valid_const_sign = "(?:\-|\+)[0-9\.]+(?:e[0-9]+)?"
 valid_arg = "(?:%s|%s)" % (valid_var, valid_const)
 valid_arg_nosign = "(?:%s|%s)" % (valid_var, valid_const_nosign)
 valid_arg_sign = "(?:%s|%s)" % (valid_var, valid_const_sign)
-literal_c = ".*;"
+literal_c = ".*;;"
 
 valid_arg_end = "[a-zA-Z0-9\._]"
 
@@ -55,3 +54,4 @@ _set_const = "[a-zA-Z0-9_]+[ ]*=[ ]*([a-zA-Z0-9_]+[ ]*=[ ]*(?:\+|\-)?[0-9\.]+)"
 
 valid_printf_varinject = "(@\{[ ]*(%s)[ ]*\})" % (valid_arg)
 valid_tmp = "__tmp_[q-z]+"
+

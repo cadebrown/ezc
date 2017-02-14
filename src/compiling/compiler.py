@@ -1,16 +1,22 @@
 # -*- coding: utf-8 -*-
 import ezdata
 
-import compiling
 from compiling import resolve
+import compiling
 
-import parsing
 from parsing import parser
-
 from ezlogging import log
 
-import re
+import parsing
 
+
+def init():
+	"""
+	Initialize parsing with functions from resolve module
+	"""
+	parser.init(compiling.functions, compiling.operators, compiling.order_op)
+	compiling.reset()
+	
 def get_c_file():
 	"""
 	Return transpiled EZC into C code, which can be compiled by cc
@@ -31,12 +37,14 @@ def add_code(file_contents):
 
 def compile_line(line):
 	ret = ""
-	to_proc = re.split("(?<!\\\\)\\\|", line)
+	if ";;" not in line:
+		to_proc = line.split(";")
+	else:
+		to_proc = [line]
 	for x in to_proc:
 		for y in parser.parse_line(x):
 			ret += "\n\t%s" % (resolve.get_c_st(y))
 	return ret
-
 def add_compile_lines(lines):
 	"""
 	Takes an array-like of EZC code which then is translated to C, and added to variables so that it can be compiled by a C compiler.
@@ -74,3 +82,4 @@ def add_compile_lines(lines):
 			compiling.user_funcs += res
 		else:
 			compiling.main += res
+

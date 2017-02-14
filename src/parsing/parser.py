@@ -7,6 +7,10 @@ Parses function calls, operators, definintions, etc
 import re
 
 from parsing import regexes
+import parsing
+
+import compiling
+
 
 def is_user_function(line):
 	"""
@@ -133,7 +137,7 @@ def expand_line(line):
 			#line = line.replace(to_do[x], tmp_var, 1)
 			#line = rep(line, to_do[x], tmp_var)
 			line = re.sub("(?<!({0}))({1})".format(regexes.valid_arg_end, re.escape(to_do[x])), " "+tmp_var, line, 1)
-			ret.append("mpfr_t %s; mpfr_init (%s);" % (tmp_var, tmp_var))
+			ret.append("mpfr_t %s; mpfr_init (%s);;" % (tmp_var, tmp_var))
 			res_exp = expand_line(tmp_var + " = " + to_do[x])
 			if isinstance(res_exp, list):
 				for xx in res_exp:
@@ -143,7 +147,7 @@ def expand_line(line):
 		ret.append(line.replace("(", " ").replace(")", " "))
 		if "for" not in line:
 			for vv in var_tod:
-				to_add = "mpfr_clear (%s);" % (tmp_var)
+				to_add = "mpfr_clear (%s);;" % (tmp_var)
 				if to_add not in ret:
 					ret.append(to_add)
 		return ret
@@ -157,8 +161,11 @@ def get_nested(line):
 	c_group = ""
 	paren_level = 0
 	has_been_1 = False
+	ch_index = 0
 	for char in line:
 		if char == ')':
+			if paren_level <= 0:
+				raise parsing.EZCSyntaxError("Unexpected symbol: ')'", full_line, compiling.line_num, ch_index) 
 			paren_level -= 1
 		if paren_level >= 1:
 			c_group += char
@@ -169,6 +176,11 @@ def get_nested(line):
 		if char == '(':
 			has_been_1 = True
 			paren_level += 1
+		ch_index += 1
+
+	if paren_level != 0:
+		raise parsing.EZCSyntaxError("Missing ending parenthesis", full_line, compiling.line_num, ch_index)
+		
 	return to_ret
 
 def get_var(text):
@@ -232,12 +244,12 @@ def resolve_operators(line):
 				tmp_var = get_tmp_var()
 				st = "%s = %s" % (tmp_var, resolve[0])
 				line = line.replace(resolve[0], tmp_var, 1)
-				ret.append("mpfr_t %s; mpfr_init(%s);" % (tmp_var, tmp_var))
+				ret.append("mpfr_t %s; mpfr_init(%s);;" % (tmp_var, tmp_var))
 				ret.append(st)
 				recurse = resolve_operators(line)
 				for n in recurse:
 					ret.append(n)
-				ret.append("mpfr_clear (%s);" % (tmp_var))
+				ret.append("mpfr_clear (%s);;" % (tmp_var))
 	if not k_t:
 		ret.append(line)
 	return ret

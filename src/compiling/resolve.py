@@ -1,12 +1,11 @@
-import parsing
+# -*- coding: utf-8 -*-
 
-from parsing import parser
+from parsing import parser, regexes
 from ezlogging import log
 
 import re
 
 import compiling
-
 
 def get_c_st(ret):
 	"""
@@ -16,12 +15,9 @@ def get_c_st(ret):
 	if not isinstance(ret, list) and parser.is_literal(ret):
 		return ret
 	else:
-		if ret == "":
-			return ""
 		if not isinstance(ret, list):
-			return ret
+			return ""
 		return compiling.type_resolve_dict[ret[0]](ret[1][0], ret[1][1])
-	return ret
 
 def reg_args(args):
 	"""
@@ -38,33 +34,33 @@ def reg_args(args):
 			compiling.var.add(arg)
 			if arg not in compiling.var_lvl:
 				compiling.var_lvl[arg] = compiling.c_lvl
-			ret.append("mpfr_t {0}; mpfr_init({0});".format(arg))
+			ret.append("mpfr_t %s; mpfr_init(%s);;" % (arg, arg))
 	return (args, ret)
 
 def go_in_func():
-	compiling.var_tmp = compiling.var.copy()
+	var_tmp = compiling.var.copy()
 	compiling.var = compiling._var.copy()
-	compiling._var = compiling.var_tmp
+	compiling._var = var_tmp
 
-	compiling.var_lvl_tmp = compiling.var_lvl.copy()
+	var_lvl_tmp = compiling.var_lvl.copy()
 	compiling.var_lvl = compiling._var_lvl.copy()
-	compiling._var_lvl = compiling.var_lvl_tmp
+	compiling._var_lvl = var_lvl_tmp
 	
-	compiling.c_lvl_tmp = compiling.c_lvl + 0
+	c_lvl_tmp = compiling.c_lvl + 0
 	compiling.c_lvl = compiling._c_lvl + 0
-	compiling._c_lvl = compiling.c_lvl_tmp
+	compiling._c_lvl = c_lvl_tmp
 
 
 def go_out_func():
-	compiling.var_tmp = compiling.var.copy()
+	var_tmp = compiling.var.copy()
 	compiling.var = compiling._var.copy()
-	compiling._var = set()
+	_var = set()
 
-	compiling.var_lvl_tmp = compiling.var_lvl.copy()
+	var_lvl_tmp = compiling.var_lvl.copy()
 	compiling.var_lvl = compiling._var_lvl.copy()
 	compiling._var_lvl = {}
 	
-	compiling.c_lvl_tmp = compiling.c_lvl + 0
+	c_lvl_tmp = compiling.c_lvl + 0
 	compiling.c_lvl = compiling._c_lvl + 0
 	compiling._c_lvl = 0
 
@@ -75,7 +71,7 @@ def go_up_lvl():
 def go_down_lvl():
 	_tovar = compiling.var.copy()
 	for arg in compiling.var:
-		if compiling.var_lvl[arg] == compiling.c_lvl:
+		if arg in compiling.var_lvl and compiling.var_lvl[arg] == compiling.c_lvl:
 			_tovar.remove(arg)
 
 	compiling.var = _tovar
@@ -87,28 +83,29 @@ def c_noarg_call(fname, args):
 	Represents a call to a function with no arguments
 	"""
 	args = reg_args(args)
-	return "{0}ezc_{1}({2});".format("".join(args[1]), fname, args[0][0])
+	return "%sezc_%s(%s);" % ("".join(args[1]), fname, args[0][0])
 def c_call(fname, args):
 	"""
 	A typical C call to most functions.
 	"""
 	args = reg_args(args)
-	return "{0}ezc_{1}({2});".format("".join(args[1]), fname, ",".join(args[0]))
+	return "%s ezc_%s(%s);" % ("".join(args[1]), fname, ",".join(args[0]))
 def c_user_call(fname, args):
 	"""
 	Calls a user defined function
 	"""
 	args = reg_args(args)
-	return "{0}ezc_{1}({2});".format("".join(args[1]), fname.replace("@", ""), ",".join(args[0]))
+	return "%s ezc_%s(%s);" % ("".join(args[1]), fname.replace("@", ""), ", ".join(args[0]))
 def c_prompt(fname, args):
 	"""
 	Special case for the `prompt` function
 	"""
-	compiling.full_line = parser.compiling.full_line.replace("'", "\"")
-	pstring = compiling.full_line.split("\"")[1]
+	full_line = parser.full_line.replace("'", "\"")
+	pstring = full_line.split("\"")[1]
 
 	args = reg_args(args)
-	return "{0}ezc_{1}({2}, \"{3}\");".format("".join(args[1]), fname, args[0][0], pstring)
+
+	return "%s\nezc_%s(%s, \"%s\");" % ("".join(args[1]), fname, args[0][0], pstring)
 def c_echo(fname, args):
 	"""
 	Special case for the `echo` function
@@ -121,9 +118,9 @@ def c_printf(fname, args):
 
 	args = reg_args(args)
 
-	compiling.full_line = compiling.full_line.replace("'", "\"")
+	full_line = parser.full_line.replace("'", "\"")
 
-	string_print = compiling.full_line.split("\"")[1]
+	string_print = full_line.split("\"")[1]
 
 	fmt_args = []
 	for x in string_print.split("@")[1:]:
@@ -152,7 +149,8 @@ def c_printf(fname, args):
 
 		ci += 1
 
-	return "{0}mpfr_{1}(\"{2}\"{3});".format("".join(args[1]), fname, string_print, "".join([", "+x for x in print_args]))
+	ret = "%smpfr_%s(\"%s\"%s);" % ("".join(args[1]), fname, string_print, "".join([", "+x for x in print_args]))
+	return ret
 
 def c_file(op, args):
 	"""
@@ -190,7 +188,7 @@ def arg_call(op, args):
 def c_if_call(op, args):
 	args = reg_args(args)
 	go_up_lvl()
-	return "%sif (ezc_cmp(%s, %s) %s 0) {" % ("".join(args[1]), args[0][0], args[0][2], args[0][1])
+	return "%sif (mpfr_cmp(%s, %s) %s 0) {" % ("".join(args[1]), args[0][0], args[0][2], args[0][1])
 def c_for_call(op, args):
 	if len(args) <= 3:
 		args = args + ["ezc_next_const(\"1\")"]
@@ -247,3 +245,4 @@ def printf_f(val, settings=[10]):
 
 def printf_sf(val, settings=[10]):
 	return "{0}, {1}".format(settings[0], val)
+

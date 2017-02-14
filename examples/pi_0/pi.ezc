@@ -16,19 +16,19 @@ stime
 etime
 t1 = (time)
 
-{mpfr_free_cache();}
+mpfr_free_cache();;
 stime
 	x = (acos -1)
 etime
 t2 = (time)
 
-{mpfr_free_cache();}
+mpfr_free_cache();;
 stime
 	x = 4*(atan 1)
 etime
 t3 = (time)
 
-{mpfr_free_cache();}
+mpfr_free_cache();;
 stime
 	# this is the slowest because it is calculating -.5 factorial. Very expensive
 	x = (fact -.5)^2

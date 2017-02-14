@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import compiling.resolve
-
-import parsing
+from compiling import resolve
 
 
 def reset():
@@ -20,6 +18,38 @@ int main(int argc, char *argv[]) {
 """
 	default_file = ""
 	user_funcs = ""
+
+full_line = ""
+line_num = 0
+
+
+includes = """
+
+#include "EZC.h"
+
+#include <time.h>
+#include <stdio.h>
+#include <string.h>a
+#include <stdlib.h>
+#include <mpfr.h>
+#include <math.h>
+
+"""
+
+user_funcs=""""""
+
+start=""""""
+
+main = """"""
+
+end = """"""
+
+is_func = False
+current_func = None
+
+default_file=""
+
+
 
 printf_convert_fmt= {
 	"F": "%.*Rf",
@@ -51,16 +81,16 @@ is_func = False
 not_vars = []
 """Specific to not use tmp vars (user functions)"""
 
-protected_words = ["RETURN", "NaN", "INF", "NINF", "set", "mpfr_t"]
+protected_words = ["RETURN", "NaN", "INF", "NINF", "set"]
 """Constants"""
 
 functions = "getprec,time,wait,stime,etime,svar,binomcoef,binompdf,binomcdf,binomcdf_1,normalpdf,normalcdf,erf,free,prompt,if,else,file,fi,for,rof,prec,add,sub,mul,div,pow,mod,\",mpz,var,rawvar,intvar,rawintvar,set,sqrt,\\√,cbrt,min,max,near,trunc,rand,fact,echo,printf,hypot,exp,log,agm,gamma,factorial,zeta,\\ζ,pi,deg,rad,sin,cos,tan,asin,acos,atan,csc,sec,cot,acsc,asec,acot,sinh,cosh,tanh,asinh,acosh,atanh,csch,sech,coth,acsch,asech,acoth".split(",")
 """Callable functions"""
 
-operators = "~,^,choose,*,/,%,+,-,~,?".split(",")
+operators = "~,^,choose,*,/,÷,%,+,-,~,?".split(",")
 """Callable operators"""
 
-order_op = [group.split(",") for group in "?,~,choose,,^,,*,/,%,,+,-".split(",,")]
+order_op = [group.split(",") for group in "?,~,choose,,^,,*,/,÷,%,,+,-".split(",,")]
 """Order of operators"""
 
 op_map_funcs = {
@@ -68,6 +98,7 @@ op_map_funcs = {
 	"-": "sub",
 	"*": "mul",
 	"/": "div",
+	"÷": "div",
 	"^": "pow",
 	"%": "mod",
 	"~": "near",
@@ -114,38 +145,3 @@ type_resolve_dict = {
 	"user_function": resolve.get_user_func_translate
 }
 """Types to resolve function"""
-
-
-includes = """
-
-#include "EZC.h"
-
-#include <time.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <mpfr.h>
-#include <math.h>
-
-"""
-
-user_funcs=""""""
-
-start=""""""
-
-main = """"""
-
-end = """"""
-
-is_func = False
-current_func = None
-
-default_file=""
-
-reset()
-
-needed_var = 0
-
-full_line = ""
-
-parsing.parser.init(functions, operators, order_op)
