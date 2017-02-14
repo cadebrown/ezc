@@ -31,7 +31,7 @@ def add_code(file_contents):
 
 def compile_line(line):
 	ret = ""
-	to_proc = re.split("(?<!\\\\)\\;", line)
+	to_proc = re.split("(?<!\\\\)\\\|", line)
 	for x in to_proc:
 		for y in parser.parse_line(x):
 			ret += "\n\t%s" % (resolve.get_c_st(y))

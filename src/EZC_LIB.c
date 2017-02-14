@@ -325,7 +325,7 @@ void ezc_var(mpfr_t a) {
 	mpfr_printf("%.*Rf\n",ezc_prec, a); 
 }
 void ezc_svar(mpfr_t a) { 
-	mpfr_out_str(stdout, 10, 0, a, EZC_RND);
+	mpfr_out_str(stdout, 10, 8, a, EZC_RND);
 	printf("\n");
 }
 void ezc_rawvar(mpfr_t a) { 

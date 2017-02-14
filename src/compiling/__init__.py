@@ -51,7 +51,7 @@ is_func = False
 not_vars = []
 """Specific to not use tmp vars (user functions)"""
 
-protected_words = ["RETURN", "NaN", "INF", "NINF", "set"]
+protected_words = ["RETURN", "NaN", "INF", "NINF", "set", "mpfr_t"]
 """Constants"""
 
 functions = "getprec,time,wait,stime,etime,svar,binomcoef,binompdf,binomcdf,binomcdf_1,normalpdf,normalcdf,erf,free,prompt,if,else,file,fi,for,rof,prec,add,sub,mul,div,pow,mod,\",mpz,var,rawvar,intvar,rawintvar,set,sqrt,\\√,cbrt,min,max,near,trunc,rand,fact,echo,printf,hypot,exp,log,agm,gamma,factorial,zeta,\\ζ,pi,deg,rad,sin,cos,tan,asin,acos,atan,csc,sec,cot,acsc,asec,acot,sinh,cosh,tanh,asinh,acosh,atanh,csch,sech,coth,acsch,asech,acoth".split(",")
@@ -147,3 +147,5 @@ reset()
 needed_var = 0
 
 full_line = ""
+
+parsing.parser.init(functions, operators, order_op)

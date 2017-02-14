@@ -5,17 +5,17 @@ Parses function calls, operators, definintions, etc
 """
 
 import re
-import parsing
-import compiling
+
+from parsing import regexes
 
 def is_user_function(line):
 	"""
 	Returns a tupe with the C code, and setup lines, or None if no valid user function declaration or end
 	"""
-	if re.findall(parsing.valid_declare_user_function, line):
-		res = re.findall(parsing.valid_declare_user_function, line)[0]
+	if re.findall(regexes.valid_declare_user_function, line):
+		res = re.findall(regexes.valid_declare_user_function, line)[0]
 		return ("void ezc_%s(mpfr_t RETURN, mpfr_t %s) {" % (res[0].replace("@", ""), ", mpfr_t ".join(res[1].split())), res[1].split(), res[0].replace("@", ""))
-	elif re.findall(parsing.valid_end_user_function, line):
+	elif re.findall(regexes.valid_end_user_function, line):
 		return ("}", [], None)
 
 def __fits(pattern, text):
@@ -27,38 +27,40 @@ def __fits(pattern, text):
 
 def is_valid_arg(arg):
 	"""
-	Returns true if arg is a valid arg, as defined in parsing, false otherwise
+	Returns true if arg is a valid arg, as defined in regexes, false otherwise
 	"""	
-	return __fits(parsing.valid_arg, arg)
+	return __fits(regexes.valid_arg, arg)
 
 def is_valid_const(const):
 	"""
-	Returns true if const is a valid const, as defined in parsing, false otherwise
+	Returns true if const is a valid const, as defined in regexes, false otherwise
 	"""
-	return __fits(parsing.valid_const, const)
+	return __fits(regexes.valid_const, const)
 
 def is_valid_var(var):
 	"""
-	Returns true if var is a valid var, as defined in parsing, false otherwise
+	Returns true if var is a valid var, as defined in regexes, false otherwise
 	"""
-	return __fits(parsing.valid_var, var)
+	return __fits(regexes.valid_var, var)
 
 def is_literal(line):
 	"""
 	Returns true if line is literal C code
 	"""
-	return len(re.findall(parsing.literal_c, line)) != 0
+	return len(re.findall(regexes.literal_c, line)) != 0
 
 # parses a line. This looks for operators, userfunctions, functions, assignment, functions with no arguments, and then freeform(default).
 def parse_line(line):
 	"""
 	Returns a line which is parsed into an intermediate format similar to to a syntax tree
 	"""
-	parsing.compiling.full_line = line
+	global needed_var
+	global full_line
+	full_line = line
 	try:
-		_never_use = compiling.needed_var
+		_never_use = needed_var
 	except:
-		compiling.needed_var = 0
+		needed_var = 0
 
 	#needed_var = 0
 	#line = line.replace(",", " ")
@@ -73,28 +75,29 @@ def get_statement(line):
 	"""
 	Gets the statement of a single line
 	"""
-	line = re.sub('\s+', ' ', line).strip()
+	global valid_assign; global c_l
+	line = re.sub(' +', ' ', line)
+	c_l = line
 	k_t = True
-	if re.findall(parsing.valid_assign, line) and "set" not in line:
+	if re.findall(regexes.valid_assign, line) and "set" not in line:
 		if (line.count("=") - line.count("==")) > 1:
-			return get_statement(re.findall(parsing._set_const, line)[0].replace("=", "= set "))
+			return get_statement(re.findall(regexes._set_const, line)[0].replace("=", "= set "))
 		#return get_statement(line.replace("=", "= set "))
-	for op in [(parsing.valid_return, parse_return), (parsing.valid_function, parse_func), (parsing.valid_operator, parse_oper), (parsing.valid_user_function, parse_user_func), (parsing.valid_noarg_function, parse_noarg_func)]:
+	for op in order_parse:
 		if k_t:
 			rr = re.findall(op[0], line)
 			if rr:
 				k_t = False
 				line = op[1](rr[0])
-	if k_t and re.findall(parsing.valid_assign, line) and "set" not in line:
+	if k_t and re.findall(regexes.valid_assign, line) and "set" not in line:
 		line = get_statement(line.replace("=", "= set "))
-	if isinstance(line, str) and line != "" and line[-1] != ";":
-		return ""
 	return line
 
 def get_tmp_var():
 	"""
 	Allocates a new tmp var
 	"""
+	global needed_var
 	char_map = {
 		"0": "z",
 		"1": "y",
@@ -107,8 +110,8 @@ def get_tmp_var():
 		"8": "r",
 		"9": "q",
 	}
-	res = "__tmp_%s" % ("".join([char_map[i] for i in str(compiling.needed_var)]))
-	compiling.needed_var += 1
+	res = "__tmp_%s" % ("".join([char_map[i] for i in str(needed_var)]))
+	needed_var += 1
 	return res
 
 def expand_line(line):
@@ -129,7 +132,7 @@ def expand_line(line):
 			var_tod.add(tmp_var)
 			#line = line.replace(to_do[x], tmp_var, 1)
 			#line = rep(line, to_do[x], tmp_var)
-			line = re.sub("(?<!({0}))({1})".format(parsing.valid_arg_end, re.escape(to_do[x])), " "+tmp_var, line, 1)
+			line = re.sub("(?<!({0}))({1})".format(regexes.valid_arg_end, re.escape(to_do[x])), " "+tmp_var, line, 1)
 			ret.append("mpfr_t %s; mpfr_init (%s);" % (tmp_var, tmp_var))
 			res_exp = expand_line(tmp_var + " = " + to_do[x])
 			if isinstance(res_exp, list):
@@ -154,11 +157,8 @@ def get_nested(line):
 	c_group = ""
 	paren_level = 0
 	has_been_1 = False
-	ch_index = 0
 	for char in line:
 		if char == ')':
-			if paren_level <= 0:
-				raise parsing.EZCSyntaxError("Unexpected symbol: ')'", compiling.full_line, line_num, ch_index) 
 			paren_level -= 1
 		if paren_level >= 1:
 			c_group += char
@@ -169,11 +169,6 @@ def get_nested(line):
 		if char == '(':
 			has_been_1 = True
 			paren_level += 1
-		ch_index += 1
-
-	if paren_level != 0:
-		raise parsing.EZCSyntaxError("Missing ending parenthesis", compiling.full_line, line_num, ch_index)
-		
 	return to_ret
 
 def get_var(text):
@@ -189,6 +184,8 @@ def get_var(text):
 	else:
 		return "%s" % (text)
 
+c_l = None
+
 def parse_return(call):
 	"""Parses a return call to a user function"""
 	return get_statement("RETURN = %s" % (call))
@@ -200,8 +197,9 @@ def parse_func(call):
 
 def parse_oper(call):
 	"""Parses an operator call"""
-	if re.findall(parsing.valid_set, compiling.full_line) and not call[1]:
-		return get_statement(compiling.full_line.replace("=", "= set"))
+	global c_l
+	if re.findall(regexes.valid_set, c_l) and not call[1]:
+		return get_statement(c_l.replace("=", "= set"))
 	call = [call[2], ("%s %s %s" % (call[0], call[1], call[3])).split()]
 	return ["operator", [call[0], call[1]]]
 
@@ -226,7 +224,7 @@ def resolve_operators(line):
 	"""Resolves operators, like expand_line. This uses order of operators passed by init"""
 	ret = []
 	k_t = False
-	for pats in parsing.valid_order_op:
+	for pats in regexes.valid_order_op:
 		for pat in pats:
 			if len(re.findall(pat, line)) >= 1 and not k_t:
 				k_t = True
@@ -245,5 +243,10 @@ def resolve_operators(line):
 	return ret
 
 
-compiling.full_line = None
-line_num = 0
+# sets the regex. This should be called after lib_linker.register_lib has been called for all imports
+def init(functions, operators, order_op):
+	"""Initializes regex, and parsing order"""
+	regexes.init(functions, operators, order_op)
+	global order_parse
+	order_parse = [(regexes.valid_return, parse_return), (regexes.valid_function, parse_func), (regexes.valid_operator, parse_oper), (regexes.valid_user_function, parse_user_func), (regexes.valid_noarg_function, parse_noarg_func)]
+full_line = None
