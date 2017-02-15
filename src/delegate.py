@@ -106,6 +106,7 @@ def run_exec():
 	log.info("Running", runcmd)
 	run_proc = Popen(runcmd, shell=True)
 	run_proc.wait()
+	return run_proc.returncode
 
 def get_ezc_lib_args():
 	if not os.path.isfile(ezdata.EZC_STATIC_LIB) or args["genstaticlib"]:
@@ -143,6 +144,7 @@ def compile_exec(file=None, out=None):
 	log.info("Compiling", cmd)
 	compile_proc = Popen(cmd, shell=True)
 	compile_proc.wait()
+	return compile_proc.returncode
 
 def addcode(fs, cmp):
 	"""
@@ -167,7 +169,10 @@ def compile_files(sources):
 	outf.write(compiler.get_c_file())
 	outf.close()
 
-	compile_exec()
+	if compile_exec() == 0:
+		return True
+	else:
+		log.err("Compiling", "Failed")
 
 def transpile(text):
 	"""
@@ -181,4 +186,7 @@ def transpile(text):
 	outf = open(args["tmp"], "w+")
 	outf.write(compiler.get_c_file())
 	outf.close()
-	compile_exec()
+	if compile_exec() == 0:
+		return True
+	else:
+		log.err("Compiling", "Failed")

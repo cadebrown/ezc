@@ -67,14 +67,14 @@ def main():
 
 	try:
 		if args["genstaticlib"] or (delegate.get_built_static_hash() != delegate.get_live_static_hash()):
-			delegate.gen_static_lib()
+			do_run = do_run and delegate.gen_static_lib()
 		if args["e"]:
 			to_run = "\n".join(sys.stdin)
-			delegate.transpile(to_run)
+			do_run = do_run and delegate.transpile(to_run)
 		elif args["c"]:
-			delegate.transpile(args["c"])
+			do_run = do_run and delegate.transpile(args["c"])
 		else:
-			delegate.compile_files(args["files"])
+			do_run = do_run and delegate.compile_files(args["files"])
 
 		if do_run:
 			delegate.run_exec()
