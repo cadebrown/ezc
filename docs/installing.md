@@ -40,10 +40,10 @@ To get back to the install directory, run `cd ~/.ezc/`
 For the cutting edge version, you'll be building EZC:
 
 ```bash
-PLATFORM=build VERSION=dev curl -L chemdev.space/ezc.sh | sh
+curl -L chemdev.space/ezc.sh | PLATFORM=build VERSION=dev sh
 ```
 
-<button class="btn" data-clipboard-text='PLATFORM=build VERSION=dev curl -L chemdev.space/ezc.sh | sh'>
+<button class="btn" data-clipboard-text='curl -L chemdev.space/ezc.sh | PLATFORM=build VERSION=dev sh'>
     Copy to clipboard
 </button>
 
@@ -53,10 +53,10 @@ PLATFORM=build VERSION=dev curl -L chemdev.space/ezc.sh | sh
 If you'd like to install globally for all users, run:
 
 ```bash
-PROFILE=/etc/profile.d/ezc.sh LOCATION=/usr/local/ezc/ curl -L chemdev.space/ezc.sh | sudo sh
+curl -L chemdev.space/ezc.sh | sudo PROFILE=/etc/profile.d/ezc.sh LOCATION=/usr/local/ezc/ sh
 ```
 
-<button class="btn" data-clipboard-text='PROFILE=/etc/profile.d/ezc.sh LOCATION=/usr/local/ezc/ curl -L chemdev.space/ezc.sh | sudo sh'>
+<button class="btn" data-clipboard-text='curl -L chemdev.space/ezc.sh | sudo PROFILE=/etc/profile.d/ezc.sh LOCATION=/usr/local/ezc/ sh'>
     Copy to clipboard
 </button>
 
@@ -109,10 +109,10 @@ Essentially, you need to run this in your path file:
 
 `export PATH=$PATH:$LOCATION`, `$LOCATION` being where you installed ezc (`.ezc` by default)
 
-For your shell, prepend this to your install command which should start with `curl`, so for zsh, you would run:
+For your shell, prepend this to your install command which should start with `sh`, so for zsh, you would run:
 
 ``` bash
-PATHFILE=~/.zshrc curl chemdev.space/ezc.sh -L | sh
+curl chemdev.space/ezc.sh -L | PATHFILE=~/.zshrc sh
 ```
 
 | Shell | Command | Copy it |
