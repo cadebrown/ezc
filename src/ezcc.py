@@ -74,10 +74,11 @@ def main():
 		elif args["c"]:
 			do_run = do_run and delegate.transpile(args["c"])
 		else:
-			do_run = do_run and delegate.compile_files(args["files"])
+			delegate.compile_files(args["files"])
 
 		if do_run:
 			delegate.run_exec()
+
 
 	except parsing.EZCSyntaxError as e:
 		log.err("Compiling", str(e))

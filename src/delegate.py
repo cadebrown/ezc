@@ -173,6 +173,7 @@ def compile_files(sources):
 		return True
 	else:
 		log.err("Compiling", "Failed")
+		return False
 
 def transpile(text):
 	"""
