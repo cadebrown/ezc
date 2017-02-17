@@ -62,6 +62,8 @@ curl -L chemdev.space/ezc.sh | sudo PROFILE=/etc/profile.d/ezc.sh LOCATION=/usr/
 
 Now, anyone is able to run `ezc -h`
 
+Note: For globally using EZC, you must relogin (most of the time, reboot) the machine.
+
 ## Utils
 
 EZC also has commandline utils which are provided in source form.
