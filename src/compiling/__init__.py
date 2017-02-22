@@ -29,7 +29,7 @@ includes = """
 
 #include <time.h>
 #include <stdio.h>
-#include <string.h>a
+#include <string.h>
 #include <stdlib.h>
 #include <mpfr.h>
 #include <math.h>

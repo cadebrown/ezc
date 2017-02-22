@@ -1,3 +1,10 @@
+ezc (1.4.1) testing; urgency=med
+
+  * fixed compatability issues with platforms
+    - Now with more distributing, and more architectures
+
+ -- Cade Brown <info@chemicaldevelopment.us>  Wed, 22 Feb 2017 10:32:42 -0500
+
 ezc (1.4.0) testing; urgency=med
 
   * bugs

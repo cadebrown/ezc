@@ -19,10 +19,10 @@ This is the last release version of EZC, which has been somewhat tested.
 To get up and running with a released version, open a terminal (such as `Terminal` on macOS, or `XTerm` in Linux), and run:
 
 ``` bash
-curl -L chemdev.space/ezc.sh | sh
+curl -L chemdev.space/ezc/install.sh | sh
 ```
 
-<button class="btn" data-clipboard-text='curl -L chemdev.space/ezc.sh | sh'>
+<button class="btn" data-clipboard-text='curl -L chemdev.space/ezc/install.sh | sh'>
     Copy to clipboard
 </button>
 
@@ -40,10 +40,10 @@ To get back to the install directory, run `cd ~/.ezc/`
 For the cutting edge version, you'll be building EZC:
 
 ```bash
-curl -L chemdev.space/ezc.sh | PLATFORM=build VERSION=dev sh
+curl -L chemdev.space/ezc/install.sh | PLATFORM=build VERSION=dev sh
 ```
 
-<button class="btn" data-clipboard-text='curl -L chemdev.space/ezc.sh | PLATFORM=build VERSION=dev sh'>
+<button class="btn" data-clipboard-text='curl -L chemdev.space/ezc/install.sh | PLATFORM=build VERSION=dev sh'>
     Copy to clipboard
 </button>
 
@@ -53,10 +53,10 @@ curl -L chemdev.space/ezc.sh | PLATFORM=build VERSION=dev sh
 If you'd like to install globally for all users, run:
 
 ```bash
-curl -L chemdev.space/ezc.sh | sudo PROFILE=/etc/profile.d/ezc.sh LOCATION=/usr/local/ezc/ sh
+curl -L chemdev.space/ezc/install.sh | sudo PROFILE=/etc/profile.d/ezc.sh LOCATION=/usr/local/ezc/ sh
 ```
 
-<button class="btn" data-clipboard-text='curl -L chemdev.space/ezc.sh | sudo PROFILE=/etc/profile.d/ezc.sh LOCATION=/usr/local/ezc/ sh'>
+<button class="btn" data-clipboard-text='curl -L chemdev.space/ezc/install.sh | sudo PROFILE=/etc/profile.d/ezc.sh LOCATION=/usr/local/ezc/ sh'>
     Copy to clipboard
 </button>
 
@@ -93,10 +93,10 @@ It probably won't work though. However, it has been tested on [WSL](https://msdn
 Once you've installed WSL, open the start menu and search `Bash`. Once you are in there, you can paste in the install command:
 
 ``` bash
-curl -L chemdev.space/ezc.sh | sh
+curl -L chemdev.space/ezc/install.sh | sh
 ```
 
-<button class="btn" data-clipboard-text='curl -L chemdev.space/ezc.sh | sh'>
+<button class="btn" data-clipboard-text='curl -L chemdev.space/ezc/install.sh | sh'>
     Copy to clipboard
 </button>
 
@@ -114,7 +114,7 @@ Essentially, you need to run this in your path file:
 For your shell, prepend this to your install command which should start with `sh`, so for zsh, you would run:
 
 ``` bash
-curl chemdev.space/ezc.sh -L | PATHFILE=~/.zshrc sh
+curl chemdev.space/ezc/install.sh -L | PATHFILE=~/.zshrc sh
 ```
 
 | Shell | Command | Copy it |

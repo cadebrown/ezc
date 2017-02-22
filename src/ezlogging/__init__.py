@@ -1,6 +1,9 @@
 name = "EZCC"
 
-version = "1.4.0"
+version = "@VERSION@"
+
+if version.startswith("@"):
+	version = "dev"
 
 import time
 #time.strftime("%Y-%m-%d %H:%M:%S %z")

@@ -19,9 +19,11 @@ mkdir -p $SRC_DIR
 mkdir -p $INSTALL_DIR
 
 PLATFORM=$(./scripts/platform.sh)
+ARCHSTR=$(uname -m)
+VERSION=$(cat VERSION)
 
 
-echo Operating System Type: $PLATFORM
+echo "Operating System Type: $PLATFORM"
 
 EZC_BIN="#!/bin/sh \npython \$(dirname \$0)/src/ezcc.py \"\${@}\" \n"
 
@@ -73,13 +75,16 @@ do
 	parentname="$(basename "$(dirname "$SRC")")"
 	mkdir -p $SRC_DIR/$parentname
 	cp ./src/$SRC $SRC_DIR/$SRC
+	sed -i -e "s/@VERSION@/$VERSION/g" $SRC_DIR/$SRC
+	sed -i -e "s/@ARCH@/$ARCHSTR/g" $SRC_DIR/$SRC
+	sed -i -e "s/@PLATFORM@/$PLATFORM/g" $SRC_DIR/$SRC
 done
 
 ./scripts/copyutils.sh $INSTALL_DIR
 cp ./scripts/makeutils.sh $INSTALL_DIR/utils.sh
 
-echo -e $EZC_BIN > $INSTALL_DIR/ezc
-echo -e $EZC_BIN > $INSTALL_DIR/ezcc
+echo $EZC_BIN > $INSTALL_DIR/ezc
+echo $EZC_BIN > $INSTALL_DIR/ezcc
 
 chmod +x $INSTALL_DIR/ezc
 chmod +x $INSTALL_DIR/ezcc

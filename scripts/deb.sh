@@ -12,6 +12,10 @@ DOC_PATH=deb-package/usr/share/doc/ezc/
 EZC_BIN="#!/bin/bash\\n$FIN_SRC_PATH/ezcc.py \"\${@}\""
 DIRS="deb-package/DEBIAN/ $DOC_PATH"
 
+PLATFORM=$(./scripts/platform.sh)
+ARCHSTR=$(uname -m)
+VERSION=$(cat VERSION)
+
 for DIR in $DIRS
 do
 	mkdir -p $DIR
@@ -41,7 +45,14 @@ popd
 
 echo "Now copying in debian files"
 cp DEBIAN-FILES/control deb-package/DEBIAN/control
+sed -i -e "s/@VERSION@/$VERSION/g" deb-package/DEBIAN/control
+sed -i -e "s/@ARCH@/$ARCHSTR/g" deb-package/DEBIAN/control
+# needed for debian package arches
+sed -i -e "s/x86_64/amd64/g" deb-package/DEBIAN/control
+sed -i -e "s/@PLATFORM@/$PLATFORM/g" deb-package/DEBIAN/control
+
 cp DEBIAN-FILES/copyright $DOC_PATH/copyright
+
 gzip -n -9 -c DEBIAN-FILES/changelog > $DOC_PATH/changelog.gz
 
 # For bundling
