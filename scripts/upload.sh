@@ -4,8 +4,9 @@ NC='\033[0m'
 BOLD='\033[1m'
 
 PLATFORM=$(./scripts/platform.sh)
+ARCHSTR=$(./scripts/arch.sh)
 
-ARCHIVE=ezc-$PLATFORM.tar.xz
+ARCHIVE=ezc-$PLATFORM-$ARCHSTR.tar.xz
 
 echo "Uploading archive $ARCHIVE"
 

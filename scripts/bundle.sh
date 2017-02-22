@@ -7,7 +7,7 @@ PLATFORM=$(./scripts/platform.sh)
 ARCHSTR=$(uname -m)
 VERSION=$(cat VERSION)
 
-ARCHIVE="ezc-${PLATFORM}_${ARCHSTR}.tar.xz"
+ARCHIVE="ezc-${PLATFORM}-${ARCHSTR}.tar.xz"
 
 echo "Tarring $DIR into $ARCHIVE"
 TO=$PWD
