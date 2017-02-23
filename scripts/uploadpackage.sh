@@ -30,7 +30,7 @@ fi
 
 ARCHIVE=$(echo $ARCHIVE)
 
-echo "Uploading archive $ARCHIVE"
+echo "Uploading $ARCHIVE"
 
 printf "\n\n${RED}${BOLD}Download the file here:\n\n"
 

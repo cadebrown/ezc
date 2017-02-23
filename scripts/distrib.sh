@@ -23,8 +23,8 @@ if [ "$COPYPY" != "" ]; then
 	cp $COPYPY $DIR/src/python-bin
 	#cp -Rf /usr/lib/python2.7 $DIR/src/lib/python2.7
 	mkdir -p $TOPYDIR/$(basename $COPYPYDIR)
-	echo $COPYPYDIR
-	echo $TOPYDIR/$(basename $COPYPYDIR)
+	#echo $COPYPYDIR
+	#echo $TOPYDIR/$(basename $COPYPYDIR)
 	cp -Rf $COPYPYDIR $TOPYDIR/$(basename $COPYPYDIR)
 
 	find $TOPYDIR -type f -name "*.pyc" -delete

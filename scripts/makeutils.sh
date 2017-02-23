@@ -10,7 +10,7 @@ if [ "$1" != "" ]; then
 fi
 
 
-echo Compiling utils
+#echo Compiling utils
 
 for UTIL in $UTILS
 do
@@ -18,4 +18,4 @@ do
 	$EXE_DIR/ezc $UTIL -o $O_UTIL
 done
 
-echo Done with utils
+#echo Done with utils

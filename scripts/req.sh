@@ -11,7 +11,7 @@ cd "$BUILD_DIR"
 BUILD_DIR="$PWD"
 cd $TO
 
-echo Installing GMP and MPFR in $BUILD_DIR
+#echo Installing GMP and MPFR in $BUILD_DIR
 
 mkdir -p $BUILD_DIR
 cd $BUILD_DIR
@@ -26,8 +26,8 @@ cd ..
 curl $MPFR_TAR > mpfr.tar.xz
 tar xvf mpfr.tar.xz  >/dev/null 2>&1
 cd mpfr-*
-./configure --disable-shared --enable-fat --enable-static --prefix=$BUILD_DIR --with-gmp=$BUILD_DIR
-make install
+./configure --disable-shared --enable-fat --enable-static --prefix=$BUILD_DIR --with-gmp=$BUILD_DIR >/dev/null 2>&1
+make install >/dev/null 2>&1
 cd ..
 
 rm -Rf gmp* mpfr* share/ lib/*.la

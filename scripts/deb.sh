@@ -28,7 +28,6 @@ rm -rf $SRC_PATH/*.pyc
 
 # Replace exe files (bc this is in whole filesystem)
 echo -e $EZC_BIN > $EXE_PATH/ezc
-
 echo -e $EZC_BIN > $EXE_PATH/ezcc
 
 pushd $EXE_PATH
@@ -36,7 +35,7 @@ pushd $EXE_PATH
 	for X in ./utils/*
 	do
 		O=$(basename $X .ezc)
-		echo $X
+		#echo $X
 		python ../src/ezcc.py $X -o $O
 		strip --strip-unneeded $O
 	done
@@ -62,11 +61,11 @@ chmod 0644 $SRC_PATH/*.py
 chmod 0755 $SRC_PATH/ezcc.py
 chmod 0644 $DOC_PATH/*
 
-printf "\nDeb file:\n"
-echo $FL
+#printf "\nDeb file:\n"
+#echo $FL
 
-printf "\n\nReport on .deb file:\n"
-fakeroot dpkg-deb --build deb-package $FL && lintian $FL
+#printf "\n\nReport on .deb file:\n"
+#fakeroot dpkg-deb --build deb-package $FL && lintian $FL
 
 #rm -rf deb-package
 

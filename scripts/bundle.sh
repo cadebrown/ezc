@@ -9,13 +9,10 @@ VERSION=$(cat VERSION)
 
 ARCHIVE="ezc-${PLATFORM}-${ARCHSTR}.tar.xz"
 
-echo "Tarring $DIR into $ARCHIVE"
+echo "Creating $ARCHIVE"
 TO=$PWD
-echo "PWD: $TO"
 
 cd $DIR
 tar cvzf $TO/$ARCHIVE ./
 cd $TO
-
-echo "Done tarring"
 

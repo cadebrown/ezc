@@ -8,7 +8,7 @@ ARCHSTR=$(./scripts/arch.sh)
 
 ARCHIVE=ezc-$PLATFORM-$ARCHSTR.tar.xz
 
-echo "Uploading archive $ARCHIVE"
+echo "Uploading $ARCHIVE"
 
 printf "\n\n${RED}${BOLD}Download the file here:\n\n"
 
