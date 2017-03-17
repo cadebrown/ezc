@@ -1,9 +1,0 @@
-('src/ezlogging',
- 'ezlogging/',
- [],
- 'DATA',
- [('ezlogging/__init__.py', 'src/ezlogging/__init__.py', 'DATA'),
-  ('ezlogging/log.py', 'src/ezlogging/log.py', 'DATA'),
-  ('ezlogging/__pycache__/log.cpython-34.pyc',
-   'src/ezlogging/__pycache__/log.cpython-34.pyc',
-   'DATA')])
