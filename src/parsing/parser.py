@@ -85,7 +85,6 @@ def get_statement(line):
 	k_t = True
 	if re.findall(regexes.valid_assign, line) and "set" not in line:
 		if (line.count("=") - line.count("==")) > 1:
-			print line
 			return get_statement(re.findall(regexes._set_const, line)[0].replace("=", "= set "))
 		#return get_statement(line.replace("=", "= set "))
 	for op in order_parse:

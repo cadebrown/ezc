@@ -9,7 +9,7 @@ COPYPYDIR=$4
 # copy a c compiler
 if [ "$COPYCC" != "" ]; then
 	cp $COPYCC $DIR/src/cc
-	printf "\ncc = '{0}/cc'.format(EZC_DIR)\n" >> $DIR/src/ezdata.py
+	printf "\nBUNDLED=True\ncc = '{0}/cc'.format(EZC_DIR)\n" >> $DIR/src/data.txt
 fi
 
 if [ "$COPYPYDIR" = "" ]; then

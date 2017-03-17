@@ -43,6 +43,7 @@ def main():
 	parser.add_argument('-e', action='store_true', help='run from stdin')
 
 	parser.add_argument('-gsl', '--genstaticlib', action='store_true', help='Generates a static library')
+	parser.add_argument('-ngsl', '--nogenstaticlib', action='store_true', help='Refuses to generate static library')
 
 	# flags
 	parser.add_argument('-cvars', default="10", help='Number of constants used by compiler')
@@ -66,7 +67,7 @@ def main():
 	delegate.init(args)
 
 	try:
-		if args["genstaticlib"] or (delegate.get_built_static_hash() != delegate.get_live_static_hash()):
+		if (args["genstaticlib"] or (delegate.get_built_static_hash() != delegate.get_live_static_hash())) and not args["nogenstaticlib"] and not ezdata.BUNDLED:
 			do_run = do_run and delegate.gen_static_lib()
 		if args["e"]:
 			to_run = "\n".join(sys.stdin)

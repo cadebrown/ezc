@@ -77,7 +77,7 @@ chmod +x $INSTALL_DIR/ezc
 chmod +x $INSTALL_DIR/ezcc
 
 if [ "$I_MPFR" = "true" ] || [ "$KEEP_MPFR" = "true" ]; then
-	printf "\nEZC_LIB=\"-w -I%%s/include/ %%s/lib/libmpfr.a %%s/lib/libgmp.a\" %% (EZC_DIR, EZC_DIR, EZC_DIR)\n" >> $SRC_DIR/ezdata.py
+	printf "\nBUNDLED=True\nEZC_LIB=\"-w -I%%s/include/ %%s/lib/libmpfr.a %%s/lib/libgmp.a\" %% (EZC_DIR, EZC_DIR, EZC_DIR)\n" >> $SRC_DIR/data.txt
 fi
 
 FROM=$PWD

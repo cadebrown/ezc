@@ -21,8 +21,9 @@ def init(_args):
 	args = _args
 	compiler.init()
 
-	if not os.path.isfile(ezdata.EZC_STATIC_LIB) and not args["genstaticlib"]:
-		gen_static_lib()
+	#if not os.path.isfile(ezdata.EZC_STATIC_LIB) and not args["genstaticlib"]:
+	#if args["genstaticlib"]:
+#		gen_static_lib()
 
 def get_live_static_hash():
 	to_hash = ezdata.EZC_C + ezdata.EZC_DOGFOOD + ezdata.EZC_DIR

@@ -113,3 +113,7 @@ vsce:
 # uploads and prints a link to the file to download
 upload:
 	-${SH} ${SCRIPTS}/upload.sh
+
+pyinstall:
+	pyinstaller ezcc.spec --onefile
+	printf "BUNDLED=True" >> dist/ezcc/data.txt
