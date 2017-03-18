@@ -124,7 +124,7 @@ def main(argv):
 
     parser.add_argument('files', metavar='files', type=str, nargs='*', default=[], help='files to compile')
 
-    parser.add_argument('-o', default="{0}.pso", type=str, help='File struct')
+    parser.add_argument('-o', default="{0}.pc", type=str, help='File struct')
     args = parser.parse_args(argv)
     SLOC = 0
     for cfile in args.files:

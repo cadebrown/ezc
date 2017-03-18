@@ -17,4 +17,5 @@
 *.spec
 *.hash
 
-*.pso
+*.pc
+test*

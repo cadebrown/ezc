@@ -1,4 +1,0 @@
-#!/bin/sh
-
-./req/bin/python src/ezcc.py "$@"
-
