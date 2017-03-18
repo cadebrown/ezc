@@ -3,6 +3,9 @@ import ezcompiler
 from ezcompiler import INTEGER, VARIABLE, EQUALS, operator_tiers, LPAREN, RPAREN
 from ezcompiler.tlex import Lexer
 
+SUB_OPT_STR = "P"
+SUB_OPTS = ["o"]
+
 class EZC2PC(object):
     def __init__(self, lines):
         self.lexer = None
@@ -120,14 +123,13 @@ def main(argv):
     parser = argparse.ArgumentParser(description='EZC 2 Pseudocode')
 
     parser.add_argument('files', metavar='files', type=str, nargs='*', default=[], help='files to compile')
-    parser.add_argument('-o', default="a.out", help='Output file')
 
-    parser.add_argument('-file', default="{0}.pso", type=str, help='File struct')
+    parser.add_argument('-o', default="{0}.pso", type=str, help='File struct')
     args = parser.parse_args(argv)
     SLOC = 0
     for cfile in args.files:
         if cfile.endswith(".ezc"):
-            fp = open(args.file.format(cfile), "w+")
+            fp = open(args.o.format(cfile), "w+")
             lines = open(cfile).read().split("\n")
             PCgen = EZC2PC(lines)
             fp.write("! SLOC: {0}\n".format(SLOC))
