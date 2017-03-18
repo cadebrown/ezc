@@ -1,27 +1,17 @@
-# Generated
-*tmp/
-*.spec
 
-# compiled files
 *.pyc
+*.pyd
 *.pyo
-__pycache__
+
 *.o
+*.so
 *.out
-*.vscode/
-!VSCODE-extension/.vscode/
 
-*.hash
+*.a
+*.la
 
-# build dirs
-/deb-package/*
-req/
-ezc/
-dist/
-build/
-
-# package
+*.tar*
+*.zip
 *.deb
 
-# archive
-*.tar.*
+*.spec

@@ -13,13 +13,13 @@ compiler:
 install:
   - make build
   # this will fail and say the build has cancelled
-  - make check
-  - make bundle package
+  #- make check
+  #- make bundle package
 
 script:
-  - make upload
-  - make upload-package
-#  - make check-global
+  #- make upload
+  #- make upload-package
+  #- make check-global
 
 notifications:
   email:
