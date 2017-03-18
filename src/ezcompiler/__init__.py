@@ -2,6 +2,12 @@
 EQUALS    =    'EQUALS'
 INTEGER   =   'INTEGER'
 VARIABLE  =  'VARIABLE'
+FUNCTION  =  'FUNCTION'
+KEYWORD   =   'KEYWORD'
+TUPLE     =     'TUPLE'
+ET        =        '=='
+GT        =         '>'
+LT        =         '<'
 ADD       =         '+'
 SUB       =         '-'
 MUL       =         '*'
@@ -13,10 +19,12 @@ RPAREN    =         ')'
 EOF       =       'EOF'
 
 
-operators = (ADD, SUB, MUL, DIV, POW)
+protected_words = ('rof', 'fi', )
+
+operators = (ADD, SUB, MUL, DIV, POW, GT, LT, ET)
 
 operator_tiers = (
-	(POW, ), 
+	(POW, GT, LT, ET, ), 
 	(MUL, DIV, ), 
 	(ADD, SUB, )
 )
@@ -27,6 +35,10 @@ _op_name_dict = {
 	DIV: "DIV",
 	ADD: "ADD",
 	SUB: "SUB",
+
+	GT: "GT",
+	LT: "LT",
+	ET: "ET",
 
 	EQUALS: "SET",
 }

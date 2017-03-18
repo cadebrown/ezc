@@ -16,6 +16,8 @@ class EZC2PC(object):
         #self.lines = []
         # set current token to the first token taken from the input
         if self.linenum < len(self.srclines):
+            self.isfunc = False
+            
             self.varnum = 0
             self.lines = []            
             self.line = self.srclines[self.linenum]
@@ -64,16 +66,45 @@ class EZC2PC(object):
     def term(self):
         """term : factor ((MUL | DIV) factor)*"""
         result = self.factor()
-
+        
         while self.current_token.type in operator_tiers[1] or self.current_token.type in operator_tiers[0]:
             token = self.current_token
             self.new_tmpvar()
-            line = "{0}({1}, {2}, {3});"
+            line = "{1}={0}({2}, {3});"
             self.eat(token.type)
             self.lines.append(line.format(ezcompiler.op_to_name(token.type), self.tmpvar, result, self.factor()))
             result = self.tmpvar
         return result
 
+    def func(self):
+        result = self.term()
+        if self.current_token.type in (ezcompiler.FUNCTION, ):
+            line = "{0}={1}({2});"
+            fname = self.current_token.value
+
+            self.eat(ezcompiler.FUNCTION)
+            var = []
+            while self.current_token.type in (ezcompiler.TUPLE, ezcompiler.INTEGER, ezcompiler.VARIABLE, ezcompiler.FUNCTION):
+                res = self.expr()
+                var += [str(res)]
+                if self.current_token.type == ezcompiler.FUNCTION:
+                    result = self.func()
+                self.eat(self.current_token.type)
+
+            self.new_tmpvar()
+
+            self.lines.append(line.format(self.tmpvar, fname, ", ".join(var)))
+            result = self.tmpvar
+        return result
+
+    def changeAssignment(self, text, v):
+        c_ptr = 0
+        tor = ""
+        while c_ptr < len(text) and text[c_ptr].isdigit() or text[c_ptr].isalpha():
+            tor += text[c_ptr]
+            c_ptr += 1
+        tor = tor + "="
+        return text.replace(tor, v + "=", 1)
 
     def expr(self):
         """Arithmetic expression parser / interpreter.
@@ -86,24 +117,35 @@ class EZC2PC(object):
         factor : INTEGER | LPAREN expr RPAREN
         """
 
-        result = self.term()
+        if self.current_token.type == ezcompiler.KEYWORD:
+            self.lines.append(self.current_token.value + ";")
+            return 
+        result = self.func()
         var = []
         fresult = None
 
         if self.current_token.type == EQUALS:
             fresult = self.rside()
 
-
         while self.current_token.type in operator_tiers[2]:
             token = self.current_token
             self.new_tmpvar()
-            line = "{0}({1}, {2}, {3});"
+            line = "{1}={0}({2}, {3});"
             self.eat(token.type)
             self.lines.append(line.format(ezcompiler.op_to_name(token.type), self.tmpvar, result, self.term()))
             result = self.tmpvar
 
+        self.result = result
+        self.fresult = fresult
+
+
         if fresult:
-            self.lines[-1] = self.lines[-1].replace(fresult, result)
+            if len(self.lines) > 0:
+                self.lines[-1] = self.changeAssignment(self.lines[-1], result)
+                #print result
+                #pass
+               # print self.lines[-1].replace(fresult, result, 1)
+                #self.lines[-1] = self.lines[-1].replace(fresult, result, 1)
         else:
             fresult = result
         return fresult
@@ -113,6 +155,9 @@ class EZC2PC(object):
         for i in range(0, len(self.srclines)):
             self.next_line()
             self.expr()
+            if len(self.lines) > 0 and self.result and not self.fresult:
+                self.lines[-1] = self.lines[-1].replace(self.result+"=", "", 1)
+
             res.append(self.lines)
         return res
 
@@ -132,11 +177,13 @@ def main(argv):
             fp = open(args.o.format(cfile), "w+")
             lines = open(cfile).read().split("\n")
             PCgen = EZC2PC(lines)
-            fp.write("! SLOC: {0}\n".format(SLOC))
             for x in PCgen.get_pc():
-                for xx in x:
-                    fp.write(xx + "\n")
-                SLOC += 1
+                if x:
+                    fp.write("! SLOC: {0}\n".format(SLOC))
+                    for xx in x:
+                        fp.write(xx + "\n")
+                    SLOC += 1
+                    fp.write("\n")
 
             fp.close()
 
