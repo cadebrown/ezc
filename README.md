@@ -23,9 +23,13 @@ You can think of it like a calculator language, but with more functions and more
 
 # Status
 
-Currently working on implementing in C/cpp!
+Now with lexers! (still in python)
 
-(long ways)
+Planned:
+
+  * Code generation to a number of different languages (Python, C, ASM)
+  * Optional GMP/MPFR/MPC
+
 
 # Installation
 
@@ -34,25 +38,6 @@ If any errors are produced, please open an [issue](https://github.com/ChemicalDe
 Use the [installation doc page](http://chemicaldevelopment.us/ezc/installing) for most installing.
 
 
-# Contributing
-
-To contribute, clone the repo, then run:
-
-`sudo make dev`
-
-now, run `python src/ezcc.py example.py -run` to assure nothing is wrong.
-
-Now, you are set up!
-
-
-# Environment variables
-
-You can change the way EZC runs.
-
-Run `export EZC_PREC=1000` to set the number of digits to 1000 by default.
-
-Run `export EZC_DEG=1` to use degree mode for trig functions. To disable this, run `export EZC_DEG=0`
-
 # Syntax highlighting
 
 For Sublime text, use the included `VSCODE-extension/ezc.tmLanguage` file.
@@ -60,11 +45,3 @@ For Sublime text, use the included `VSCODE-extension/ezc.tmLanguage` file.
 For Visual Studio Code, run `CTRL+SHIFT+P` and type in `install extensions`. Search for `ezc`. Click install, and when you restart code, all .ezc files will have formatting
 
 For any other text editor, look up how to install .tmLanguage files (most support tmLanguage)
-
-## Documentation
-
-[Chemical Development Docs](http://chemicaldevelopment.us/ezc/) is the documentation for EZC,
-
-and tutorials are located at [docs tutorial](http://chemicaldevelopment.us/ezc/tutorials)
-
-(coming soon)
