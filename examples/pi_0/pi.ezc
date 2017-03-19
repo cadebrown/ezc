@@ -9,7 +9,7 @@ Notice that the builtin ones normally use the same method (since they are specia
 ###
 
 # at least 20
-prec (max 20 $1)
+prec (max(20, $1))
 
 stime
 	x = (pi)

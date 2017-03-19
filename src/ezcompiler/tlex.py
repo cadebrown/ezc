@@ -1,6 +1,6 @@
 
 import ezcompiler
-from ezcompiler import EQUALS, INTEGER, VARIABLE, FUNCTION, TUPLE, LPAREN, RPAREN, KEYWORD, EOF, ADD, SUB, MUL, DIV, POW, GT, LT, ET
+from ezcompiler import EQUALS, CONSTANT, VARIABLE, FUNCTION, TUPLE, LPAREN, RPAREN, KEYWORD, EOF, ADD, SUB, MUL, DIV, POW, GT, LT, ET
 from ezcompiler.token import Token
 
 
@@ -50,13 +50,13 @@ class Lexer(object):
             self.advance()
         return result
 
-    def integer(self):
+    def constant(self):
         """Return a (multidigit) integer consumed from the input."""
         result = ''
-        while self.current_char is not None and self.current_char.isdigit():
+        while self.current_char is not None and (self.current_char.isdigit() or self.current_char == "."):
             result += self.current_char
             self.advance()
-        return int(result)
+        return result
 
     def get_next_token(self):
         """Lexical analyzer (also known as scanner or tokenizer)
@@ -69,6 +69,9 @@ class Lexer(object):
             if self.current_char.isspace():
                 self.skip_whitespace()
                 continue
+            
+            for macro in ezcompiler._macros:
+                self.text = self.text.replace(macro, ezcompiler._macros[macro])
 
             for word in ezcompiler.protected_words:
                 if self.text[self.pos:].startswith(word):
@@ -85,8 +88,8 @@ class Lexer(object):
             if self.current_char.isalpha():
                 return Token(VARIABLE, self.variable())
 
-            if self.current_char.isdigit():
-                return Token(INTEGER, self.integer())
+            if self.current_char.isdigit() or self.current_char == ".":
+                return Token(CONSTANT, self.constant())
 
             if self.current_char == ',':
                 self.advance()
@@ -142,4 +145,3 @@ class Lexer(object):
             self.error()
 
         return Token(EOF, None)
-

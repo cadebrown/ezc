@@ -1,24 +1,25 @@
 
 import ezcompiler
-from ezcompiler import INTEGER, VARIABLE, EQUALS, operator_tiers, LPAREN, RPAREN
+from ezcompiler import CONSTANT, VARIABLE, STRING, EQUALS, TUPLE, operator_tiers, LPAREN, RPAREN
 from ezcompiler.tlex import Lexer
 
-SUB_OPT_STR = "P"
+SUB_OPT_STR = "E2P"
 SUB_OPTS = ["o"]
+SUB_NAME = "EZC 2 PC"
 
 class EZC2PC(object):
     def __init__(self, lines):
         self.lexer = None
         self.srclines = lines
         self.linenum = 0
+        self.varnum = 0
+        
 
     def next_line(self):
         #self.lines = []
         # set current token to the first token taken from the input
         if self.linenum < len(self.srclines):
-            self.isfunc = False
             
-            self.varnum = 0
             self.lines = []            
             self.line = self.srclines[self.linenum]
             self.lexer = Lexer(self.line)
@@ -28,6 +29,7 @@ class EZC2PC(object):
     def new_tmpvar(self):
         self.tmpvar = "tmp{0}".format(self.varnum)
         self.varnum += 1
+        return self.tmpvar
 
     def error(self):
         raise Exception('Invalid syntax')
@@ -51,11 +53,14 @@ class EZC2PC(object):
         """factor : INTEGER | LPAREN expr RPAREN"""
         
         token = self.current_token
-        if token.type == INTEGER:
-            self.eat(INTEGER)
+        if token.type == CONSTANT:
+            self.eat(CONSTANT)
             return token.value
         elif token.type == VARIABLE:
             self.eat(VARIABLE)
+            return token.value
+        elif token.type == STRING:
+            self.eat(STRING)
             return token.value
         elif token.type == LPAREN:
             self.eat(LPAREN)
@@ -66,14 +71,13 @@ class EZC2PC(object):
     def term(self):
         """term : factor ((MUL | DIV) factor)*"""
         result = self.factor()
-        
         while self.current_token.type in operator_tiers[1] or self.current_token.type in operator_tiers[0]:
             token = self.current_token
-            self.new_tmpvar()
+            rettmp = self.new_tmpvar()
             line = "{1}={0}({2}, {3});"
             self.eat(token.type)
             self.lines.append(line.format(ezcompiler.op_to_name(token.type), self.tmpvar, result, self.factor()))
-            result = self.tmpvar
+            result = rettmp
         return result
 
     def func(self):
@@ -81,20 +85,24 @@ class EZC2PC(object):
         if self.current_token.type in (ezcompiler.FUNCTION, ):
             line = "{0}={1}({2});"
             fname = self.current_token.value
+            rettmp = self.new_tmpvar()
 
             self.eat(ezcompiler.FUNCTION)
             var = []
-            while self.current_token.type in (ezcompiler.TUPLE, ezcompiler.INTEGER, ezcompiler.VARIABLE, ezcompiler.FUNCTION):
-                res = self.expr()
-                var += [str(res)]
+            while self.current_token.type in (ezcompiler.TUPLE, ezcompiler.CONSTANT, ezcompiler.STRING, ezcompiler.VARIABLE, ezcompiler.FUNCTION):
                 if self.current_token.type == ezcompiler.FUNCTION:
                     result = self.func()
+                elif self.current_token.type == ezcompiler.TUPLE:
+                    self.eat(ezcompiler.TUPLE)
+                else:
+                    result = self.expr()
+                #else:
+                #    result = self.expr()
                 self.eat(self.current_token.type)
-
-            self.new_tmpvar()
-
-            self.lines.append(line.format(self.tmpvar, fname, ", ".join(var)))
-            result = self.tmpvar
+                
+                var += [str(result)]
+            result = rettmp
+            self.lines.append(line.format(rettmp, fname, ", ".join(var)))
         return result
 
     def changeAssignment(self, text, v):
@@ -126,29 +134,23 @@ class EZC2PC(object):
 
         if self.current_token.type == EQUALS:
             fresult = self.rside()
-
         while self.current_token.type in operator_tiers[2]:
             token = self.current_token
-            self.new_tmpvar()
+            rettmp = self.new_tmpvar()
             line = "{1}={0}({2}, {3});"
             self.eat(token.type)
-            self.lines.append(line.format(ezcompiler.op_to_name(token.type), self.tmpvar, result, self.term()))
-            result = self.tmpvar
+            self.lines.append(line.format(ezcompiler.op_to_name(token.type), rettmp, result, self.expr()))
+            result = rettmp
 
         self.result = result
         self.fresult = fresult
 
-
         if fresult:
             if len(self.lines) > 0:
                 self.lines[-1] = self.changeAssignment(self.lines[-1], result)
-                #print result
-                #pass
-               # print self.lines[-1].replace(fresult, result, 1)
-                #self.lines[-1] = self.lines[-1].replace(fresult, result, 1)
         else:
             fresult = result
-        return fresult
+        return result
 
     def get_pc(self):
         res = []
@@ -157,6 +159,8 @@ class EZC2PC(object):
             self.expr()
             if len(self.lines) > 0 and self.result and not self.fresult:
                 self.lines[-1] = self.lines[-1].replace(self.result+"=", "", 1)
+            if len(self.lines) == 0:
+                self.lines = [self.line]
 
             res.append(self.lines)
         return res
@@ -165,7 +169,7 @@ def main(argv):
     import argparse
     import ezlogging
 
-    parser = argparse.ArgumentParser(description='EZC 2 Pseudocode')
+    parser = argparse.ArgumentParser(description=SUB_NAME)
 
     parser.add_argument('files', metavar='files', type=str, nargs='*', default=[], help='files to compile')
 

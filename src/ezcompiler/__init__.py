@@ -1,18 +1,20 @@
 
 EQUALS    =    'EQUALS'
-INTEGER   =   'INTEGER'
+CONSTANT  =  'CONSTANT'
+GETARG    =    'GETARG'
 VARIABLE  =  'VARIABLE'
 FUNCTION  =  'FUNCTION'
 KEYWORD   =   'KEYWORD'
+STRING    =    'STRING'
 TUPLE     =     'TUPLE'
-ET        =        '=='
-GT        =         '>'
-LT        =         '<'
 ADD       =         '+'
 SUB       =         '-'
 MUL       =         '*'
 DIV       =         '/'
 POW       =         '^'
+ET        =        '=='
+GT        =         '>'
+LT        =         '<'
 
 LPAREN    =         '('
 RPAREN    =         ')'
@@ -41,6 +43,10 @@ _op_name_dict = {
 	ET: "ET",
 
 	EQUALS: "SET",
+}
+
+_macros = {
+	"$": "GETARG",
 }
 
 def op_to_name(op):
