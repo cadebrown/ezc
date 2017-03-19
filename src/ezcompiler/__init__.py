@@ -1,55 +1,20 @@
+from token import Token
 
-EQUALS    =    'EQUALS'
-CONSTANT  =  'CONSTANT'
-GETARG    =    'GETARG'
-VARIABLE  =  'VARIABLE'
-FUNCTION  =  'FUNCTION'
-KEYWORD   =   'KEYWORD'
-STRING    =    'STRING'
-TUPLE     =     'TUPLE'
-ADD       =         '+'
-SUB       =         '-'
-MUL       =         '*'
-DIV       =         '/'
-POW       =         '^'
-ET        =        '=='
-GT        =         '>'
-LT        =         '<'
+INTEGER             = 'INTEGER'
+PLUS                = 'PLUS'
+MINUS               = 'MINUS'
+MUL                 = 'MUL'
+DIV                 = 'DIV'
+LPAREN              = '('
+RPAREN              = ')'
+ID                  = 'ID'
+ASSIGN              = 'ASSIGN'
+BEGIN               = 'BEGIN'
+END                 = 'END'
+SEMI                = 'SEMI'
+DOT                 = 'DOT'
+EOF                 = 'EOF'
 
-LPAREN    =         '('
-RPAREN    =         ')'
-EOF       =       'EOF'
-
-
-protected_words = ('rof', 'fi', )
-
-operators = (ADD, SUB, MUL, DIV, POW, GT, LT, ET)
-
-operator_tiers = (
-	(POW, GT, LT, ET, ), 
-	(MUL, DIV, ), 
-	(ADD, SUB, )
-)
-
-_op_name_dict = {
-	POW: "POW",
-	MUL: "MUL",
-	DIV: "DIV",
-	ADD: "ADD",
-	SUB: "SUB",
-
-	GT: "GT",
-	LT: "LT",
-	ET: "ET",
-
-	EQUALS: "SET",
+RESERVED_KEYWORDS = {
+    'function': Token('FUNCTION', 'FUNCTION')
 }
-
-_macros = {
-	"$": "GETARG",
-}
-
-def op_to_name(op):
-	if op not in _op_name_dict.keys():
-		raise Exception('Invalid operator: {0}'.format(op))
-	return _op_name_dict[op]

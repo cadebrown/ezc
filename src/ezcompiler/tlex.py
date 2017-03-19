@@ -1,8 +1,6 @@
 
 import ezcompiler
-from ezcompiler import EQUALS, CONSTANT, VARIABLE, FUNCTION, STRING, TUPLE, LPAREN, RPAREN, KEYWORD, EOF, ADD, SUB, MUL, DIV, POW, GT, LT, ET
-from ezcompiler.token import Token
-
+from token import Token
 
 class Lexer(object):
     def __init__(self, text):
@@ -10,9 +8,7 @@ class Lexer(object):
         self.text = text
         # self.pos is an index into self.text
         self.pos = 0
-        self.current_char = None
-        if self.pos < len(self.text):
-            self.current_char = self.text[self.pos]
+        self.current_char = self.text[self.pos]
 
     def error(self):
         raise Exception('Invalid character')
@@ -25,47 +21,34 @@ class Lexer(object):
         else:
             self.current_char = self.text[self.pos]
 
+    def peek(self):
+        peek_pos = self.pos + 1
+        if peek_pos > len(self.text) - 1:
+            return None
+        else:
+            return self.text[peek_pos]
+
     def skip_whitespace(self):
         while self.current_char is not None and self.current_char.isspace():
             self.advance()
 
-    def function(self):
-        """Return a valid variable name"""
-        result = ''
-        while self.current_char.isalpha() or self.current_char == "_":
-            result += self.current_char
-            self.advance()
-        self.skip_whitespace()
-        if self.current_char == LPAREN:
-            self.advance()
-        else:
-            raise Exception("Expected '('")
-        return result
-
-    def variable(self):
-        """Return a valid variable name"""
-        result = ''
-        while self.current_char is not None and self.current_char.isalpha() or self.current_char == "_":
-            result += self.current_char
-            self.advance()
-        return result
-
-    def constant(self):
+    def integer(self):
         """Return a (multidigit) integer consumed from the input."""
         result = ''
-        while self.current_char is not None and (self.current_char.isdigit() or self.current_char == "."):
+        while self.current_char is not None and self.current_char.isdigit():
             result += self.current_char
             self.advance()
-        return result
-    def string(self):
-        """Return a (multidigit) integer consumed from the input."""
+        return int(result)
+
+    def _id(self):
+        """Handle identifiers and reserved keywords"""
         result = ''
-        self.advance()
-        while self.current_char is not None and self.current_char != '"':
+        while self.current_char is not None and self.current_char.isalnum():
             result += self.current_char
             self.advance()
-        self.advance()
-        return '"{0}"'.format(result)
+
+        token = ezcompiler.RESERVED_KEYWORDS.get(result, Token(ezcompiler.ID, result))
+        return token
 
     def get_next_token(self):
         """Lexical analyzer (also known as scanner or tokenizer)
@@ -78,83 +61,49 @@ class Lexer(object):
             if self.current_char.isspace():
                 self.skip_whitespace()
                 continue
-            
-            for macro in ezcompiler._macros:
-                self.text = self.text.replace(macro, ezcompiler._macros[macro])
-
-            for word in ezcompiler.protected_words:
-                if self.text[self.pos:].startswith(word):
-                    return Token(KEYWORD, word)
 
             if self.current_char.isalpha():
-                c_ptr = self.pos
-                while c_ptr < len(self.text) and (self.text[c_ptr].isalpha() or self.text[c_ptr].isspace() or self.text[c_ptr] == "_"):
-                    c_ptr += 1
-                if c_ptr < len(self.text) and self.text[c_ptr] == "(":
-                    ret = Token(FUNCTION, self.function())
-                    return ret
-            
-            if self.current_char.isalpha():
-                return Token(VARIABLE, self.variable())
+                return self._id()
 
-            if self.current_char.isdigit() or self.current_char == ".":
-                return Token(CONSTANT, self.constant())
+            if self.current_char.isdigit():
+                return Token(ezcompiler.INTEGER, self.integer())
 
-
-            if self.current_char == '"':
-                return Token(STRING, self.string())
-
-            if self.current_char == ',':
+            if self.current_char == '=' and self.peek() != "=":
                 self.advance()
-                return Token(TUPLE, ',')
+                return Token(ezcompiler.ASSIGN, '=')
 
-            if self.current_char == GT:
+            if self.current_char == ';':
                 self.advance()
-                return Token(GT, '>')
-
-            if self.current_char == LT:
-                self.advance()
-                return Token(LT, '<')
-
-            if self.text[self.pos:self.pos+2] == ET:
-                self.advance()
-                self.advance()
-                return Token(ET, '==')
+                return Token(ezcompiler.SEMI, ';')
 
             if self.current_char == '+':
                 self.advance()
-                return Token(ADD, '+')
-
-            if self.current_char == '=':
-                self.advance()
-                return Token(EQUALS, '=')
+                return Token(ezcompiler.PLUS, '+')
 
             if self.current_char == '-':
                 self.advance()
-                return Token(SUB, '-')
+                return Token(ezcompiler.MINUS, '-')
 
             if self.current_char == '*':
                 self.advance()
-                return Token(MUL, '*')
+                return Token(ezcompiler.MUL, '*')
 
             if self.current_char == '/':
                 self.advance()
-                return Token(DIV, '/')
-
-            if self.current_char == '^':
-                self.advance()
-                return Token(POW, '^')
+                return Token(ezcompiler.DIV, '/')
 
             if self.current_char == '(':
                 self.advance()
-                return Token(LPAREN, '(')
+                return Token(ezcompiler.LPAREN, '(')
 
             if self.current_char == ')':
                 self.advance()
-                return Token(RPAREN, ')')
+                return Token(ezcompiler.RPAREN, ')')
+
+            if self.current_char == '.':
+                self.advance()
+                return Token(ezcompiler.DOT, '.')
 
             self.error()
 
-            self.error()
-
-        return Token(EOF, None)
+        return Token(ezcompiler.EOF, None)
