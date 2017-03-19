@@ -76,7 +76,7 @@ class EZC2PC(object):
             rettmp = self.new_tmpvar()
             line = "{1}={0}({2}, {3});"
             self.eat(token.type)
-            self.lines.append(line.format(ezcompiler.op_to_name(token.type), self.tmpvar, result, self.factor()))
+            self.lines.append(line.format(ezcompiler.op_to_name(token.type), rettmp, result, self.factor()))
             result = rettmp
         return result
 
@@ -89,15 +89,11 @@ class EZC2PC(object):
 
             self.eat(ezcompiler.FUNCTION)
             var = []
-            while self.current_token.type in (ezcompiler.TUPLE, ezcompiler.CONSTANT, ezcompiler.STRING, ezcompiler.VARIABLE, ezcompiler.FUNCTION):
+            while self.current_token.type in (ezcompiler.LPAREN, ezcompiler.CONSTANT, ezcompiler.STRING, ezcompiler.VARIABLE, ezcompiler.FUNCTION):
                 if self.current_token.type == ezcompiler.FUNCTION:
                     result = self.func()
-                elif self.current_token.type == ezcompiler.TUPLE:
-                    self.eat(ezcompiler.TUPLE)
                 else:
                     result = self.expr()
-                #else:
-                #    result = self.expr()
                 self.eat(self.current_token.type)
                 
                 var += [str(result)]

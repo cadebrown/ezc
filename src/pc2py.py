@@ -15,6 +15,8 @@ import sys
 
 flt=decimal.Decimal
 
+default_type=float
+
 def prec(a):
     decimal.getcontext().prec = a
 
@@ -22,9 +24,8 @@ def __is_flt(a):
     return isinstance(a, flt)
 
 
-
-def GETARG(x):
-    return sys.argv[x]
+def GETARG(x, typ=default_type):
+    return typ(sys.argv[x])
 def ADD(a, b):
     if __is_flt(a) or __is_flt(b):
         return decimal.getcontext().add(a, b)
@@ -50,10 +51,17 @@ def POW(a, b):
         return decimal.getcontext().power(a, b)
     else:
         return a ** b
+def LT(a, b):
+    return a < b
+def ET(a, b):
+    return a == b
+
 
 """
 
+indent = 0
 var_list = { }
+loop_endst = []
 
 def is_assign(text):
     c_p = 0
@@ -63,10 +71,12 @@ def is_assign(text):
 
 class Statement():
     def __init__(self, line):
-        if line == "":
-            self.strval = line
-        elif line.startswith("!"):
-            self.strval = line.replace("!", "#", 1)
+        global loop_endst
+        global indent
+        self.indent = indent
+        if line == "" or line.startswith("!"):
+            self.strval = []
+            return
         else:
             if is_assign(line):
                 self.assign = line[0:line.index("=")].strip()
@@ -83,12 +93,34 @@ class Statement():
                 self.args = []
             if self.func == "print":
                 line = line.replace(self.assign + "=", "", 1)
+            elif self.func == "for":
+                if self.assign:
+                    self.args = [self.assign] + self.args
+                line = ["{0}={1}".format(*self.args), "while {0} < {2}:".format(*self.args)]
+                loop_endst += ["{0}=ADD({0}, {3})".format(*self.args)]
+                indent += 1
+            elif line.startswith("if"):
+                line = line.replace(";", "")
+                line = line + ":"
+                indent += 1
+            elif "rof;" in line:
+                line = loop_endst[indent - 1]
+                indent -= 1
+            elif "fi;" in line:
+                indent -= 1
+                line = ""
+            if isinstance(line, str):
+                line = [line]
             self.strval = line
+        
 
     def __str__(self):
-        return self.strval
+        return "".join(["  " * self.indent + vv + "\n" for vv in self.strval])
     
     def __repr__(self):
+        return self.__str__()
+
+    def getval(self):
         return self.__str__()
 
 
@@ -100,7 +132,7 @@ class PC2PY(object):
         ret = [PY_LIB]
         for x in self.lines:
             st_x = Statement(x)
-            ret.append(str(st_x))
+            ret.append(st_x.getval())
         return ret
 
 def main(argv):
@@ -120,11 +152,7 @@ def main(argv):
             lines = open(cfile).read().split("\n")
             PYgen = PC2PY(lines)
             for x in PYgen.get_py():
-                if x:
-                    #fp.write("! SLOC: {0}\n".format(SLOC))
-                    #print x
-                    fp.write(x + "\n")
-                    #fp.write("\n")
+                fp.write(x)
 
             fp.close()
 

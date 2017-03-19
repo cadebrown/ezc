@@ -1,6 +1,6 @@
 
 import ezcompiler
-from ezcompiler import EQUALS, CONSTANT, VARIABLE, FUNCTION, TUPLE, LPAREN, RPAREN, KEYWORD, EOF, ADD, SUB, MUL, DIV, POW, GT, LT, ET
+from ezcompiler import EQUALS, CONSTANT, VARIABLE, FUNCTION, STRING, TUPLE, LPAREN, RPAREN, KEYWORD, EOF, ADD, SUB, MUL, DIV, POW, GT, LT, ET
 from ezcompiler.token import Token
 
 
@@ -32,7 +32,7 @@ class Lexer(object):
     def function(self):
         """Return a valid variable name"""
         result = ''
-        while self.current_char.isalpha():
+        while self.current_char.isalpha() or self.current_char == "_":
             result += self.current_char
             self.advance()
         self.skip_whitespace()
@@ -45,7 +45,7 @@ class Lexer(object):
     def variable(self):
         """Return a valid variable name"""
         result = ''
-        while self.current_char is not None and self.current_char.isalpha():
+        while self.current_char is not None and self.current_char.isalpha() or self.current_char == "_":
             result += self.current_char
             self.advance()
         return result
@@ -57,6 +57,15 @@ class Lexer(object):
             result += self.current_char
             self.advance()
         return result
+    def string(self):
+        """Return a (multidigit) integer consumed from the input."""
+        result = ''
+        self.advance()
+        while self.current_char is not None and self.current_char != '"':
+            result += self.current_char
+            self.advance()
+        self.advance()
+        return '"{0}"'.format(result)
 
     def get_next_token(self):
         """Lexical analyzer (also known as scanner or tokenizer)
@@ -79,9 +88,9 @@ class Lexer(object):
 
             if self.current_char.isalpha():
                 c_ptr = self.pos
-                while self.text[c_ptr].isalpha() or self.text[c_ptr].isspace():
+                while c_ptr < len(self.text) and (self.text[c_ptr].isalpha() or self.text[c_ptr].isspace() or self.text[c_ptr] == "_"):
                     c_ptr += 1
-                if self.text[c_ptr] == "(":
+                if c_ptr < len(self.text) and self.text[c_ptr] == "(":
                     ret = Token(FUNCTION, self.function())
                     return ret
             
@@ -90,6 +99,10 @@ class Lexer(object):
 
             if self.current_char.isdigit() or self.current_char == ".":
                 return Token(CONSTANT, self.constant())
+
+
+            if self.current_char == '"':
+                return Token(STRING, self.string())
 
             if self.current_char == ',':
                 self.advance()
