@@ -1,7 +1,0 @@
-#!../src/ezcc.py -runfile
-prec $3
-if ($2) == (NaN)
-    var (log $1)
-else
-    var (log $1 $2)
-fi

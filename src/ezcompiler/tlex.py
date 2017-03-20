@@ -1,12 +1,22 @@
+###             EZC src/ezcompiler/tlex.py v@VERSION@
+#
+#  EZC is free software; you are free to modify and/or redistribute it under the terms of the GNU GPLv3. See 'LICENSE' for more details.
+#
+#  Contains lexer utilities used by parser.py to generate ASTs.
+#
+#  TODO:
+#    * Parse functions
+#    * add peek(n) to non-destructively check next few characters
+#    * Add custom exceptions, and use old exception format (showing which char): https://github.com/ChemicalDevelopment/ezc/blob/f125dacaee53ddcb97b6f1c4cf0c805dde925f12/src/parsing/__init__.py
+#
+###
 
 import ezcompiler
 from token import Token
 
 class Lexer(object):
     def __init__(self, text):
-        # client string input, e.g. "4 + 2 * 3 - 6 / 2"
         self.text = text
-        # self.pos is an index into self.text
         self.pos = 0
         self.current_char = self.text[self.pos]
 
@@ -14,10 +24,9 @@ class Lexer(object):
         raise Exception('Invalid character')
 
     def advance(self):
-        """Advance the `pos` pointer and set the `current_char` variable."""
         self.pos += 1
         if self.pos > len(self.text) - 1:
-            self.current_char = None  # Indicates end of input
+            self.current_char = None
         else:
             self.current_char = self.text[self.pos]
 
@@ -33,7 +42,6 @@ class Lexer(object):
             self.advance()
 
     def integer(self):
-        """Return a (multidigit) integer consumed from the input."""
         result = ''
         while self.current_char is not None and self.current_char.isdigit():
             result += self.current_char
@@ -41,7 +49,6 @@ class Lexer(object):
         return int(result)
 
     def _id(self):
-        """Handle identifiers and reserved keywords"""
         result = ''
         while self.current_char is not None and self.current_char.isalnum():
             result += self.current_char
@@ -51,11 +58,6 @@ class Lexer(object):
         return token
 
     def get_next_token(self):
-        """Lexical analyzer (also known as scanner or tokenizer)
-
-        This method is responsible for breaking a sentence
-        apart into tokens. One token at a time.
-        """
         while self.current_char is not None:
 
             if self.current_char.isspace():
@@ -68,6 +70,7 @@ class Lexer(object):
             if self.current_char.isdigit():
                 return Token(ezcompiler.INTEGER, self.integer())
 
+            # avoids equality (like ==)
             if self.current_char == '=' and self.peek() != "=":
                 self.advance()
                 return Token(ezcompiler.ASSIGN, '=')

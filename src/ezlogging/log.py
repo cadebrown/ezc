@@ -1,3 +1,15 @@
+###             EZC src/ezlogging/log.py v@VERSION@
+#
+#  EZC is free software; you are free to modify and/or redistribute it under the terms of the GNU GPLv3. See 'LICENSE' for more details.
+#
+#  Colorized output for EZC
+#
+#  TODO:
+#    * Update for the new AST system (general cleanup)
+#    * Implement some of the old error printing (see https://github.com/ChemicalDevelopment/ezc/blob/f125dacaee53ddcb97b6f1c4cf0c805dde925f12/src/parsing/__init__.py)
+#
+###
+
 import ezlogging
 import sys
 

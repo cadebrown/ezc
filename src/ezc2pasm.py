@@ -1,3 +1,17 @@
+###             EZC src/ezc2pasm.py v@VERSION@
+#
+#  EZC is free software; you are free to modify and/or redistribute it under the terms of the GNU GPLv3. See 'LICENSE' for more details.
+#
+#  Generates PASM (psuedo assembly) from EZC source files.
+#
+#  TODO:
+#    * Unary operations support
+#    * Functions (subroutines)
+#
+#  CREDITS:
+#    * Ruslan Spivak (https://ruslanspivak.com/) for a great resource on ASTs/parsing
+#
+###
 
 from ezcompiler.tlex import Lexer
 from ezcompiler.parser import Parser
@@ -25,7 +39,7 @@ class EZC2PASM(NodeVisitor):
     def visit_BinOp(self, node):
         l_vis = self.visit(node.left)
         r_vis = self.visit(node.right)
-        line = "{0}({1}, {2}, {3})"
+        line = "{0}({1},{2},{3})"
         tvar = self.new_tmp_var()
         self.lines.append(line.format(node.op.type, tvar, l_vis, r_vis))
         return tvar
@@ -71,7 +85,7 @@ class EZC2PASM(NodeVisitor):
             return ''
         self.visit(tree)
         for assign in self.GLOBAL_SCOPE:
-            self.lines.append("ASSIGN({0}, {1})".format(assign, self.GLOBAL_SCOPE[assign]))
+            self.lines.append("ASSIGN({0},{1})".format(assign, self.GLOBAL_SCOPE[assign]))
         return self.lines
 
 def main(argv):

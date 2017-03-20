@@ -1,3 +1,14 @@
+###             EZC src/ezcompiler/parser.py v@VERSION@
+#
+#  EZC is free software; you are free to modify and/or redistribute it under the terms of the GNU GPLv3. See 'LICENSE' for more details.
+#
+#  Parses, using a lexer, constants, and operations. Generates an AST to use
+#
+#  TODO:
+#    * Parse functions
+#    * Make compound_statement handle things like for/if loops, and functions
+#
+###
 
 from ezcompiler import INTEGER, ID, ASSIGN, PLUS, MINUS, MUL, DIV, SEMI, LPAREN, RPAREN, EOF
 from token import Var, Num, Assign, NoOp, UnaryOp, BinOp, Compound
@@ -5,32 +16,25 @@ from token import Var, Num, Assign, NoOp, UnaryOp, BinOp, Compound
 class Parser(object):
     def __init__(self, lexer):
         self.lexer = lexer
-        # set current token to the first token taken from the input
         self.current_token = self.lexer.get_next_token()
 
+    # todo add more explicit error messages
     def error(self):
         raise Exception('Invalid syntax')
 
+    # go forward, incrementing lexer pointer
     def eat(self, token_type):
-        # compare the current token type with the passed token
-        # type and if they match then "eat" the current token
-        # and assign the next token to the self.current_token,
-        # otherwise raise an exception.
         if self.current_token.type == token_type:
             self.current_token = self.lexer.get_next_token()
         else:
             self.error()
 
+    # the whole program is a compound statement
     def program(self):
-        """program : compound_statement DOT"""
         node = self.compound_statement()
-        #self.eat(DOT)
         return node
 
     def compound_statement(self):
-        """
-        compound_statement: BEGIN statement_list END
-        """
         nodes = self.statement_list()
 
         root = Compound()
@@ -40,10 +44,6 @@ class Parser(object):
         return root
 
     def statement_list(self):
-        """
-        statement_list : statement
-                       | statement SEMI statement_list
-        """
         node = self.statement()
 
         results = [node]
@@ -58,11 +58,6 @@ class Parser(object):
         return results
 
     def statement(self):
-        """
-        statement : compound_statement
-                  | assignment_statement
-                  | empty
-        """
         if self.current_token.type == ID:
             node = self.assignment_statement()
         else:
@@ -70,9 +65,6 @@ class Parser(object):
         return node
 
     def assignment_statement(self):
-        """
-        assignment_statement : variable ASSIGN expr
-        """
         left = self.variable()
         token = self.current_token
         self.eat(ASSIGN)
@@ -81,21 +73,14 @@ class Parser(object):
         return node
 
     def variable(self):
-        """
-        variable : ID
-        """
         node = Var(self.current_token)
         self.eat(ID)
         return node
 
     def empty(self):
-        """An empty production"""
         return NoOp()
 
     def expr(self):
-        """
-        expr : term ((PLUS | MINUS) term)*
-        """
         node = self.term()
 
         while self.current_token.type in (PLUS, MINUS):
@@ -110,7 +95,6 @@ class Parser(object):
         return node
 
     def term(self):
-        """term : factor ((MUL | DIV) factor)*"""
         node = self.factor()
 
         while self.current_token.type in (MUL, DIV):
@@ -126,12 +110,6 @@ class Parser(object):
 
 
     def factor(self):
-        """factor : PLUS factor
-                  | MINUS factor
-                  | INTEGER
-                  | LPAREN expr RPAREN
-                  | variable
-        """
         token = self.current_token
         if token.type == PLUS:
             self.eat(PLUS)
@@ -154,34 +132,6 @@ class Parser(object):
             return node
 
     def parse(self):
-        """
-        program : compound_statement DOT
-
-        compound_statement : BEGIN statement_list END
-
-        statement_list : statement
-                       | statement SEMI statement_list
-
-        statement : compound_statement
-                  | assignment_statement
-                  | empty
-
-        assignment_statement : variable ASSIGN expr
-
-        empty :
-
-        expr: term ((PLUS | MINUS) term)*
-
-        term: factor ((MUL | DIV) factor)*
-
-        factor : PLUS factor
-               | MINUS factor
-               | INTEGER
-               | LPAREN expr RPAREN
-               | variable
-
-        variable: ID
-        """
         node = self.program()
         if self.current_token.type != EOF:
             self.error()

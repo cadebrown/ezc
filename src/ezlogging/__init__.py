@@ -1,3 +1,14 @@
+###             EZC src/ezlogging/__init__.py v@VERSION@
+#
+#  EZC is free software; you are free to modify and/or redistribute it under the terms of the GNU GPLv3. See 'LICENSE' for more details.
+#
+#  Colorized output for EZC
+#
+#  TODO:
+#    * Cleanup/See if python has anything for colors builtin
+#
+###
+
 name = "EZCC"
 
 version = "@VERSION@"

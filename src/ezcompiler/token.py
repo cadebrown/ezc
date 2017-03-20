@@ -1,3 +1,13 @@
+###             EZC src/ezcompiler/token.py v@VERSION@
+#
+#  EZC is free software; you are free to modify and/or redistribute it under the terms of the GNU GPLv3. See 'LICENSE' for more details.
+#
+#  Simple definitions for the lexer/parser. AST definitions
+#
+#  TODO:
+#    * Function AST object
+#
+###
 
 class Token(object):
     def __init__(self, type, value):
@@ -5,17 +15,7 @@ class Token(object):
         self.value = value
 
     def __str__(self):
-        """String representation of the class instance.
-
-        Examples:
-            Token(INTEGER, 3)
-            Token(PLUS, '+')
-            Token(MUL, '*')
-        """
-        return 'Token({type}, {value})'.format(
-            type=self.type,
-            value=repr(self.value)
-        )
+        return 'Token({1}, {1})'.format(self.type, repr(self.value))
 
     def __repr__(self):
         return self.__str__()
@@ -44,7 +44,6 @@ class UnaryOp(AST):
 
 
 class Compound(AST):
-    """Represents a 'BEGIN ... END' block"""
     def __init__(self):
         self.children = []
 
@@ -57,7 +56,6 @@ class Assign(AST):
 
 
 class Var(AST):
-    """The Var node is constructed out of ID token."""
     def __init__(self, token):
         self.token = token
         self.value = token.value

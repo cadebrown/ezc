@@ -1,3 +1,0 @@
-#!../src/ezcc.py -runfile
-prec $3
-var($1 - $2)

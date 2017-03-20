@@ -1,20 +1,37 @@
+###             EZC req/Makfile v@VERSION@
+#
+#  EZC is free software; you are free to modify and/or redistribute it under the terms of the GNU GPLv3. See 'LICENSE' for more details.
+#
+#  Installs requirements and dependencies for EZC.
+#
+#  Currently, to build EZC, you will need python, which will need a full featured C compiler.
+#
+#  If you already have a C compiler, use `make cc="CCOMPILER" python` to install python.
+#  Otherwise, you can run `make gcc`, or if you know how to bootstrap it with tcc, do that.
+#
+#  To use EZC -> C code generation, you will need a (simple) C compiler. tcc will work for this.
+#  Run `make tcc` to install tcc locally.
+#
+#  TODO:
+#    * In the future, add a `make bundle-req` to compile all requirements needed to distribute EZC.
+#
+###
 
 cc=cc
 export CC=$(cc)
 
 
-gmp.src:
+gmp.src: FORCE
 	cd $@; ./configure --disable-shared --enable-static --prefix=$(PWD)/; make install
 
-mpfr.src:
+mpfr.src: FORCE
 	cd $@; ./configure --disable-shared --enable-static --prefix=$(PWD)/ --with-gmp=$(PWD)/; make install
 
-mpc.src:
+mpc.src: FORCE
 	cd $@; ./configure --disable-shared --enable-static --prefix=$(PWD)/ --with-gmp=$(PWD)/ --with-mpfr=$(PWD)/; make install
 
 elf.src: FORCE
 	cd $@; ./configure --disable-shared --enable-static --prefix=$(PWD)/; make install
-
 
 isl.src: FORCE
 	cd $@; ./configure --disable-shared --enable-static --prefix=$(PWD)/; make install

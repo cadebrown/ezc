@@ -1,3 +1,0 @@
-#!../src/ezcc.py -runfile
-prec $2
-var(cos $1)
