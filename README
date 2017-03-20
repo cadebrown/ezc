@@ -1,9 +1,9 @@
-#               EZC v@VERSION@
+#                       EZC v@VERSION@
 
 To see usage and more, see [docs folder](./docs/), or the [docs website](http://chemicaldevelopment.us/ezc/)
 
 
-##              What is EZC?
+##                      What is EZC?
 
 EZC is a language/compiler which supports multiprecision, quick scripting, and a large number of platforms (eventually aiming for any platform with a C compiler). EZC also features dynamic code generation to pseudo assembly (.pasm files) which can be used by other compilers, as it is a basic, parsed format. EZC syntax is similar to python, and just as abstract. However, it is much simpler, and is meant for mainly high precision numeric computation, or high speed simple arithmetic.
 
@@ -11,7 +11,7 @@ EZC also includes commandline utilities (WIP) which allow shells access to fast 
 
 Online documentation: http://chemicaldevelopment.us/ezc/
 
-##              TODOs
+##                      TODOs
 				 
   1. Code generation to a number of different
     * PASM [partially done]
@@ -24,7 +24,7 @@ Online documentation: http://chemicaldevelopment.us/ezc/
     * MPFR []
     * MPC [unlikely to come soon, as this is complex numbers]
 
-##              AUTHORS
+##                      AUTHORS
 
   * Cade Brown <cade@cade.site>
 
