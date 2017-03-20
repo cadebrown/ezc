@@ -14,6 +14,7 @@ def main(argv):
 
 	import argparse
 	import ezlogging
+	from ezlogging import log
 	import ezc2pasm
 
 	subprogs = [ezc2pasm]
@@ -22,6 +23,7 @@ def main(argv):
 
 	parser.add_argument('files', metavar='files', type=str, nargs='*', default=[], help='files to compile')
 	parser.add_argument('-c', default=None, help='Compiles a string of text')
+	parser.add_argument('-v', type=int, default=1, help='Verbosity level')
 	parser.add_argument('-o', default="o.py", help='Output file')
 
 	for subprog in subprogs:
@@ -29,6 +31,8 @@ def main(argv):
 			parser.add_argument('-{0}{1}'.format(subprog.SUB_OPT_STR, SUB_OPT), nargs='*', default=None, help="Automatically passed to {0}".format(subprog.SUB_NAME))
 
 	args = parser.parse_args(argv)
+
+	log.init(args.v)
 
 	SUB_OPTS = { }
 
@@ -42,6 +46,8 @@ def main(argv):
 				SUB_OPTS[subprog] = SUB_OPTS[subprog] + ["-{0}".format(SUB_OPT.replace(subprog.SUB_OPT_STR, "", 1))]
 				for LIST_OPT in vargs[SUB_OPT]:
 					SUB_OPTS[subprog] = SUB_OPTS[subprog] + [LIST_OPT]
+	if args.c:
+		SUB_OPTS[ezc2pasm] += ["-c", args.c]
 
 	ezc2pasm.main(args.files + SUB_OPTS[ezc2pasm])
 

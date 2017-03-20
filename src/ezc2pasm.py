@@ -13,9 +13,12 @@
 #
 ###
 
+import ezcompiler
 from ezcompiler.tlex import Lexer
 from ezcompiler.parser import Parser
 from ezcompiler.inter import NodeVisitor
+
+from ezlogging import log
 
 from pasm import folding
 
@@ -55,11 +58,17 @@ class EZC2PASM(NodeVisitor):
         return node.value
 
     def visit_UnaryOp(self, node):
-        op = node.op.type
-        if op == PLUS:
-            return +self.visit(node.expr)
-        elif op == MINUS:
-            return -self.visit(node.expr)
+        vis = self.visit(node.expr)
+        ufunc = "U_{0}".format(node.op.type)
+        if self.args["folding"]:
+            if ufunc in folding.fold_func:
+                tres = folding.fold_func[ufunc](vis)
+                if tres:
+                    return tres
+        tvar = self.new_tmp_var()
+        line = "{0}({1},{2})"
+        self.lines.append(line.format(ufunc, tvar, vis))
+        return tvar   
 
     def visit_Compound(self, node):
         for child in node.children:
@@ -110,7 +119,10 @@ def main(argv):
 
     args = parser.parse_args(argv)
     if args.c:
-        fp = open(args.o.format("ezc2pasm-c"), "w+")
+        ofile = args.o.format("ezc2pasm-c")
+        log.extra(SUB_NAME, "'{0}' -> {1}".format(args.c, ofile))
+        
+        fp = open(ofile, "w+")
         text = args.c
 
         lexer = Lexer(text)
@@ -124,7 +136,10 @@ def main(argv):
     else:
         for cfile in args.files:
             if cfile.endswith(".ezc"):
-                fp = open(args.o.format(cfile), "w+")
+                ofile = args.o.format(cfile)
+                log.extra(SUB_NAME, "{0} -> {1}".format(cfile, ofile))
+                
+                fp = open(ofile, "w+")
                 text = open(cfile).read().replace("\n", ";\n")
 
                 lexer = Lexer(text)

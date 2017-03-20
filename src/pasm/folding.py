@@ -11,6 +11,7 @@
 
 import pasm
 from fractions import gcd
+import math
 
 def isint(val, bits=pasm.MAX_WORD_BITS):
     try:
@@ -19,7 +20,7 @@ def isint(val, bits=pasm.MAX_WORD_BITS):
     except:
         return False
 
-def PLUS(*args):
+def ADD(*args):
     if len(args) == 2:
         if isint(args[0]) and isint(args[1]):
             tres = int(args[0]) + int(args[1])
@@ -27,7 +28,7 @@ def PLUS(*args):
                 return tres
     return None
 
-def MINUS(*args):
+def SUB(*args):
     if len(args) == 2:
         if isint(args[0]) and isint(args[1]):
             tres = int(args[0]) - int(args[1])
@@ -51,11 +52,21 @@ def DIV(*args):
                 return tres
     return None
 
+def U_SQRT(*args):
+    if len(args) == 1:
+        if isint(args[0]):
+            tres = int(math.sqrt(int(args[0])))
+            if isint(tres) and tres ** 2 == int(args[0]):
+                return tres
+    return None
+
+
 
 fold_func = {
-    "PLUS": PLUS,
-    "MINUS": MINUS,
+    "ADD": ADD,
+    "SUB": SUB,
     "MUL": MUL,
-    "DIV": DIV
+    "DIV": DIV,
+    "U_SQRT": U_SQRT
 }
 

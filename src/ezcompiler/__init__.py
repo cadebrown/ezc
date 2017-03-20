@@ -13,8 +13,9 @@
 from token import Token
 
 INTEGER             = 'INTEGER'
-PLUS                = 'PLUS'
-MINUS               = 'MINUS'
+SQRT                = 'SQRT'
+ADD                 = 'ADD'
+SUB                 = 'SUB'
 MUL                 = 'MUL'
 DIV                 = 'DIV'
 LPAREN              = '('

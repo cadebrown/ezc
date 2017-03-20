@@ -10,7 +10,7 @@
 #
 ###
 
-from ezcompiler import INTEGER, ID, ASSIGN, PLUS, MINUS, MUL, DIV, SEMI, LPAREN, RPAREN, EOF
+from ezcompiler import INTEGER, ID, ASSIGN, SQRT, ADD, SUB, MUL, DIV, SEMI, LPAREN, RPAREN, EOF
 from token import Var, Num, Assign, NoOp, UnaryOp, BinOp, Compound
 
 class Parser(object):
@@ -83,12 +83,12 @@ class Parser(object):
     def expr(self):
         node = self.term()
 
-        while self.current_token.type in (PLUS, MINUS):
+        while self.current_token.type in (ADD, SUB, ):
             token = self.current_token
-            if token.type == PLUS:
-                self.eat(PLUS)
-            elif token.type == MINUS:
-                self.eat(MINUS)
+            if token.type == ADD:
+                self.eat(ADD)
+            elif token.type == SUB:
+                self.eat(SUB)
 
             node = BinOp(left=node, op=token, right=self.term())
 
@@ -111,12 +111,16 @@ class Parser(object):
 
     def factor(self):
         token = self.current_token
-        if token.type == PLUS:
-            self.eat(PLUS)
+        if token.type == SQRT:
+            self.eat(SQRT)
             node = UnaryOp(token, self.factor())
             return node
-        elif token.type == MINUS:
-            self.eat(MINUS)
+        if token.type == ADD:
+            self.eat(ADD)
+            node = UnaryOp(token, self.factor())
+            return node
+        elif token.type == SUB:
+            self.eat(SUB)
             node = UnaryOp(token, self.factor())
             return node
         elif token.type == INTEGER:

@@ -23,19 +23,23 @@ class Lexer(object):
     def error(self):
         raise Exception('Invalid character')
 
-    def advance(self):
-        self.pos += 1
-        if self.pos > len(self.text) - 1:
-            self.current_char = None
-        else:
-            self.current_char = self.text[self.pos]
+    def advance(self, num=1):
+        for i in range(0, num):
+            self.pos += 1
+            if self.pos > len(self.text) - 1:
+                self.current_char = None
+            else:
+                self.current_char = self.text[self.pos]
 
-    def peek(self):
-        peek_pos = self.pos + 1
-        if peek_pos > len(self.text) - 1:
-            return None
-        else:
-            return self.text[peek_pos]
+    def peek(self, num=1):
+        peek_pos = self.pos
+        res = ""
+        while peek_pos < self.pos + num:
+            if peek_pos > len(self.text) - 1:
+                break
+            res += self.text[peek_pos]
+            peek_pos += 1
+        return res
 
     def skip_whitespace(self):
         while self.current_char is not None and self.current_char.isspace():
@@ -64,6 +68,10 @@ class Lexer(object):
                 self.skip_whitespace()
                 continue
 
+            if self.peek(4) == 'sqrt':
+                self.advance(4)
+                return Token(ezcompiler.SQRT, 'sqrt')
+
             if self.current_char.isalpha():
                 return self._id()
 
@@ -71,39 +79,40 @@ class Lexer(object):
                 return Token(ezcompiler.INTEGER, self.integer())
 
             # avoids equality (like ==)
-            if self.current_char == '=' and self.peek() != "=":
+            if  self.peek() == "=" and self.peek(2) != "==":
                 self.advance()
                 return Token(ezcompiler.ASSIGN, '=')
 
-            if self.current_char == ';':
+            if self.peek() == ';':
                 self.advance()
                 return Token(ezcompiler.SEMI, ';')
 
-            if self.current_char == '+':
-                self.advance()
-                return Token(ezcompiler.PLUS, '+')
 
-            if self.current_char == '-':
+            if self.peek() == '+':
                 self.advance()
-                return Token(ezcompiler.MINUS, '-')
+                return Token(ezcompiler.ADD, '+')
 
-            if self.current_char == '*':
+            if self.peek() == '-':
+                self.advance()
+                return Token(ezcompiler.SUB, '-')
+
+            if self.peek() == '*':
                 self.advance()
                 return Token(ezcompiler.MUL, '*')
 
-            if self.current_char == '/':
+            if self.peek() == '/':
                 self.advance()
                 return Token(ezcompiler.DIV, '/')
 
-            if self.current_char == '(':
+            if self.peek() == '(':
                 self.advance()
                 return Token(ezcompiler.LPAREN, '(')
 
-            if self.current_char == ')':
+            if self.peek() == ')':
                 self.advance()
                 return Token(ezcompiler.RPAREN, ')')
 
-            if self.current_char == '.':
+            if self.peek() == '.':
                 self.advance()
                 return Token(ezcompiler.DOT, '.')
 

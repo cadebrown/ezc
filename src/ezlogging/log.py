@@ -66,7 +66,7 @@ def info(title, message):
 		print_base(title, message, [ezlogging.BLUE + ezlogging.BOLD, ezlogging.RBOLD + ezlogging.DEFAULT])
 
 def extra(title, message):
-	if ezlogging.verbosity >= 3:
+	if ezlogging.verbosity >= 4:
 		print_base(title, message, [ezlogging.CYAN, ezlogging.DIM + ezlogging.DEFAULT])
 
 def init(verbose):
