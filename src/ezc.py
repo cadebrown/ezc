@@ -21,11 +21,12 @@ def main(argv):
 	parser = argparse.ArgumentParser(description='Compile EZC Language. v{0}'.format(ezlogging.version))
 
 	parser.add_argument('files', metavar='files', type=str, nargs='*', default=[], help='files to compile')
+	parser.add_argument('-c', default=None, help='Compiles a string of text')
 	parser.add_argument('-o', default="o.py", help='Output file')
 
 	for subprog in subprogs:
 		for SUB_OPT in subprog.SUB_OPTS:
-			parser.add_argument('-{0}{1}'.format(subprog.SUB_OPT_STR, SUB_OPT), nargs='*', help="Automatically passed to {0}".format(subprog.SUB_NAME))
+			parser.add_argument('-{0}{1}'.format(subprog.SUB_OPT_STR, SUB_OPT), nargs='*', default=None, help="Automatically passed to {0}".format(subprog.SUB_NAME))
 
 	args = parser.parse_args(argv)
 
@@ -42,7 +43,7 @@ def main(argv):
 				for LIST_OPT in vargs[SUB_OPT]:
 					SUB_OPTS[subprog] = SUB_OPTS[subprog] + [LIST_OPT]
 
-	ezc2pasm.main(args.files)
+	ezc2pasm.main(args.files + SUB_OPTS[ezc2pasm])
 
 if __name__ == "__main__":
 	import sys

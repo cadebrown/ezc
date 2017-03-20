@@ -17,6 +17,7 @@ from ezcompiler.tlex import Lexer
 from ezcompiler.parser import Parser
 from ezcompiler.inter import NodeVisitor
 
+from pasm import folding
 
 SUB_OPT_STR = "PASM"
 SUB_OPTS = ["o"]
@@ -27,10 +28,11 @@ class EZC2PASM(NodeVisitor):
 
     GLOBAL_SCOPE = {}
 
-    def __init__(self, parser):
+    def __init__(self, parser, **kwargs):
         self.parser = parser
         self.lines = []
         self.tmp_var = []
+        self.args = dict(kwargs)
 
     def new_tmp_var(self):
         self.tmp_var.append("__tmp" + str(len(self.tmp_var)))
@@ -40,6 +42,11 @@ class EZC2PASM(NodeVisitor):
         l_vis = self.visit(node.left)
         r_vis = self.visit(node.right)
         line = "{0}({1},{2},{3})"
+        if self.args["folding"]:
+            if node.op.type in folding.fold_func:
+                tres = folding.fold_func[node.op.type](l_vis, r_vis)
+                if tres:
+                    return tres
         tvar = self.new_tmp_var()
         self.lines.append(line.format(node.op.type, tvar, l_vis, r_vis))
         return tvar
@@ -97,20 +104,36 @@ def main(argv):
     parser.add_argument('files', metavar='files', type=str, nargs='*', default=[], help='files to compile')
 
     parser.add_argument('-o', default="{0}.pasm", type=str, help='File struct')
+    parser.add_argument('-c', default=None, type=str, help='Compile a string')
+
+    OPT_ARGS={ "folding": True }
+
     args = parser.parse_args(argv)
-    SLOC = 0
-    for cfile in args.files:
-        if cfile.endswith(".ezc"):
-            fp = open(args.o.format(cfile), "w+")
-            text = open(cfile).read().replace("\n", ";\n")
+    if args.c:
+        fp = open(args.o.format("ezc2pasm-c"), "w+")
+        text = args.c
 
-            lexer = Lexer(text)
-            parser = Parser(lexer)
-            asmgen = EZC2PASM(parser)
+        lexer = Lexer(text)
+        parser = Parser(lexer)
+        asmgen = EZC2PASM(parser, **OPT_ARGS)
 
-            for x in asmgen.get_src():
-                fp.write(x + "\n")
-            fp.close()
+        for x in asmgen.get_src():
+            fp.write(x + "\n")
+        fp.close()
+    
+    else:
+        for cfile in args.files:
+            if cfile.endswith(".ezc"):
+                fp = open(args.o.format(cfile), "w+")
+                text = open(cfile).read().replace("\n", ";\n")
+
+                lexer = Lexer(text)
+                parser = Parser(lexer)
+                asmgen = EZC2PASM(parser, **OPT_ARGS)
+
+                for x in asmgen.get_src():
+                    fp.write(x + "\n")
+                fp.close()
 
 if __name__ == "__main__":
     import sys
