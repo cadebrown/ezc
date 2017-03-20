@@ -17,5 +17,6 @@
 *.spec
 *.hash
 
+*.pasm
 *.pc
 test*
