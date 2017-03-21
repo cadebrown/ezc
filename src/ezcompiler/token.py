@@ -61,6 +61,12 @@ class Var(AST):
         self.token = token
         self.value = token.value
 
+class String(AST):
+    def __init__(self, token):
+        self.token = token
+        self.value = token.value
+
+
 class Function(AST):
     def __init__(self, token, args):
         self.token = token

@@ -13,10 +13,13 @@ import pasm
 from fractions import gcd
 import math
 
-def isint(val, bits=pasm.MAX_WORD_BITS):
+def isint(val, bits=pasm.MAX_WORD_BITS, signed=False):
     try:
         x = int(val)
-        return x < 2 ** bits
+        if signed:
+            return x < 2 ** (bits - 1) and x > - (2 ** (bits - 1))
+        else:
+            return x < 2 ** bits
     except:
         return False
 

@@ -66,7 +66,7 @@ class Lexer(object):
 
     def _id(self):
         result = ''
-        while self.current_char is not None and self.current_char.isalnum():
+        while self.current_char is not None and self.current_char.replace('"', "").isalnum():
             result += self.current_char
             self.advance()
 
@@ -79,6 +79,17 @@ class Lexer(object):
             if self.current_char.isspace():
                 self.skip_whitespace()
                 continue
+
+            if self.peek() == '"':
+                start = self.pos
+                res = ""
+                l_char = ""
+                self.advance()
+                while self.current_char is not None and l_char != "\\" and self.current_char != '"':
+                    res += self.current_char
+                    self.advance()
+                self.advance()
+                return Token(ezcompiler.STRING, res, start)
 
             if self.peek() == ',':
                 self.advance()

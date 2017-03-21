@@ -15,6 +15,7 @@ from token import Token
 
 UNKNOWN             = 'UNKNOWN'
 CONSTANT            = 'CONSTANT'
+STRING              = 'STRING'
 COMMA               = 'COMMA'
 FUNCTION            = 'FUNCTION'
 ADD                 = 'ADD'

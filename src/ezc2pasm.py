@@ -93,6 +93,10 @@ class EZC2PASM(NodeVisitor):
         for child in node.children:
             self.visit(child)
 
+    def visit_String(self, node):
+        val = node.value
+        return '"{0}"'.format(val)
+
     def visit_Assign(self, node):
         var_name = node.left.value
         self.GLOBAL_SCOPE[var_name] = self.visit(node.right)

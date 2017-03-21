@@ -12,8 +12,8 @@
 import ezc
 
 import ezcompiler
-from ezcompiler import CONSTANT, ID, ASSIGN, FUNCTION, COMMA, ADD, SUB, MUL, DIV, SEMI, LPAREN, RPAREN, EOF
-from token import Var, Num, Assign, NoOp, UnaryOp, BinOp, Compound, Function
+from ezcompiler import CONSTANT, ID, STRING, ASSIGN, FUNCTION, COMMA, ADD, SUB, MUL, DIV, SEMI, LPAREN, RPAREN, EOF
+from token import Var, Num, String, Assign, NoOp, UnaryOp, BinOp, Compound, Function
 
 class Parser(object):
     def __init__(self, lexer):
@@ -59,7 +59,9 @@ class Parser(object):
         return results
 
     def statement(self):
-        if self.current_token.type == ID:
+        if self.current_token.type == FUNCTION:
+            node = self.function_statement()
+        elif self.current_token.type == ID:
             node = self.assignment_statement()
         else:
             node = self.empty()
@@ -72,6 +74,10 @@ class Parser(object):
         right = self.expr()
         node = Assign(left, token, right)
         return node
+
+    def function_statement(self):
+        v = self.expr()
+        return v
 
     def variable(self):
         node = Var(self.current_token)
@@ -124,6 +130,9 @@ class Parser(object):
         elif token.type == CONSTANT:
             self.eat(CONSTANT)
             return Num(token)
+        elif token.type == STRING:
+            self.eat(STRING)
+            return String(token)
         elif token.type == LPAREN:
             self.eat(LPAREN)
             node = self.expr()
