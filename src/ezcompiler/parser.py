@@ -5,13 +5,15 @@
 #  Parses, using a lexer, constants, and operations. Generates an AST to use
 #
 #  TODO:
-#    * Parse functions
-#    * Make compound_statement handle things like for/if loops, and functions
+#
 #
 ###
 
-from ezcompiler import INTEGER, ID, ASSIGN, SQRT, ADD, SUB, MUL, DIV, SEMI, LPAREN, RPAREN, EOF
-from token import Var, Num, Assign, NoOp, UnaryOp, BinOp, Compound
+import ezc
+
+import ezcompiler
+from ezcompiler import INTEGER, ID, ASSIGN, FUNCTION, COMMA, ADD, SUB, MUL, DIV, SEMI, LPAREN, RPAREN, EOF
+from token import Var, Num, Assign, NoOp, UnaryOp, BinOp, Compound, Function
 
 class Parser(object):
     def __init__(self, lexer):
@@ -19,15 +21,15 @@ class Parser(object):
         self.current_token = self.lexer.get_next_token()
 
     # todo add more explicit error messages
-    def error(self):
-        raise Exception('Invalid syntax')
+    def error(self, got=None, expect=None):
+        ezc.err("Invalid Character (parser.py)", ezcompiler.InvalidCharacter(self.current_token.char_at, self.lexer.text, got, expect))
 
     # go forward, incrementing lexer pointer
     def eat(self, token_type):
         if self.current_token.type == token_type:
             self.current_token = self.lexer.get_next_token()
         else:
-            self.error()
+            self.error(self.current_token.type, token_type)
 
     # the whole program is a compound statement
     def program(self):
@@ -51,9 +53,8 @@ class Parser(object):
         while self.current_token.type == SEMI:
             self.eat(SEMI)
             results.append(self.statement())
-
         if self.current_token.type == ID:
-            self.error()
+            self.error(got=ID, expect=None)
 
         return results
 
@@ -111,10 +112,7 @@ class Parser(object):
 
     def factor(self):
         token = self.current_token
-        if token.type == SQRT:
-            self.eat(SQRT)
-            node = UnaryOp(token, self.factor())
-            return node
+
         if token.type == ADD:
             self.eat(ADD)
             node = UnaryOp(token, self.factor())
@@ -131,6 +129,15 @@ class Parser(object):
             node = self.expr()
             self.eat(RPAREN)
             return node
+        elif token.type == FUNCTION:
+            self.eat(FUNCTION)
+            args = []
+            while self.current_token.type != RPAREN:
+                args.append(self.expr())
+                if self.current_token.type != RPAREN:
+                    self.eat(COMMA)
+            self.eat(RPAREN)
+            return Function(token, args)
         else:
             node = self.variable()
             return node
@@ -138,6 +145,6 @@ class Parser(object):
     def parse(self):
         node = self.program()
         if self.current_token.type != EOF:
-            self.error()
+            self.error(expect=EOF, got=self.current_token.type)
 
         return node

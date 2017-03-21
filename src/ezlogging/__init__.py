@@ -22,10 +22,7 @@ date=time.strftime("%Y-%m-%d %H:%M:%S %z")
 
 authors=["Cade Brown <cade@cade.site>"]
 
-RESET = '\033[0m'
 
-DEFAULT = '\033[39m'
-DEFAULTB = '\033[49m'
 
 WHITE = '\033[97m'
 
@@ -92,5 +89,12 @@ RINVERT = '\033[27m'
 HIDE = '\033[8m'
 RHIDE = '\033[28m'
 
+DEFAULT = LGRAY
+
+RESET = '\033[0m' + DEFAULT
+
+
 verbosity = 2
 silent = False
+
+

@@ -5,14 +5,15 @@
 #  Simple definitions for the lexer/parser. AST definitions
 #
 #  TODO:
-#    * Function AST object
+#
 #
 ###
 
 class Token(object):
-    def __init__(self, type, value):
+    def __init__(self, type, value, char_at=-1):
         self.type = type
         self.value = value
+        self.char_at = char_at
 
     def __str__(self):
         return 'Token({1}, {1})'.format(self.type, repr(self.value))
@@ -59,6 +60,12 @@ class Var(AST):
     def __init__(self, token):
         self.token = token
         self.value = token.value
+
+class Function(AST):
+    def __init__(self, token, args):
+        self.token = token
+        self.value = token.value
+        self.args = args
 
 
 class NoOp(AST):

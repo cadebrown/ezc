@@ -6,7 +6,6 @@
 #
 #  TODO:
 #    * Update for the new AST system (general cleanup)
-#    * Implement some of the old error printing (see https://github.com/ChemicalDevelopment/ezc/blob/f125dacaee53ddcb97b6f1c4cf0c805dde925f12/src/parsing/__init__.py)
 #
 ###
 
@@ -55,7 +54,7 @@ def print_base(title, message, colors=[ezlogging.CYAN, ezlogging.DEFAULT]):
 	print_reset()
 
 def err(title, message):
-	print_base(title, message, [ezlogging.RED + ezlogging.BOLD + ezlogging.BLINK, ezlogging.RBOLD + ezlogging.LGRAY])
+	print_base(title, message, [ezlogging.BOLD + ezlogging.RED, ""])
 
 def warn(title, message):
 	if ezlogging.verbosity >= 1:

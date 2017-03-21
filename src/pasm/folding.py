@@ -28,10 +28,27 @@ def ADD(*args):
                 return tres
     return None
 
+def U_ADD(*args):
+    if len(args) == 1:
+        if isint(args[0]):
+            tres = +int(args[0])
+            if isint(tres):
+                return tres
+    return None
+
+
 def SUB(*args):
     if len(args) == 2:
         if isint(args[0]) and isint(args[1]):
             tres = int(args[0]) - int(args[1])
+            if isint(tres):
+                return tres
+    return None
+
+def U_SUB(*args):
+    if len(args) == 1:
+        if isint(args[0]):
+            tres = -int(args[0])
             if isint(tres):
                 return tres
     return None
@@ -52,7 +69,7 @@ def DIV(*args):
                 return tres
     return None
 
-def U_SQRT(*args):
+def F_sqrt(*args):
     if len(args) == 1:
         if isint(args[0]):
             tres = int(math.sqrt(int(args[0])))
@@ -64,9 +81,11 @@ def U_SQRT(*args):
 
 fold_func = {
     "ADD": ADD,
+    "U_ADD": U_ADD,
     "SUB": SUB,
+    "U_SUB": U_SUB,
     "MUL": MUL,
     "DIV": DIV,
-    "U_SQRT": U_SQRT
+    "F_sqrt": F_sqrt
 }
 

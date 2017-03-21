@@ -5,13 +5,14 @@
 #  Generates PASM (psuedo assembly) from EZC source files.
 #
 #  TODO:
-#    * Unary operations support
-#    * Functions (subroutines)
+#
 #
 #  CREDITS:
 #    * Ruslan Spivak (https://ruslanspivak.com/) for a great resource on ASTs/parsing
 #
 ###
+
+import ezc
 
 import ezcompiler
 from ezcompiler.tlex import Lexer
@@ -40,6 +41,24 @@ class EZC2PASM(NodeVisitor):
     def new_tmp_var(self):
         self.tmp_var.append("__tmp" + str(len(self.tmp_var)))
         return self.tmp_var[-1]
+
+    def visit_Function(self, node):
+        viss = []
+        for nd in node.args:
+            viss.append(self.visit(nd))
+
+        dfuncn = "F_{0}".format(node.value)
+        dfunc =  "{0}({1}{2})"
+        argf = "".join([",{0}".format(vis) for vis in viss])
+        if self.args["folding"]:
+            if dfuncn in folding.fold_func:
+                tres = folding.fold_func[dfuncn](*viss)
+                if tres:
+                    return tres
+
+        tvar = self.new_tmp_var()
+        self.lines.append(dfunc.format(dfuncn, tvar, argf))
+        return tvar
 
     def visit_BinOp(self, node):
         l_vis = self.visit(node.left)
@@ -82,7 +101,7 @@ class EZC2PASM(NodeVisitor):
         var_name = node.value
         val = self.GLOBAL_SCOPE.get(var_name)
         if val is None:
-            raise NameError(repr(var_name))
+            ezc.err("Undefined Variable", ezcompiler.NameNotFound(repr(var_name)))
         else:
             return val
 

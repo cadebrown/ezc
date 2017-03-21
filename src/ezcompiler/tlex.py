@@ -5,11 +5,12 @@
 #  Contains lexer utilities used by parser.py to generate ASTs.
 #
 #  TODO:
-#    * Parse functions
-#    * add peek(n) to non-destructively check next few characters
-#    * Add custom exceptions, and use old exception format (showing which char): https://github.com/ChemicalDevelopment/ezc/blob/f125dacaee53ddcb97b6f1c4cf0c805dde925f12/src/parsing/__init__.py
+#    * Parse statements which don't begin with `x=`, like `f(x)`
+#
 #
 ###
+
+import ezc
 
 import ezcompiler
 from token import Token
@@ -20,8 +21,9 @@ class Lexer(object):
         self.pos = 0
         self.current_char = self.text[self.pos]
 
-    def error(self):
-        raise Exception('Invalid character')
+    # todo add more explicit error messages
+    def error(self, got=None, expect=None):
+        ezc.err("Invalid Character (tlex.py)", ezcompiler.InvalidCharacter(self.pos, self.text, got, expect))
 
     def advance(self, num=1):
         for i in range(0, num):
@@ -45,6 +47,16 @@ class Lexer(object):
         while self.current_char is not None and self.current_char.isspace():
             self.advance()
 
+
+    def function(self):
+        result = ''
+        self.advance()
+        while self.current_char is not None and self.current_char.isdigit():
+            result += self.current_char
+            self.advance()
+        return int(result)
+
+
     def integer(self):
         result = ''
         while self.current_char is not None and self.current_char.isdigit():
@@ -58,7 +70,7 @@ class Lexer(object):
             result += self.current_char
             self.advance()
 
-        token = ezcompiler.RESERVED_KEYWORDS.get(result, Token(ezcompiler.ID, result))
+        token = ezcompiler.RESERVED_KEYWORDS.get(result, Token(ezcompiler.ID, result, self.pos))
         return token
 
     def get_next_token(self):
@@ -68,54 +80,64 @@ class Lexer(object):
                 self.skip_whitespace()
                 continue
 
-            if self.peek(4) == 'sqrt':
-                self.advance(4)
-                return Token(ezcompiler.SQRT, 'sqrt')
+            if self.peek() == ',':
+                self.advance()
+                return Token(ezcompiler.COMMA, ',', self.pos)
 
             if self.current_char.isalpha():
+                num = 1
+                tres = ""
+                while self.peek(num)[-1].isalpha() or self.peek(num)[-1].isspace():
+                    if num >= len(self.text):
+                        break
+                    tres += self.peek(num)[-1]
+                    num += 1
+                if self.peek(num)[-1] == "(":
+                    self.advance(num)
+                    return Token(ezcompiler.FUNCTION, tres, self.pos-1)
                 return self._id()
 
             if self.current_char.isdigit():
-                return Token(ezcompiler.INTEGER, self.integer())
+                return Token(ezcompiler.INTEGER, self.integer(), self.pos)
 
             # avoids equality (like ==)
             if  self.peek() == "=" and self.peek(2) != "==":
                 self.advance()
-                return Token(ezcompiler.ASSIGN, '=')
+                return Token(ezcompiler.ASSIGN, '=', self.pos-1)
 
             if self.peek() == ';':
                 self.advance()
-                return Token(ezcompiler.SEMI, ';')
+                return Token(ezcompiler.SEMI, ';', self.pos-1)
 
 
             if self.peek() == '+':
                 self.advance()
-                return Token(ezcompiler.ADD, '+')
+                return Token(ezcompiler.ADD, '+', self.pos-1)
 
             if self.peek() == '-':
                 self.advance()
-                return Token(ezcompiler.SUB, '-')
+                return Token(ezcompiler.SUB, '-', self.pos-1)
 
             if self.peek() == '*':
                 self.advance()
-                return Token(ezcompiler.MUL, '*')
+                return Token(ezcompiler.MUL, '*', self.pos-1)
 
             if self.peek() == '/':
                 self.advance()
-                return Token(ezcompiler.DIV, '/')
+                return Token(ezcompiler.DIV, '/', self.pos-1)
 
             if self.peek() == '(':
                 self.advance()
-                return Token(ezcompiler.LPAREN, '(')
+                return Token(ezcompiler.LPAREN, '(', self.pos-1)
 
             if self.peek() == ')':
                 self.advance()
-                return Token(ezcompiler.RPAREN, ')')
+                return Token(ezcompiler.RPAREN, ')', self.pos-1)
 
             if self.peek() == '.':
                 self.advance()
-                return Token(ezcompiler.DOT, '.')
+                return Token(ezcompiler.DOT, '.', self.pos-1)
 
-            self.error()
+            self.error(got=ezcompiler.UNKNOWN, expect=None)
 
-        return Token(ezcompiler.EOF, None)
+        return Token(ezcompiler.EOF, None, self.pos)

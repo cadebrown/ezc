@@ -6,15 +6,19 @@
 #  The main source file for EZC. Takes in source and object files to compile.
 #
 #  TODO:
-#    * Use ezlogging/ for formatted output
+#
 #
 ###
+from ezlogging import log
+import ezlogging
+
+def err(title, exc):
+	log.err(title, str(exc))
+	exit()	
 
 def main(argv):
 
 	import argparse
-	import ezlogging
-	from ezlogging import log
 	import ezc2pasm
 
 	subprogs = [ezc2pasm]
@@ -55,5 +59,3 @@ if __name__ == "__main__":
 	import sys
 	main(sys.argv[1:])
 	exit()
-else:
-	print ("Please run as main program!")
