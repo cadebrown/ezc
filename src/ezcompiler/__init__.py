@@ -14,7 +14,7 @@ import ezlogging
 from token import Token
 
 UNKNOWN             = 'UNKNOWN'
-INTEGER             = 'INTEGER'
+CONSTANT            = 'CONSTANT'
 COMMA               = 'COMMA'
 FUNCTION            = 'FUNCTION'
 ADD                 = 'ADD'

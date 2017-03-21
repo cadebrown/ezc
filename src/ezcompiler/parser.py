@@ -12,7 +12,7 @@
 import ezc
 
 import ezcompiler
-from ezcompiler import INTEGER, ID, ASSIGN, FUNCTION, COMMA, ADD, SUB, MUL, DIV, SEMI, LPAREN, RPAREN, EOF
+from ezcompiler import CONSTANT, ID, ASSIGN, FUNCTION, COMMA, ADD, SUB, MUL, DIV, SEMI, LPAREN, RPAREN, EOF
 from token import Var, Num, Assign, NoOp, UnaryOp, BinOp, Compound, Function
 
 class Parser(object):
@@ -121,8 +121,8 @@ class Parser(object):
             self.eat(SUB)
             node = UnaryOp(token, self.factor())
             return node
-        elif token.type == INTEGER:
-            self.eat(INTEGER)
+        elif token.type == CONSTANT:
+            self.eat(CONSTANT)
             return Num(token)
         elif token.type == LPAREN:
             self.eat(LPAREN)

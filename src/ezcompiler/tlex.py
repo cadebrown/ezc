@@ -57,12 +57,12 @@ class Lexer(object):
         return int(result)
 
 
-    def integer(self):
+    def constant(self):
         result = ''
-        while self.current_char is not None and self.current_char.isdigit():
+        while self.current_char is not None and self.current_char.isdigit() or self.current_char == ".":
             result += self.current_char
             self.advance()
-        return int(result)
+        return result
 
     def _id(self):
         result = ''
@@ -97,8 +97,8 @@ class Lexer(object):
                     return Token(ezcompiler.FUNCTION, tres, self.pos-1)
                 return self._id()
 
-            if self.current_char.isdigit():
-                return Token(ezcompiler.INTEGER, self.integer(), self.pos)
+            if self.current_char.isdigit() or self.current_char == ".":
+                return Token(ezcompiler.CONSTANT, self.constant(), self.pos)
 
             # avoids equality (like ==)
             if  self.peek() == "=" and self.peek(2) != "==":
