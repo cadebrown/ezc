@@ -1,4 +1,6 @@
 
+bundle/
+
 *.pyc
 *.pyd
 *.pyo

@@ -12,6 +12,7 @@
 
 import ezc
 
+from ezlogging import exc
 import ezcompiler
 from token import Token
 
@@ -23,7 +24,7 @@ class Lexer(object):
 
     # todo add more explicit error messages
     def error(self, got=None, expect=None):
-        ezc.err("Invalid Character (tlex.py)", ezcompiler.InvalidCharacter(self.pos, self.text, got, expect))
+        ezc.err("Invalid Character (tlex.py)", exc.InvalidCharacter(self.pos, 1, self.text, got, expect))
 
     def advance(self, num=1):
         for i in range(0, num):
@@ -109,7 +110,8 @@ class Lexer(object):
                 return self._id()
 
             if self.current_char.isdigit() or self.current_char == ".":
-                return Token(ezcompiler.CONSTANT, self.constant(), self.pos)
+                rpos = self.pos
+                return Token(ezcompiler.CONSTANT, self.constant(), rpos, self.pos - rpos)
 
             # avoids equality (like ==)
             if  self.peek() == "=" and self.peek(2) != "==":

@@ -12,6 +12,7 @@
 import ezc
 
 import ezcompiler
+from ezlogging import exc
 from ezcompiler import CONSTANT, ID, STRING, ASSIGN, FUNCTION, COMMA, ADD, SUB, MUL, DIV, SEMI, LPAREN, RPAREN, EOF
 from token import Var, Num, String, Assign, NoOp, UnaryOp, BinOp, Compound, Function
 
@@ -22,7 +23,7 @@ class Parser(object):
 
     # todo add more explicit error messages
     def error(self, got=None, expect=None):
-        ezc.err("Invalid Character (parser.py)", ezcompiler.InvalidCharacter(self.current_token.char_at, self.lexer.text, got, expect))
+        ezc.err("Invalid Character (parser.py)", exc.InvalidCharacter(self.current_token.char_at, self.current_token.len, self.lexer.text, got, expect))
 
     # go forward, incrementing lexer pointer
     def eat(self, token_type):

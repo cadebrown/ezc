@@ -12,10 +12,30 @@
 #
 ###
 
+src_dir=src
 req_dir=req
+bundle_dir=bundle
+
+inc=
+
 
 $(req_dir)/%: FORCE
 	$(MAKE) $(subst $(req_dir)/,,$@) -C $(req_dir)
+
+
+$(bundle_dir): FORCE
+	rm -rf $(bundle_dir)
+	mkdir -p $(bundle_dir)
+	mkdir -p $(bundle_dir)/$(req_dir)
+	mkdir -p $(bundle_dir)/$(req_dir)/bin
+	cp -Rf $(src_dir) $(bundle_dir)/$(src_dir)
+	find $(bundle_dir) -regex "\(.*__pycache__.*\|*.py[co]\)" -delete
+	
+	for sreq in $(inc) ; do \
+	    cp $$sreq $(bundle_dir)/$$sreq ; \
+	done
+
+	cp ezcc.py $(bundle_dir)/ezcc
 
 
 $(req_dir): FORCE

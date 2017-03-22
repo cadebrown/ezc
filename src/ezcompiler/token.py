@@ -10,10 +10,11 @@
 ###
 
 class Token(object):
-    def __init__(self, type, value, char_at=-1):
+    def __init__(self, type, value, char_at=-1, _len=1):
         self.type = type
         self.value = value
         self.char_at = char_at
+        self.len = _len
 
     def __str__(self):
         return 'Token({1}, {1})'.format(self.type, repr(self.value))

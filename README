@@ -12,17 +12,24 @@ EZC also includes commandline utilities (WIP) which allow shells access to fast 
 Online documentation: http://chemicaldevelopment.us/ezc/
 
 ##                      TODOs
+
 				 
+  0. Big picture changes
+    * Implement in C [Unlikely, due to difficulty, but may come later]
+	 
   1. Code generation to a number of different
     * PASM [partially done]
-	* C []
-	* ASM []
-	* R []
+	  * C []
+	  * ASM []
+	  * R []
 
   2. Optional imports/libraries
     * GMP []
     * MPFR []
     * MPC [unlikely to come soon, as this is complex numbers]
+
+  3. Compiling and deploying
+    * Configure script []
 
 ##                      AUTHORS
 

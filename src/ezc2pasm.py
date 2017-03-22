@@ -20,6 +20,7 @@ from ezcompiler.parser import Parser
 from ezcompiler.inter import NodeVisitor
 
 from ezlogging import log
+from ezlogging import exc
 
 from pasm import folding
 
@@ -105,7 +106,7 @@ class EZC2PASM(NodeVisitor):
         var_name = node.value
         val = self.GLOBAL_SCOPE.get(var_name)
         if val is None:
-            ezc.err("Undefined Variable", ezcompiler.NameNotFound(repr(var_name)))
+            ezc.err("Undefined Variable", exc.NameNotFound(repr(var_name)))
         else:
             return val
 
