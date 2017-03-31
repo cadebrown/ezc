@@ -11,16 +11,5 @@ const unsigned long hash(const char str[]) {
 }
 
 void move_ahead(int num) {
-	int ct = ptr-1;
-	if (num < 0) {
-		while (ct > ptr - 1 - num) {
-			reset_val(--ct);
-		}
-	} else if (num > 0) {
-		while (ct < ptr - 1 + num) {
-			reset_val(++ct);
-		}
-	}
-
 	ptr = ptr + num;
 }
