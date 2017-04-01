@@ -1,0 +1,64 @@
+
+    for (inptr = 0; inptr < strlen(input); ) {
+        skip_whitespace();
+
+        if (ISSPECIAL(cc)) {
+            if (ISCONTROL(input[inptr+1])) {
+                buf0ptr = 0;
+                buf0[buf0ptr++] = cc;
+                buf0[buf0ptr] = 0;
+                inptr++;
+                handle_control(cc, buf0);
+            } else {
+                handle_special(cc);                
+            }
+            inptr++;
+        } else if (ISDIGIT(cc) || (cc == '-' && ISDIGIT(input[inptr+1]))) {
+            buf0ptr = 0;
+            while (ISDIGIT(cc) || cc == '-') {
+                buf0[buf0ptr++] = input[inptr++];
+            }
+            buf0[buf0ptr] = 0;
+
+            if (ISCONTROL(cc)) {
+                handle_control(cc, buf0);
+                inptr++;
+            } else {
+                handle_constant(buf0);
+            }
+        } else if (ISCONTROL(cc)) {
+            handle_control_stack(cc);
+            inptr++;
+        } else if (ISOP(cc)) {
+            if (input[inptr+1] == '&') {
+                char op = cc;
+                inptr = inptr + 2; // skip over & and op as well
+                int cap = 0, ct = 0;
+                if (ISDIGIT(cc)) {
+                    buf0ptr = 0;
+                    while (ISDIGIT(cc)) {
+                        buf0[buf0ptr++] = input[inptr++];
+                    }
+                    buf0[buf0ptr] = 0;
+                    cap = convert_str(buf0);
+                }
+                while ((!MEETS_FLAG(get_recent_flags(1), EZC_SPECIAL_STOP_FLAGS) && ptr > 0) && (cap == 0 || ct < cap)) {
+                    handle_operator(op);
+                    ct++;
+                }
+            } else {
+                handle_operator(cc);
+            }
+            inptr++;
+        } else if (ISFUNC(cc)) {
+            buf0ptr = 0;
+            while (ISFUNC(cc)) {
+                buf0[buf0ptr++] = input[inptr++];
+            }
+            buf0[buf0ptr] = 0;
+            handle_function(buf0);
+        } else {
+            fail("Unexpected symbol");
+        }
+    }
+    terminate_main();

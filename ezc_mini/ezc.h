@@ -5,33 +5,30 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include "ezc_generic.h"
+#include "helper.h"
 
-#define ISDIGIT(x) (x - '0' >= 0 && x - '0' <= 9)
-#define ISCONTROL(x) (x == '<' || x == '>')
-#define ISOP(x) (x == '+' || x == '-' || x == '*' || x == '/' || x == '^' || x == '%' || x == '!')
-#define ISALPHA(x) (x - 'a' >= 0 && x - 'z' <= 0)
-#define ISFUNC(x) (ISALPHA(x) || x == ':')
-#define ISSPECIAL(x) (x == '|' || x == '#')
-#define ISSPACE(x) (x == ' ' || x == ',')
+#define EZC_REPEAT(x) (x == '&')
 
-#define ERROR(s) fprintf(stderr, s); exit (1);
+typedef struct stack_t {
+    EZC_STACK_TYPE vals[MAXSTACKSIZE];
+    EZC_FLAG_TYPE flags[MAXSTACKSIZE];
+} stack_t;
 
-#define cc (input[inptr])
+stack_t stk;
 
-EZC_STACK_TYPE vals[MAXSTACKSIZE];
-EZC_FLAG_TYPE flags[MAXSTACKSIZE];
 
 long long inptr, ptr;
 
-char *input;
+char *input, *buf;
+
+void end(void);
+
+void fail(char *code, char *reason, long long pos);
 
 
-void skip_whitespace(void);
-void terminate_main(void);
-void fail(char reason[]);
+void exec_code(char *code, long long start, long long len);
 
 int main(int argc, char *argv[]);
 

@@ -16,6 +16,7 @@
  #define MAXSTACKSIZE (100)
 #endif
 
+
 #ifdef USE_GMP
  #include <gmp.h>
  #define EZC_STACK_TYPE mpz_t
@@ -25,40 +26,66 @@
  #define EZC_FLAG_TYPE long long
 #endif
 
-void setup(void);
 
-void dump(void);
+#define GET(n) stk.vals[n]
+#define GET_F(n) stk.flags[n]
 
-void end(void);
+#define RECENT(n) stk.vals[ptr-n]
+#define RECENT_F(n) stk.flags[ptr-n]
 
-
-
-void handle_operator(char op);
-void handle_special(char op);
-
-void handle_control(char control, char val[]);
-void handle_control_stack(char control);
-
-EZC_STACK_TYPE convert_str(char val[]);
-
-void handle_constant(char val[]);
-
-void handle_function(char val[]);
+#define LAST stk.vals[ptr]
+#define LAST_F stk.flags[ptr]
 
 
-const unsigned long hash(const char str[]);
-
-void reset_val(int idx);
+/*
+   These are handled in ezc_generic.c
+*/
 
 void move_ahead(int num);
 
+void gen_setup(void);
+void gen_dump(void);
+void gen_end(void);
 
-#define get_recent(n) vals[ptr-n]
-#define get_recent_flags(n) flags[ptr-n]
+void gen_ret_ll(char *val, long long *idx, long long *out);
 
-#define get_last vals[ptr]
-#define get_last_flags flags[ptr]
+void gen_ret_special(char *out, char *val, long long *start);
+void gen_ret_operator(char *out, char *val, long long *start);
+void gen_ret_subgroup(char *val, long long *idx, long long *start, long long *len);
 
-#define STR_EQ(a, b) (strcmp(a, b) == 0)
+void gen_operator(char *op);
+void gen_special(char *op);
+
+void gen_control(char *control, char val[]);
+
+void get_const_str(char *out, char *code, long long *start);
+void push_dupe(void);
+void push_str(char *val);
+
+/*
+  These should be implemented per C file, for example, GMP v LL
+*/
+
+void reset_val(EZC_STACK_TYPE *ret);
+
+void from_str(EZC_STACK_TYPE *ret, EZC_FLAG_TYPE *flags, char *val);
+void to_str(char *ret, EZC_STACK_TYPE val, EZC_FLAG_TYPE flags);
+
+void print_single(FILE *stream, EZC_STACK_TYPE val, EZC_FLAG_TYPE flags);
+
+// functions
+
+void __gt(EZC_STACK_TYPE *ret, EZC_STACK_TYPE op0, EZC_STACK_TYPE op1);
+void __lt(EZC_STACK_TYPE *ret, EZC_STACK_TYPE op0, EZC_STACK_TYPE op1);
+
+void __swap(EZC_STACK_TYPE *op0, EZC_STACK_TYPE *op1);
+
+void __add(EZC_STACK_TYPE *ret, EZC_STACK_TYPE op0, EZC_STACK_TYPE op1);
+void __sub(EZC_STACK_TYPE *ret, EZC_STACK_TYPE op0, EZC_STACK_TYPE op1);
+void __mul(EZC_STACK_TYPE *ret, EZC_STACK_TYPE op0, EZC_STACK_TYPE op1);
+void __div(EZC_STACK_TYPE *ret, EZC_STACK_TYPE op0, EZC_STACK_TYPE op1);
+void __mod(EZC_STACK_TYPE *ret, EZC_STACK_TYPE op0, EZC_STACK_TYPE op1);
+void __pow(EZC_STACK_TYPE *ret, EZC_STACK_TYPE op0, EZC_STACK_TYPE op1);
+
 
 #endif
