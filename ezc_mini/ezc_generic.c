@@ -4,6 +4,11 @@
 void move_ahead(int num) {
 	ptr = ptr + num;
 }
+EZC_INT gen_pop_int(void) {
+    EZC_INT ret = RECENT(EZC_INT, 0);
+    move_ahead(-1);
+    return ret;
+}
 
 void gen_setup(void) { }
 
@@ -28,20 +33,16 @@ void gen_end(void) {
     gen_dump();
 }
 
-void gen_ret_ll(char *val, long long *idx, long long *out) {
-    (*out) = 0;
-    while (IS_DIGIT(val[*idx])) {
-        (*out) = 10*(*out) + (val[*idx] - '0');
-        (*idx)++;
-    }
-}
-
-
 void gen_push_dupe() {
     move_ahead(1);
-    RECENT(long long, 0) = RECENT(long long, 1);
+    RECENT(EZC_INT, 0) = RECENT(EZC_INT, 1);
+    RECENT_F(0) = RECENT_F(1);
+    RECENT_T(0) = RECENT_T(1);
 }
 
+void gen_push_int(EZC_INT val) {
+    __int_push(val);
+}
 
 void gen_push_str(char *val) {
     int len = strlen(val);
@@ -64,8 +65,18 @@ void get_const_str(char *out, char *code, long long *start) {
     (*start) = i;
 }
 
+void gen_ret_function(char *out, char *code, long long *start) {
+    long long i = (*start);
+    while (IS_ALPHA(code[i])) {
+        out[i-(*start)] = code[i];
+        i++;
+    }
+    out[i] = 0;
+    (*start) = i;
+}
+
 void gen_ret_subgroup(char *val, long long *idx, long long *start, long long *len) {
-    long long parencount = 0;
+    long long parencount = 0, minparen = 0;
     (*len) = 0;
     (*start) = 0;
 
@@ -73,22 +84,24 @@ void gen_ret_subgroup(char *val, long long *idx, long long *start, long long *le
     if (val[(*idx)] == '[') {
         ++(*idx);
         ++parencount;
+        minparen = 1;
+    } else {
+        minparen = 0;
     }
+
     (*start) = (*idx);
 
 
-    while (!STR_STARTS(val, "if", (*idx))) { 
-
+    while (!(parencount < minparen || STR_STARTS(val, "if", (*idx)))) { 
         if (val[*idx] == ']') {
             parencount--;
         } else if (val[*idx] == '[') {
             parencount++;
         }
-        if (parencount == 0) {
-            break;
+        if (parencount >= minparen) {
+            (*idx)++;
+            (*len)++;
         }
-        (*idx)++;
-        (*len)++;
     }
     if (val[(*idx)] == ']') {
         (*idx)++;
@@ -121,12 +134,19 @@ void gen_ret_special(char *out, char *val, long long *start) {
 void gen_special(char *spec) {
     if (STR_EQ(spec, "|")) {
         move_ahead(1);
-        //LAST = hashstr(spec);
         RECENT_F(0) = FLAG_STOP;
+        RECENT_T(0) = TYPE_NIL;
     } else if (STR_EQ(spec, "#")) {
         move_ahead(1);
-        //LAST = hashstr(spec);
         RECENT_F(0) = FLAG_POINT;
+        RECENT_T(0) = TYPE_NIL;
+    }
+}
+void gen_ret_ll(char *val, long long *idx, long long *out) {
+    (*out) = 0;
+    while (IS_DIGIT(val[*idx])) {
+        (*out) = 10*(*out) + (val[*idx] - '0');
+        (*idx)++;
     }
 }
 
@@ -148,56 +168,20 @@ void gen_ret_operator(char *out, char *val, long long *start) {
 }
 
 void gen_operator(char *op) {
-    int numargs;
     if (STR_EQ(op, ":")) {
         long long t0 = RECENT_T(0), t1 = RECENT_T(1);
         gen_swap(ptr, ptr-1);
-        return;
-    }
-
-    if (STR_EQ(op, "$")) {
-        numargs = 1;
-    } else if (STR_EQ(op, "<<") || STR_EQ(op, ">>")) {
-        numargs = 0;
-    } else {
-        numargs = 2;
-    }
-    if (MEETS_FLAG(RECENT_F(0), FLAG_STOP)) {
-        return;
-    }
-
-    if (numargs == 2) {
-        int p0 = ptr;
-        while (MEETS_FLAG(GET_F(p0), FLAG_POINT)) {
-            p0 -= 1;
-        }
-        int p1 = p0 - 1;
-        while (MEETS_FLAG(RECENT_F(p1), FLAG_POINT)) {
-            p1 -= 1;
-        }
-        long long t0 = GET_T(p0), t1 = GET_T(p1), t = 0;
-
-        if (t0 == t1) {
-            t = t0;
-            if (IS_TYPE(t, TYPE_INT)) {
-                __int_op_2(op, p1, p1, p0);
-            }
-        }
+    } else if (STR_EQ(op, "<<")) {
         move_ahead(-1);
-
-    } else if (numargs == 1) {
-        int p0 = ptr;
-        while (MEETS_FLAG(GET_F(p0), FLAG_POINT)) {
-            p0 -= 1;
-        }
-        long long t = GET_T(p0);
-
-        if (IS_TYPE(t, TYPE_INT)) {
-            __int_op_1(op, p0, p0);
-        }
-
-    } else if (numargs == 0) {
-        /**/ if (STR_EQ(op, ">>")) move_ahead(1);
-        else if (STR_EQ(op, "<<")) move_ahead(-1);
+    } else if (STR_EQ(op, ">>")) {
+        move_ahead(1);
+    } else {
+        __int_op(op);
     }
 }
+
+
+void gen_function(char *op) {
+    __int_function(op);
+}
+

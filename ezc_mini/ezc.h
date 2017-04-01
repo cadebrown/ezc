@@ -1,15 +1,27 @@
 //#define USE_GMP
 
+
 #ifndef __EZC_H__
 #define __EZC_H__
 
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "ezc_generic.h"
 #include "helper.h"
 
-#define EZC_REPEAT(x) (x == '&')
+
+#ifndef MAXSTACKSIZE
+ #define MAXSTACKSIZE (100)
+#endif
+
+
+#define EZC_INT long long
+
+#define EZC_STACK long long
+#define EZC_FLAG long long
+#define EZC_TYPE long long
+#define EZC_IDX long long
+
 
 typedef struct stack_t {
     void **vals[MAXSTACKSIZE];

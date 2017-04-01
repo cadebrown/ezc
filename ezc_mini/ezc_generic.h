@@ -12,7 +12,7 @@
 #define TYPE_MPI                  (0x0003 | TYPE_EXT)
 
 
-#define FLAG_DEFAULT         (0x0000)
+#define FLAG_DEFAULT              (0x0000)
 #define FLAG_SPECIAL              (0x0100)
 
 #define FLAG_STOP                 (0x0001 | FLAG_SPECIAL)
@@ -23,17 +23,6 @@
 
 #define MEETS_FLAG(v, f)          (v == f)
 #define MEETS_GENFLAG(v, f)       ((v & f) == f)
-
-#ifndef MAXSTACKSIZE
- #define MAXSTACKSIZE (100)
-#endif
-
-#define EZC_INT long long
-
-#define EZC_STACK long long
-#define EZC_FLAG long long
-#define EZC_TYPE long long
-#define EZC_IDX long long
 
 #define GET(type, n) ((type *)(&stk.vals))[n]
 #define GET_F(n) stk.flags[n]
@@ -55,7 +44,7 @@ void gen_dump(void);
 void gen_end(void);
 
 void gen_ret_ll(char *val, long long *idx, long long *out);
-
+void gen_ret_function(char *out, char *code, long long *start);
 void gen_ret_special(char *out, char *val, long long *start);
 void gen_ret_operator(char *out, char *val, long long *start);
 void gen_ret_subgroup(char *val, long long *idx, long long *start, long long *len);
@@ -67,6 +56,9 @@ void gen_control(char *control, char val[]);
 
 void get_const_str(char *out, char *code, long long *start);
 
+EZC_INT gen_pop_int(void);
+
+void gen_push_int(EZC_INT val);
 void gen_push_dupe(void);
 void gen_push_str(char *val);
 
@@ -75,8 +67,9 @@ void gen_push_str(char *val);
 */
 
 
-void __int_op_1(char *op, EZC_IDX ret, EZC_IDX p0);
-void __int_op_2(char *op, EZC_IDX ret, EZC_IDX p0, EZC_IDX p1);
+void __int_function(char *func);
+
+void __int_op(char *op);
 
 
 void __int_push(EZC_INT ret);
@@ -96,6 +89,8 @@ void __int_mul(EZC_IDX ret, EZC_IDX p0, EZC_IDX p1);
 void __int_div(EZC_IDX ret, EZC_IDX p0, EZC_IDX p1);
 void __int_mod(EZC_IDX ret, EZC_IDX p0, EZC_IDX p1);
 void __int_pow(EZC_IDX ret, EZC_IDX p0, EZC_IDX p1);
+
+void __int_sqrt(EZC_IDX ret, EZC_IDX p0);
 
 
 #endif

@@ -1,18 +1,28 @@
 #include "ezc.h"
 #include "ezc_generic.h"
 
-void __int_op_1(char *op, EZC_IDX ret, EZC_IDX p0) {
-	/**/ if (STR_EQ(op, "$")) GET(EZC_INT, ret) = GET(EZC_INT, GET(EZC_INT, p0));
+void __int_function(char *func) {
+	/**/ if (STR_EQ(func, "sqrt")) {
+		__int_sqrt(NEXT(ptr, 0), NEXT(ptr, 0));
+	}
 }
-void __int_op_2(char *op, EZC_IDX ret, EZC_IDX p0, EZC_IDX p1) {
-	/**/ if (STR_EQ(op, "+")) __int_add(ret, p0, p1);
-	else if (STR_EQ(op, "-")) __int_sub(ret, p0, p1);
-	else if (STR_EQ(op, "*")) __int_mul(ret, p0, p1);
-	else if (STR_EQ(op, "/")) __int_div(ret, p0, p1);
-	else if (STR_EQ(op, "%")) __int_mod(ret, p0, p1);
-	else if (STR_EQ(op, "^")) __int_pow(ret, p0, p1);
-	else if (STR_EQ(op, ">")) __int_lt (ret, p0, p1);
-	else if (STR_EQ(op, "<")) __int_gt (ret, p0, p1);
+
+void __int_op(char *op) {
+	if (STR_EQ(op, "$")) {
+		EZC_IDX p0 = NEXT(ptr, 0);
+		GET(EZC_INT, p0) = GET(EZC_INT, GET(EZC_INT, p0));
+	} else {
+		EZC_IDX p0 = NEXT(ptr, 1), p1 = NEXT(ptr, 0);
+		/**/ if (STR_EQ(op, "+")) __int_add(p0, p0, p1);
+		else if (STR_EQ(op, "-")) __int_sub(p0, p0, p1);
+		else if (STR_EQ(op, "*")) __int_mul(p0, p0, p1);
+		else if (STR_EQ(op, "/")) __int_div(p0, p0, p1);
+		else if (STR_EQ(op, "%")) __int_mod(p0, p0, p1);
+		else if (STR_EQ(op, "^")) __int_pow(p0, p0, p1);
+		else if (STR_EQ(op, "<")) __int_lt (p0, p0, p1);
+		else if (STR_EQ(op, ">")) __int_gt (p0, p0, p1);
+		move_ahead(-1);
+	}
 }
 
 
@@ -66,9 +76,10 @@ void __int_pow(EZC_IDX ret, EZC_IDX p0, EZC_IDX p1) {
 }
 
 void __int_sqrt(EZC_IDX ret, EZC_IDX p0) {
-	EZC_INT _a = GET(EZC_INT, p0), _ret = GET(EZC_INT, p0), __ret = -1;
-    while ((_ret = _ret/2 + _a/(2 * _ret)) != __ret && _ret != __ret + 1) {
-        __ret = _ret;
+	EZC_INT _a = GET(EZC_INT, p0), _ret = GET(EZC_INT, p0), _times = 10;
+    while (_times) {
+		_ret = (_ret * _ret + _a) / (2 * _ret);
+		_times--;
     }
-	GET(EZC_INT, ret) = (_ret * _ret > GET(EZC_INT, p0)) ? __ret : _ret;
+	GET(EZC_INT, ret) = _ret;
 }

@@ -51,15 +51,15 @@ void exec_code(char *code, long long start, long long len) {
         } else if (code[i] == '[') {
             gen_ret_subgroup(code, &i, &s, &l);
             if (STR_STARTS(code, "if", i)) {
-                long long sc=0, lc=0;
+                long long sc=0, lc=0, qres=0;
                 i += 2;
                 gen_ret_subgroup(code, &i, &sc, &lc);
-                DO_ITER(code, i, ct, maxiter, 
-                    exec_code(code, sc, lc); 
-                    if (GET(long long, 0)) { 
+                DO_ITER(code, i, ct, maxiter,
+                    exec_code(code, sc, lc);
+                    qres = RECENT(EZC_INT, 0);
+                    move_ahead(-1);
+                    if (qres) {
                         exec_code(code, s, l);
-                    } else {
-                        break;
                     }
                 )
             } else {
@@ -68,17 +68,19 @@ void exec_code(char *code, long long start, long long len) {
                 )
             }
             SKIP_WHITESPACE(code, i);
-
         } else if (IS_DIGIT(code[i]) || (IS_SIGN(code[i]) && IS_DIGIT(code[i+1]))) {
             get_const_str(buf, code, &i);
             move_ahead(1);
-            from_str(&RECENT(long long, 0), &RECENT_F(0), buf);
+            __int_from_str(ptr, buf);
         } else if (IS_OP(code, i)) {
             gen_ret_operator(buf, code, &i);
             gen_operator(buf);
         } else if (IS_SPEC(code[i])) {
             gen_ret_special(buf, code, &i);
             gen_special(buf);
+        } else if (IS_ALPHA(code[i])) {
+            gen_ret_function(buf, code, &i);
+            gen_function(buf);
         } else if (i < start + len) {
             fail(code, "Unexpected character", i);
         }
