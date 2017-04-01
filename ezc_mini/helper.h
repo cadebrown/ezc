@@ -13,7 +13,7 @@
  SS(s, "<", x) || SS(s, ">", x) || SS(s, "<<", x) || SS(s, ">>", x) || \
  SS(s, "+", x) || SS(s, "-", x) ||  SS(s, "*", x) ||  SS(s, "/", x) || \
  SS(s, "%", x) || SS(s, "^", x) ||  SS(s, "!", x) ||  SS(s, "$", x) || \
- SS(s, ":", x)                                                         \
+ SS(s, ":", x) || SS(s, "==", x)                                    \
 ) 
 
 #define IS_ALPHA(x) ((x - 'a' >= 0 && x - 'z' <= 0) || (x - 'A' >= 0 && x - 'Z' <= 0))
@@ -31,7 +31,7 @@
      gen_ret_ll(src, &i, &maxiter);                                         \
    } else if (src[i] == '[') {                                              \
      EZC_INT _s = 0, _l = 0;                                                \
-     gen_ret_subgroup(src, &i, &_s, &_l);                                   \
+     gen_ret_subgroup(src, &i, &_s, &_l, 0);                                \
      exec_code(src, _s, _l);                                                \
      maxiter = gen_pop_int();                                               \
    }                                                                        \

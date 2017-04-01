@@ -21,6 +21,7 @@ void __int_op(char *op) {
 		else if (STR_EQ(op, "^")) __int_pow(p0, p0, p1);
 		else if (STR_EQ(op, "<")) __int_lt (p0, p0, p1);
 		else if (STR_EQ(op, ">")) __int_gt (p0, p0, p1);
+		else if (STR_EQ(op, "==")) __int_et (p0, p0, p1);
 		move_ahead(-1);
 	}
 }
@@ -56,6 +57,7 @@ void __int_print(EZC_IDX pos) {
 
 void __int_gt (EZC_IDX ret, EZC_IDX p0, EZC_IDX p1) { GET(EZC_INT, ret) = GET(EZC_INT, p0) > GET(EZC_INT, p1); }
 void __int_lt (EZC_IDX ret, EZC_IDX p0, EZC_IDX p1) { GET(EZC_INT, ret) = GET(EZC_INT, p0) < GET(EZC_INT, p1); }
+void __int_et (EZC_IDX ret, EZC_IDX p0, EZC_IDX p1) { GET(EZC_INT, ret) = GET(EZC_INT, p0) == GET(EZC_INT, p1); }
 
 void __int_add(EZC_IDX ret, EZC_IDX p0, EZC_IDX p1) { GET(EZC_INT, ret) = GET(EZC_INT, p0) + GET(EZC_INT, p1); }
 void __int_sub(EZC_IDX ret, EZC_IDX p0, EZC_IDX p1) { GET(EZC_INT, ret) = GET(EZC_INT, p0) - GET(EZC_INT, p1); }

@@ -47,7 +47,7 @@ void gen_ret_ll(char *val, long long *idx, long long *out);
 void gen_ret_function(char *out, char *code, long long *start);
 void gen_ret_special(char *out, char *val, long long *start);
 void gen_ret_operator(char *out, char *val, long long *start);
-void gen_ret_subgroup(char *val, long long *idx, long long *start, long long *len);
+void gen_ret_subgroup(char *val, long long *idx, long long *start, long long *len, long long parencount);
 
 void gen_operator(char *op);
 void gen_special(char *op);
@@ -59,6 +59,7 @@ void get_const_str(char *out, char *code, long long *start);
 EZC_INT gen_pop_int(void);
 
 void gen_push_int(EZC_INT val);
+void gen_push_copy(EZC_IDX pos);
 void gen_push_dupe(void);
 void gen_push_str(char *val);
 
@@ -82,6 +83,7 @@ void __int_print(EZC_IDX pos);
 
 void __int_gt(EZC_IDX ret, EZC_IDX p0, EZC_IDX p1);
 void __int_lt(EZC_IDX ret, EZC_IDX p0, EZC_IDX p1);
+void __int_et(EZC_IDX ret, EZC_IDX p0, EZC_IDX p1);
 
 void __int_add(EZC_IDX ret, EZC_IDX p0, EZC_IDX p1);
 void __int_sub(EZC_IDX ret, EZC_IDX p0, EZC_IDX p1);

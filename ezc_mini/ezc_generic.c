@@ -39,6 +39,12 @@ void gen_push_dupe() {
     RECENT_F(0) = RECENT_F(1);
     RECENT_T(0) = RECENT_T(1);
 }
+void gen_push_copy(EZC_IDX pos) {
+    move_ahead(1);
+    RECENT(EZC_INT, 0) = GET(EZC_INT, pos);
+    RECENT_F(0) = GET_F(pos);
+    RECENT_T(0) = GET_T(pos);
+}
 
 void gen_push_int(EZC_INT val) {
     __int_push(val);
@@ -75,24 +81,23 @@ void gen_ret_function(char *out, char *code, long long *start) {
     (*start) = i;
 }
 
-void gen_ret_subgroup(char *val, long long *idx, long long *start, long long *len) {
-    long long parencount = 0, minparen = 0;
+void gen_ret_subgroup(char *val, long long *idx, long long *start, long long *len, long long parencount) {
+    long long minparen = 0;
     (*len) = 0;
     (*start) = 0;
 
-
-    if (val[(*idx)] == '[') {
+    if (val[*idx] == '[') {
         ++(*idx);
-        ++parencount;
-        minparen = 1;
-    } else {
-        minparen = 0;
+        ++(*start);
+        //++parencount;
+        //++minparen;
     }
 
     (*start) = (*idx);
 
 
-    while (!(parencount < minparen || STR_STARTS(val, "if", (*idx)))) { 
+    while (!(STR_STARTS(val, "if", (*idx)) || STR_STARTS(val, "else", (*idx)))) { 
+
         if (val[*idx] == ']') {
             parencount--;
         } else if (val[*idx] == '[') {
@@ -101,11 +106,18 @@ void gen_ret_subgroup(char *val, long long *idx, long long *start, long long *le
         if (parencount >= minparen) {
             (*idx)++;
             (*len)++;
+        } else {
+            break;
         }
-    }
-    if (val[(*idx)] == ']') {
+
+    }        
+
+    while (val[*idx] == ']' && parencount >= minparen-1) {
         (*idx)++;
     }
+    
+//    (*idx)++;        
+ //   (*len)++;
 }
 
 void gen_swap(long long pos0, long long pos1) {
@@ -152,19 +164,20 @@ void gen_ret_ll(char *val, long long *idx, long long *out) {
 
 void gen_ret_operator(char *out, char *val, long long *start) {
     long long i = 0;
-    if (STR_STARTS(val, "<<", (*start))) {
+    if (STR_STARTS(val, "==", (*start))) {
+        out[i++] = '=';
+        out[i++] = '=';
+    } else if (STR_STARTS(val, "<<", (*start))) {
         out[i++] = '<';
         out[i++] = '<';
-        (*start) += 2;
     } else if (STR_STARTS(val, ">>", (*start))) {
         out[i++] = '>';
         out[i++] = '>';
-        (*start) += 2;
     } else if (IS_OP(val, (*start))) {
         out[i++] = val[(*start)];
-        (*start)++;
     }
     out[i] = 0;
+    (*start) += strlen(out);
 }
 
 void gen_operator(char *op) {

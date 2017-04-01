@@ -38,7 +38,7 @@ char *input, *buf;
 
 void end(void);
 
-void fail(char *code, char *reason, long long pos);
+void fail(char *reason, char *code, long long pos, long long subpos);
 
 
 void exec_code(char *code, long long start, long long len);
