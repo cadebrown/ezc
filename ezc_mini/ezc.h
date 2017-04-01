@@ -13,8 +13,8 @@
 
 typedef struct stack_t {
     void **vals[MAXSTACKSIZE];
-    EZC_FLAG_TYPE flags[MAXSTACKSIZE];
-    EZC_FLAG_TYPE type[MAXSTACKSIZE];
+    EZC_FLAG flags[MAXSTACKSIZE];
+    EZC_TYPE type[MAXSTACKSIZE];
 } stack_t;
 
 stack_t stk;

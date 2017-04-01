@@ -8,10 +8,10 @@ void move_ahead(int num) {
 void gen_setup(void) { }
 
 void gen_print_single(int pos) {
-    if (MEETS_FLAG(GET_F(pos), EZC_STR_FLAGS)) { 
-        fprintf(stdout, "'%s'", GET(char *, pos)); 
-    } else { 
-        print_single(stdout, GET(long long, pos), GET_F(pos)); 
+    if (IS_TYPE(GET_T(pos), TYPE_STR)) { 
+        printf("'%s'", GET(char *, pos)); 
+    } else if (IS_TYPE(GET_T(pos), TYPE_INT)) {
+        __int_print(pos);
     }  
 }
 
@@ -49,7 +49,8 @@ void gen_push_str(char *val) {
     strcpy(kval, val);
     move_ahead(1);
     stk.vals[ptr] = (void *)kval;
-    RECENT_F(0) = EZC_STR_FLAGS;
+    RECENT_F(0) = FLAG_DEFAULT;
+    RECENT_T(0) = TYPE_STR;
 }
 
 void get_const_str(char *out, char *code, long long *start) {
@@ -97,15 +98,15 @@ void gen_ret_subgroup(char *val, long long *idx, long long *start, long long *le
 void gen_swap(long long pos0, long long pos1) {
     void *tmp = GET(void *, pos0);
     long long tmpf = GET_F(pos0), tmpt = GET_T(pos0);
-    gen_print_single(pos0);
-    gen_print_single(pos1);
-    printf("\n");
+
     GET(void *, pos0) = GET(void *, pos1);
     GET_F(pos0) = GET_F(pos1);
     GET_T(pos0) = GET_T(pos1);
+
     GET(void *, pos1) = tmp;
-    GET_F(pos0) = tmpf;
-    GET_T(pos0) = tmpt;
+    GET_F(pos1) = tmpf;
+    GET_T(pos1) = tmpt;
+
 }
 
 void gen_ret_special(char *out, char *val, long long *start) {
@@ -121,11 +122,11 @@ void gen_special(char *spec) {
     if (STR_EQ(spec, "|")) {
         move_ahead(1);
         //LAST = hashstr(spec);
-        RECENT_F(0) = EZC_SPECIAL_STOP_FLAGS;
+        RECENT_F(0) = FLAG_STOP;
     } else if (STR_EQ(spec, "#")) {
         move_ahead(1);
         //LAST = hashstr(spec);
-        RECENT_F(0) = EZC_SPECIAL_POINT_FLAGS;
+        RECENT_F(0) = FLAG_POINT;
     }
 }
 
@@ -150,13 +151,7 @@ void gen_operator(char *op) {
     int numargs;
     if (STR_EQ(op, ":")) {
         long long t0 = RECENT_T(0), t1 = RECENT_T(1);
-        /*if (t0 == t1) {
-            
-        } else {
-
-        }*/
         gen_swap(ptr, ptr-1);
-        //__swap(&GET_DYN(ptr), &GET_DYN(ptr-1));
         return;
     }
 
@@ -167,46 +162,42 @@ void gen_operator(char *op) {
     } else {
         numargs = 2;
     }
-    if (MEETS_FLAG(RECENT_F(0), EZC_SPECIAL_STOP_FLAGS)) {
+    if (MEETS_FLAG(RECENT_F(0), FLAG_STOP)) {
         return;
     }
 
     if (numargs == 2) {
-        int op0mv = 0;
-        while (MEETS_FLAG(RECENT_F(op0mv), EZC_SPECIAL_POINT_FLAGS)) {
-            op0mv += 1;
+        int p0 = ptr;
+        while (MEETS_FLAG(GET_F(p0), FLAG_POINT)) {
+            p0 -= 1;
         }
-        int op1mv = op0mv+1;
-        while (MEETS_FLAG(RECENT_F(op1mv), EZC_SPECIAL_POINT_FLAGS)) {
-            op1mv += 1;
+        int p1 = p0 - 1;
+        while (MEETS_FLAG(RECENT_F(p1), FLAG_POINT)) {
+            p1 -= 1;
         }
-        EZC_STACK_TYPE op1 = RECENT(long long, op1mv), op0 = RECENT(long long, op0mv);
+        long long t0 = GET_T(p0), t1 = GET_T(p1), t = 0;
 
-        /**/ if (STR_EQ(op, "+")) __add(&RECENT(long long, op1mv), op1, op0);
-        else if (STR_EQ(op, "-")) __sub(&RECENT(long long, op1mv), op1, op0);
-        else if (STR_EQ(op, "*")) __mul(&RECENT(long long, op1mv), op1, op0);
-        else if (STR_EQ(op, "/")) __div(&RECENT(long long, op1mv), op1, op0);
-        else if (STR_EQ(op, "%")) __mod(&RECENT(long long, op1mv), op1, op0);
-        else if (STR_EQ(op, "^")) __pow(&RECENT(long long, op1mv), op1, op0);
-        else if (STR_EQ(op, ">")) __gt(&RECENT(long long, op1mv), op1, op0);
-        else if (STR_EQ(op, "<")) __lt(&RECENT(long long, op1mv), op1, op0);
+        if (t0 == t1) {
+            t = t0;
+            if (IS_TYPE(t, TYPE_INT)) {
+                __int_op_2(op, p1, p1, p0);
+            }
+        }
+        move_ahead(-1);
 
     } else if (numargs == 1) {
-        int op0mv = 0;
-        while (MEETS_FLAG(RECENT_F(op0mv), EZC_SPECIAL_POINT_FLAGS)) {
-            op0mv += 1;
+        int p0 = ptr;
+        while (MEETS_FLAG(GET_F(p0), FLAG_POINT)) {
+            p0 -= 1;
         }
-        EZC_STACK_TYPE op0 = RECENT(long long, op0mv);
-        /**/ if (STR_EQ(op, "$")) RECENT(long long, op0mv) = GET(long long, op0);
+        long long t = GET_T(p0);
+
+        if (IS_TYPE(t, TYPE_INT)) {
+            __int_op_1(op, p0, p0);
+        }
+
     } else if (numargs == 0) {
         /**/ if (STR_EQ(op, ">>")) move_ahead(1);
         else if (STR_EQ(op, "<<")) move_ahead(-1);
-    }
-
-
-    if (numargs == 0) {
-
-    } else {
-        move_ahead(1-numargs);
     }
 }
