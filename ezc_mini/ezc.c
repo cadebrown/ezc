@@ -37,8 +37,17 @@ void exec_code(char *code, long long start, long long len) {
     while (i < start + len) {
         SKIP_WHITESPACE(code, i);
         if (code[i] == '.') {
-            push_dupe();
+            gen_push_dupe();
             i++;
+        } else if (code[i] == '"') {
+            i++;
+            lbufptr = 0;
+            while (code[i] != '"') {
+                lbuf[lbufptr++] = code[i++];
+            }
+            lbuf[lbufptr] = 0;
+            i++;
+            gen_push_str(lbuf);
         } else if (code[i] == '[') {
             gen_ret_subgroup(code, &i, &s, &l);
             if (STR_STARTS(code, "if", i)) {
@@ -47,7 +56,7 @@ void exec_code(char *code, long long start, long long len) {
                 gen_ret_subgroup(code, &i, &sc, &lc);
                 DO_ITER(code, i, ct, maxiter, 
                     exec_code(code, sc, lc); 
-                    if (LAST) { 
+                    if (GET(long long, 0)) { 
                         exec_code(code, s, l);
                     } else {
                         break;
@@ -62,7 +71,8 @@ void exec_code(char *code, long long start, long long len) {
 
         } else if (IS_DIGIT(code[i]) || (IS_SIGN(code[i]) && IS_DIGIT(code[i+1]))) {
             get_const_str(buf, code, &i);
-            push_str(buf);
+            move_ahead(1);
+            from_str(&RECENT(long long, 0), &RECENT_F(0), buf);
         } else if (IS_OP(code, i)) {
             gen_ret_operator(buf, code, &i);
             gen_operator(buf);

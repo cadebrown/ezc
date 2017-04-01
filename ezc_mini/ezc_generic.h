@@ -4,6 +4,7 @@
 #include "ezc.h"
 
 #define EZC_CONST_FLAGS           (0x0001)
+#define EZC_STR_FLAGS             (0x0002)
 
 #define EZC_SPECIAL_FLAGS         (0x0100)
 #define EZC_SPECIAL_STOP_FLAGS    (0x0001 | EZC_SPECIAL_FLAGS)
@@ -17,24 +18,17 @@
 #endif
 
 
-#ifdef USE_GMP
- #include <gmp.h>
- #define EZC_STACK_TYPE mpz_t
- #define EZC_FLAG_TYPE long long
-#else
- #define EZC_STACK_TYPE long long
- #define EZC_FLAG_TYPE long long
-#endif
+#define EZC_STACK_TYPE long long
+#define EZC_FLAG_TYPE long long
 
 
-#define GET(n) stk.vals[n]
+#define GET(type, n) ((type *)(&stk.vals))[n]
 #define GET_F(n) stk.flags[n]
+#define GET_T(n) stk.type[n]
 
-#define RECENT(n) stk.vals[ptr-n]
-#define RECENT_F(n) stk.flags[ptr-n]
-
-#define LAST stk.vals[ptr]
-#define LAST_F stk.flags[ptr]
+#define RECENT(type, n) GET(type, ptr-n)
+#define RECENT_F(n) GET_F(ptr-n)
+#define RECENT_T(n) GET_T(ptr-n)
 
 
 /*

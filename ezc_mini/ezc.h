@@ -12,8 +12,9 @@
 #define EZC_REPEAT(x) (x == '&')
 
 typedef struct stack_t {
-    EZC_STACK_TYPE vals[MAXSTACKSIZE];
+    void **vals[MAXSTACKSIZE];
     EZC_FLAG_TYPE flags[MAXSTACKSIZE];
+    EZC_FLAG_TYPE type[MAXSTACKSIZE];
 } stack_t;
 
 stack_t stk;
