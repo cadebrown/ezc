@@ -11,7 +11,7 @@
 
 
 #ifndef MAXSTACKSIZE
- #define MAXSTACKSIZE (100)
+ #define MAXSTACKSIZE (1000)
 #endif
 
 

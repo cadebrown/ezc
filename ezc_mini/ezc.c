@@ -81,6 +81,7 @@ void exec_code(char *code, long long start, long long len) {
                 if (ifd == 1) {
                     exec_code(code, ifs, ifl);
                     qres = RECENT(EZC_INT, 0);
+                    move_ahead(-1);
                     if (qres) {
                         exec_code(code, s, l);
                     } else if (elsed) {
