@@ -13,7 +13,9 @@ EZC_INT gen_pop_int(void) {
 void gen_setup(void) { }
 
 void gen_print_single(int pos) {
-    if (IS_TYPE(GET_T(pos), TYPE_STR)) { 
+    if (MEETS_FLAG(GET_F(pos), FLAG_STOP)) { 
+        printf("| (stop)"); 
+    } else if (IS_TYPE(GET_T(pos), TYPE_STR)) { 
         printf("'%s'", GET(char *, pos)); 
     } else if (IS_TYPE(GET_T(pos), TYPE_INT)) {
         __int_print(pos);
@@ -77,47 +79,40 @@ void gen_ret_function(char *out, char *code, long long *start) {
         out[i-(*start)] = code[i];
         i++;
     }
-    out[i] = 0;
+    out[i-(*start)] = 0;
     (*start) = i;
 }
 
-void gen_ret_subgroup(char *val, long long *idx, long long *start, long long *len, long long parencount) {
-    long long minparen = 0;
+void gen_ret_subgroup(char *val, long long *idx, long long *start, long long *len) {
     (*len) = 0;
     (*start) = 0;
 
     if (val[*idx] == '[') {
-        ++(*idx);
-        ++(*start);
-        //++parencount;
-        //++minparen;
+        (*idx)++;
     }
 
     (*start) = (*idx);
 
-
-    while (!(STR_STARTS(val, "if", (*idx)) || STR_STARTS(val, "else", (*idx)))) { 
+    long long parens = 0;
+    while (parens > -1 && !(parens == 0 && (STR_STARTS(val, "if", (*idx)) || STR_STARTS(val, "else", (*idx))))) { 
 
         if (val[*idx] == ']') {
-            parencount--;
+            parens--;
         } else if (val[*idx] == '[') {
-            parencount++;
+            parens++;
         }
-        if (parencount >= minparen) {
+        if (parens > -1) {
             (*idx)++;
             (*len)++;
         } else {
             break;
         }
+    }
+    if (parens == 0 && (STR_STARTS(val, "if", (*idx)) || STR_STARTS(val, "else", (*idx)))) {
 
-    }        
-
-    while (val[*idx] == ']' && parencount >= minparen-1) {
+    } else {
         (*idx)++;
     }
-    
-//    (*idx)++;        
- //   (*len)++;
 }
 
 void gen_swap(long long pos0, long long pos1) {
@@ -182,19 +177,22 @@ void gen_ret_operator(char *out, char *val, long long *start) {
 
 void gen_operator(char *op) {
     if (STR_EQ(op, ":")) {
-        long long t0 = RECENT_T(0), t1 = RECENT_T(1);
+        EZC_TYPE t0 = RECENT_T(0), t1 = RECENT_T(1);
         gen_swap(ptr, ptr-1);
-    } else if (STR_EQ(op, "<<")) {
-        move_ahead(-1);
-    } else if (STR_EQ(op, ">>")) {
-        move_ahead(1);
     } else {
         __int_op(op);
     }
 }
 
 
-void gen_function(char *op) {
-    __int_function(op);
+void gen_function(char *func) {
+    if (STR_EQ(func, "dump")) {
+        gen_dump();
+    } else if (STR_EQ(func, "print") || STR_EQ(func, "p")) {
+        gen_print_single(ptr);
+        printf("\n");
+    } else {
+        __int_function(func);
+    }
 }
 

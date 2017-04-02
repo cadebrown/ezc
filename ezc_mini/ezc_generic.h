@@ -47,7 +47,7 @@ void gen_ret_ll(char *val, long long *idx, long long *out);
 void gen_ret_function(char *out, char *code, long long *start);
 void gen_ret_special(char *out, char *val, long long *start);
 void gen_ret_operator(char *out, char *val, long long *start);
-void gen_ret_subgroup(char *val, long long *idx, long long *start, long long *len, long long parencount);
+void gen_ret_subgroup(char *val, long long *idx, long long *start, long long *len);
 
 void gen_operator(char *op);
 void gen_special(char *op);

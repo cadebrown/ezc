@@ -8,11 +8,21 @@ void __int_function(char *func) {
 }
 
 void __int_op(char *op) {
-	if (STR_EQ(op, "$")) {
+	if (STR_EQ(op, "_")) {
+		gen_push_int(ptr);
+	} else if (STR_EQ(op, "$")) {
 		EZC_IDX p0 = NEXT(ptr, 0);
 		GET(EZC_INT, p0) = GET(EZC_INT, GET(EZC_INT, p0));
+	} else if (STR_EQ(op, "<<")) {
+		move_ahead(-1);
+	} else if (STR_EQ(op, ">>")) {
+		move_ahead(1);
 	} else {
 		EZC_IDX p0 = NEXT(ptr, 1), p1 = NEXT(ptr, 0);
+		if (p0 < 0) {
+			globalstop = 1;
+			return;
+		}
 		/**/ if (STR_EQ(op, "+")) __int_add(p0, p0, p1);
 		else if (STR_EQ(op, "-")) __int_sub(p0, p0, p1);
 		else if (STR_EQ(op, "*")) __int_mul(p0, p0, p1);
@@ -78,9 +88,11 @@ void __int_pow(EZC_IDX ret, EZC_IDX p0, EZC_IDX p1) {
 }
 
 void __int_sqrt(EZC_IDX ret, EZC_IDX p0) {
-	EZC_INT _a = GET(EZC_INT, p0), _ret = GET(EZC_INT, p0), _times = 10;
-    while (_times) {
-		_ret = (_ret * _ret + _a) / (2 * _ret);
+	EZC_INT _a = GET(EZC_INT, ret), _ret = GET(EZC_INT, p0);
+	EZC_INT _times = 31;
+	_ret = _a;
+    while (_times > 0) {
+		_ret = (_a / _ret + _ret) / 2;
 		_times--;
     }
 	GET(EZC_INT, ret) = _ret;

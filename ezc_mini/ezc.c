@@ -6,7 +6,7 @@
 
 stack_t stk;
 
-long long ptr = -1, bufptr;
+long long ptr = -1, bufptr = 0, globalstop = 0;
 
 char *input, *buf;
 
@@ -44,7 +44,10 @@ void exec_code(char *code, long long start, long long len) {
     i = start;
     while (i < start + len) {
         SKIP_WHITESPACE(code, i);
-        if (STR_STARTS(code, "..", i)) {
+        if (IS_SPEC(code[i])) {
+            gen_ret_special(buf, code, &i);
+            gen_special(buf);
+        } else if (STR_STARTS(code, "..", i)) {
             gen_push_copy(ptr-1);
             i+=2;
         } else if (STR_STARTS(code, ".", i)) {
@@ -60,22 +63,22 @@ void exec_code(char *code, long long start, long long len) {
             i++;
             gen_push_str(lbuf);
         } else if (code[i] == '[') {
-            gen_ret_subgroup(code, &i, &s, &l, 0);
+            gen_ret_subgroup(code, &i, &s, &l);
             long long ifd = 0, ifs = 0, ifl = 0, qres = 0;
             long long elsed = 0, elses = 0, elsel = 0;
+            long long brk = 0;
             if (STR_STARTS(code, "if", i)) {
                 i += 2;
                 ifd = 1;
-                gen_ret_subgroup(code, &i, &ifs, &ifl, 0);
+                gen_ret_subgroup(code, &i, &ifs, &ifl);
                 if (STR_STARTS(code, "else", i)) {
                     i += 4;
                     elsed = 1;
-                    gen_ret_subgroup(code, &i, &elses, &elsel, 0);
+                    gen_ret_subgroup(code, &i, &elses, &elsel);
                 }
             }
             DO_ITER(code, i, ct, maxiter,
                 if (ifd == 1) {
-                   // gen_dump();
                     exec_code(code, ifs, ifl);
                     qres = RECENT(EZC_INT, 0);
                     if (qres) {
@@ -93,15 +96,14 @@ void exec_code(char *code, long long start, long long len) {
             move_ahead(1);
             __int_from_str(ptr, buf);
         } else if (IS_OP(code, i)) {
-            gen_ret_operator(buf, code, &i);
-            gen_operator(buf);
-        } else if (IS_SPEC(code[i])) {
-            gen_ret_special(buf, code, &i);
-            gen_special(buf);
+            gen_ret_operator(lbuf, code, &i);
+            DO_ITER(code, i, ct, maxiter,
+                gen_operator(lbuf);
+            )
         } else if (IS_ALPHA(code[i])) {
             gen_ret_function(buf, code, &i);
             gen_function(buf);
-        } else if (i < start + len && code[i] != ']') {
+        } else if (i < start + len) {
             lbufptr = 0;
             while (lbufptr < len) {
                 lbuf[lbufptr] = code[lbufptr+start];
@@ -109,6 +111,8 @@ void exec_code(char *code, long long start, long long len) {
             }
             lbuf[lbufptr] = 0;
             fail("Unexpected character", lbuf, i, i - start);
+        } else {
+            i++;
         }
     }
     free(lbuf);

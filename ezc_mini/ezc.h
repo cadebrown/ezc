@@ -15,9 +15,15 @@
 #endif
 
 
+
 #define EZC_INT long long
 
-#define EZC_STACK long long
+#ifndef USEGMP
+ #define EZC_MP mpz_t
+#else
+ #define EZC_MP err
+#endif
+
 #define EZC_FLAG long long
 #define EZC_TYPE long long
 #define EZC_IDX long long
@@ -29,12 +35,12 @@ typedef struct stack_t {
     EZC_TYPE type[MAXSTACKSIZE];
 } stack_t;
 
-stack_t stk;
+extern stack_t stk;
 
 
-long long inptr, ptr;
+extern long long ptr, bufptr, globalstop;
 
-char *input, *buf;
+extern char *input, *buf;
 
 void end(void);
 
