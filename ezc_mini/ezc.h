@@ -7,16 +7,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "helper.h"
-
-
 #ifndef MAXSTACKSIZE
  #define MAXSTACKSIZE (1000)
 #endif
 
-
+#ifndef MAXCONSTSIZE
+ #define MAXCONSTSIZE (1000)
+#endif
 
 #define EZC_INT long long
+#define EZC_STR char *
 
 #ifndef USEGMP
  #define EZC_MP mpz_t
@@ -27,27 +27,42 @@
 #define EZC_FLAG long long
 #define EZC_TYPE long long
 #define EZC_IDX long long
+#define EZC_STACK ezc_stack_t *
+#define EZC_DICT ezc_dict_t *
 
-
-typedef struct stack_t {
+typedef struct ezc_stack_t {
+    long long ptr;
+    
     void **vals[MAXSTACKSIZE];
     EZC_FLAG flags[MAXSTACKSIZE];
     EZC_TYPE type[MAXSTACKSIZE];
-} stack_t;
+} ezc_stack_t;
 
-extern stack_t stk;
+typedef struct ezc_dict_t {
+    long long ptr;
+
+    void **keys[MAXSTACKSIZE];
+
+    void **vals[MAXSTACKSIZE];
+    EZC_FLAG flags[MAXSTACKSIZE];
+    EZC_TYPE type[MAXSTACKSIZE];
+} ezc_dict_t;
 
 
-extern long long ptr, bufptr, globalstop;
+extern EZC_STACK global_stk;
+extern EZC_DICT global_dict;
 
-extern char *input, *buf;
+extern long long globalstop;
 
-void end(void);
-
-void fail(char *reason, char *code, long long pos, long long subpos);
+extern char tmpbuf[10000];
 
 
-void exec_code(char *code, long long start, long long len);
+void end(EZC_STACK stk);
+
+void fail(char *reason, EZC_STACK stk, char *code, long long pos);
+
+
+void exec_code(EZC_STACK stk, char *code);
 
 int main(int argc, char *argv[]);
 

@@ -2,6 +2,7 @@
 #define __EZC_HELPER_H__
 
 #include <string.h>
+#include "ezc.h"
 
 #define STR_EQ(a, b) (strcmp(a, b) == 0)
 #define STR_STARTS(st, va, off) (str_startswith(st, va, off))
@@ -23,30 +24,30 @@
 
 #define SKIP_WHITESPACE(code, itr) while (IS_SPACE(code[itr])) { itr++; }
 
-#define DO_ITER(src, i, ct, maxiter, code)                                  \
+#define DO_ITER(stk, src, i, ct, maxiter, code)                             \
  ct = 0; maxiter = 1;                                                       \
  if (IS_REPEAT(src[i])) {                                                   \
    maxiter = -1; i++;                                                       \
    if (IS_DIGIT(src[i])) {                                                  \
-     gen_ret_ll(src, &i, &maxiter);                                         \
+     ret_ll(src, &i, &maxiter);                                             \
    } else if (src[i] == '[') {                                              \
-     EZC_INT _s = 0, _l = 0;                                                \
-     gen_ret_subgroup(src, &i, &_s, &_l);                                   \
-     exec_code(src, _s, _l);                                                \
-     maxiter = gen_pop_int();                                               \
+     char *__subgroup = (char *)malloc(1000);                               \
+      ret_subgroup(__subgroup, src, &i);                                    \
+      exec_code(stk, __subgroup);                                           \
+     maxiter = pop_int(stk);                                                \
    }                                                                        \
  }                                                                          \
- while (ct < maxiter || maxiter == -1 && ptr >= 0 &&                        \
-       (RECENT_F(0) != FLAG_STOP) && !(globalstop)) {                       \
+ while (ct < maxiter || maxiter == -1 && (*stk).ptr >= 0 &&                 \
+       RECENT_F(stk, 0) != FLAG_STOP && !globalstop) {                      \
    code                                                                     \
    ct++;                                                                    \
  }                                                                          \
 
-#define NEXT(ptr, num) next_valid(ptr, num)
+#define NEXT(stk, ptr, num) next_valid(stk, ptr, num)
 
 long long str_startswith(char *str, char *val, long long offset);
 
-long long next_valid(long long val, long long num);
+long long next_valid(EZC_STACK stk, EZC_IDX val, EZC_INT num);
 
 
 #endif

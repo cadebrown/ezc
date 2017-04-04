@@ -2,128 +2,120 @@
 #include "ezc_generic.h"
 #include "helper.h"
 
-// The `cc` used is a macro in ezc.h for current char
+EZC_STACK global_stk;
+EZC_DICT global_dict;
 
-stack_t stk;
 
-long long ptr = -1, bufptr = 0, globalstop = 0;
+long long globalstop = 0;
 
-char *input, *buf;
+char tmpbuf[10000];
 
-void end(void) {
+void end(EZC_STACK stk) {
     fprintf(stderr, "final stack:\n");
-    gen_dump();
-    free(buf);
+    dump(stk);
+    //free(buf);
     exit (1);
 }
-void fail(char *reason, char *code, long long pos, long long subpos) {
+void fail(char *reason, EZC_STACK stk, char *code, long long pos) {
     long long i;
     fprintf(stderr, "%s\n", reason);
-    fprintf(stderr, "%s\n", input);
+    fprintf(stderr, "%s\n", code);
     i = 0;
     while (i < pos) {
         fprintf(stderr, " ");
         i++;
     }
     fprintf(stderr, "^\n");
-    fprintf(stderr, "While executing: \n");
-    fprintf(stderr, "%s\n", code);
-    i = 0;
-    while (i < subpos) {
-        fprintf(stderr, " ");
-        i++;
-    }
-    fprintf(stderr, "^\n");
-    end();
+    end(stk);
 }
 
-void exec_code(char *code, long long start, long long len) {
-    long long i = 0, s = 0, l = 0, maxiter = 0, ct = 0;
-    char *lbuf = (char *)malloc(1000);
-    long long lbufptr = 0;
-    i = start;
-    while (i < start + len) {
+void exec_code(EZC_STACK stk, char *code) {
+    if (strlen(code) < 1) {
+        printf(":%d:\n", code[0]);
+    }
+    long long i = 0, len = 0;
+    while (i < strlen(code)) {
         SKIP_WHITESPACE(code, i);
         if (IS_SPEC(code[i])) {
-            gen_ret_special(buf, code, &i);
-            gen_special(buf);
+            ret_special(tmpbuf, code, &i);
+            run_special(stk, tmpbuf);
         } else if (STR_STARTS(code, "..", i)) {
-            gen_push_copy(ptr-1);
+            push_copy(stk, (*stk).ptr);
             i+=2;
         } else if (STR_STARTS(code, ".", i)) {
-            gen_push_dupe();
+            push_copy(stk, (*stk).ptr);
             i++;
         } else if (code[i] == '"') {
             i++;
-            lbufptr = 0;
+
+            long long tbufptr = 0;
             while (code[i] != '"') {
-                lbuf[lbufptr++] = code[i++];
+                tmpbuf[tbufptr++] = code[i++];
             }
-            lbuf[lbufptr] = 0;
+            tmpbuf[tbufptr] = 0;
             i++;
-            gen_push_str(lbuf);
+            push_str(stk, tmpbuf);
         } else if (code[i] == '[') {
-            gen_ret_subgroup(code, &i, &s, &l);
-            long long ifd = 0, ifs = 0, ifl = 0, qres = 0;
-            long long elsed = 0, elses = 0, elsel = 0;
-            long long brk = 0;
+            char *runbuf = (char *)malloc(1000), *ifbuf, *elsebuf;
+            ret_subgroup(runbuf, code, &i);
+            long long ifd = 0, elsed = 0, maxiter = 0, ct = 0, qres = 0;
             if (STR_STARTS(code, "if", i)) {
+                ifbuf = (char *)malloc(1000);
                 i += 2;
                 ifd = 1;
-                gen_ret_subgroup(code, &i, &ifs, &ifl);
+                ret_subgroup(ifbuf, code, &i);
                 if (STR_STARTS(code, "else", i)) {
+                    elsebuf = (char *)malloc(1000);
                     i += 4;
                     elsed = 1;
-                    gen_ret_subgroup(code, &i, &elses, &elsel);
+                    ret_subgroup(elsebuf, code, &i);
                 }
             }
-            DO_ITER(code, i, ct, maxiter,
+            DO_ITER(stk, code, i, ct, maxiter,
                 if (ifd == 1) {
-                    exec_code(code, ifs, ifl);
-                    qres = RECENT(EZC_INT, 0);
-                    move_ahead(-1);
-                    if (qres) {
-                        exec_code(code, s, l);
+                    
+                    exec_code(stk, ifbuf);
+                    
+                    qres = RECENT(stk, EZC_INT, 0);
+                    move_ahead(stk, -1);
+                    if (qres != 0) {
+                        
+                        exec_code(stk, runbuf);
                     } else if (elsed) {
-                        exec_code(code, elses, elsel);
+                        exec_code(stk, elsebuf);
                     }
                 } else {
-                    exec_code(code, s, l);
+                    exec_code(stk, runbuf);
                 }
             )
             SKIP_WHITESPACE(code, i);
         } else if (IS_DIGIT(code[i]) || (IS_SIGN(code[i]) && IS_DIGIT(code[i+1]))) {
-            get_const_str(buf, code, &i);
-            move_ahead(1);
-            __int_from_str(ptr, buf);
+            ret_const(tmpbuf, code, &i);
+            move_ahead(stk, 1);
+            RECENT(stk, EZC_INT, 0) = strtoll(tmpbuf, NULL, 10);
         } else if (IS_OP(code, i)) {
-            gen_ret_operator(lbuf, code, &i);
-            DO_ITER(code, i, ct, maxiter,
-                gen_operator(lbuf);
+            ret_operator(tmpbuf, code, &i);
+            long long maxiter = 0, ct = 0;
+            DO_ITER(stk, code, i, ct, maxiter,
+                run_operator(stk, tmpbuf);
             )
         } else if (IS_ALPHA(code[i])) {
-            gen_ret_function(buf, code, &i);
-            gen_function(buf);
-        } else if (i < start + len) {
-            lbufptr = 0;
-            while (lbufptr < len) {
-                lbuf[lbufptr] = code[lbufptr+start];
-                lbufptr++;
-            }
-            lbuf[lbufptr] = 0;
-            fail("Unexpected character", lbuf, i, i - start);
+            ret_function(tmpbuf, code, &i);
+            run_function(stk, tmpbuf);
+        } else if (i < strlen(code)) {
+            fail("Unexpected character", stk, code, i);
         } else {
-            i++;
+            break;
         }
     }
-    free(lbuf);
 }
 
 
 int main(int argc, char *argv[]) {
-    input = argv[1];
-    buf = (char *)malloc(1000);
-    exec_code(input, 0, strlen(input));
-    end();
+    global_stk = (EZC_STACK)malloc(sizeof(EZC_STACK));
+    (*global_stk).ptr = -1;
+    exec_code(global_stk, argv[1]);
+
+    end(global_stk);
 }
 
