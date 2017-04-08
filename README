@@ -5,7 +5,7 @@ To see usage and more, see [docs folder](./docs/), or the [docs website](http://
 
 ##                      What is EZC?
 
-EZC is a language/compiler which supports multiprecision, quick scripting, and a large number of platforms (eventually aiming for any platform with a C compiler). EZC also features dynamic code generation to pseudo assembly (.pasm files) which can be used by other compilers, as it is a basic, parsed format. EZC syntax is similar to python, and just as abstract. However, it is much simpler, and is meant for mainly high precision numeric computation, or high speed simple arithmetic.
+EZC is a language/compiler which supports multiprecision, quick scripting, and a large number of platforms (eventually aiming for any platform with a C compiler).
 
 EZC also includes commandline utilities (WIP) which allow shells access to fast computations with an extended set of functions, so EZC is also a commandline calculator extension. 
 
