@@ -19,6 +19,9 @@ missing
 ezc.pc
 test-driver
 
+*.orig
+src/ec
+
 
 autom4te.cache
 autoscan.log
@@ -26,7 +29,7 @@ autoscan-*.log
 aclocal.m4
 compile
 config.guess
-config.*
+config.h*
 config.sub
 configure
 configure.scan
