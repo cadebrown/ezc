@@ -1,7 +1,5 @@
+
 #include "ezc.h"
-
-#include "helper.h"
-
 
 
 void exec(EZC_STR code, EZC_DICT dict, EZC_STACK stk) {
