@@ -8,7 +8,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
+#include "config.h"
+
+#define EZC_FAIL(reason) fprintf(stderr, reason); exit(2);
 
 #ifndef USEGMP
  #define EZC_MP mpz_t
@@ -25,6 +29,8 @@
 
 
 /* Helpful macros */
+
+#define CONT_ALIAS(dict, a0, a1) (dict_contains_key(dict, a0) || dict_contains_key(dict, a1))
 
 #define STR_EQ(a, b) (strcmp(a, b) == 0)
 #define STR_STARTS(st, va, off) (str_startswith(st, va, off))
@@ -51,13 +57,24 @@ long long str_startswith(char *str, char *val, long long offset);
 
 /* objects */
 #define EZC_OBJ ezc_obj_t *
+#define CREATE_OBJ(name) EZC_OBJ name = (EZC_OBJ)malloc(sizeof(ezc_obj_t) * 1);
 
+#define TYPE_NIL   (0x0000)
+#define TYPE_BOOL  (0x0001)
+#define TYPE_INT   (0x0002)
+#define TYPE_FLT   (0x0003)
+#define TYPE_STR   (0x0004)
 
 typedef struct ezc_obj_t {
 	EZC_TYPE type;
 
 	void *val;
 } ezc_obj_t;
+
+bool obj_eq(EZC_OBJ a, EZC_OBJ b);
+EZC_INT obj_cmp(EZC_OBJ a, EZC_OBJ b);
+
+void obj_dump(EZC_OBJ obj);
 
 
 /* stacks */
@@ -71,6 +88,8 @@ typedef struct ezc_stk_t {
 } ezc_stk_t;
 
 
+void stk_dump(EZC_STACK stk);
+
 void stk_init(EZC_STACK stk, EZC_INT len);
 void stk_resize(EZC_STACK stk, EZC_INT len);
 
@@ -79,6 +98,7 @@ EZC_OBJ stk_get(EZC_STACK stk, EZC_INT pos);
 
 void stk_push(EZC_STACK stk, EZC_OBJ val);
 void stk_set(EZC_STACK stk, EZC_INT pos, EZC_OBJ val);
+
 
 
 /* dictionaries */
@@ -94,13 +114,33 @@ typedef struct ezc_dict_t {
 } ezc_dict_t;
 
 
-void dict_init(EZC_DICT stk, EZC_INT len);
-void dict_resize(EZC_DICT stk, EZC_INT len);
+void dict_dump(EZC_DICT dict);
+void dict_dump_fmt(EZC_DICT dict, long long offset);
+
+
+void dict_init(EZC_DICT dict, EZC_INT len);
+void dict_resize(EZC_DICT dict, EZC_INT len);
+
+bool dict_contains_key(EZC_DICT dict, EZC_STR key);
+EZC_IDX dict_key_idx(EZC_DICT dict, EZC_STR key);
+
+bool dict_contains_val(EZC_DICT dict, EZC_OBJ val);
+EZC_IDX dict_val_idx(EZC_DICT dict, EZC_OBJ val);
 
 void dict_set(EZC_DICT dict, EZC_STR key, EZC_OBJ val);
-
 EZC_OBJ dict_get(EZC_DICT dict, EZC_STR key);
 
+
+
+/* argument functions */
+
+
+void init_args(EZC_DICT dict);
+void get_args(EZC_DICT dict, EZC_STR *args, EZC_IDX start, EZC_IDX end);
+
+void help_message();
+
+/* main program functions */
 
 
 void exec(EZC_STR code, EZC_DICT dict, EZC_STACK stk);

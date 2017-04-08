@@ -2,6 +2,7 @@
 #include "ezc.h"
 
 
+
 void exec(EZC_STR code, EZC_DICT dict, EZC_STACK stk) {
 	EZC_INT i = 0, l;
 	while (i < strlen(code)) {
@@ -23,6 +24,19 @@ void exec(EZC_STR code, EZC_DICT dict, EZC_STACK stk) {
 
 
 int main(int argc, char *argv[]) {
+	ezc_dict_t args;
+	init_args(&args);
+
+	get_args(&args, argv, 1, argc);
+
+	if (CONT_ALIAS(&args, "-h", "--help")) {
+		help_message();
+		return 0;
+	}
+
+	dict_dump_fmt(&args, 10);
+
+/*
     ezc_stk_t stk;
 	ezc_dict_t dict;
 	stk_init(&stk, DEFAULT_ARRAY_LEN);
@@ -30,6 +44,6 @@ int main(int argc, char *argv[]) {
 
 	exec(argv[1], &dict, &stk);
 	stk_dump(&stk);
-
+	*/
 }
 

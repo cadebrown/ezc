@@ -4,7 +4,10 @@
 void stk_dump(EZC_STACK stk) {
 	EZC_INT i = 0;
 	while (i < (*stk).ptr) {
-		printf("%lld, ", (long long)(*stk_get(stk, i++)).val);
+		printf("(%lld) : ", i);
+		obj_dump((*stk).vals[i]);
+		printf("\n");
+		i++;
 	}
 	printf("\n");
 }
