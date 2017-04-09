@@ -22,5 +22,5 @@ AC_CHECK_HEADERS([stdlib.h stdio.h stdbool.h string.h])
 AC_FUNC_MALLOC
 AC_FUNC_REALLOC
 
-AC_CONFIG_FILES([src/Makefile])
+AC_CONFIG_FILES([Makefile, src/Makefile])
 AC_OUTPUT
