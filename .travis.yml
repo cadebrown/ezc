@@ -11,15 +11,9 @@ compiler:
   - gcc
 
 install:
-  - make build
-  # this will fail and say the build has cancelled
-  #- make check
-  #- make bundle package
-
-script:
-  #- make upload
-  #- make upload-package
-  #- make check-global
+  - ./configure
+  - make
+  - sudo make install
 
 notifications:
   email:
