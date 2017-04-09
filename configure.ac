@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ([2.69])
+AC_PREREQ([2.55])
 AC_INIT([EZC], [1.4.0], [ezc@chemicaldevelopment.us])
 AM_INIT_AUTOMAKE()
 
