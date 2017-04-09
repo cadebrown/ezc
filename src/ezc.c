@@ -1,29 +1,117 @@
 
 #include "ezc.h"
 
+EZC_OBJ EZC_NIL;
+char *EXEC_TITLE;
+
+void init() {
+	MALLOC_OBJ(EZC_NIL);
+	SET_OBJ(EZC_NIL, TYPE_NIL, 0);
+}
+
+void fail(EZC_STR reason, EZC_STR code, EZC_DICT dict, EZC_STACK stk, long long pos) {
+	printf("Error: %s\n", reason);
+	printf("While executing:\n %s", code);
+	if (code[strlen(code)-1] != '\n') {
+		printf("\n");
+	}
+
+	long long i = 0;
+	while (i <= pos) {
+		printf(" ");
+		i++;
+	}
+	printf("^\n");
+
+	printf("Final dict:\n");
+	dict_dump(dict);
+
+	printf("\nFinal stack:\n");
+	stk_dump(stk);
+
+	exit (3);
+}
 
 
 void exec(EZC_STR code, EZC_DICT dict, EZC_STACK stk) {
-	EZC_INT i = 0, l;
+	EZC_INT i = 0;
 	while (i < strlen(code)) {
-		if (IS_DIGIT(code[i])) {
-			char *tmp = (char *)malloc(1000);
-			l=0;
-			while (IS_DIGIT(code[i])) {
-				printf("%s\n", tmp);
-				tmp[l++]=code[i++];
+		SKIP_WHITESPACE(code, i);
+		if (IS_DIGIT(code[i]) || (code[i] == '-' && IS_DIGIT(code[i++]))) {
+			EZC_INT sind = i, eind = i;
+			if (code[eind] == '-') {
+				eind++;
 			}
-			tmp[l] = 0;
-			EZC_OBJ llobj = (EZC_OBJ)malloc(sizeof(EZC_OBJ));
-			(*llobj).val = (void *)strtoll(tmp, NULL, 10);
-			stk_push(stk, llobj);
-			i++;
+
+			while (IS_DIGIT(code[eind])) {
+				eind++;
+			}
+
+			char *res = (char *)malloc(eind-i+1);
+			while (i < eind) {
+				res[i - sind] = code[i];
+				i++;
+			}
+			res[i] = 0;
+			stk_push(stk, obj_from_str(res));
+			free(res);
+		} else if (IS_OP(code, i)) {
+			char *res = (char *)malloc(MAX_OP_LENGTH);
+			ret_operator(res, code, &i);
+			eval_op(dict, stk, res);
+			free(res);
+		} else if (code[i] == '"') {
+			EZC_INT sind = i, eind = i;
+			eind++;
+			while (code[eind] != '"' && code[eind-1] != '\\') {
+				eind++;
+			}
+			eind++;
+			char *res = (char *)malloc(eind-i+1);
+			while (i < eind) {
+				res[i - sind] = code[i];
+				i++;
+			}
+			res[i] = 0;
+			stk_push(stk, obj_from_str(res));
+			free(res);
+		} else if (IS_ALPHA(code[i])) {
+			EZC_INT sind = i, eind = i;
+			while (IS_ALPHA(code[eind])) {
+				eind++;
+			}
+			char *res = (char *)malloc(eind-i+1);
+			while (i < eind) {
+				res[i - sind] = code[i];
+				i++;
+			}
+			res[i] = 0;
+			eval_func(dict, stk, res);
+			free(res);
+		} else if (i < strlen(code)) {
+			fail("Unexpected character", code, dict, stk, i);
 		}
+	}
+}
+
+void interperet(EZC_DICT dict, EZC_STACK stk) {
+	char *line = NULL;
+	size_t size;
+	printf(" > ");
+	while (getline(&line, &size, stdin) >= 0) {
+		if (strlen(line) == 2 && line[0] == 'q') {
+			return;
+		}
+		exec(line, dict, stk);
+		printf(" > ");
 	}
 }
 
 
 int main(int argc, char *argv[]) {
+	EXEC_TITLE = argv[0];
+	init();
+
 	ezc_dict_t args;
 	init_args(&args);
 
@@ -34,16 +122,39 @@ int main(int argc, char *argv[]) {
 		return 0;
 	}
 
-	dict_dump_fmt(&args, 10);
+	if (CONT_ALIAS(&args, "-e", "--expr")) {
+		ezc_stk_t stk;
+		ezc_dict_t dict;
+		stk_init(&stk, DEFAULT_ARRAY_LEN);
+		dict_init(&dict, DEFAULT_ARRAY_LEN);
+		char * torun;
+		if (dict_contains_key(&args, "-e")) {
+			torun = str_from_obj(dict_get(&args, "-e"));
+		} else {
+			torun = str_from_obj(dict_get(&args, "--expr"));
+		}
 
-/*
-    ezc_stk_t stk;
-	ezc_dict_t dict;
-	stk_init(&stk, DEFAULT_ARRAY_LEN);
-	dict_init(&dict, DEFAULT_ARRAY_LEN);
+		exec(torun, &dict, &stk);
 
-	exec(argv[1], &dict, &stk);
-	stk_dump(&stk);
-	*/
+		//printf("\nFinal results:\n");
+
+		//dict_dump(&dict);
+		//stk_dump(&stk);
+	} else {
+		ezc_stk_t stk;
+		ezc_dict_t dict;
+		stk_init(&stk, DEFAULT_ARRAY_LEN);
+		dict_init(&dict, DEFAULT_ARRAY_LEN);
+
+		interperet(&dict, &stk);
+
+		printf("Final results:\n");
+
+		dict_dump(&dict);
+		stk_dump(&stk);
+	}
+
+
+
 }
 

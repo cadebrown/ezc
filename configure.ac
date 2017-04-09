@@ -6,7 +6,7 @@ AC_INIT([EZC], [1.4.0], [ezc@chemicaldevelopment.us])
 AM_INIT_AUTOMAKE([subdir-objects])
 
 AC_CONFIG_SRCDIR([src/ezc.h])
-AC_CONFIG_HEADERS([config.h], [], [AUTHORS="asdfasdf"])
+AC_CONFIG_HEADERS([config.h])
 
 # Checks for programs.
 AC_PROG_CC

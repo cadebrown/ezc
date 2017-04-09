@@ -9,7 +9,6 @@ void stk_dump(EZC_STACK stk) {
 		printf("\n");
 		i++;
 	}
-	printf("\n");
 }
 
 void stk_init(EZC_STACK stk, EZC_INT len) {
@@ -36,13 +35,14 @@ void stk_set(EZC_STACK stk, EZC_INT pos, EZC_OBJ val) {
 
 
 EZC_OBJ stk_pop(EZC_STACK stk) {
-	EZC_OBJ res = stk_get(stk, (*stk).ptr);
 	(*stk).ptr--;
-	return res;
+	return stk_get(stk, (*stk).ptr);
 }
 
 EZC_OBJ stk_get(EZC_STACK stk, EZC_INT pos) {
 	return (*stk).vals[pos];
 }
 
-
+EZC_OBJ stk_get_recent(EZC_STACK stk, EZC_INT rpos) {
+	return stk_get(stk, (*stk).ptr - 1 - rpos);
+}

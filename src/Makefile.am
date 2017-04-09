@@ -6,4 +6,4 @@ AM_LDFLAGS = -I./
 # this lists the binaries to produce, the (non-PHONY, binary) targets in
 # the previous manual Makefile
 bin_PROGRAMS = ec
-ec_SOURCES = ezc.h ezc.c helper.c obj.c stack.c dict.c getargs.c
+ec_SOURCES = ezc.h ezc.c helper.c obj.c stack.c dict.c getargs.c eval.c
