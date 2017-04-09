@@ -3,7 +3,7 @@
 
 AC_PREREQ([2.69])
 AC_INIT([EZC], [1.4.0], [ezc@chemicaldevelopment.us])
-AM_INIT_AUTOMAKE([subdir-objects])
+AM_INIT_AUTOMAKE()
 
 AC_CONFIG_SRCDIR([src/ezc.h])
 AC_CONFIG_HEADERS([config.h])
@@ -22,5 +22,5 @@ AC_CHECK_HEADERS([stdlib.h stdio.h stdbool.h string.h])
 AC_FUNC_MALLOC
 AC_FUNC_REALLOC
 
-AC_CONFIG_FILES([Makefile, src/Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile])
 AC_OUTPUT
