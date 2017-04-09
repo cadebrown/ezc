@@ -16,6 +16,9 @@ install:
   - make clean all
   - sudo make install
 
+script:
+  -
+
 notifications:
   email:
     recipients:
