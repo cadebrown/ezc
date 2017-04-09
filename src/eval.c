@@ -18,7 +18,7 @@ void eval_func(EZC_DICT dict, EZC_STACK stk, EZC_STR func) {
 	} else if (STR_EQ(func, "d") || STR_EQ(func, "dict")) {
 		dict_dump(dict);
 	} else {
-		printf("Error in function: don't know the name of function.\n");
+		printf("Error in function: don't know the name of function: :%s:.\n", func);
 	}
 }
 
@@ -36,6 +36,14 @@ void eval_op(EZC_DICT dict, EZC_STACK stk, EZC_STR op) {
 				eval_op__int(dict, stk, op);
 			} else if (type0 == TYPE_STR) {
 				eval_op__str(dict, stk, op);
+			}
+			#ifdef USE_GMP
+				else if (type0 == TYPE_MPZ) {
+					eval_op__mpz(dict, stk, op);
+				}
+			#endif
+			else {
+				printf("Error in operator: not defined for this type.\n");
 			}
 		} else {
 			printf("Error in operator: different types.\n");

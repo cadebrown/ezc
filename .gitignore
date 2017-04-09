@@ -24,6 +24,9 @@ src/ec
 *.o
 *.out
 
+*.tar
+*.tar.*
+
 
 autom4te.cache
 autoscan.log

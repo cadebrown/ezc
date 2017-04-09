@@ -2,13 +2,6 @@
 #ifndef __EZC_H__
 #define __EZC_H__
 
-
-#define DEFAULT_ARRAY_LEN    (20)
-#define ARG_PRINT_OFF        (25)
-#define MAX_LINE_LENGTH      (10000)
-#define MAX_OP_LENGTH        (5)
-
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -16,13 +9,8 @@
 
 #include "config.h"
 
-#define EZC_FAIL(reason) fprintf(stderr, reason); exit(2);
 
-#ifndef USEGMP
- #define EZC_MP mpz_t
-#else
- #define EZC_MP err
-#endif
+#define EZC_FAIL(reason) fprintf(stderr, reason); exit(2);
 
 #define EZC_INT long long
 #define EZC_STR char *
@@ -30,6 +18,7 @@
 #define EZC_FLAG long long
 #define EZC_TYPE long long
 #define EZC_IDX long long
+
 
 
 /* Helpful macros */
@@ -193,5 +182,18 @@ void exec(EZC_STR code, EZC_DICT dict, EZC_STACK stk);
 void interperet(EZC_DICT dict, EZC_STACK stk);
 
 int main(int argc, char *argv[]);
+
+
+/* addons */
+
+#ifdef USE_GMP
+	#include <gmp.h>
+
+	void eval_op__mpz(EZC_DICT dict, EZC_STACK stk, EZC_STR op);
+
+	#define TYPE_MPZ       (0x0101) 
+	#define EZC_MP         mpz_t *
+
+#endif
 
 #endif

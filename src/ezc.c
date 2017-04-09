@@ -1,6 +1,7 @@
 
 #include "ezc.h"
 
+
 EZC_OBJ EZC_NIL;
 char *EXEC_TITLE;
 
@@ -46,14 +47,19 @@ void exec(EZC_STR code, EZC_DICT dict, EZC_STACK stk) {
 			while (IS_DIGIT(code[eind])) {
 				eind++;
 			}
-
+			if (code[eind] == 'Z') {
+				eind++;
+			}
 			char *res = (char *)malloc(eind-i+1);
 			while (i < eind) {
 				res[i - sind] = code[i];
 				i++;
 			}
 			res[i] = 0;
-			stk_push(stk, obj_from_str(res));
+			EZC_OBJ ret = obj_from_str(res);
+
+			stk_push(stk, ret);
+
 			free(res);
 		} else if (IS_OP(code, i)) {
 			char *res = (char *)malloc(MAX_OP_LENGTH);
@@ -72,20 +78,20 @@ void exec(EZC_STR code, EZC_DICT dict, EZC_STACK stk) {
 				res[i - sind] = code[i];
 				i++;
 			}
-			res[i] = 0;
+			res[i-sind] = 0;
 			stk_push(stk, obj_from_str(res));
 			free(res);
 		} else if (IS_ALPHA(code[i])) {
 			EZC_INT sind = i, eind = i;
-			while (IS_ALPHA(code[eind])) {
+			while (IS_ALPHA(code[eind]) && eind < strlen(code)) {
 				eind++;
 			}
 			char *res = (char *)malloc(eind-i+1);
-			while (i < eind) {
+			while (i < eind &&  i < strlen(code)) {
 				res[i - sind] = code[i];
 				i++;
 			}
-			res[i] = 0;
+			res[i-sind] = 0;
 			eval_func(dict, stk, res);
 			free(res);
 		} else if (i < strlen(code)) {
@@ -95,10 +101,9 @@ void exec(EZC_STR code, EZC_DICT dict, EZC_STACK stk) {
 }
 
 void interperet(EZC_DICT dict, EZC_STACK stk) {
-	char *line = NULL;
-	size_t size;
+	char line[MAX_INTERPERET_LEN];
 	printf(" > ");
-	while (getline(&line, &size, stdin) >= 0) {
+	while (fgets(line, sizeof(line), stdin)) {
 		if (strlen(line) == 2 && line[0] == 'q') {
 			return;
 		}
@@ -125,8 +130,8 @@ int main(int argc, char *argv[]) {
 	if (CONT_ALIAS(&args, "-e", "--expr")) {
 		ezc_stk_t stk;
 		ezc_dict_t dict;
-		stk_init(&stk, DEFAULT_ARRAY_LEN);
-		dict_init(&dict, DEFAULT_ARRAY_LEN);
+		stk_init(&stk, DEFAULT_STACK_LEN);
+		dict_init(&dict, DEFAULT_DICT_LEN);
 		char * torun;
 		if (dict_contains_key(&args, "-e")) {
 			torun = str_from_obj(dict_get(&args, "-e"));
@@ -143,8 +148,8 @@ int main(int argc, char *argv[]) {
 	} else {
 		ezc_stk_t stk;
 		ezc_dict_t dict;
-		stk_init(&stk, DEFAULT_ARRAY_LEN);
-		dict_init(&dict, DEFAULT_ARRAY_LEN);
+		stk_init(&stk, DEFAULT_STACK_LEN);
+		dict_init(&dict, DEFAULT_DICT_LEN);
 
 		interperet(&dict, &stk);
 

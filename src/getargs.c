@@ -2,7 +2,7 @@
 #include "ezc.h"
 
 void init_args(EZC_DICT dict) {
-	dict_init(dict, DEFAULT_ARRAY_LEN);
+	dict_init(dict, DEFAULT_DICT_LEN);
 }
 
 void help_message() {
@@ -16,7 +16,7 @@ void help_message() {
 	dict_set(&usage, "-h, --help", obj_from_str("\"shows help message and exits\""));
 	dict_set(&usage, "-e, --expr '[CMD]'", obj_from_str("\"executes [CMD]\""));
 
-	dict_dump_fmt(&usage, true, ARG_PRINT_OFF);
+	dict_dump_fmt(&usage, true, PRINT_OFFSET);
 
 
 	printf("For general discussion, please post and subscribe on the mailing list:\n");
