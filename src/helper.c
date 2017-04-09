@@ -24,30 +24,11 @@ void ret_operator(char *out, char *val, long long *start) {
         out[i++] = '>';
     } else if (IS_OP(val, (*start))) {
         out[i++] = val[(*start)];
+    } else {
+        ERR_STR(out);
+		sprintf(out, "Unknown operator: %c", val[*start]);
+		ezc_fail(out);
     }
     out[i] = 0;
     (*start) += strlen(out);
-}
-
-void ret_str(char *out, char *code, long long *start) {
-    long long i = (*start);
-    if (code[i] != '"') {
-        printf("Error, called 'ret_str' with something that didn't start with \"");
-        return;
-    } else {
-        i++;
-    }
-    while (IS_ALPHA(code[i])) {
-        out[i-(*start)] = code[i];
-        i++;
-    }
-    out[i-(*start)] = 0;
-
-    if (code[i] != '"') {
-        printf("Error, called 'ret_str' with something that didn't end with \"");
-        return;
-    } else {
-        i++;
-    }
-    (*start) = i;
 }

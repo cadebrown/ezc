@@ -1,25 +1,24 @@
 
 #include "ezc.h"
 
-void init_args(EZC_DICT dict) {
-	dict_init(dict, DEFAULT_DICT_LEN);
-}
-
 void help_message() {
 
 	printf("Usage: %s [- | -e [EXPR]] [OPTIONS ...]\n\n", EXEC_TITLE);
 
-	ezc_dict_t usage;
-	dict_init(&usage, 10);
+	CREATE_OBJ(usage);
+	SET_OBJ(usage, TYPE_DICT, malloc(sizeof(TYPE_DICT)));
 
-	dict_set(&usage, "-", obj_from_str("\"start an interactive shell\""));
-	dict_set(&usage, "-h, --help", obj_from_str("\"shows help message and exits\""));
-	dict_set(&usage, "-e, --expr '[CMD]'", obj_from_str("\"executes [CMD]\""));
+	dict_init((*usage).val, 10);
 
-	dict_dump_fmt(&usage, true, PRINT_OFFSET);
+	dict_set((*usage).val, "-", obj_from_str("\"start an interactive shell\""));
+	dict_set((*usage).val, "-h, --help", obj_from_str("\"shows help message and exits\""));
+	dict_set((*usage).val, "-e, --expr '[CMD]'", obj_from_str("\"executes [CMD]\""));
 
 
-	printf("For general discussion, please post and subscribe on the mailing list:\n");
+	obj_dump_fmt(usage, ARGS_PRINT_OFFSET+25, 0, PRINT_OFFSET, false, false);
+
+
+	printf("\nFor general discussion, please post and subscribe on the mailing list:\n");
 	printf("<%s>\n", PACKAGE_BUGREPORT);
 //	SET_OBJ();
 	printf("\n");

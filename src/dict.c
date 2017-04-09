@@ -8,34 +8,6 @@ void dict_init(EZC_DICT dict, EZC_INT len) {
 	(*dict).vals = (EZC_OBJ*)malloc(sizeof(EZC_STR) * len);
 }
 
-void dict_dump_fmt(EZC_DICT dict, bool raw, long long offset) {
-	EZC_INT i = 0, j = 0;
-	while (i < (*dict).ptr) {
-		printf("%s", (*dict).keys[i]);
-		j = strlen((*dict).keys[i]);
-		while (j < offset) {
-			printf(" ");
-			j++;
-		}
-		printf(": ");
-		obj_dump_fmt((*dict).vals[i], raw);
-		printf("\n");
-		i++;
-	}
-	printf("\n");
-}
-
-void dict_dump(EZC_DICT dict) {
-	EZC_INT i = 0;
-	while (i < (*dict).ptr) {
-		printf("%s : ", (*dict).keys[i]);
-		obj_dump((*dict).vals[i]);
-		printf("\n");
-		i++;
-	}
-	printf("\n");
-}
-
 
 void dict_resize(EZC_DICT dict, EZC_INT len) {
 	(*dict).size = len;

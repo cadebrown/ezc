@@ -32,14 +32,7 @@ If you have these, you will run `autoreconf -i`, then `./configure && make && su
 ##                      TODOs
 
 				 
-  0. Big picture changes
-    * Get RPN dictionary and stack logic worked out [partial]
-	 
-  1. Optional imports/libraries
-    * GMP [looking into automake things for --with-gmp]
-    * MPFR []
-    * MPC [unlikely to come soon, as this is complex numbers]
-
+  * Make stacks and dicts EZC_OBJ s, redo error handling
 
 
 ##                      AUTHORS

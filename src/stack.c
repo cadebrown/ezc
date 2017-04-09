@@ -1,16 +1,6 @@
 
 #include "ezc.h"
 
-void stk_dump(EZC_STACK stk) {
-	EZC_INT i = 0;
-	while (i < (*stk).ptr) {
-		printf("(%lld): ", i, (*stk).vals[i]);
-		obj_dump((*stk).vals[i]);
-		printf("\n");
-		i++;
-	}
-}
-
 void stk_init(EZC_STACK stk, EZC_INT len) {
 	(*stk).ptr = 0;
 	(*stk).size = len;

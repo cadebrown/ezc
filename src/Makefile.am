@@ -7,6 +7,6 @@ AM_LDFLAGS = -I./
 # the previous manual Makefile
 bin_PROGRAMS = ec
 
-ec_SOURCES = ezc.h ezc.c helper.c obj.c stack.c dict.c getargs.c eval.c gmp_addon.c
+ec_SOURCES = ezc.h ezc_colors.h ezc.c helper.c obj.c stack.c dict.c getargs.c eval.c gmp_addon.c str_addon.c
 ec_LDADD = @GMPLDFLAGS@
 

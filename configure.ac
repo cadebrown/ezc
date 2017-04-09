@@ -58,7 +58,11 @@ AC_DEFINE([DEFAULT_DICT_LEN], [20], [Default dictionary keys and values length])
 AC_DEFINE([MAX_INTERPERET_LEN], [10000], [The maximum size for an operator string])
 AC_DEFINE([MAX_OP_LENGTH], [5], [The maximum size for an operator string])
 
-AC_DEFINE([PRINT_OFFSET], [25], [The offset of printing])
+AC_DEFINE([MAX_ERR_STR], [2000], [Maxmimum length of an error string])
+
+AC_DEFINE([PRINT_OFFSET], [4], [The offset of printing])
+AC_DEFINE([ARGS_PRINT_OFFSET], [25], [The offset of printing for args])
+AC_DEFINE([PRINT_COL_OFFSET], [35], [The offset of columm printing])
 
 # Checks for typedefs, structures, and compiler characteristics.
 

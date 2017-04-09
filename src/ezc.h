@@ -7,10 +7,9 @@
 #include <string.h>
 #include <stdbool.h>
 
+#include "ezc_colors.h"
 #include "config.h"
 
-
-#define EZC_FAIL(reason) fprintf(stderr, reason); exit(2);
 
 #define EZC_INT long long
 #define EZC_STR char *
@@ -19,9 +18,12 @@
 #define EZC_TYPE long long
 #define EZC_IDX long long
 
+#define ERR_STR(n0) char n0[MAX_ERR_STR];
 
 
 /* Helpful macros */
+
+#define _SPACE(n) printf("%*s", (int)(n), "");
 
 #define CONT_ALIAS(dict, a0, a1) (dict_contains_key(dict, a0) || dict_contains_key(dict, a1))
 
@@ -72,6 +74,9 @@ void ret_operator(char *out, char *val, long long *start);
 #define TYPE_FLT   (0x0003)
 #define TYPE_STR   (0x0004)
 
+#define TYPE_STK   (0x0201)
+#define TYPE_DICT  (0x0202)
+
 typedef struct ezc_obj_t {
 	EZC_TYPE type;
 
@@ -82,12 +87,14 @@ void obj_cpy(EZC_OBJ a, EZC_OBJ b);
 EZC_OBJ obj_from_str(EZC_STR s);
 EZC_STR str_from_obj(EZC_OBJ v);
 
+char * get_type_name(EZC_TYPE type);
 
 bool obj_eq(EZC_OBJ a, EZC_OBJ b);
 EZC_INT obj_cmp(EZC_OBJ a, EZC_OBJ b);
 
 void obj_dump(EZC_OBJ obj);
-void obj_dump_fmt(EZC_OBJ obj, bool raw);
+void obj_dump_raw(EZC_OBJ obj);
+void obj_dump_fmt(EZC_OBJ obj, long long coloff, long long offset, long long addeach, bool raw, bool print_quotes);
 
 /* obj constants */
 
@@ -99,6 +106,7 @@ EZC_OBJ EZC_NIL;
 #define EZC_STACK ezc_stk_t *
 
 typedef struct ezc_stk_t {
+
 	EZC_IDX ptr;
 	EZC_IDX size;
 
@@ -133,10 +141,6 @@ typedef struct ezc_dict_t {
 } ezc_dict_t;
 
 
-void dict_dump(EZC_DICT dict);
-void dict_dump_fmt(EZC_DICT dict, bool raw, long long offset);
-
-
 void dict_init(EZC_DICT dict, EZC_INT len);
 void dict_resize(EZC_DICT dict, EZC_INT len);
 
@@ -151,21 +155,25 @@ EZC_OBJ dict_get(EZC_DICT dict, EZC_STR key);
 
 /* evaluating code */
 
-void eval_func(EZC_DICT dict, EZC_STACK stk, EZC_STR func);
-void eval_func__int(EZC_DICT dict, EZC_STACK stk, EZC_STR op);
+void eval_func(EZC_STR func);
+void eval_func__int(EZC_STR op);
 
 
-void eval_op(EZC_DICT dict, EZC_STACK stk, EZC_STR op);
-void eval_op__int(EZC_DICT dict, EZC_STACK stk, EZC_STR op);
-void eval_op__str(EZC_DICT dict, EZC_STACK stk, EZC_STR op);
+void eval_op(EZC_STR op);
+void eval_op__int(EZC_STR op);
+void eval_op__str(EZC_STR op);
 
 EZC_INT __int_pow(EZC_INT a, EZC_INT b);
+
+
+/* addons */
+
+EZC_OBJ str_literal(EZC_STR x);
 
 
 /* argument functions */
 
 
-void init_args(EZC_DICT dict);
 void get_args(EZC_DICT dict, EZC_STR *args, EZC_IDX start, EZC_IDX end);
 
 void help_message();
@@ -173,13 +181,31 @@ void help_message();
 
 /* main program functions */
 
+//
+#define LAST(STK) stk_get_recent((*STK).val, 0)
+#define LAST_STACK ((EZC_STACK)(*stk_get_recent((*stacks).val, 0)).val)
+
 char *EXEC_TITLE;
 
-void fail(EZC_STR reason, EZC_STR code, EZC_DICT dict, EZC_STACK stk, long long pos);
 
-void exec(EZC_STR code, EZC_DICT dict, EZC_STACK stk);
+EZC_OBJ codes;
+EZC_OBJ poss;
 
-void interperet(EZC_DICT dict, EZC_STACK stk);
+EZC_OBJ stacks;
+EZC_OBJ dicts;
+
+EZC_OBJ args;
+
+bool is_live;
+
+
+void ezc_fail(EZC_STR reason);
+
+void ezc_end();
+
+void exec();
+
+void interperet();
 
 int main(int argc, char *argv[]);
 
@@ -189,7 +215,7 @@ int main(int argc, char *argv[]);
 #ifdef USE_GMP
 	#include <gmp.h>
 
-	void eval_op__mpz(EZC_DICT dict, EZC_STACK stk, EZC_STR op);
+	void eval_op__mpz(EZC_STR op);
 
 	#define TYPE_MPZ       (0x0101) 
 	#define EZC_MP         mpz_t *

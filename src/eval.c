@@ -9,96 +9,118 @@
 );
 
 
-void eval_func(EZC_DICT dict, EZC_STACK stk, EZC_STR func) {
-	if (STR_EQ(func, "p") || STR_EQ(func, "print")) {
-		obj_dump_fmt(stk_get_recent(stk, 0), true);
+void eval_func(EZC_STR func) {
+
+	if (STR_EQ(func, "q") || STR_EQ(func, "quit")) {
+		ezc_end();
+		exit (0);
+		return;
+	} else if (STR_EQ(func, "e") || STR_EQ(func, "eval")) {
+		EZC_OBJ code_to_run = stk_pop(LAST_STACK);
+		exec((char *)(*code_to_run).val);
+	} else if (STR_EQ(func, "p") || STR_EQ(func, "print")) {
+		obj_dump_fmt(stk_get_recent(LAST_STACK, 0), 10, 0, 2, true, true);
 		printf("\n");
 	} else if (STR_EQ(func, "s") || STR_EQ(func, "stk")) {
-		stk_dump(stk);
+		obj_dump_fmt(stk_get_recent((*stacks).val, 0), 10, 0, 2, true, true);
+		printf("\n");
 	} else if (STR_EQ(func, "d") || STR_EQ(func, "dict")) {
-		dict_dump(dict);
+		obj_dump((*dicts).val);
+		printf("\n");
 	} else {
-		printf("Error in function: don't know the name of function: :%s:.\n", func);
+		ERR_STR(out);
+		sprintf(out, "Function not defined: '%s'", func);
+		ezc_fail(out);
 	}
 }
 
-void eval_op(EZC_DICT dict, EZC_STACK stk, EZC_STR op) {
+void eval_op(EZC_STR op) {
 	if (IS_1OP(op, 0)) {
-		EZC_TYPE type = (*stk_get_recent(stk, 0)).type;
+		EZC_TYPE type = (*stk_get_recent(LAST_STACK, 0)).type;
 		if (type == TYPE_INT) {
-			eval_op__int(dict, stk, op);
+			eval_op__int(op);
 		}
 	} else if (IS_2OP(op, 0)) {
-		EZC_TYPE type0 = (*stk_get_recent(stk, 0)).type;
-		EZC_TYPE type1 = (*stk_get_recent(stk, 1)).type;
+		EZC_TYPE type0 = (*stk_get_recent(LAST_STACK, 0)).type;
+		EZC_TYPE type1 = (*stk_get_recent(LAST_STACK, 1)).type;
 		if (type0 == type1) {
 			if (type0 == TYPE_INT) {
-				eval_op__int(dict, stk, op);
+				eval_op__int(op);
 			} else if (type0 == TYPE_STR) {
-				eval_op__str(dict, stk, op);
+				eval_op__str(op);
 			}
 			#ifdef USE_GMP
 				else if (type0 == TYPE_MPZ) {
-					eval_op__mpz(dict, stk, op);
+					eval_op__mpz(op);
 				}
 			#endif
 			else {
-				printf("Error in operator: not defined for this type.\n");
+				ERR_STR(out);
+				sprintf(out, "Operator %s not defined for type: %s", op, get_type_name(type0));
+				ezc_fail(out);
 			}
 		} else {
-			printf("Error in operator: different types.\n");
+			ERR_STR(out);
+			sprintf(out, "Operator %s being applied to two different types: %s and %s", op, get_type_name(type0), get_type_name(type1));
+			ezc_fail(out);
 		}
 	} else {
-		printf("Error in operator: don't know the type of operator.\n");
+		ERR_STR(out);
+		sprintf(out, "Unknown operator: %s", op);
+		ezc_fail(out);
 	}
 	
 }
 
 
-void eval_op__str(EZC_DICT dict, EZC_STACK stk, EZC_STR op) {
-	if (STR_STARTS(op, "+", 0)) {
-		EZC_OBJ b = stk_pop(stk);
-		EZC_OBJ a = stk_pop(stk);
+void eval_op__str(EZC_STR op) {
+	if (STR_EQ(op, "+")) {
+		EZC_OBJ b = stk_pop(LAST_STACK);
+		EZC_OBJ a = stk_pop(LAST_STACK);
 		CREATE_OBJ(ret);
 		SET_OBJ(ret, TYPE_STR, malloc(strlen((*a).val) + strlen((*b).val)));
 		strcpy((*ret).val, (*a).val);
 		strcat((*ret).val, (*b).val);
 		free((*a).val);
 		free((*b).val);
-		stk_push(stk, ret);
+		stk_push(LAST_STACK, ret);
 	} else {
-		printf("Error: undefined str operation: %s\n", op);
+		ERR_STR(out);
+		sprintf(out, "Operator %s undefined for str", op);
+		ezc_fail(out);
 	}
 }
 
-void eval_op__int(EZC_DICT dict, EZC_STACK stk, EZC_STR op) {
-	if (STR_STARTS(op, "+", 0)) {
-		EZC_OBJ b = stk_pop(stk);
-		EZC_OBJ a = stk_pop(stk);
+void eval_op__int(EZC_STR op) {
+	if (STR_EQ(op, "+")) {
+		EZC_OBJ b = stk_pop(LAST_STACK);
+		EZC_OBJ a = stk_pop(LAST_STACK);
 		__INT_OP_MAP(a, a, b, +);
-		stk_push(stk, a);
-	} else if (STR_STARTS(op, "-", 0)) {
-		EZC_OBJ b = stk_pop(stk);
-		EZC_OBJ a = stk_pop(stk);
+		stk_push(LAST_STACK, a);
+	} else if (STR_EQ(op, "-")) {
+		EZC_OBJ b = stk_pop(LAST_STACK);
+		EZC_OBJ a = stk_pop(LAST_STACK);
 		__INT_OP_MAP(a, a, b, -);
-		stk_push(stk, a);
-	} else if (STR_STARTS(op, "*", 0)) {
-		EZC_OBJ b = stk_pop(stk);
-		EZC_OBJ a = stk_pop(stk);
+		stk_push(LAST_STACK, a);
+	} else if (STR_EQ(op, "*")) {
+		EZC_OBJ b = stk_pop(LAST_STACK);
+		EZC_OBJ a = stk_pop(LAST_STACK);
 		__INT_OP_MAP(a, a, b, *);
-		stk_push(stk, a);
-	} else if (STR_STARTS(op, "/", 0)) {
-		EZC_OBJ b = stk_pop(stk);
-		EZC_OBJ a = stk_pop(stk);
+		stk_push(LAST_STACK, a);
+	} else if (STR_EQ(op, "/")) {
+		EZC_OBJ b = stk_pop(LAST_STACK);
+		EZC_OBJ a = stk_pop(LAST_STACK);
 		__INT_OP_MAP(a, a, b, /);
-		stk_push(stk, a);
-	} else if (STR_STARTS(op, "^", 0)) {
-		EZC_OBJ b = stk_pop(stk);
-		EZC_OBJ a = stk_pop(stk);
+		stk_push(LAST_STACK, a);
+	} else if (STR_EQ(op, "^")) {
+		EZC_OBJ b = stk_pop(LAST_STACK);
+		EZC_OBJ a = stk_pop(LAST_STACK);
 		__INT_FUNC_MAP(a, a, b, __int_pow);
-		stk_push(stk, a);
+		stk_push(LAST_STACK, a);
 	} else {
-		printf("Error: undefined int operation: %s\n", op);
+		ERR_STR(out);
+		sprintf(out, "Operator %s undefined for int", op);
+		ezc_fail(out);
 	}
 }
 
