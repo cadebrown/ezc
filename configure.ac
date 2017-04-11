@@ -155,5 +155,5 @@ AC_SUBST(MPFRCFLAGS, $MPFR_CFLAGS)
 AC_SUBST(MPFRLDFLAGS, $MPFR_LDFLAGS)
 
 # todo, add tests
-AC_CONFIG_FILES([Makefile src/Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile mini.src/Makefile])
 AC_OUTPUT

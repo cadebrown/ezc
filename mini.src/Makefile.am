@@ -1,4 +1,4 @@
-###  Makefile.am -- Makefile for automake, which generates a final makefile
+###  src/Makefile.am -- Makefile for automake compiling main executables
 #  
 #    Copyright 2016-2017 ChemicalDevelopment
 #  
@@ -18,6 +18,14 @@
 #  can also find a copy at http://www.gnu.org/licenses/.
 ###  
 
-AUTOMAKE_OPTIONS=foreign
-SUBDIRS=src mini.src
+# what flags you want to pass to the C compiler & linker
+AM_CFLAGS = --pedantic -Wall -std=c99 -O2
+AM_LDFLAGS =
+
+# this lists the binaries to produce, the (non-PHONY, binary) targets in
+# the previous manual Makefile
+bin_PROGRAMS = ecm
+
+ecm_SOURCES = ezc_mini.c
+ecm_LDADD = 
 
