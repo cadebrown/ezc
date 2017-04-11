@@ -21,17 +21,26 @@ can also find a copy at http://www.gnu.org/licenses/.
 
 #include "ezc.h"
 
-#define __INT_OP_MAP(r, a, b, OP) SET_OBJ(r, TYPE_INT, \
-	((EZC_INT)(*a).val OP (EZC_INT)(*b).val) \
-);
 
-#define __INT_FUNC_MAP(r, a, b, func) SET_OBJ(r, TYPE_INT, \
-	func((EZC_INT)(*a).val, (EZC_INT)(*b).val) \
-);
+
+#define __TYPE_OP_MAP(type, type_enum, r, a, b, OP)                                                                    \
+  type *__tmp_set = (type *)malloc(sizeof(type));                                                                      \
+  (*__tmp_set)=((*(type *)(*a).val) OP (*(type *)(*b).val));                                                           \
+  SET_OBJ(r, type_enum, (__tmp_set) );
+
+#define __TYPE_FUNC_MAP(type, type_enum, r, a, b, func)                                                                \
+  type *__tmp_set = (type *)malloc(sizeof(type));                                                                      \
+  (*__tmp_set)=func((*(type *)(*a).val), (*(type *)(*b).val));                                                         \
+  SET_OBJ(r, type_enum, (__tmp_set));
+
+#define __FLOAT_OP_MAP(r, a, b, OP) __TYPE_OP_MAP(EZC_FLOAT, TYPE_FLOAT, r, a, b, OP)
+#define __INT_OP_MAP(r, a, b, OP) __TYPE_OP_MAP(EZC_INT, TYPE_INT, r, a, b, OP)
+
+#define __FLOAT_FUNC_MAP(r, a, b, func) __TYPE_FUNC_MAP(EZC_FLOAT, TYPE_FLOAT, r, a, b, func)
+#define __INT_FUNC_MAP(r, a, b, func) __TYPE_FUNC_MAP(EZC_INT, TYPE_INT, r, a, b, func)
 
 
 void eval_func(EZC_STR func) {
-
 	if (STR_EQ(func, "q") || STR_EQ(func, "quit")) {
 		ezc_end();
 		exit (0);
@@ -48,6 +57,73 @@ void eval_func(EZC_STR func) {
 	} else if (STR_EQ(func, "d") || STR_EQ(func, "dict")) {
 		obj_dump((*dicts).val);
 		printf("\n");
+	} else if (IS_OP(func, 0)) {
+		if (IS_1OP(func, 0)) {
+			EZC_TYPE type = (*stk_get_recent(LAST_STACK, 0)).type;
+			if (type == TYPE_INT) {
+				eval_func__int(func);
+			} else {
+				ERR_STR(out);
+				sprintf(out, "Dont know how to apply function %s to type %s", func, get_type_name(type));
+				ezc_fail(out);
+			}
+		} else if (IS_2OP(func, 0)) {
+			EZC_TYPE type0 = (*stk_get_recent(LAST_STACK, 0)).type;
+			EZC_TYPE type1 = (*stk_get_recent(LAST_STACK, 1)).type;
+			if (type0 == type1) {
+				if (type0 == TYPE_INT) {
+					eval_func__int(func);
+				} else if (type0 == TYPE_FLOAT) {
+					eval_func__float(func);
+				} else if (type0 == TYPE_STR) {
+					eval_func__str(func);
+				} else if (type0 == TYPE_MPZ) {
+					#ifdef USE_GMP
+						eval_func__mpz(func);
+					#else
+						ERR_STR(out);
+						sprintf(out, "Function %s being used on mpz, and was not compiled with GMP", func);
+						ezc_fail(out);
+					#endif
+				} else if (type0 == TYPE_MPF) {
+					#ifdef USE_GMP
+						eval_func__mpf(func);
+					#else
+						ERR_STR(out);
+						sprintf(out, "Function %s being used on mpf, and was not compiled with GMP", func);
+						ezc_fail(out);
+					#endif
+				} else if (type0 == TYPE_MPFR) {
+					#ifdef USE_GMP
+						#ifdef USE_MPFR
+							eval_func__mpfr(func);
+						#else
+							//todo add compatability switch
+							ERR_STR(out);
+							sprintf(out, "Function %s being used on mpfr, and was not compiled with MPFR (does have GMP, though)", func);
+							ezc_fail(out);
+						#endif
+					#else
+						ERR_STR(out);
+						sprintf(out, "Function %s being used on mpfr, and was not compiled with GMP or MPFR", func);
+						ezc_fail(out);
+					#endif
+				} else {
+					ERR_STR(out);
+					sprintf(out, "Function %s not defined for type: %s", func, get_type_name(type0));
+					ezc_fail(out);
+				}
+			} else {
+				ERR_STR(out);
+				sprintf(out, "Function %s being applied to two different types: %s and %s", func, get_type_name(type0), get_type_name(type1));
+				ezc_fail(out);
+			}
+		} else {
+			ERR_STR(out);
+			sprintf(out, "Unknown function: %s", func);
+			ezc_fail(out);
+		}
+	
 	} else {
 		ERR_STR(out);
 		sprintf(out, "Function not defined: '%s'", func);
@@ -55,46 +131,8 @@ void eval_func(EZC_STR func) {
 	}
 }
 
-void eval_op(EZC_STR op) {
-	if (IS_1OP(op, 0)) {
-		EZC_TYPE type = (*stk_get_recent(LAST_STACK, 0)).type;
-		if (type == TYPE_INT) {
-			eval_op__int(op);
-		}
-	} else if (IS_2OP(op, 0)) {
-		EZC_TYPE type0 = (*stk_get_recent(LAST_STACK, 0)).type;
-		EZC_TYPE type1 = (*stk_get_recent(LAST_STACK, 1)).type;
-		if (type0 == type1) {
-			if (type0 == TYPE_INT) {
-				eval_op__int(op);
-			} else if (type0 == TYPE_STR) {
-				eval_op__str(op);
-			}
-			#ifdef USE_GMP
-				else if (type0 == TYPE_MPZ) {
-					eval_op__mpz(op);
-				}
-			#endif
-			else {
-				ERR_STR(out);
-				sprintf(out, "Operator %s not defined for type: %s", op, get_type_name(type0));
-				ezc_fail(out);
-			}
-		} else {
-			ERR_STR(out);
-			sprintf(out, "Operator %s being applied to two different types: %s and %s", op, get_type_name(type0), get_type_name(type1));
-			ezc_fail(out);
-		}
-	} else {
-		ERR_STR(out);
-		sprintf(out, "Unknown operator: %s", op);
-		ezc_fail(out);
-	}
-	
-}
 
-
-void eval_op__str(EZC_STR op) {
+void eval_func__str(EZC_STR op) {
 	if (STR_EQ(op, "+")) {
 		EZC_OBJ b = stk_pop(LAST_STACK);
 		EZC_OBJ a = stk_pop(LAST_STACK);
@@ -112,7 +150,7 @@ void eval_op__str(EZC_STR op) {
 	}
 }
 
-void eval_op__int(EZC_STR op) {
+void eval_func__int(EZC_STR op) {
 	if (STR_EQ(op, "+")) {
 		EZC_OBJ b = stk_pop(LAST_STACK);
 		EZC_OBJ a = stk_pop(LAST_STACK);
@@ -145,6 +183,38 @@ void eval_op__int(EZC_STR op) {
 	}
 }
 
+void eval_func__float(EZC_STR op) {
+	if (STR_EQ(op, "+")) {
+		EZC_OBJ b = stk_pop(LAST_STACK);
+		EZC_OBJ a = stk_pop(LAST_STACK);
+		__FLOAT_OP_MAP(a, a, b, +);
+		stk_push(LAST_STACK, a);
+	} else if (STR_EQ(op, "-")) {
+		EZC_OBJ b = stk_pop(LAST_STACK);
+		EZC_OBJ a = stk_pop(LAST_STACK);
+		__FLOAT_OP_MAP(a, a, b, -);
+		stk_push(LAST_STACK, a);
+	} else if (STR_EQ(op, "*")) {
+		EZC_OBJ b = stk_pop(LAST_STACK);
+		EZC_OBJ a = stk_pop(LAST_STACK);
+		__FLOAT_OP_MAP(a, a, b, *);
+		stk_push(LAST_STACK, a);
+	} else if (STR_EQ(op, "/")) {
+		EZC_OBJ b = stk_pop(LAST_STACK);
+		EZC_OBJ a = stk_pop(LAST_STACK);
+		__FLOAT_OP_MAP(a, a, b, /);
+		stk_push(LAST_STACK, a);
+	} else if (STR_EQ(op, "^")) {
+		EZC_OBJ b = stk_pop(LAST_STACK);
+		EZC_OBJ a = stk_pop(LAST_STACK);
+		__FLOAT_FUNC_MAP(a, a, b, __int_pow);
+		stk_push(LAST_STACK, a);
+	} else {
+		ERR_STR(out);
+		sprintf(out, "Operator %s undefined for float", op);
+		ezc_fail(out);
+	}
+}
 
 
 EZC_INT __int_pow(EZC_INT a, EZC_INT b) {

@@ -51,3 +51,4 @@ void ret_operator(char *out, char *val, long long *start) {
     out[i] = 0;
     (*start) += strlen(out);
 }
+

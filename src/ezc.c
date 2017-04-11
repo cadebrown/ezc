@@ -117,7 +117,8 @@ void ezc_fail(EZC_STR reason) {
 
 
 void exec(EZC_STR code) {
-	EZC_INT i = 0;
+	EZC_INT si = 0, i = 0;
+
 
 
 	CREATE_OBJ(this_pos);
@@ -130,69 +131,46 @@ void exec(EZC_STR code) {
 	while (i < strlen(code)) {
 		SKIP_WHITESPACE(code, i);
 		(*this_pos).val = (void *)(i);
-
-		if (IS_DIGIT(code[i]) || (code[i] == '-' && IS_DIGIT(code[i+1]))) {
-			EZC_INT sind = i, eind = i;
-			if (code[eind] == '-') {
-				eind++;
-			}
-			while (IS_DIGIT(code[eind])) {
-				eind++;
-			}
-			if (code[eind] == 'Z') {
-				eind++;
-			}
-			char *res = (char *)malloc(eind-i+1);
-			while (i < eind) {
-				res[i - sind] = code[i];
-				i++;
-			}
-			res[i] = 0;
-			EZC_OBJ ret = obj_from_str(res);
-
-
-			stk_push(LAST_STACK, ret);
-
-			free(res);
-		} else if (IS_OP(code, i)) {
-			char *res = (char *)malloc(MAX_OP_LENGTH);
-			ret_operator(res, code, &i);
-			eval_op(res);
-			free(res);
-		} else if (code[i] == '"') {
-			EZC_INT sind = i, eind = i;
-			eind++;
-			while (code[eind] != '"' && code[eind-1] != '\\') {
-				eind++;
-			}
-			eind++;
-			char *res = (char *)malloc(eind-i+1);
-			while (i < eind) {
-				res[i - sind] = code[i];
-				i++;
-			}
-			res[i-sind] = 0;
-			stk_push(LAST_STACK, obj_from_str(res));
-			free(res);
-		} else if (IS_ALPHA(code[i])) {
-			EZC_INT sind = i, eind = i;
-			while (IS_ALPHA(code[eind]) && eind < strlen(code)) {
-				eind++;
-			}
-			char *res = (char *)malloc(eind-i+1);
-			while (i < eind &&  i < strlen(code)) {
-				res[i - sind] = code[i];
-				i++;
-			}
-			res[i-sind] = 0;
-			eval_func(res);
-			free(res);
-		} else if (i < strlen(code)) {
-			ezc_fail("Unexpected character");
+		if (i >= strlen(code)) {
+			stk_pop((*codes).val);
 			stk_pop((*poss).val);
 			return;
 		}
+		if (!IS_ALPHA(code[i]) && !IS_OP(code, i)) {
+			si = i;
+			while (code[i] != ' ' && i < strlen(code) && !IS_OP(code, i)) {
+				i++;
+			}
+			char *cur_obj = (char *)malloc(i-si+3);
+			long long j = si;
+			while (j < i) {
+				cur_obj[j - si] = code[j];
+				j++;
+			}
+			cur_obj[j - si] = 0;
+			stk_push(LAST_STACK, obj_from_str(cur_obj));
+
+			free(cur_obj);
+		} else {
+			si = i;
+			while (code[i] != ' ' && i < strlen(code)) {
+				i++;
+			}
+			char *func = (char *)malloc(i-si+1);
+			long long j = si;
+			while (j < i) {
+				func[j - si] = code[j];
+				j++;
+			}
+			func[j - si] = 0;
+
+			eval_func(func);
+
+			free(func);
+		}
+
 	}
+	stk_pop((*codes).val);
 	stk_pop((*poss).val);
 }
 

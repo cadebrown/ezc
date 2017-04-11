@@ -32,9 +32,11 @@ AC_PROG_CC
 
 
 # Checks for header files.
-AC_CHECK_HEADERS([stdlib.h stdio.h stdbool.h string.h])
+AC_CHECK_HEADERS([stdlib.h stdio.h stdbool.h string.h math.h])
 
 # Checks for libraries.
+
+AC_CHECK_LIB(m, log)
 
 
 # GMP can be supplied to use multiprecision support
@@ -42,7 +44,6 @@ AC_CHECK_HEADERS([stdlib.h stdio.h stdbool.h string.h])
 AC_ARG_WITH(gmp,
   AS_HELP_STRING([--with-gmp],
                  [Use GMP. Default: auto-detect]), [
-#AC_MSG_ERROR("$with_gmp")
 case "$with_gmp" in
   yes)
     withval=/usr/local
@@ -63,11 +64,46 @@ if test ! -e "$withval/include/gmp.h" ; then
 fi
 AC_MSG_RESULT(yes ($withval))
 AC_DEFINE([USE_GMP], [1], [Use GMP library code])
-LIBGMP_PATH="-L$with_gmp/lib -lgmp"
-GMP_CFLAGS="-I$with_gmp/include"
+GMP_LDFLAGS="-L$withval/lib -lgmp"
+GMP_CFLAGS="-I$withval/include"
 ], [])
 
 AH_TEMPLATE(USE_GMP,[GMP support is available])
+
+
+# MPFR for multiprecision floats
+# TODO: detect which functions are present
+
+AC_ARG_WITH(mpfr,
+  AS_HELP_STRING([--with-mpfr],
+                 [Use MPFR. Default: auto-detect]), [
+case "$with_mpfr" in
+  yes)
+    withval=/usr/local
+    ;;
+  no)
+    : #dont use it
+    ;;
+esac
+AC_MSG_CHECKING(MPFR)
+
+if test ! -d "$withval" ; then
+	AC_MSG_RESULT(no ($withval not a directory))
+	AC_MSG_ERROR([--with-mpfr path does not point to a directory])
+fi
+if test ! -e "$withval/include/mpfr.h" ; then
+	AC_MSG_RESULT(no ($withval/include/mpfr.h not found))
+	AC_MSG_ERROR([--with-mpfr path does not include `include/mpfr.h` header file ($withval/include/mpfr.h not found)])
+fi
+AC_MSG_RESULT(yes ($withval))
+AC_DEFINE([USE_MPFR], [1], [Use MPFR library code])
+MPFR_LDFLAGS="-L$withval/lib -lmpfr"
+MPFR_CFLAGS="-I$withval/include"
+], [])
+
+AH_TEMPLATE(USE_GMP,[GMP support is available])
+
+
 
 
 # defines additional macros
@@ -89,8 +125,12 @@ AC_DEFINE([PRINT_COL_OFFSET], [35], [The offset of columm printing])
 AC_FUNC_MALLOC
 AC_FUNC_REALLOC
 
+# macro subs
 AC_SUBST(GMPCFLAGS, $GMP_CFLAGS)
-AC_SUBST(GMPLDFLAGS, $LIBGMP_PATH)
+AC_SUBST(GMPLDFLAGS, $GMP_LDFLAGS)
+
+AC_SUBST(MPFRCFLAGS, $MPFR_CFLAGS)
+AC_SUBST(MPFRLDFLAGS, $MPFR_LDFLAGS)
 
 # todo, add tests
 AC_CONFIG_FILES([Makefile src/Makefile])

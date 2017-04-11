@@ -6,22 +6,28 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <math.h>
 
 #include "ezc_colors.h"
 #include "config.h"
 
 
 #define EZC_INT long long
+#define EZC_FLOAT double
 #define EZC_STR char *
 
 #define EZC_FLAG long long
 #define EZC_TYPE long long
 #define EZC_IDX long long
 
-#define ERR_STR(n0) char n0[MAX_ERR_STR];
+#define ERR_STR(n0) char n0[MAX_ERR_STR]; 
 
 
 /* Helpful macros */
+
+#define LOG2(x) (log((x)) / log(2.0))
+#define EZC_STRSIZE(bits, base) (long long)((1) + (bits) / LOG2(10))
+#define EZC_BITSIZE(slen, base) (long long)((4) + (slen) * LOG2(10))
 
 #define _SPACE(n) printf("%*s", (int)(n), "");
 
@@ -32,12 +38,12 @@
 #define SS(st, va, off) STR_STARTS(st, va, off)
 
 #define IS_REPEAT(x) (x == '&')
-#define IS_DIGIT(x) ((x) - '0' >= 0 && (x) - '0' <= 9)
+#define IS_CONST(x) (((x) - '0' >= 0 && (x) - '0' <= 9) || (x) == '.')
+#define IS_TYPE_SUFFIX(x) ((x) == 'F' || (x) == 'Z')
 #define IS_OP(s, x) ( \
  SS(s, "<", x) || SS(s, ">", x) ||  SS(s, "==", x) || SS(s, "_", x) ||      \
  SS(s, "+", x) || SS(s, "-", x) ||  SS(s, "*", x) ||  SS(s, "/", x) ||      \
- SS(s, "%", x) || SS(s, "^", x) ||  SS(s, "!", x) ||  SS(s, "$", x) ||      \
- SS(s, ":", x)                                                              \
+ SS(s, "%", x) || SS(s, "^", x) ||  SS(s, "!", x) ||  SS(s, "$", x)         \
 ) 
 
 #define IS_1OP(s, x) ( \
@@ -55,11 +61,11 @@
 #define IS_SPACE(x) (x == ' ' || x == ',' || x == '\n')
 #define IS_SIGN(x) (x == '-')
 
+
 #define SKIP_WHITESPACE(code, itr) while (IS_SPACE(code[itr])) { itr++; }
 
 long long str_startswith(char *str, char *val, long long offset);
 void ret_operator(char *out, char *val, long long *start);
-
 
 
 /* objects */
@@ -68,10 +74,12 @@ void ret_operator(char *out, char *val, long long *start);
 #define CREATE_OBJ(name) EZC_OBJ name; MALLOC_OBJ(name);
 #define SET_OBJ(tmp, typ, vl) (*tmp).val = (void *)vl; (*tmp).type = typ;
 
+#define TYPE_UNKNOWN (0xffff)
+
 #define TYPE_NIL   (0x0000)
 #define TYPE_BOOL  (0x0001)
 #define TYPE_INT   (0x0002)
-#define TYPE_FLT   (0x0003)
+#define TYPE_FLOAT   (0x0003)
 #define TYPE_STR   (0x0004)
 
 #define TYPE_STK   (0x0201)
@@ -88,6 +96,11 @@ EZC_OBJ obj_from_str(EZC_STR s);
 EZC_STR str_from_obj(EZC_OBJ v);
 
 char * get_type_name(EZC_TYPE type);
+
+EZC_TYPE type_from_str_suffix(EZC_STR suffix);
+EZC_STR parse_suffix(EZC_STR val);
+EZC_STR remove_suffix(EZC_STR val);
+
 
 bool obj_eq(EZC_OBJ a, EZC_OBJ b);
 EZC_INT obj_cmp(EZC_OBJ a, EZC_OBJ b);
@@ -157,11 +170,9 @@ EZC_OBJ dict_get(EZC_DICT dict, EZC_STR key);
 
 void eval_func(EZC_STR func);
 void eval_func__int(EZC_STR op);
+void eval_func__float(EZC_STR op);
+void eval_func__str(EZC_STR op);
 
-
-void eval_op(EZC_STR op);
-void eval_op__int(EZC_STR op);
-void eval_op__str(EZC_STR op);
 
 EZC_INT __int_pow(EZC_INT a, EZC_INT b);
 
@@ -212,13 +223,31 @@ int main(int argc, char *argv[]);
 
 /* addons */
 
+
+#define TYPE_MPZ       (0x0101)
+#define TYPE_MPF       (0x0102)
+
+#define EZC_RND    (MPFR_RNDN)
+#define TYPE_MPFR   (0x0105)
+
 #ifdef USE_GMP
 	#include <gmp.h>
 
-	void eval_op__mpz(EZC_STR op);
+	void eval_func__mpz(EZC_STR op);
+	void eval_func__mpf(EZC_STR op);
 
-	#define TYPE_MPZ       (0x0101) 
-	#define EZC_MP         mpz_t *
+	#define EZC_MPZ        mpz_t
+	#define EZC_MPF        mpf_t
+	
+
+	#ifdef USE_MPFR
+		#include <mpfr.h>
+
+		void eval_func__mpfr(EZC_STR op);
+
+		#define EZC_MPFR       mpfr_t
+	
+	#endif
 
 #endif
 
