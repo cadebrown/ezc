@@ -30,6 +30,16 @@ long long str_startswith(char *str, char *val, long long offset) {
     return 1;
 }
 
+bool str_has_char_before_space(char *str, int i, char itm) {
+    while (str[i] != ' ' && i < strlen(str)) {
+        if (str[i] == itm) {
+            return true;
+        }
+        i++;
+    }
+    return false;
+}
+
 void ret_operator(char *out, char *val, long long *start) {
     long long i = 0;
     if (STR_STARTS(val, "==", (*start))) {

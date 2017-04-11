@@ -134,7 +134,7 @@ void exec(EZC_STR code) {
 			stk_pop((*poss).val);
 			return;
 		}
-		if (!IS_ALPHA(code[i]) && !IS_OP(code, i)) {
+		if ((!IS_ALPHA(code[i]) && !IS_OP(code, i)) || str_has_char_before_space(code, i, ':')) {
 			si = i;
 			while (code[i] != ' ' && i < strlen(code) && !IS_OP(code, i)) {
 				i++;

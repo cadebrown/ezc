@@ -315,11 +315,12 @@ EZC_OBJ obj_from_str(EZC_STR s) {
 	if (s_type == TYPE_NIL) {
 		return EZC_NIL;
 	} else if (s_type == TYPE_BOOL) {
-		if (STR_EQ(s, "true")) {
+		printf(";%s;\n", s_val);
+		if (STR_EQ(s_val, "true")) {
 			CREATE_OBJ(ret);
 			SET_OBJ(ret, TYPE_BOOL, 1);
 			return ret;
-		} else if (STR_EQ(s, "false")) {
+		} else if (STR_EQ(s_val, "false")) {
 			CREATE_OBJ(ret);
 			SET_OBJ(ret, TYPE_BOOL, 0);
 			return ret;

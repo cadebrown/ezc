@@ -65,6 +65,7 @@
 #define SKIP_WHITESPACE(code, itr) while (IS_SPACE(code[itr])) { itr++; }
 
 long long str_startswith(char *str, char *val, long long offset);
+bool str_has_char_before_space(char *str, int i, char itm);
 void ret_operator(char *out, char *val, long long *start);
 
 

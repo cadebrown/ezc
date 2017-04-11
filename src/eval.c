@@ -207,7 +207,7 @@ void eval_func__float(EZC_STR op) {
 	} else if (STR_EQ(op, "^")) {
 		EZC_OBJ b = stk_pop(LAST_STACK);
 		EZC_OBJ a = stk_pop(LAST_STACK);
-		__FLOAT_FUNC_MAP(a, a, b, __int_pow);
+		__FLOAT_FUNC_MAP(a, a, b, pow);
 		stk_push(LAST_STACK, a);
 	} else {
 		ERR_STR(out);
