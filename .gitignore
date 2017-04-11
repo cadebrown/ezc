@@ -21,7 +21,7 @@ test-driver
 
 *.orig
 src/ec
-src/ecm
+mini.src/ecm
 *.o
 *.out
 
