@@ -37,6 +37,8 @@ AC_CHECK_HEADERS([stdlib.h stdio.h stdbool.h string.h math.h])
 # Checks for libraries.
 
 AC_CHECK_LIB(m, log)
+GMP_DIR=""
+MPFR_DIR=""
 
 
 # GMP can be supplied to use multiprecision support
@@ -64,8 +66,7 @@ if test ! -e "$withval/include/gmp.h" ; then
 fi
 AC_MSG_RESULT(yes ($withval))
 AC_DEFINE([USE_GMP], [1], [Use GMP library code])
-GMP_LDFLAGS="-L$withval/lib -lgmp"
-GMP_CFLAGS="-I$withval/include"
+GMP_DIR="$withval"
 ], [])
 
 AH_TEMPLATE(USE_GMP,[GMP support is available])
@@ -97,14 +98,35 @@ if test ! -e "$withval/include/mpfr.h" ; then
 fi
 AC_MSG_RESULT(yes ($withval))
 AC_DEFINE([USE_MPFR], [1], [Use MPFR library code])
-MPFR_LDFLAGS="-L$withval/lib -lmpfr"
-MPFR_CFLAGS="-I$withval/include"
+MPFR_DIR="$withval"
 ], [])
 
 AH_TEMPLATE(USE_GMP,[GMP support is available])
 
+AC_ARG_ENABLE([static],
+    AS_HELP_STRING([--enable-static], [Enable static building]))
 
 
+AS_IF([test "x$enable_static" = "xyes"], [ 
+  AS_IF([test "x$GMP_DIR" != "x"], [
+    GMP_LDFLAGS="$GMP_DIR/lib/libgmp.a"
+    GMP_CFLAGS="-I$GMP_DIR/include"
+  ])
+  AS_IF([test "x$MPFR_DIR" != "x"], [
+    MPFR_LDFLAGS="$MPFR_DIR/lib/libmpfr.a"
+    MPFR_CFLAGS="-I$MPFR_DIR/include"
+  ])
+], [
+  #dynamic libs
+  AS_IF([test "x$GMP_DIR" != "x"], [
+    GMP_LDFLAGS="-L$GMP_DIR/lib -lgmp"
+    GMP_CFLAGS="-I$GMP_DIR/include"
+  ])
+  AS_IF([test "x$MPFR_DIR" != "x"], [
+    MPFR_LDFLAGS="-L$MPFR_DIR/lib -lmpfr"
+    MPFR_CFLAGS="-I$MPFR_DIR/include"
+  ])
+])
 
 # defines additional macros
 
