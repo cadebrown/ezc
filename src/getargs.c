@@ -27,7 +27,7 @@ void help_message() {
 	printf("Usage: %s [- | -e [EXPR]] [OPTIONS ...]\n\n", EXEC_TITLE);
 
 	CREATE_OBJ(usage);
-	SET_OBJ(usage, TYPE_DICT, malloc(sizeof(TYPE_DICT)));
+	SET_OBJ(usage, TYPE_DICT, malloc(sizeof(ezc_dict_t)));
 
 	dict_init((*usage).val, 10);
 

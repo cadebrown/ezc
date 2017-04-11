@@ -61,30 +61,29 @@ void init() {
 	MALLOC_OBJ(EZC_NIL);
 	SET_OBJ(EZC_NIL, TYPE_NIL, 0);
 
-
 	MALLOC_OBJ(codes);
-	SET_OBJ(codes, TYPE_STK, malloc(sizeof(EZC_STACK)));
+	SET_OBJ(codes, TYPE_STK, malloc(sizeof(ezc_stk_t)));
 	stk_init((*codes).val, 10);
 
 	MALLOC_OBJ(poss);
-	SET_OBJ(poss, TYPE_STK, malloc(sizeof(EZC_STACK)));
+	SET_OBJ(poss, TYPE_STK, malloc(sizeof(ezc_stk_t)));
 	stk_init((*poss).val, 10);
 
 	MALLOC_OBJ(stacks);
-	SET_OBJ(stacks, TYPE_STK, malloc(sizeof(EZC_STACK)));
+	SET_OBJ(stacks, TYPE_STK, malloc(sizeof(ezc_stk_t)));
 	stk_init((*stacks).val, 10);
 
 	CREATE_OBJ(this_obj);
-	SET_OBJ(this_obj, TYPE_STK, malloc(sizeof(EZC_STACK)));
+	SET_OBJ(this_obj, TYPE_STK, malloc(sizeof(ezc_stk_t)));
 	stk_init((*this_obj).val, 10);
 	stk_push((*stacks).val, this_obj);
 
 	MALLOC_OBJ(dicts);
-	SET_OBJ(dicts, TYPE_DICT, malloc(sizeof(EZC_STACK)));
+	SET_OBJ(dicts, TYPE_DICT, malloc(sizeof(ezc_dict_t)));
 	dict_init((*dicts).val, 10);
 	
 	MALLOC_OBJ(args);
-	SET_OBJ(args, TYPE_DICT, malloc(sizeof(EZC_STACK)));
+	SET_OBJ(args, TYPE_DICT, malloc(sizeof(ezc_dict_t)));
 	dict_init((*args).val, 10);
 }
 
@@ -118,7 +117,6 @@ void ezc_fail(EZC_STR reason) {
 
 void exec(EZC_STR code) {
 	EZC_INT si = 0, i = 0;
-
 
 
 	CREATE_OBJ(this_pos);
@@ -191,8 +189,13 @@ int main(int argc, char *argv[]) {
 	EXEC_TITLE = argv[0];
 	
 	init();
+	dict_init((*args).val, 10);
 
 	get_args((*args).val, argv, 1, argc);
+
+//	char *trun = str_from_obj(dict_get((*args).val, "-t"));
+
+	//printf("%s\n", trun);
 
 	if (CONT_ALIAS((*args).val, "-h", "--help")) {
 		help_message();
@@ -201,6 +204,7 @@ int main(int argc, char *argv[]) {
 
 	if (CONT_ALIAS((*args).val, "-e", "--expr")) {
 		char * torun;
+		
 		if (dict_contains_key((*args).val, "-e")) {
 			torun = str_from_obj(dict_get((*args).val, "-e"));
 		} else {
