@@ -19,7 +19,7 @@
 ###  
 
 # what flags you want to pass to the C compiler & linker
-AM_CFLAGS = --pedantic -Wall -std=c99 -O2 @GMPCFLAGS@ @MPFRCFLAGS@
+AM_CFLAGS = --pedantic -Wall -std=c99 -O2 @MPFRCFLAGS@ @GMPCFLAGS@
 AM_LDFLAGS = -I./
 
 # this lists the binaries to produce, the (non-PHONY, binary) targets in
@@ -27,5 +27,5 @@ AM_LDFLAGS = -I./
 bin_PROGRAMS = ec
 
 ec_SOURCES = ezc.h ezc_colors.h ezc.c helper.c obj.c stack.c dict.c getargs.c eval.c gmp_addon.c str_addon.c
-ec_LDADD = @GMPLDFLAGS@ @MPFRLDFLAGS@
+ec_LDADD = @MPFRLDFLAGS@ @GMPLDFLAGS@
 
