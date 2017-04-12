@@ -101,12 +101,43 @@ AC_DEFINE([USE_MPFR], [1], [Use MPFR library code])
 MPFR_DIR="$withval"
 ], [])
 
-AH_TEMPLATE(USE_GMP,[GMP support is available])
+AH_TEMPLATE(USE_MPFR,[MPFR support is available])
+
+# readline support for terminal
+
+AC_ARG_WITH(readline,
+  AS_HELP_STRING([--with-readline],
+                 [Use readline. Default: auto-detect]), [
+case "$with_readline" in
+  yes)
+    withval=/usr/local
+    ;;
+  no)
+    : #dont use it
+    ;;
+esac
+AC_MSG_CHECKING(GNU Readline)
+
+if test ! -d "$withval" ; then
+	AC_MSG_RESULT(no ($withval not a directory))
+	AC_MSG_ERROR([--with-readline path does not point to a directory])
+fi
+if test ! -e "$withval/include/readline/readline.h" ; then
+	AC_MSG_RESULT(no ($withval/include/readline/readline.h not found))
+	AC_MSG_ERROR([--with-readline path does not include `readline/readline.h` header file ($withval/include/readline/readline.h not found)])
+fi
+AC_MSG_RESULT(yes ($withval))
+AC_DEFINE([USE_READLINE], [1], [Use GNU Readline code])
+READLINE_DIR="$withval"
+], [])
+
+AH_TEMPLATE(USE_READLINE,[GNU Readline support is available])
+
+
+
 
 AC_ARG_ENABLE([static],
     AS_HELP_STRING([--enable-static], [Enable static building]))
-
-
 AS_IF([test "x$enable_static" = "xyes"], [ 
   AS_IF([test "x$GMP_DIR" != "x"], [
     GMP_LDFLAGS="$GMP_DIR/lib/libgmp.a"
@@ -115,6 +146,10 @@ AS_IF([test "x$enable_static" = "xyes"], [
   AS_IF([test "x$MPFR_DIR" != "x"], [
     MPFR_LDFLAGS="$MPFR_DIR/lib/libmpfr.a"
     MPFR_CFLAGS="-I$MPFR_DIR/include"
+  ])
+  AS_IF([test "x$READLINE_DIR" != "x"], [
+    READLINE_LDFLAGS="$READLINE_DIR/lib/libreadline.a"
+    READLINE_CFLAGS="-I$READLINE_DIR/include"
   ])
 ], [
   #dynamic libs
@@ -125,6 +160,10 @@ AS_IF([test "x$enable_static" = "xyes"], [
   AS_IF([test "x$MPFR_DIR" != "x"], [
     MPFR_LDFLAGS="-L$MPFR_DIR/lib -lmpfr"
     MPFR_CFLAGS="-I$MPFR_DIR/include"
+  ])
+  AS_IF([test "x$READLINE_DIR" != "x"], [
+    READLINE_LDFLAGS="-L$READLINE_DIR/lib -lreadline"
+    READLINE_CFLAGS="-I$READLINE_DIR/include"
   ])
 ])
 
@@ -153,6 +192,10 @@ AC_SUBST(GMPLDFLAGS, $GMP_LDFLAGS)
 
 AC_SUBST(MPFRCFLAGS, $MPFR_CFLAGS)
 AC_SUBST(MPFRLDFLAGS, $MPFR_LDFLAGS)
+
+AC_SUBST(READLINECFLAGS, $READLINE_CFLAGS)
+AC_SUBST(READLINELDFLAGS, $READLINE_LDFLAGS)
+
 
 # todo, add tests
 AC_CONFIG_FILES([Makefile src/Makefile mini.src/Makefile])
