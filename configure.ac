@@ -150,6 +150,10 @@ AS_IF([test "x$enable_static" = "xyes"], [
   AS_IF([test "x$READLINE_DIR" != "x"], [
     READLINE_LDFLAGS="$READLINE_DIR/lib/libreadline.a"
     READLINE_CFLAGS="-I$READLINE_DIR/include"
+    if test ! -e "$READLINE_DIR/lib/libreadline.a" ; then
+      READLINE_LDFLAGS="-L$READLINE_DIR/lib -lreadline"
+      AC_MSG_WARN([--with-readline path does not have a static library, using dynamic])
+    fi
   ])
 ], [
   #dynamic libs
