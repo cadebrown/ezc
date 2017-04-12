@@ -47,6 +47,15 @@ can also find a copy at http://www.gnu.org/licenses/.
 #define SUB1F(f) push(f(pop()))
 #define SUBO(o) a = pop(); push(pop() o a)
 
+/* math functions */
+#define csc(x) (1.0 / sin(x))
+#define sec(x) (1.0 / cos(x))
+#define cot(x) (1.0 / tan(x))
+#define acsc(x) (asin(1.0 / x))
+#define asec(x) (acos(1.0 / x))
+#define acot(x) (atan(1.0 / x))
+#define logbase(x, y) (log(x) / log(y))
+
 int stack_ptr = -1;
 double stack[STACK_NUM];
 char PSTR[PSTR_LEN];
@@ -160,12 +169,27 @@ void eval(char *code) {
                 PSTR[j++] = code[i++];
             }
             PSTR[j] = 0;
-              /**/ if (STR_EQ(PSTR, "sin")) {
-                SUB1F(sin);
-            } else if (STR_EQ(PSTR, "cos")) {
-                SUB1F(cos);
-            } else if (STR_EQ(PSTR, "tan")) {
-                SUB1F(tan);
+            /*  */ if (STR_EQ(PSTR, "sin")) { SUB1F(sin);
+            } else if (STR_EQ(PSTR, "cos")) { SUB1F(cos);
+            } else if (STR_EQ(PSTR, "tan")) { SUB1F(tan);
+            } else if (STR_EQ(PSTR, "csc")) { SUB1F(csc);
+            } else if (STR_EQ(PSTR, "sec")) { SUB1F(sec);
+            } else if (STR_EQ(PSTR, "cot")) { SUB1F(cot);
+            } else if (STR_EQ(PSTR, "asin")) { SUB1F(asin);
+            } else if (STR_EQ(PSTR, "acos")) { SUB1F(acos);
+            } else if (STR_EQ(PSTR, "atan")) { SUB1F(atan);
+            } else if (STR_EQ(PSTR, "acsc")) { SUB1F(acsc);
+            } else if (STR_EQ(PSTR, "asec")) { SUB1F(asec);
+            } else if (STR_EQ(PSTR, "acot")) { SUB1F(acot);
+            /* hyperbolic                                */
+            } else if (STR_EQ(PSTR, "sinh")) { SUB1F(sinh);
+            } else if (STR_EQ(PSTR, "cosh")) { SUB1F(cosh);
+            } else if (STR_EQ(PSTR, "tanh")) { SUB1F(tanh);
+            /* most of math.h                            */
+            } else if (STR_EQ(PSTR, "sqrt")) { SUB1F(sqrt);
+            } else if (STR_EQ(PSTR, "log")) { SUB1F(log);
+            } else if (STR_EQ(PSTR, "logb")) { SUB2F(logbase);
+            /* err                                       */
             } else {
                 char estr[PSTR_LEN];
                 sprintf(estr, "Unknown function %s\n", PSTR);
