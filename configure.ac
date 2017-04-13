@@ -35,8 +35,6 @@ AC_CHECK_HEADERS([stdlib.h stdio.h stdbool.h string.h math.h])
 # Checks for libraries.
 
 AC_CHECK_LIB(m, log)
-AC_LIB_LINKFLAGS(m)
-
 
 
 # GMP can be supplied to use multiprecision support
