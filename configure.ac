@@ -26,10 +26,8 @@ AM_INIT_AUTOMAKE()
 AC_CONFIG_SRCDIR([src/ezc.h])
 AC_CONFIG_HEADERS([config.h])
 
-
 # Checks for programs.
 AC_PROG_CC
-
 
 # Checks for header files.
 AC_CHECK_HEADERS([stdlib.h stdio.h stdbool.h string.h math.h])
@@ -37,138 +35,102 @@ AC_CHECK_HEADERS([stdlib.h stdio.h stdbool.h string.h math.h])
 # Checks for libraries.
 
 AC_CHECK_LIB(m, log)
-GMP_DIR=""
-MPFR_DIR=""
+AC_LIB_LINKFLAGS(m)
+
 
 
 # GMP can be supplied to use multiprecision support
 
-AC_ARG_WITH(gmp,
+AC_ARG_WITH(
+  gmp, 
   AS_HELP_STRING([--with-gmp],
-                 [Use GMP. Default: auto-detect]), [
-case "$with_gmp" in
-  yes)
-    withval=/usr/local
-    ;;
-  no)
-    : #dont use it
-    ;;
-esac
-AC_MSG_CHECKING(GMP)
+  [Use GMP for multiprecision]), [
+  case "$with_gmp" in
+    yes)
+      withval=/usr/local
+      ;;
+  esac
 
-if test ! -d "$withval" ; then
-	AC_MSG_RESULT(no ($withval not a directory))
-	AC_MSG_ERROR([--with-gmp path does not point to a directory])
-fi
-if test ! -e "$withval/include/gmp.h" ; then
-	AC_MSG_RESULT(no ($withval/include/gmp.h not found))
-	AC_MSG_ERROR([--with-gmp path does not include `include/gmp.h` header file ($withval/include/gmp.h not found)])
-fi
-AC_MSG_RESULT(yes ($withval))
-AC_DEFINE([USE_GMP], [1], [Use GMP library code])
-GMP_DIR="$withval"
-], [])
+  LDFLAGS="$LDFLAGS -L$withval/lib"
+  CFLAGS="$CFLAGS -I$withval/include"
 
+  DYN_LIBS="-lgmp $DYN_LIBS"
+  STATIC_LIBS="-l:libgmp.a $STATIC_LIBS"
+
+  AC_LIB_LINKFLAGS(gmp)
+  AC_MSG_CHECKING(GMP)
+  AC_MSG_RESULT(yes ($withval))
+
+  AC_DEFINE([USE_GMP], [1], [Use GMP library code])
+], [ ])
 AH_TEMPLATE(USE_GMP,[GMP support is available])
 
 
-# MPFR for multiprecision floats
-# TODO: detect which functions are present
+# MPFR can be supplied to use multiprecision support
 
-AC_ARG_WITH(mpfr,
+AC_ARG_WITH(
+  mpfr, 
   AS_HELP_STRING([--with-mpfr],
-                 [Use MPFR. Default: auto-detect]), [
-case "$with_mpfr" in
-  yes)
-    withval=/usr/local
-    ;;
-  no)
-    : #dont use it
-    ;;
-esac
-AC_MSG_CHECKING(MPFR)
+  [Use MPFR for multiprecision]), [
+  case "$with_mpfr" in
+    yes)
+      withval=/usr/local
+      ;;
+  esac
 
-if test ! -d "$withval" ; then
-	AC_MSG_RESULT(no ($withval not a directory))
-	AC_MSG_ERROR([--with-mpfr path does not point to a directory])
-fi
-if test ! -e "$withval/include/mpfr.h" ; then
-	AC_MSG_RESULT(no ($withval/include/mpfr.h not found))
-	AC_MSG_ERROR([--with-mpfr path does not include `include/mpfr.h` header file ($withval/include/mpfr.h not found)])
-fi
-AC_MSG_RESULT(yes ($withval))
-AC_DEFINE([USE_MPFR], [1], [Use MPFR library code])
-MPFR_DIR="$withval"
-], [])
+  LDFLAGS="$LDFLAGS -L$withval/lib"
+  CFLAGS="$CFLAGS -I$withval/include"
 
+  DYN_LIBS="-lmpfr $DYN_LIBS"
+  STATIC_LIBS="-l:libmpfr.a $STATIC_LIBS"
+
+  AC_LIB_LINKFLAGS(mpfr)
+  AC_MSG_CHECKING(MPFR)
+  AC_MSG_RESULT(yes ($withval))
+
+  AC_DEFINE([USE_MPFR], [1], [Use MPFR library code])
+], [ ])
 AH_TEMPLATE(USE_MPFR,[MPFR support is available])
 
-# readline support for terminal
+# Readline support
 
-AC_ARG_WITH(readline,
+AC_ARG_WITH(
+  readline, 
   AS_HELP_STRING([--with-readline],
-                 [Use readline. Default: auto-detect]), [
-case "$with_readline" in
-  yes)
-    withval=/usr/local
-    ;;
-  no)
-    : #dont use it
-    ;;
-esac
-AC_MSG_CHECKING(GNU Readline)
+  [Use readline for terminal]), [
+  case "$with_readline" in
+    yes)
+      withval=/usr/local
+      ;;
+  esac
 
-if test ! -d "$withval" ; then
-	AC_MSG_RESULT(no ($withval not a directory))
-	AC_MSG_ERROR([--with-readline path does not point to a directory])
-fi
-if test ! -e "$withval/include/readline/readline.h" ; then
-	AC_MSG_RESULT(no ($withval/include/readline/readline.h not found))
-	AC_MSG_ERROR([--with-readline path does not include `readline/readline.h` header file ($withval/include/readline/readline.h not found)])
-fi
-AC_MSG_RESULT(yes ($withval))
-AC_DEFINE([USE_READLINE], [1], [Use GNU Readline code])
-READLINE_DIR="$withval"
-], [])
+  LDFLAGS="$LDFLAGS -L$withval/lib"
+  CFLAGS="$CFLAGS -I$withval/include"
 
-AH_TEMPLATE(USE_READLINE,[GNU Readline support is available])
+  DYN_LIBS="$DYN_LIBS -lreadline"
+  STATIC_LIBS="$STATIC_LIBS -l:libreadline.a"
 
+  AC_LIB_LINKFLAGS(readline)
+  AC_MSG_CHECKING(Readline)
+  AC_MSG_RESULT(yes ($withval))
+
+  #ncurses giving problems
+  AC_SEARCH_LIBS(tputs, termcap)
+
+
+  AC_DEFINE([USE_READLINE], [1], [Use Readline library code])
+], [ ])
+AH_TEMPLATE(USE_READLINE,[Readline support is available])
 
 
 
-AC_ARG_ENABLE([static],
-    AS_HELP_STRING([--enable-static], [Enable static building]))
-AS_IF([test "x$enable_static" = "xyes"], [ 
-  AS_IF([test "x$GMP_DIR" != "x"], [
-    GMP_LDFLAGS="$GMP_DIR/lib/libgmp.a"
-    GMP_CFLAGS="-I$GMP_DIR/include"
-  ])
-  AS_IF([test "x$MPFR_DIR" != "x"], [
-    MPFR_LDFLAGS="$MPFR_DIR/lib/libmpfr.a"
-    MPFR_CFLAGS="-I$MPFR_DIR/include"
-  ])
-  AS_IF([test "x$READLINE_DIR" != "x"], [
-    READLINE_LDFLAGS="$READLINE_DIR/lib/libreadline.a"
-    READLINE_CFLAGS="-I$READLINE_DIR/include"
-    if test ! -e "$READLINE_DIR/lib/libreadline.a" ; then
-      READLINE_LDFLAGS="-L$READLINE_DIR/lib -lreadline"
-      AC_MSG_WARN([--with-readline path does not have a static library, using dynamic])
-    fi
-  ])
+AC_ARG_ENABLE([static], AS_HELP_STRING([--enable-static], [Enable static building]))
+
+AS_IF([test "x$enable_static" = "xyes"], [
+  LIBS="$STATIC_LIBS $LIBS"
+  LDFLAGS="-static $LDFLAGS"
 ], [
-  #dynamic libs
-  AS_IF([test "x$GMP_DIR" != "x"], [
-    GMP_LDFLAGS="-L$GMP_DIR/lib -lgmp"
-    GMP_CFLAGS="-I$GMP_DIR/include"
-  ])
-  AS_IF([test "x$MPFR_DIR" != "x"], [
-    MPFR_LDFLAGS="-L$MPFR_DIR/lib -lmpfr"
-    MPFR_CFLAGS="-I$MPFR_DIR/include"
-  ])
-  AS_IF([test "x$READLINE_DIR" != "x"], [
-    READLINE_LDFLAGS="-L$READLINE_DIR/lib -lreadline"
-    READLINE_CFLAGS="-I$READLINE_DIR/include"
-  ])
+  LIBS="$DYN_LIBS $LIBS"
 ])
 
 # defines additional macros
@@ -189,16 +151,6 @@ AC_DEFINE([PRINT_COL_OFFSET], [35], [The offset of columm printing])
 # Checks for library functions.
 AC_FUNC_MALLOC
 AC_FUNC_REALLOC
-
-# macro subs
-AC_SUBST(GMPCFLAGS, $GMP_CFLAGS)
-AC_SUBST(GMPLDFLAGS, $GMP_LDFLAGS)
-
-AC_SUBST(MPFRCFLAGS, $MPFR_CFLAGS)
-AC_SUBST(MPFRLDFLAGS, $MPFR_LDFLAGS)
-
-AC_SUBST(READLINECFLAGS, $READLINE_CFLAGS)
-AC_SUBST(READLINELDFLAGS, $READLINE_LDFLAGS)
 
 
 # todo, add tests

@@ -62,6 +62,12 @@ can also find a copy at http://www.gnu.org/licenses/.
 #define K_STACK  (1000)
 #define K_CSTR   (1000)
 
+// hopefully handle math.h not having PI
+#ifndef M_PI
+#define M_PI 3.14
+#endif
+
+
 // enums to say whether we are running doubles, mpf_t s, or mpfr_t s
 #define E_DOUBLE (0x01)
 #define E_MPF    (0x02)
@@ -327,7 +333,7 @@ void fail(char reason[]) {
             i++;
         }
         printf("\n");
-        if ((cptr >= j && cptr < i) || (i >= strlen(ccode))) {
+        if ((cptr >= i && cptr < i) || (i >= strlen(ccode))) {
             printf(KYEL);
             j = s_i;
             while (j < i) {
