@@ -51,11 +51,11 @@ AC_ARG_WITH(
 
   LDFLAGS="$LDFLAGS -L$withval/lib"
   CFLAGS="$CFLAGS -I$withval/include"
+  LIBS="-lgmp $LIBS"
 
-  DYN_LIBS="-lgmp $DYN_LIBS"
-  STATIC_LIBS="-l:libgmp.a $STATIC_LIBS"
-
-  AC_LIB_LINKFLAGS(gmp)
+  AC_CHECK_HEADER(gmp.h, [], [
+    AC_MSG_ERROR(GMP header not found (looking for gmp.h))
+  ])
   AC_MSG_CHECKING(GMP)
   AC_MSG_RESULT(yes ($withval))
 
@@ -78,17 +78,18 @@ AC_ARG_WITH(
 
   LDFLAGS="$LDFLAGS -L$withval/lib"
   CFLAGS="$CFLAGS -I$withval/include"
+  LIBS="-lmpfr $LIBS"
 
-  DYN_LIBS="-lmpfr $DYN_LIBS"
-  STATIC_LIBS="-l:libmpfr.a $STATIC_LIBS"
-
-  AC_LIB_LINKFLAGS(mpfr)
+  AC_CHECK_HEADER(mpfr.h, [], [
+    AC_MSG_ERROR(MPFR header not found (looking for mpfr.h))
+  ])
   AC_MSG_CHECKING(MPFR)
   AC_MSG_RESULT(yes ($withval))
 
   AC_DEFINE([USE_MPFR], [1], [Use MPFR library code])
 ], [ ])
 AH_TEMPLATE(USE_MPFR,[MPFR support is available])
+
 
 # Readline support
 
@@ -105,15 +106,18 @@ AC_ARG_WITH(
   LDFLAGS="$LDFLAGS -L$withval/lib"
   CFLAGS="$CFLAGS -I$withval/include"
 
-  DYN_LIBS="$DYN_LIBS -lreadline"
-  STATIC_LIBS="$STATIC_LIBS -l:libreadline.a"
 
-  AC_LIB_LINKFLAGS(readline)
+  AC_SEARCH_LIBS(tputs, termcap)
+
+  LIBS="-lreadline $LIBS"
+
+  AC_CHECK_HEADER(readline/readline.h, [], [
+    AC_MSG_ERROR(Readline header not found (looking for readline/readline.h))
+  ])
   AC_MSG_CHECKING(Readline)
   AC_MSG_RESULT(yes ($withval))
 
   #ncurses giving problems
-  AC_SEARCH_LIBS(tputs, termcap)
 
 
   AC_DEFINE([USE_READLINE], [1], [Use Readline library code])
@@ -125,10 +129,8 @@ AH_TEMPLATE(USE_READLINE,[Readline support is available])
 AC_ARG_ENABLE([static], AS_HELP_STRING([--enable-static], [Enable static building]))
 
 AS_IF([test "x$enable_static" = "xyes"], [
-  LIBS="$STATIC_LIBS $LIBS"
   LDFLAGS="-static $LDFLAGS"
 ], [
-  LIBS="$DYN_LIBS $LIBS"
 ])
 
 # defines additional macros
