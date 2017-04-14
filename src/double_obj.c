@@ -1,4 +1,4 @@
-/* obj.c -- object definitions
+/* double_obj.c -- an double object
 
   Copyright 2016-2017 ChemicalDevelopment
 
@@ -20,3 +20,15 @@ can also find a copy at http://www.gnu.org/licenses/.
 */
 
 #include "ezc_impl.h"
+
+void double_obj_init(obj_t *r, double val) {
+    double *_r_val = malloc(sizeof(double));
+    (*_r_val) = val;
+    (*r).val = _r_val;
+    (*r).type = TYPE_DOUBLE;
+}
+
+void double_obj_to_double(double *r, obj_t val) {
+    (*r) = *(double *)val.val;
+}
+

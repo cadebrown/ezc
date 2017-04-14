@@ -1,4 +1,4 @@
-/* obj.c -- object definitions
+/* obj.h -- object header file
 
   Copyright 2016-2017 ChemicalDevelopment
 
@@ -19,4 +19,38 @@ can also find a copy at http://www.gnu.org/licenses/.
 
 */
 
-#include "ezc_impl.h"
+#ifndef __EZC_OBJ_H__
+#define __EZC_OBJ_H__
+
+#define TYPE_INT         0x000001
+#define TYPE_DOUBLE      0x000002
+#define TYPE_STR         0x000010
+#define TYPE_MPF         0x000102
+
+typedef struct obj_t {
+    int type;
+
+    void *val;
+} obj_t;
+
+
+void obj_fromstr(obj_t *r, char *val);
+
+void str_obj_init(obj_t *r, char *val);
+void str_obj_to_str(char *r, obj_t val);
+
+void int_obj_init(obj_t *r, int val);
+void int_obj_to_int(int *r, obj_t val);
+
+void double_obj_init(obj_t *r, double val);
+void double_obj_to_double(double *r, obj_t val);
+
+
+#ifdef USE_GMP
+
+void mpf_obj_init(obj_t *r, mpf_t val);
+void mpf_obj_get_mpf(mpf_t *r, obj_t val);
+
+#endif
+
+#endif

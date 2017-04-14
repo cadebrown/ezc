@@ -20,12 +20,14 @@
 
 # what flags you want to pass to the C compiler & linker
 AM_CFLAGS = --pedantic -Wall -std=c99 -O2
-AM_LDFLAGS = -I./
+AM_LDFLAGS =
 
 # this lists the binaries to produce, the (non-PHONY, binary) targets in
 # the previous manual Makefile
 bin_PROGRAMS = ec
 
-ec_SOURCES = ezc.h ezc_colors.h ezc.c helper.c obj.c stack.c dict.c getargs.c eval.c gmp_addon.c str_addon.c
+
+EZC_OBJ_SRC = str_obj.c int_obj.c double_obj.c
+ec_SOURCES = ezc.h ezc_impl.h common_types.h obj.h ezc.c obj.c args.c $(EZC_OBJ_SRC)
 ec_LDADD =
 

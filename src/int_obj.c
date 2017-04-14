@@ -1,4 +1,4 @@
-/* obj.c -- object definitions
+/* int_obj.c -- an integer object
 
   Copyright 2016-2017 ChemicalDevelopment
 
@@ -20,3 +20,15 @@ can also find a copy at http://www.gnu.org/licenses/.
 */
 
 #include "ezc_impl.h"
+
+void int_obj_init(obj_t *r, int val) {
+    int *_r_val = malloc(sizeof(int));
+    (*_r_val) = val;
+    (*r).val = _r_val;
+    (*r).type = TYPE_INT;
+}
+
+void int_obj_to_int(int *r, obj_t val) {
+    (*r) = *(int *)val.val;
+}
+

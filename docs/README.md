@@ -2,7 +2,7 @@
 
 ## What is EZC?
 
-EZC is programming language meant to enable fast calculations of multiprecision floats, but with loose syntax, and without memory management.
+EZC is programming language meant to enable fast calculations of multiprecision floats, but with RPN syntax, and without memory management.
 
 It is sort of like a calculator language, but with for, if, function definitions, and more advanced features.
 
@@ -31,7 +31,7 @@ Also, many custom functions, such as binomcdf, normalcdf, etc are implemented in
 
 ### Who is it for?
 
-This is primarily for programmers who want to explore new constants, and match correlations.
+This is primarily for programmers who want to [fold](https://en.wikipedia.org/wiki/Constant_folding) constants or equations, match correlations, or use RPN.
 
 This is an easy way to prototype a summation, and then see if it matches up with your existing data, or even calculate a billion digits of a constant.
 

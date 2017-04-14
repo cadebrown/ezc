@@ -25,14 +25,17 @@ make install
 Here are some more options:
 
 ```
-./configure --with-gmp[=LOC] --prefix=PREFIX
+./configure --with-gmp[=LOC] --with-mpfr[=LOC] --with-readline[=LOC] --prefix=PREFIX --enable-static
 make
 make install
 ```
 
-Where `[=LOC]` is optional, and points to the path where you installed gmp (`/usr/local` if you don't enter anything).
+Where `[=LOC]` is optional, and points to the path where you installed gmp/mpfr/readline (defaults to `/usr/local` if you don't enter anything).
 
 PREFIX is where the program installs to. So, if you run with `--prefix=$HOME`, you can now run `$HOME/bin/ec` to run the program.
+
+--enable-static builds a static binary. Apple doesn't really let you do this easily, so it is still expiremental on macOS.
+
 
 ### Development Versions
 
@@ -52,9 +55,8 @@ And it will output the help message.
 
 ## TODOs
 				 
-  * Add MPFR build with, and add mpfr (using `F` suffix), and then implement MPFR functions in plain C (for floats and ints), or perhaps cast those to mpfrs.
-  * Add more functions to both int, and gmp_mpz s.
-  * Add a manual, and update the docs site for new EZC
+  * Rewrite the main EZC for more modular and object based code.
+  * Add checks
 
 
 ## AUTHORS

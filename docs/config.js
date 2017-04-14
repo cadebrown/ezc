@@ -11,9 +11,6 @@ self.$config = {
     },
     {
       title: 'Installing', path: '/installing'
-    },
-    {
-      title: 'Dev Workflow', path: '/workflow'
     }
   ]
 }

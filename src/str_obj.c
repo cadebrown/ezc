@@ -1,4 +1,4 @@
-/* str_addon.c -- extra string methods can live here
+/* str_obj.c -- a string object
 
   Copyright 2016-2017 ChemicalDevelopment
 
@@ -19,12 +19,17 @@ can also find a copy at http://www.gnu.org/licenses/.
 
 */
 
-#include "ezc.h"
+#include "ezc_impl.h"
 
+void str_obj_init(obj_t *r, char *val) {
+    char *_r_val = malloc(sizeof(val));
+    strcpy(_r_val, val);
+    (*r).val = _r_val;
+    (*r).type = TYPE_STR;
+}
 
-EZC_OBJ str_literal(EZC_STR x) {
-	CREATE_OBJ(ret);
-	SET_OBJ(ret, TYPE_STR, x);
-	return ret;
+void str_obj_to_str(char *r, obj_t val) {
+    *r = malloc(sizeof(val.val));
+    strcpy(r, val.val);
 }
 

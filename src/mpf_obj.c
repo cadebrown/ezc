@@ -1,4 +1,4 @@
-/* obj.c -- object definitions
+/* mpf_obj.c -- a multiprecision object
 
   Copyright 2016-2017 ChemicalDevelopment
 
@@ -19,4 +19,24 @@ can also find a copy at http://www.gnu.org/licenses/.
 
 */
 
+#ifdef USE_GMP
+
 #include "ezc_impl.h"
+
+obj_t mpf_obj_init(mpf_t val) {
+    obj_t r;
+    mpf_init(r.val);
+    mpf_set(r.val, val);
+    r.type = TYPE_MPF;
+    return r;
+}
+
+mpf_t mpf_obj_to_mpf(obj_t val) {
+    mpf_t r;
+    mpf_init(r);
+    mpf_set(r, val.val);
+    return r;
+}
+
+#endif
+
