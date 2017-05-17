@@ -693,6 +693,10 @@ int main(int argc, char *argv[]) {
         } else if (STR_EQ(argv[i], "-")) {
             // all we need to do is make sure we interperet.
             do_interperet = true;
+        } else if (STR_EQ(argv[i], "-prec")) {
+            // sets the minimum precision (requires GMP or MPFR)
+            i++;
+            min_prec = strtoll(argv[i], NULL, 10);
         } else if (STR_EQ(argv[i], "-t") || STR_EQ(argv[i], "--type")) {
             // sets the type to execute as. (this directly affects the macro DOIF)
             i++;

@@ -125,6 +125,7 @@ AC_ARG_WITH(
 AH_TEMPLATE(USE_READLINE,[Readline support is available])
 
 
+  #LDFLAGS="-static $LDFLAGS"
 
 AC_ARG_ENABLE([static], AS_HELP_STRING([--enable-static], [Enable static building]))
 
