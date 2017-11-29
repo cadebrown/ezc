@@ -19,8 +19,15 @@ missing
 ezc.pc
 test-driver
 
+.vscode/
+
+ezcconfig.h
+
+build/
+
 *.orig
 src/ec
+src/ezc
 mini.src/ecm
 *.o
 *.out

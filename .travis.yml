@@ -11,9 +11,9 @@ compiler:
   - gcc
 
 install:
-  - autoreconf -i
-  - ./configure
-  - make clean all
+  - mkdir build && cd build
+  - cmake ..
+  - make
   - sudo make install
 
 script:
