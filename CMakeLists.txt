@@ -4,13 +4,7 @@ project (ezc)
 set (EZC_VERSION_MAJOR 0)
 set (EZC_VERSION_MINOR 0)
 
-if (CMAKE_VERSION VERSION_LESS "3.1")
-  if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
-    set (CMAKE_C_FLAGS "-std=gnu++11 ${CMAKE_C_FLAGS}")
-  endif ()
-else ()
-  set (CMAKE_C_STANDARD 11)
-endif ()
+set (CMAKE_C_FLAGS "-std=c99 ${CMAKE_C_FLAGS}")
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D__FILENAME__='\"$(subst ${CMAKE_SOURCE_DIR}/,,$(abspath $<))\"'")
 

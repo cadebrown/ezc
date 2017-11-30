@@ -8,25 +8,38 @@
 #include <string.h>
 
 
-int num_types = 5;
-type_t * types;
-
-void byte_constructor(obj_t * ret, char * value) {
-    ret->data = malloc(1);
+void byte_parser(obj_t * ret, char * value) {
     ret->data_len = 1;
-    ret->type_id = types[0].id;
+    ret->data = malloc(ret->data_len);
     
     if (strlen(value) == 1) {
         ((char *)ret->data)[0] = value[0];
+        ret->type_id = utils.type_id_from_name("byte");
     } else if (strlen(value) > 2 && strlen(value) <= 4 && value[0] == '0' && value[1] == 'x' && strtol(value, NULL, 0) <= 0xff) {
         ((char *)ret->data)[0] = strtol(value, NULL, 0);
+        ret->type_id = utils.type_id_from_name("byte");
     } else {
+        ret->type_id = 0;
         printf("error constructing byte from '%s'\n", value);
     }
 }
 
-void byte_representation(char ** ret, obj_t obj) {
-    char v = ((char *)obj.data)[0];
+void byte_constructor(obj_t * ret, obj_t value) {
+    type_t str_type = utils.type_from_name("str"), input_type = utils.type_from_id(value.type_id);
+    bool has_str = utils.type_exists_name("str");
+    
+    // if passed in a string, parse it
+    if (has_str && str_type.id == input_type.id) {
+        byte_parser(ret, (char *)value.data);
+    } else {
+        ret->type_id = 0;
+        printf("Don't know how to create 'byte' from type '%s'\n", input_type.name);
+    }
+}
+
+
+void byte_representation(obj_t * obj, char ** ret) {
+    char v = ((char *)obj->data)[0];
     *ret = malloc(5);
     (*ret)[0] = '0';
     (*ret)[1] = 'x';
@@ -35,103 +48,34 @@ void byte_representation(char ** ret, obj_t obj) {
     (*ret)[4] = 0;
 }
 
-void int_constructor(obj_t * ret, char * value) {
-    ret->data_len = sizeof(int);
-    ret->data = malloc(ret->data_len);
-    ret->type_id = types[1].id;
-    
-    *((int *)ret->data) = strtol(value, NULL, 0);
-}
 
-void int_representation(char ** ret, obj_t obj) {
-    // 22 can hold 64 bits, best for safety
-    *ret = malloc(22);
-    int v = ((int *)obj.data)[0];
-    sprintf(*ret, "%d", v);
-}
-
-void long_constructor(obj_t * ret, char * value) {
-    ret->data_len = sizeof(long long);
-    ret->data = malloc(ret->data_len);
-    ret->type_id = types[2].id;
-    
-    *((long long *)ret->data) = strtol(value, NULL, 0);
-}
-
-void long_representation(char ** ret, obj_t obj) {
-    // 22 can hold 64 bits, best for safety
-    *ret = malloc(22);
-    long long v = ((long long *)obj.data)[0];
-    sprintf(*ret, "%lld", v);
-}
-
-void float_constructor(obj_t * ret, char * value) {
-    ret->data_len = sizeof(float);
-    ret->data = malloc(ret->data_len);
-    ret->type_id = types[3].id;
-    
-    *((float *)ret->data) = strtof(value, NULL);
-}
-
-void float_representation(char ** ret, obj_t obj) {
-    *ret = malloc(22);
-    float v = ((float *)obj.data)[0];
-    sprintf(*ret, "%f", v);
-}
-
-void str_constructor(obj_t * ret, char * value) {
+void str_parser(obj_t * ret, char * value) {
     ret->data_len = strlen(value);
     ret->data = malloc(ret->data_len);
-    ret->type_id = types[4].id;
-    
-    strcpy(ret->data, value);
+    ret->type_id = utils.type_id_from_name("str");
+    strcpy(ret->data, value);    
 }
 
-void str_representation(char ** ret, obj_t obj) {
-    *ret = malloc(obj.data_len);
-    strcpy(*ret, obj.data);
+void str_representation(obj_t * obj, char ** ret) {
+    *ret = malloc(obj->data_len);
+    strcpy(*ret, obj->data);
+}
+
+void str_constructor(obj_t * ret, obj_t value) {
+    type_t input_type = utils.type_from_id(value.type_id);
+    char * repr;
+    str_representation(&value, &repr);
+    str_parser(ret, repr);
 }
 
 
-int init (int type_id) {
-    types = malloc(num_types * sizeof(type_t));
 
-    int cid = 0;
+int init (int type_id, module_utils_t utils) {
 
-    types[cid].name = "byte";
-    types[cid].id = type_id++;
-    types[cid].constructor = byte_constructor;
-    types[cid].representation = byte_representation;
+    init_exported(type_id, utils);
 
-    cid++;
-
-    types[cid].name = "int";
-    types[cid].id = type_id++;
-    types[cid].constructor = int_constructor;
-    types[cid].representation = int_representation;
-
-    cid++;
-
-    types[cid].name = "long";
-    types[cid].id = type_id++;
-    types[cid].constructor = long_constructor;
-    types[cid].representation = long_representation;
-
-    cid++;
-
-    types[cid].name = "float";
-    types[cid].id = type_id++;
-    types[cid].constructor = float_constructor;
-    types[cid].representation = float_representation;
-
-
-    cid++;
-
-    types[cid].name = "str";
-    types[cid].id = type_id++;
-    types[cid].constructor = str_constructor;
-    types[cid].representation = str_representation;
-
+    add_type("byte", byte_constructor, byte_parser, byte_representation);
+    add_type("str", str_constructor, str_parser, str_representation);
 
     return 0;
 }

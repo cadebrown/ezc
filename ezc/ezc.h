@@ -4,9 +4,13 @@
 #include <stdbool.h>
 
 #include "ezctypes.h"
+#include "estack.h"
+#include "module_loader.h"
+#include "findexecdir.h"
+#include "routines.h"
 
-int main(int argc, char ** argv);
 
+void ezc_init(char * execname);
 
 #endif
 

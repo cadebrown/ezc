@@ -8,31 +8,42 @@
 #include <string.h>
 
 
-int num_types = 1;
-type_t * types;
 
-void type_dummy_constructor(obj_t * ret, char * value) {
+void type_dummy_parser(obj_t * ret, char * value) {
     ret->data = malloc(strlen(value));
     ret->data_len = strlen(value);
-    ret->type_id = types[0].id;
+    ret->type_id = utils.type_id_from_name("dummy");
     strcpy(ret->data, value);
 }
 
-void type_dummy_representation(char ** ret, obj_t obj) {
-    *ret = malloc(obj.data_len);
-    strcpy(*ret, obj.data);
+void type_dummy_constructor(obj_t * ret, obj_t input) {
+    type_t str_type = utils.type_from_name("str"), input_type = utils.type_from_id(input.type_id);
+    bool has_str = utils.type_exists_name("str");
+
+    // if passed in a string, parse it
+    if (has_str && str_type.id == input_type.id) {
+        ret->type_id = utils.type_id_from_name("dummy");
+        type_dummy_parser(ret, (char *)input.data);
+    } else {
+        ret->type_id = 0;
+        printf("Don't know how to create 'dummy' from type '%s'\n", input_type.name);
+    }
+    /*
+    type_t h_this;
+    bool worked = (*utils.get_type_name)(&h_this, "dummy");
+    */
+}
+
+void type_dummy_representation(obj_t * obj, char ** ret) {
+    *ret = malloc(obj->data_len);
+    strcpy(*ret, obj->data);
 }
 
 
-int init (int type_id) {
-    printf("Module 'dummy' says hello\n");
+int init (int id, module_utils_t utils) {
+    init_exported(id, utils);
 
-    types = malloc(num_types * sizeof(type_t));
-
-    types[0].name = "dummy";
-    types[0].id = type_id;
-    types[0].constructor = type_dummy_constructor;
-    types[0].representation = type_dummy_representation;
+    add_type("dummy", type_dummy_constructor, type_dummy_parser, type_dummy_representation);
 
     return 0;
 }

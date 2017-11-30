@@ -1,11 +1,17 @@
 
 add_subdirectory (systypes) 
 add_subdirectory (dummy) 
+add_subdirectory (printstack) 
 
-add_executable(ezc ezc.c module_loader.c estack.c findexecdir.c findexecdir.h estack.h ezctypes.h ezc.h module_loader.h)
+add_library(ezc ezc.c module_loader.c estack.c dict.c routines.c findexecdir.c routines.h findexecdir.h estack.h dict.h ezctypes.h ezc.h module_loader.h)
+install (TARGETS ezc DESTINATION lib/ezc)
 
-target_link_libraries(ezc ${CMAKE_DL_LIBS})
-target_link_libraries(ezc systypes ${CMAKE_DL_LIBS})
-target_link_libraries(ezc dummy ${CMAKE_DL_LIBS})
+add_executable(ec ec.c ec.h)
 
-install (TARGETS ezc DESTINATION bin)
+
+target_link_libraries(ec ezc ${CMAKE_DL_LIBS})
+
+
+install (TARGETS ec DESTINATION bin)
+
+

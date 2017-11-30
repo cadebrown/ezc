@@ -13,7 +13,7 @@ int max_search_path_strlen = 0;
 
 
 // start out large so that system types are enough, and keep this as a block
-int type_id = 0x1000;
+int id_index = 0x1000;
 
 
 int num_registered_modules = 0;
@@ -22,6 +22,25 @@ module_t * registered_modules = NULL;
 int num_registered_types = 0;
 type_t * registered_types = NULL;
 
+module_utils_t utils;
+
+void init_module_loader() {
+    
+
+    utils.type_exists_id = &type_exists_id;
+    utils.type_exists_name = &type_exists_name;
+    utils.type_from_id = &type_from_id;
+    utils.type_from_name = &type_from_name;
+    utils.type_name_from_id = &type_name_from_id;
+    utils.type_id_from_name = &type_id_from_name;
+    
+    utils.function_exists_id = &function_exists_id;
+    utils.function_exists_name = &function_exists_name;
+    utils.function_from_id = &function_from_id;
+    utils.function_from_name = &function_from_name;
+    utils.function_name_from_id = &function_name_from_id;
+    utils.function_id_from_name = &function_id_from_name;
+}
 
 void register_type(type_t type) {
     num_registered_types++;
@@ -43,6 +62,17 @@ void register_module(module_t module) {
     registered_modules[num_registered_modules - 1] = module;
 }
 
+void register_function(function_t function) {
+    num_registered_functions++;
+    if (registered_functions == NULL) {
+        registered_functions = malloc(sizeof(function_t) * num_registered_functions);
+    } else {
+        registered_functions = realloc(registered_functions, sizeof(function_t) * num_registered_functions);
+    }
+    registered_functions[num_registered_functions - 1] = function;
+}
+
+
 bool get_module_name(module_t * res, char * name) {
     int i;
     for (i = 0; i < num_registered_modules; ++i) {
@@ -54,28 +84,61 @@ bool get_module_name(module_t * res, char * name) {
     return false;
 }
 
-// returns true if it was successful
-bool get_type_id(type_t * res, int id) {
-    int i;
-    for (i = 0; i < num_registered_types; ++i) {
-        if (registered_types[i].id == id) {
-            *res = registered_types[i];
-            return true;
-        }
-    }
-    return false;
+
+//// START module_utils methods
+
+
+#define SEARCH_TYPES(cmp, rfound, rnfound) { \
+    int i; \
+    for (i = 0; i < num_registered_types; ++i) { \
+        if (cmp) { \
+            return rfound; \
+        } \
+    } \
+    return rnfound; \
 }
 
-bool get_type_name(type_t * res, char * name) {
-    int i;
-    for (i = 0; i < num_registered_types; ++i) {
-        if (strcmp(registered_types[i].name, name) == 0) {
-            *res = registered_types[i];
-            return true;
-        }
-    }
-    return false;
+bool type_exists_id(int id) SEARCH_TYPES(registered_types[i].id == id, true, false)
+
+bool type_exists_name(char * name) SEARCH_TYPES(strcmp(registered_types[i].name, name) == 0, true, false)
+
+type_t type_from_id(int id) SEARCH_TYPES(registered_types[i].id == id, registered_types[i], NULL_TYPE)
+
+type_t type_from_name(char * name) SEARCH_TYPES(strcmp(registered_types[i].name, name) == 0, registered_types[i], NULL_TYPE)
+
+int type_id_from_name(char * name) SEARCH_TYPES(strcmp(registered_types[i].name, name) == 0, registered_types[i].id, NULL_TYPE.id)
+
+char * type_name_from_id(int id) SEARCH_TYPES(registered_types[i].id == id, registered_types[i].name, NULL_TYPE.name)
+
+
+#define SEARCH_FUNCTIONS(cmp, rfound, rnfound) { \
+    int i; \
+    for (i = 0; i < num_registered_functions; ++i) { \
+        if (cmp) { \
+            return rfound; \
+        } \
+    } \
+    return rnfound; \
 }
+
+
+bool function_exists_id(int id) SEARCH_FUNCTIONS(registered_functions[i].id == id, true, false)
+
+bool function_exists_name(char * name) SEARCH_FUNCTIONS(strcmp(registered_functions[i].name, name) == 0, true, false)
+
+function_t function_from_id(int id) SEARCH_FUNCTIONS(registered_functions[i].id == id, registered_functions[i], NULL_FUNCTION)
+
+function_t function_from_name(char * name) SEARCH_FUNCTIONS(strcmp(registered_functions[i].name, name) == 0, registered_functions[i], NULL_FUNCTION)
+
+int function_id_from_name(char * name) SEARCH_FUNCTIONS(strcmp(registered_functions[i].name, name) == 0, registered_functions[i].id, NULL_FUNCTION.id)
+
+char * function_name_from_id(int id) SEARCH_FUNCTIONS(registered_functions[i].id == id, registered_functions[i].name, NULL_FUNCTION.name)
+
+
+
+
+//// END module_utils methods
+
 
 
 bool add_search_path(char * path) {
@@ -127,13 +190,21 @@ void print_modules() {
 void print_module(module_t module) {
     printf("%s\n", module.name);
     printf("  location: %s\n", module.path);
-    printf("  types[%d]:\n", module.num_types);
+    printf("  types[%d]:\n", module.exported.num_types);
     int i;
-    for (i = 0; i < module.num_types; ++i) {
-        printf("    %s [%d]\n", module.types[i].name, module.types[i].id);
+    for (i = 0; i < module.exported.num_types; ++i) {
+        printf("    %s [%d]\n", module.exported.types[i].name, module.exported.types[i].id);
     }
 }
 
+bool import_module(char * name) {
+    module_t cur_module;
+    bool found = load_module(&cur_module, name);
+    if (found) {
+        register_module(cur_module);
+    }
+    return found;
+}
 bool load_module(module_t * module, char * name) {
     char * cur_search = (char *)malloc(max_search_path_strlen + strlen(LIBRARY_PRE) + 2 * strlen(name) + strlen(LIBRARY_EXT) + 4);
     int i, j, csoff;
@@ -191,18 +262,24 @@ bool load_module(module_t * module, char * name) {
             printf("dlerror: %s\n", dlerror());
             return false;
         } else {
-            module->init(type_id);
-            int * num_types_ptr = (int *)dlsym(module->lib_data, "num_types");
-            if (num_types_ptr == NULL) {
+            module->init(id_index, utils);
+            module_export_t * exported = (module_export_t *)dlsym(module->lib_data, "exported");
+            if (exported == NULL) {
+                printf("error: cannot find exported values for module '%s'\n", name);
             } else {
-                module->num_types = *num_types_ptr;
-                module->types = *(type_t **)dlsym(module->lib_data, "types");
+                module->exported = *exported;
                 int j;
-                for (j = 0; j < module->num_types; ++j) {
-                    if (type_id < module->types[j].id + 1) {
-                        type_id = module->types[j].id + 1;
+                for (j = 0; j < module->exported.num_types; ++j) {
+                    if (id_index < module->exported.types[j].id + 1) {
+                        id_index = module->exported.types[j].id + 1;
                     }
-                    register_type(module->types[j]);
+                    register_type(module->exported.types[j]);
+                }
+                for (j = 0; j < module->exported.num_functions; ++j) {
+                    if (id_index < module->exported.functions[j].id + 1) {
+                        id_index = module->exported.functions[j].id + 1;
+                    }
+                    register_function(module->exported.functions[j]);
                 }
             }
             /*
