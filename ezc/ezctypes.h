@@ -22,6 +22,8 @@ typedef void parser_t(obj_t *, char *);
 
 typedef void representation_t(obj_t *, char **);
 
+typedef void destroyer_t(obj_t *);
+
 
 typedef struct type_t {
 
@@ -35,6 +37,7 @@ typedef struct type_t {
 
     representation_t * representation;
 
+    destroyer_t * destroyer;
 
 } type_t;
 
@@ -75,7 +78,7 @@ typedef struct runtime_t {
 
 
 
-typedef void raw_function_t(estack_t *);
+typedef void raw_function_t(runtime_t *);
 
 typedef struct function_t {
 

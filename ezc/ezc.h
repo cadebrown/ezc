@@ -6,9 +6,9 @@
 #include "ezctypes.h"
 #include "estack.h"
 #include "module_loader.h"
-#include "findexecdir.h"
 #include "routines.h"
 
+#include "whereami.h"
 
 void ezc_init(char * execname);
 

@@ -13,6 +13,7 @@ int main(int argc, char ** argv) {
         {"help", no_argument, NULL, 'h'},
         {"include", required_argument, NULL, 'I'},
         {"import", required_argument, NULL, 'i'},
+        {"expression", required_argument, NULL, 'e'},
         {NULL, 0, NULL, 0}
     };
     
@@ -22,10 +23,14 @@ int main(int argc, char ** argv) {
     int num_to_import = 0;
     char ** to_import = malloc(sizeof(char *));
 
-    while ((c = getopt_long (argc, argv, "hI:i:", long_options, &long_index)) != (char)-1)
+    char * expression = NULL;
+
+    while ((c = getopt_long (argc, argv, "hI:i:e:", long_options, &long_index)) != (char)-1)
     switch (c) {
         case 'h':
             printf("Usage: %s [file0 ...] [-e expr]\n\n", argv[0]);
+            printf("    -e, --expression      Evaluate an expression\n");
+            printf("\n");
             printf("    -I, --include         Add a directory to search for modules in\n");
             printf("    -i, --import          Import module\n");
             printf("    -h, --help            Print out this usage dialogue\n");
@@ -48,6 +53,14 @@ int main(int argc, char ** argv) {
             to_import = realloc(to_import, sizeof(char *) * num_to_import);
             to_import[num_to_import - 1] = optarg;           
             break;
+        case 'e':
+            if (expression != NULL) {
+                printf("error, already specified '-e'\n");
+                return 1;
+            } else {
+                expression = optarg;
+            }
+            break;
         case '?':
             printf("Unknown option `%c`\n", optopt);
             printf("Run `%s --help` for usage\n", argv[0]);
@@ -64,6 +77,9 @@ int main(int argc, char ** argv) {
 
     // import all defaults here
 
+    import_module("systypes");
+    import_module("std_func");
+
     int i;
     for (i = 0; i < num_to_import; ++i) {
         import_module(to_import[i]);
@@ -72,7 +88,19 @@ int main(int argc, char ** argv) {
     runtime_t runtime;
     init_runtime(&runtime);
 
-    run_code(&runtime, "hello world");
+    if (expression != NULL) {
+        run_code(&runtime, expression);
+
+        if (function_exists_name("dump")) {
+            printf("\nfinal results\n");
+            printf("-------------\n");
+            function_t dump_func = function_from_name("dump");
+            dump_func.function(&runtime);
+        }
+
+    } else {
+        printf("expression was null\n");
+    }
 
 
     /*

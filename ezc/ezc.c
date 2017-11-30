@@ -18,8 +18,13 @@ void ezc_init(char * execname) {
     add_search_path(cwd);
 
     if (execname != NULL) {
-        char * execdir = malloc(FILENAME_MAX);
-        findexecdir(execname, execdir, FILENAME_MAX);
+        int length, dirname_length;
+        length = wai_getExecutablePath(NULL, 0, &dirname_length);
+
+        char * execdir = malloc(length + 1);
+        wai_getExecutablePath(execdir, length, &dirname_length);
+        execdir[dirname_length] = '\0';
+
         add_search_path(execdir);
 
         char * libdir = malloc(FILENAME_MAX);

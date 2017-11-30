@@ -16,6 +16,9 @@
 #include "estack.h"
 #include "estack.c"
 
+#include "routines.h"
+#include "routines.c"
+
 
 #define PASTER(x,y) x ## _ ## y
 #define EVALUATOR(x,y)  PASTER(x,y)
@@ -55,7 +58,7 @@ void add_function(char * name, raw_function_t * function) {
 }
 
 
-void add_type(char * name, constructor_t * constructor, parser_t * parser, representation_t * representation) {
+void add_type(char * name, constructor_t * constructor, parser_t * parser, representation_t * representation, destroyer_t * destroyer) {
     exported.num_types++;
     if (exported.types == NULL) {
         exported.types = malloc(sizeof(type_t) * exported.num_types);
@@ -69,6 +72,7 @@ void add_type(char * name, constructor_t * constructor, parser_t * parser, repre
     made_type.constructor = constructor;
     made_type.parser = parser;
     made_type.representation = representation;
+    made_type.destroyer = destroyer;
     exported.types[exported.num_types - 1] = made_type;
 }
 

@@ -4,7 +4,7 @@ project (ezc)
 set (EZC_VERSION_MAJOR 0)
 set (EZC_VERSION_MINOR 0)
 
-set (CMAKE_C_FLAGS "-std=c99 ${CMAKE_C_FLAGS}")
+set (CMAKE_C_FLAGS "-O2 -g -Wall -pedantic -std=c99 ${CMAKE_C_FLAGS}")
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D__FILENAME__='\"$(subst ${CMAKE_SOURCE_DIR}/,,$(abspath $<))\"'")
 

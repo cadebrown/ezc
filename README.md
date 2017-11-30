@@ -12,50 +12,83 @@ Online documentation: http://chemicaldevelopment.us/ezc/
 
 ### Release
 
-These are found from the releases page, and can be installed like this:
+These are found from the releases page, and can be installed like this (uses [cmake](https://cmake.org/runningcmake/) as a buildsystem):
 
 ```
-./configure
-make
+mkdir build && cd build
+cmake ..
+make -j4
 make install
 ```
 (you may need to run `sudo make install` if you need priviledges to install in `/usr/local`).
 
 
-Here are some more options:
-
-```
-./configure --with-gmp[=LOC] --with-mpfr[=LOC] --with-readline[=LOC] --prefix=PREFIX --enable-static
-make
-make install
-```
-
-Where `[=LOC]` is optional, and points to the path where you installed gmp/mpfr/readline (defaults to `/usr/local` if you don't enter anything).
-
-PREFIX is where the program installs to. So, if you run with `--prefix=$HOME`, you can now run `$HOME/bin/ec` to run the program.
-
---enable-static builds a static binary. Apple doesn't really let you do this easily, so it is still expiremental on macOS.
-
-
 ### Development Versions
 
-You will need automake/autoconf/etc (you probably already have this)
+Just clone this repo:
 
-If you have these, you will run `autoreconf -i`, then follow the steps for a release (above).
+`git clone https://github.com/ChemicalDevelopment/ezc.git`, then follow the `Release` installation.
 
 
 ## Usage
 
 Run the program to view help:
 
-` $ ec -h `
+`ec -h`
+
+If you are building from a `build/` directory, replace `ec` with `./ezc/ec`
 
 And it will output the help message.
+
+## Examples
+
+Here are some quick examples:
+
+```
+ $ ec -e'cade is a boss'
+
+final results
+-------------
+globals[0]:
+stack[4]:
+  0: 'cade':str
+  1: 'is':str
+  2: 'a':str
+  3: 'boss':str
+
+```
+
+Use a function like `FUNCTION!`
+
+```
+ $ ec -e'cade is a boss concat!'
+
+final results
+-------------
+globals[0]:
+stack[3]:
+  0: 'cade':str
+  1: 'is':str
+  2: 'aboss':str
+
+```
+
+Some functions are implemented as repeaters, using `FUNCTION*!` (which will repeatedly call the function).
+
+```
+ $ ec -e'cade is a boss concat*!'
+
+final results
+-------------
+globals[0]:
+stack[1]:
+  0: 'cadeisaboss':str
+
+```
 
 
 ## TODOs
 				 
-  * Rewrite the main EZC for more modular and object based code.
   * Add checks
 
 

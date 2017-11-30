@@ -37,7 +37,6 @@ void byte_constructor(obj_t * ret, obj_t value) {
     }
 }
 
-
 void byte_representation(obj_t * obj, char ** ret) {
     char v = ((char *)obj->data)[0];
     *ret = malloc(5);
@@ -46,6 +45,46 @@ void byte_representation(obj_t * obj, char ** ret) {
     (*ret)[2] = (v >> 4) + '0';
     (*ret)[3] = (v & 15) + '0';
     (*ret)[4] = 0;
+}
+
+void byte_destroyer(obj_t * ret) {
+    if (ret->data != NULL) {
+        free(ret->data);
+    }
+    *ret = NULL_OBJ;
+}
+
+
+
+void int_parser(obj_t * ret, char * value) {
+    ret->data_len = sizeof(int);
+    ret->data = malloc(ret->data_len);
+    ret->type_id = utils.type_id_from_name("int");
+    *((int *)ret->data) = strtol(value, NULL, 0);
+}
+
+void int_representation(obj_t * obj, char ** ret) {
+    *ret = malloc(44);
+    sprintf(*ret, "%d", *((int *)obj->data));
+}
+
+void int_constructor(obj_t * ret, obj_t value) {
+    type_t input_type = utils.type_from_id(value.type_id);
+    type_t str_type = utils.type_from_name("str");
+
+    if (input_type.id == str_type.id) {
+        int_parser(ret, value.data);
+    } else {
+        printf("error (in int constructor): don't know how to make int from type '%s'", input_type.name);
+        *ret = NULL_OBJ;
+    }
+}
+
+void int_destroyer(obj_t * ret) {
+    if (ret->data != NULL) {
+        free(ret->data);
+    }
+    *ret = NULL_OBJ;
 }
 
 
@@ -64,8 +103,15 @@ void str_representation(obj_t * obj, char ** ret) {
 void str_constructor(obj_t * ret, obj_t value) {
     type_t input_type = utils.type_from_id(value.type_id);
     char * repr;
-    str_representation(&value, &repr);
+    input_type.representation(&value, &repr);
     str_parser(ret, repr);
+}
+
+void str_destroyer(obj_t * ret) {
+    if (ret->data != NULL) {
+        free(ret->data);
+    }
+    *ret = NULL_OBJ;
 }
 
 
@@ -74,8 +120,9 @@ int init (int type_id, module_utils_t utils) {
 
     init_exported(type_id, utils);
 
-    add_type("byte", byte_constructor, byte_parser, byte_representation);
-    add_type("str", str_constructor, str_parser, str_representation);
+    add_type("byte", byte_constructor, byte_parser, byte_representation, byte_destroyer);
+    add_type("int", int_constructor, int_parser, int_representation, int_destroyer);
+    add_type("str", str_constructor, str_parser, str_representation, str_destroyer);
 
     return 0;
 }
