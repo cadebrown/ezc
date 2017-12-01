@@ -73,10 +73,10 @@ stack[3]:
 
 ```
 
-Some functions are implemented as repeaters, using `FUNCTION*!` (which will repeatedly call the function).
+Some functions are implemented as repeaters, using `FUNCTION&!` (which will repeatedly call the function).
 
 ```
- $ ec -e'cade is a boss concat*!'
+ $ ec -e'cade is a boss concat&!'
 
 final results
 -------------
