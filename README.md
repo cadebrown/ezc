@@ -61,10 +61,8 @@ stack[4]:
 Use a function like `FUNCTION!`
 
 ```
- $ ec -e'cade is a boss concat!'
+ $ ec -e'cade is a boss concat! dump!'
 
-final results
--------------
 globals[0]:
 stack[3]:
   0: 'cade':str
@@ -76,10 +74,8 @@ stack[3]:
 Some functions are implemented as repeaters, using `FUNCTION&!` (which will repeatedly call the function).
 
 ```
- $ ec -e'cade is a boss concat&!'
+ $ ec -e'cade is a boss concat&! dump!'
 
-final results
--------------
 globals[0]:
 stack[1]:
   0: 'cadeisaboss':str
