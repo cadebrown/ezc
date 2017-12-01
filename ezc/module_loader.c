@@ -55,6 +55,8 @@ void init_module_loader() {
     utils.modules = &registered_modules;
     utils.functions = &registered_functions;
 
+    utils.has_exception = &has_exception;
+
 }
 
 void raise_exception(char * exception, int exitcode) {
@@ -66,6 +68,9 @@ void raise_exception(char * exception, int exitcode) {
     }
 }
 
+bool has_exception() {
+    return raised_code != 0;
+}
 
 void register_type(type_t type) {
     num_registered_types++;
@@ -108,6 +113,7 @@ bool get_module_name(module_t * res, char * name) {
     }
     return false;
 }
+
 
 
 //// START module_utils methods
@@ -231,11 +237,11 @@ bool import_module(char * name) {
     return found;
 }
 
-#define FAIL_LOAD_MODULE(reason) printf("error while loading module '%s': %s\n", name, reason); return false;
+#define FAIL_LOAD_MODULE(reason) log_fatal("while loading module '%s': %s", name, reason); return false;
 
 bool load_module(module_t * module, char * name) {
     char * cur_search = (char *)malloc(max_search_path_strlen + strlen(LIBRARY_PRE) + 2 * strlen(name) + strlen(LIBRARY_EXT) + 4);
-    int i, j, csoff;
+    int i, csoff;
     void * handle = NULL;
     module->name = malloc(strlen(name));
     strcpy(module->name, name);
@@ -280,13 +286,13 @@ bool load_module(module_t * module, char * name) {
         FAIL_LOAD_MODULE("module not found");
     } else {
         module->lib_data = handle;
-        
-        module_init_t * module_init = (module_init_t *)dlsym(module->lib_data, "init");
+
+        module_init_t * module_init = (module_init_t *)dlsym(module->lib_data, "module_init");
 
         if (module_init == NULL) {
-            FAIL_LOAD_MODULE("module has no init() method");
+            FAIL_LOAD_MODULE("module has no module_init object");
         } else {
-            module_init(id_index, utils);
+            module_init->init(id_index, utils);
             module_export_t * exported = (module_export_t *)dlsym(module->lib_data, "exported");
             if (exported == NULL) {
                 FAIL_LOAD_MODULE("module lacks an 'exported' symbol");

@@ -8,12 +8,6 @@ static struct {
     int quiet;
 } L;
 
-
-static const char *level_names[] = {
-    "FATAL", "ERROR", "WARN", "INFO", "DEBUG", "TRACE"
-};
-
-
 void log_set_udata(void *udata) {
     L.udata = udata;
 }

@@ -51,6 +51,8 @@ void register_module(module_t module);
 
 void raise_exception(char *, int);
 
+bool has_exception();
+
 
 //// START module_utils methods
 

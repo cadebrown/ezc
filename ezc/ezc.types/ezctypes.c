@@ -94,12 +94,10 @@ void int_copier(obj_t * to, obj_t * from) {
     *(int *)to->data = *(int *)from->data;
 }
 
-
-
 void str_parser(obj_t * ret, char * value) {
     ret->data_len = strlen(value) + 1;
     ret->data = malloc(ret->data_len);
-    strcpy(ret->data, value);    
+    strcpy(ret->data, value);
     ((char *)ret->data)[strlen(value)] = 0;
     
 }

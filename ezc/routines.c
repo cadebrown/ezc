@@ -112,8 +112,6 @@ void run_str(runtime_t * runtime, char * ezc_source_code, runnable_t * runnable,
     int c_off = 0;
     int c_obj_off;
 
-    int loop_start_off;
-
     obj_t str_obj;
     type_t str_type;
 
@@ -139,11 +137,13 @@ void run_str(runtime_t * runtime, char * ezc_source_code, runnable_t * runnable,
 
     // preallocated exception buffer
     char to_raise[EXCEPTION_LEN];
+    
 
 
     while (c_off < strlen(ezc_source_code)) {
-        loop_start_off = c_off;
-
+        #ifndef __EZCMODULE_H__
+        int loop_start_off = c_off;
+        #endif
         // cast using `:TYPE`
         if (cchar == CAST) {
             // tmp will be equal to TYPE

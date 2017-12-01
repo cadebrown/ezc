@@ -20,6 +20,11 @@
 module_export_t exported;
 module_utils_t utils;
 
+int init(int, module_utils_t);
+
+module_init_t module_init = { init };
+
+
 // So that these functions work
 #define type_exists_name utils.type_exists_name
 #define type_exists_id utils.type_exists_id
@@ -60,7 +65,7 @@ module_utils_t utils;
 // pre allocated exception buffer
 char to_raise[16384];
 
-
+#define has_exception utils.has_exception
 #define raise_exception(reason, code) utils.raise_exception(reason, code);
 
 #include "estack.h"

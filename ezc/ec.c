@@ -123,7 +123,16 @@ int main(int argc, char ** argv) {
         fseek(fp, 0, SEEK_SET);  //same as rewind(f);
 
         char * file_source = malloc(numbytes + 1);
-        fread(file_source, numbytes, 1, fp);
+
+        if (file_source == NULL) {
+            log_fatal("could not malloc the source buffer");
+            exit(1);
+        }
+
+        if (numbytes != fread(file_source, numbytes, 1, fp)) {
+            log_fatal("could not read file source");
+            exit(1);
+        }
 
         fclose(fp);
 

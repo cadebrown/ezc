@@ -181,11 +181,16 @@ typedef struct module_utils_t {
 
     void       (* raise_exception)(char *, int);
 
+    bool       (* has_exception)();
+
 } module_utils_t;
 
 
-// returns status code, takes type_id offset (so that they are unique)
-typedef int module_init_t(int, module_utils_t utils);
+typedef struct module_init_t {
+
+    int (*init)(int, module_utils_t);
+
+} module_init_t;
 
 
 // MAKE SURE TO INCLUDE 'ezcsymboldefs.h' IN SOME FILE

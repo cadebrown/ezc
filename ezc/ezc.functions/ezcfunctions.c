@@ -48,6 +48,7 @@ void repr(runtime_t * runtime) {
     estack_push(&runtime->stack, repr_obj(estack_pop(&runtime->stack)));
 }
 
+
 void _print_obj(obj_t to_print) {
     char * str_repr;
 
@@ -206,6 +207,8 @@ void import_repeat(runtime_t * runtime) {
     }
 }
 
+#define print_func_addr(ijk, fncaddr) for (ijk=0; ijk<sizeof (fncaddr); ijk++) printf("%.2x", ((unsigned char *)&fncaddr)[ijk]);
+
 bool print_type_id(int id) {
     if (!type_exists_id(id)) {
         raise_exception("unknown type", 1);
@@ -216,10 +219,20 @@ bool print_type_id(int id) {
     printf(":%s\n", type.name);
     printf("  %s\n\n", type.description);
     printf("  id: %d\n", type.id);
-    printf("  constructor: %p\n", (void *)type.constructor);
-    printf("  parser: %p\n", (void *)type.parser);
-    printf("  representation: %p\n", (void *)type.representation);
-    printf("  destroyer: %p\n", (void *)type.destroyer);
+
+    size_t ijk; 
+
+    printf("  constructor: ");
+    print_func_addr(ijk, type.constructor);
+    printf("\n  copier: ");
+    print_func_addr(ijk, type.copier);
+    printf("\n  parser: ");
+    print_func_addr(ijk, type.parser);
+    printf("\n  representation: ");
+    print_func_addr(ijk, type.representation);
+    printf("\n  destroyer: ");
+    print_func_addr(ijk, type.destroyer);
+    printf("\n");
 
     return true;
 }
@@ -236,7 +249,12 @@ bool print_func_id(int id) {
     printf("%s!\n", func.name);
     printf("  %s\n\n", func.description);
     printf("  id: %d\n", func.id);
-    printf("  addr: %p\n", (void *)func.function);
+    
+    size_t ijk;
+    printf("  addr: ");
+    print_func_addr(ijk, func.function);
+    printf("\n");
+    
     return true;
 }
 

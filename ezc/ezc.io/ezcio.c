@@ -7,6 +7,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+
 #include <string.h>
 #include <errno.h>
 
@@ -89,6 +90,7 @@ bool _open_file(ezc_file_t * v, char * _mode) {
     v->mode = malloc(strlen(_mode) + 1);
     strcpy(v->mode, _mode);
 
+
     if (strcmp(v->name, "stdout") == 0) {
         v->fp = stdout;
     } else if (strcmp(v->name, "stderr") == 0) {
@@ -122,30 +124,43 @@ bool _close_file(ezc_file_t * v) {
 }
 
 void open_file(runtime_t * runtime) {
+    
     ASSURE_NONEMPTY_STACK;
 
     obj_t last_obj = estack_pop(&runtime->stack);
 
     type_t file_type = type_from_name("file"), str_type = type_from_name("str");
 
+
     if (last_obj.type_id == file_type.id) {
         ezc_file_t * v = (ezc_file_t *)last_obj.data;
-        if (!_open_file(v, "r+")) return;
+    
+        if (!_open_file(v, "w+")) {
+            raise_exception("opening file failed", 1);
+            return;
+        }
+    
         estack_push(&runtime->stack, last_obj);
+
     } else if (last_obj.type_id == str_type.id) {
         obj_t new_file_obj;
+
         obj_construct(file_type, &new_file_obj, last_obj);
 
         estack_push(&runtime->stack, new_file_obj);
 
         open_file(runtime);
+
     } else {
+
+
         UNKNOWN_TYPE(type_name_from_id(last_obj.type_id));
     }
     
 }
 
 void write_file(runtime_t * runtime) {
+    
     if (runtime->stack.len <= 1) {
         raise_exception("not enough items on stack (need val, file)", 1);
         return;       
@@ -163,7 +178,7 @@ void write_file(runtime_t * runtime) {
         
         ezc_file_t * v = (ezc_file_t *)file_obj.data;
 
-        if (v->fp == NULL && !_open_file(v, "w+")) {
+        if (v->fp == NULL && !_open_file(v, "w")) {
             raise_exception("file object is null pointer and could not be opened", 1);
             return;
         }
@@ -188,6 +203,8 @@ void write_file(runtime_t * runtime) {
         estack_push(&runtime->stack, new_file_obj);
 
         open_file(runtime);
+
+        if (has_exception()) return;
 
         estack_push(&runtime->stack, to_write);
 
@@ -225,13 +242,15 @@ void read_file(runtime_t * runtime) {
 
         if (v->fp == stdin) {
             read_buffer = malloc(1);
-            char * line = NULL;
+            #define BUF_SIZE 4096
+            char * line = malloc(BUF_SIZE);
             size_t line_len;
             size_t total_len = 0;
             //printf("asdfasdf\n");
-            while (getline(&line, &line_len, stdin) != -1) {
+            while (fgets(line, BUF_SIZE, stdin) != NULL) {
+                line_len = strlen(line);
                 read_buffer = realloc(read_buffer, total_len + line_len + 1);
-                
+
                 strcpy(read_buffer + total_len, line);
                 read_buffer[total_len + strlen(line)] = '\n';
 
@@ -263,8 +282,7 @@ void read_file(runtime_t * runtime) {
 
         obj_parse(str_type, &read_obj, read_buffer);
 
-
-        //free(read_buffer);
+        free(read_buffer);
 
         estack_push(&runtime->stack, file_obj);
         estack_push(&runtime->stack, read_obj);
@@ -274,9 +292,16 @@ void read_file(runtime_t * runtime) {
 
         obj_construct(file_type, &new_file_obj, file_obj);
 
+        ezc_file_t * v = (ezc_file_t *)new_file_obj.data;
+
+        if (!_open_file(v, "r")) {
+            sprintf(to_raise, "could not open file '%s'", v->name);
+            raise_exception(to_raise, 1);
+            return;
+        }
+
         estack_push(&runtime->stack, new_file_obj);
 
-        open_file(runtime);
         read_file(runtime);
 
     } else {
