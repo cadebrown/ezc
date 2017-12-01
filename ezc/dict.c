@@ -30,6 +30,15 @@ void dict_set(dict_t * dict, char * key, obj_t obj) {
     }
 }
 
+obj_t dict_get(dict_t * dict, char * key) {
+    int idx = dict_index(dict, key);
+    if (idx < 0) {
+        return NULL_OBJ;
+    } else {
+        return dict->vals[idx];
+    }
+}
+
 int dict_index(dict_t * dict, char * key) {
     int i;
     for (i = 0; i < dict->len; ++i) {

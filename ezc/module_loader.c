@@ -12,9 +12,13 @@ int num_search_paths = 0;
 int max_search_path_strlen = 0;
 
 
+
+int raised_code = 0;
+char *raised_exception = NULL;
+
+
 // start out large so that system types are enough, and keep this as a block
 int id_index = 0x1000;
-
 
 int num_registered_modules = 0;
 module_t * registered_modules = NULL;
@@ -25,7 +29,6 @@ type_t * registered_types = NULL;
 module_utils_t utils;
 
 void init_module_loader() {
-    
 
     utils.type_exists_id = &type_exists_id;
     utils.type_exists_name = &type_exists_name;
@@ -40,7 +43,29 @@ void init_module_loader() {
     utils.function_from_name = &function_from_name;
     utils.function_name_from_id = &function_name_from_id;
     utils.function_id_from_name = &function_id_from_name;
+
+    utils.import_module = &import_module;
+
+    utils.raise_exception = &raise_exception;
+
+    utils.num_functions = &num_registered_functions;
+    utils.num_types = &num_registered_types;
+    utils.num_modules = &num_registered_modules;
+    utils.types = &registered_types;
+    utils.modules = &registered_modules;
+    utils.functions = &registered_functions;
+
 }
+
+void raise_exception(char * exception, int exitcode) {
+    
+    raised_exception = exception;
+
+    if (exitcode != 0) {
+        raised_code = exitcode;
+    }
+}
+
 
 void register_type(type_t type) {
     num_registered_types++;
@@ -205,6 +230,9 @@ bool import_module(char * name) {
     }
     return found;
 }
+
+#define FAIL_LOAD_MODULE(reason) printf("error while loading module '%s': %s\n", name, reason); return false;
+
 bool load_module(module_t * module, char * name) {
     char * cur_search = (char *)malloc(max_search_path_strlen + strlen(LIBRARY_PRE) + 2 * strlen(name) + strlen(LIBRARY_EXT) + 4);
     int i, j, csoff;
@@ -249,23 +277,19 @@ bool load_module(module_t * module, char * name) {
     free(cur_search);
 
     if (handle == NULL) {
-        printf("Did not find library by name '%s'\n", name);
-        printf("dlerror: %s\n", dlerror());
-        return false;
+        FAIL_LOAD_MODULE("module not found");
     } else {
         module->lib_data = handle;
         
-        module->init = (module_init_t *)dlsym(module->lib_data, "init");
+        module_init_t * module_init = (module_init_t *)dlsym(module->lib_data, "init");
 
-        if (module->init == NULL) {
-            printf("Could not find init() method\n");
-            printf("dlerror: %s\n", dlerror());
-            return false;
+        if (module_init == NULL) {
+            FAIL_LOAD_MODULE("module has no init() method");
         } else {
-            module->init(id_index, utils);
+            module_init(id_index, utils);
             module_export_t * exported = (module_export_t *)dlsym(module->lib_data, "exported");
             if (exported == NULL) {
-                printf("error: cannot find exported values for module '%s'\n", name);
+                FAIL_LOAD_MODULE("module lacks an 'exported' symbol");
             } else {
                 module->exported = *exported;
                 int j;

@@ -21,6 +21,8 @@ test-driver
 
 .vscode/
 
+*.out
+
 ezcconfig.h
 
 build/

@@ -77,8 +77,9 @@ int main(int argc, char ** argv) {
 
     // import all defaults here
 
-    import_module("systypes");
-    import_module("std_func");
+    import_module("ezc.types");
+    import_module("ezc.functions");
+    import_module("ezc.io");
 
     int i;
     for (i = 0; i < num_to_import; ++i) {
@@ -89,17 +90,19 @@ int main(int argc, char ** argv) {
     init_runtime(&runtime);
 
     if (expression != NULL) {
-        run_code(&runtime, expression);
+        runnable_t expr_run;
+        runnable_init_str(&expr_run, expression);
+        run_runnable(&runtime, &expr_run);
 
-        if (function_exists_name("dump")) {
-            printf("\nfinal results\n");
-            printf("-------------\n");
+        if (log_get_level() >= LOG_DEBUG && function_exists_name("dump")) {
+            log_debug("\nfinal results\n");
+            log_debug("-------------\n");
             function_t dump_func = function_from_name("dump");
             dump_func.function(&runtime);
         }
 
     } else {
-        printf("expression was null\n");
+        log_info("expression was null\n");
     }
 
 

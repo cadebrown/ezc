@@ -39,3 +39,22 @@ obj_t estack_get(estack_t * estack, int i) {
         return estack->vals[i];
     }
 }
+
+void estack_set(estack_t * estack, int i, obj_t val) {
+    if (i < 0 || i >= estack->len) {
+
+    } else {
+        estack->vals[i] = val;
+    }
+}
+
+
+
+void estack_swaptop(estack_t * estack) {
+    obj_t last = estack_pop(estack);
+    obj_t second_last = estack_pop(estack);
+
+    estack_push(estack, last);
+    estack_push(estack, second_last);
+}
+

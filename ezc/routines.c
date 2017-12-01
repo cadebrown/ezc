@@ -6,7 +6,13 @@
 
 #include "estack.h"
 #include "dict.h"
+
+#ifndef __EZCMODULE_H__
 #include "module_loader.h"
+#endif
+
+#include "ezclang.h"
+
 
 obj_t obj_copy(obj_t input) {
     obj_t ret = input;
@@ -20,17 +26,82 @@ void obj_free(obj_t * obj) {
     obj_type.destroyer(obj);
 }
 
+void obj_construct(type_t type, obj_t * to, obj_t from) {
+    to->type_id = type.id;
+    type.constructor(to, from);    
+}
+
 void init_runtime(runtime_t * runtime) {
     estack_init(&runtime->stack);
     dict_init(&runtime->globals);
 }
 
-void run_code(runtime_t * runtime, char * ezc_source_code) {
+bool str_obj_force(char ** out, obj_t in) {
+    if (!type_exists_name("str")) {
+        raise_exception("no str type", 1);
+        return false;
+    }
+
+    type_t str_type = type_from_name("str");
+    if (in.type_id == str_type.id) {
+        *out = malloc(in.data_len);
+        strcpy(*out, (char *)in.data);
+        return true;
+    } else {
+        char to_raise[EXCEPTION_LEN];
+        sprintf(to_raise, "object is not a string, but is '%s'", type_name_from_id(in.type_id));
+
+        raise_exception(to_raise, 1);
+        return false;
+    }
+
+}
+
+void runnable_init_str(runnable_t * runnable, char * _src) {
+    int lines = 0;
+    char * src = malloc(strlen(_src) + 1);
+    strcpy(src, _src);
+    char * delim = NEWLINE_STR;
+    char * cur_line = strtok(src, delim);
+
+    while (cur_line != NULL) {
+        cur_line = strtok(NULL, delim);
+        lines++;
+    }
+
+    runnable->num_lines = lines;
+    runnable->lines = malloc(sizeof(char *) * lines);
+    
+    strcpy(src, _src);
+    
+    cur_line = strtok(src, delim);
+
+    int i = 0;
+
+    while (cur_line != NULL) {
+        runnable->lines[i] = malloc(strlen(cur_line) + 1);
+        strcpy(runnable->lines[i], cur_line);
+        
+        cur_line = strtok(NULL, delim);
+        i++;
+    }
+}
+
+
+void run_runnable(runtime_t * runtime, runnable_t * runnable) {
+    int i;
+    for (i = 0; i < runnable->num_lines; ++i) {
+        run_str(runtime, runnable->lines[i], runnable, i);
+    }
+}
+
+void run_str(runtime_t * runtime, char * ezc_source_code, runnable_t * runnable, int linenum) {
     char * tmp = malloc(strlen(ezc_source_code));
     
     int c_off = 0;
     int c_obj_off;
 
+    int loop_start_off;
 
     obj_t str_obj;
     type_t str_type;
@@ -42,56 +113,72 @@ void run_code(runtime_t * runtime, char * ezc_source_code) {
         return;
     }
 
-    #define IS_SPECIAL(c) (c == ':' || c == '!')
-    #define IS_QUOTE(c) (c == '\'' || c == '"')
+    // current character
+    #define cchar (ezc_source_code[c_off])
+    // last character
+    #define lchar (ezc_source_code[c_off - 1])
+
+    #define TRAVERSE(cond, block) while (c_off < strlen(ezc_source_code) && (cond)) { \
+        block; \
+        c_off++; \
+    }
+
+    // raise error while compiling
+    #define craise(reason, code) raise_exception(reason, code); goto handle;
+
+    // preallocated exception buffer
+    char to_raise[EXCEPTION_LEN];
 
 
     while (c_off < strlen(ezc_source_code)) {
+        loop_start_off = c_off;
 
         // cast using `:TYPE`
-        if (ezc_source_code[c_off] == ':') {
+        if (cchar == CAST) {
             // tmp will be equal to TYPE
             c_off++;
             c_obj_off = c_off;
-            while (c_off < strlen(ezc_source_code) && ezc_source_code[c_off] != ' ' && !IS_SPECIAL(ezc_source_code[c_off])) {
-                tmp[c_off - c_obj_off] = ezc_source_code[c_off];
-                c_off++;
-            }
-            tmp[c_off - c_obj_off] = 0;
+            TRAVERSE(!IS_SPECIAL(cchar), 
+                tmp[c_off - c_obj_off] = cchar;
+            );
+            tmp[c_off - c_obj_off] = CHAR0;
 
             type_t to_type;
             if (type_exists_name(tmp)) {
                 to_type = type_from_name(tmp);
             } else {
-                printf("error: could not find type '%s'\n", tmp);
-                return;
+                sprintf(to_raise, "could not find type '%s'", tmp);
+                craise(to_raise, 1);
             }
 
             if (runtime->stack.len <= 0) {
-                printf ("error (while casting): no objects on stack\n");
-                return;
+                sprintf(to_raise, "no objects on stack to cast");
+                craise(to_raise, 1);
             } else {
                 obj_t last_on_stack = estack_pop(&runtime->stack);
                 obj_t new;
+                new.type_id = to_type.id;
                 to_type.constructor(&new, last_on_stack);
                 new.type_id = to_type.id;
                 estack_push(&runtime->stack, new);
             }
         
-        } else if (ezc_source_code[c_off] == '!') {
+        } else if (cchar == CALL_FUNCTION) {
             if (runtime->stack.len <= 0) {
-                printf ("no objects on the stack\n");
-                return;
+                sprintf(to_raise, "no function on the stack");
+                craise(to_raise, 1);
             }
             obj_t last_on_stack = estack_pop(&runtime->stack);
             if (last_on_stack.type_id != str_type.id) {
-                printf ("error (while finding function to execute): last item was not a str\n");
+                sprintf(to_raise, "the function you are trying to call is not a string (it is of type '%s')", type_name_from_id(last_on_stack.type_id));
+                craise(to_raise, 1);
                 return;
             }
 
             char * func_name = last_on_stack.data;
             if (!function_exists_name(func_name)) {
-                printf("error: could not find function: %s\n", func_name);
+                sprintf(to_raise, "no function named '%s'", func_name);
+                craise(to_raise, 1);
                 return;
             }
 
@@ -103,24 +190,49 @@ void run_code(runtime_t * runtime, char * ezc_source_code) {
 
         } else {
             // this section is for adding on a (string object) to the stack
-            
-            if (IS_QUOTE(ezc_source_code[c_off])) {
-                char which_quote_used = ezc_source_code[c_off];
+            if (IS_QUOTE(cchar)) {
+                char which_quote_used = cchar;
                 c_off++;
-                // handle escapes
                 c_obj_off = c_off;
-                while (c_off < strlen(ezc_source_code) && ezc_source_code[c_off] != which_quote_used && ezc_source_code[c_off - 1] !=  '\\') {
-                    tmp[c_off - c_obj_off] = ezc_source_code[c_off];
+                int num_escapes = 0;
+                TRAVERSE(cchar != which_quote_used,
+                    if (cchar == ESC) {
+                        c_off++;
+                        num_escapes++;
+                        char escaped = 0;
+                        switch (cchar) {
+                            case 'n':
+                                escaped = '\n';
+                                break;
+                            case '"':
+                                escaped = '"';
+                                break;
+                            case '\'':
+                                escaped = '\'';
+                                break;
+                            default:
+                                sprintf(to_raise, "unknown escape sequence '\\%c' in string literal", cchar);
+                                raise_exception(to_raise, 1);
+                                break;
+                        }
+                        tmp[c_off - c_obj_off - num_escapes] = escaped;
+                    } else {
+                        tmp[c_off - c_obj_off - num_escapes] = cchar;
+                    }
+                );
+                tmp[c_off - c_obj_off - num_escapes] = CHAR0;
+                if (cchar != which_quote_used) {
+                    //fail(runtime, 1);
+                    //exit(1);
+                    craise("no terminating string", 1);
+                } else {
                     c_off++;
                 }
-                c_off++;
-                tmp[c_off - c_obj_off] = 0;
             } else {
                 c_obj_off = c_off;
-                while (c_off < strlen(ezc_source_code) && ezc_source_code[c_off] != ' ' && !IS_SPECIAL(ezc_source_code[c_off])) {
-                    tmp[c_off - c_obj_off] = ezc_source_code[c_off];
-                    c_off++;
-                }
+                TRAVERSE(!IS_SPECIAL(cchar), 
+                    tmp[c_off - c_obj_off] = cchar;
+                );
                 tmp[c_off - c_obj_off] = 0;
             }
 
@@ -129,10 +241,26 @@ void run_code(runtime_t * runtime, char * ezc_source_code) {
             estack_push(&runtime->stack, str_obj);
         }
 
-        // skip whitespace
-        while (c_off < strlen(ezc_source_code) && ezc_source_code[c_off] == ' ') {
-            c_off++;
+        handle:
+        #ifndef __EZCMODULE_H__
+        if (raised_code != 0) {
+            printf("Exception was raised: %s\n", raised_exception);
+            if (runnable != NULL) {
+
+                printf("At:\n");
+                printf("%s\n", ezc_source_code);
+                int j;
+                for (j = 0; j < loop_start_off; ++j) {
+                    printf(" ");
+                }
+                printf("^\n");
+            }
+            exit(raised_code);
         }
+        #endif
+        
+        // skip whitespace
+        TRAVERSE(cchar == SPACE || cchar == SEPARATOR, )
     }
 }
 

@@ -1,5 +1,7 @@
 
-#define MODULE_NAME systypes
+#define MODULE_NAME "ezc.types"
+
+#define MODULE_DESCRIPTION "defines ezc standard library types"
 
 #include "ezcmodule.h"
 
@@ -14,37 +16,30 @@ void byte_parser(obj_t * ret, char * value) {
     
     if (strlen(value) == 1) {
         ((char *)ret->data)[0] = value[0];
-        ret->type_id = utils.type_id_from_name("byte");
     } else if (strlen(value) > 2 && strlen(value) <= 4 && value[0] == '0' && value[1] == 'x' && strtol(value, NULL, 0) <= 0xff) {
         ((char *)ret->data)[0] = strtol(value, NULL, 0);
-        ret->type_id = utils.type_id_from_name("byte");
     } else {
-        ret->type_id = 0;
-        printf("error constructing byte from '%s'\n", value);
+        sprintf(to_raise, "error parsing byte from '%s'\n", value);
+        raise_exception(to_raise, 1)
     }
 }
 
 void byte_constructor(obj_t * ret, obj_t value) {
-    type_t str_type = utils.type_from_name("str"), input_type = utils.type_from_id(value.type_id);
-    bool has_str = utils.type_exists_name("str");
+    type_t str_type = type_from_name("str"), input_type = type_from_id(value.type_id);
+    bool has_str = type_exists_name("str");
     
     // if passed in a string, parse it
     if (has_str && str_type.id == input_type.id) {
         byte_parser(ret, (char *)value.data);
     } else {
-        ret->type_id = 0;
-        printf("Don't know how to create 'byte' from type '%s'\n", input_type.name);
+        UNKNOWN_CONVERSION(type_name_from_id(ret->type_id), type_name_from_id(value.type_id));
     }
 }
 
 void byte_representation(obj_t * obj, char ** ret) {
     char v = ((char *)obj->data)[0];
-    *ret = malloc(5);
-    (*ret)[0] = '0';
-    (*ret)[1] = 'x';
-    (*ret)[2] = (v >> 4) + '0';
-    (*ret)[3] = (v & 15) + '0';
-    (*ret)[4] = 0;
+    *ret = malloc(6);
+    sprintf(*ret, "0x%x", 0xff & (int)v);
 }
 
 void byte_destroyer(obj_t * ret) {
@@ -59,7 +54,7 @@ void byte_destroyer(obj_t * ret) {
 void int_parser(obj_t * ret, char * value) {
     ret->data_len = sizeof(int);
     ret->data = malloc(ret->data_len);
-    ret->type_id = utils.type_id_from_name("int");
+
     *((int *)ret->data) = strtol(value, NULL, 0);
 }
 
@@ -69,14 +64,13 @@ void int_representation(obj_t * obj, char ** ret) {
 }
 
 void int_constructor(obj_t * ret, obj_t value) {
-    type_t input_type = utils.type_from_id(value.type_id);
-    type_t str_type = utils.type_from_name("str");
+    type_t input_type = type_from_id(value.type_id);
+    type_t str_type = type_from_name("str");
 
     if (input_type.id == str_type.id) {
         int_parser(ret, value.data);
     } else {
-        printf("error (in int constructor): don't know how to make int from type '%s'", input_type.name);
-        *ret = NULL_OBJ;
+        UNKNOWN_CONVERSION(type_name_from_id(ret->type_id), type_name_from_id(value.type_id));
     }
 }
 
@@ -91,7 +85,7 @@ void int_destroyer(obj_t * ret) {
 void str_parser(obj_t * ret, char * value) {
     ret->data_len = strlen(value);
     ret->data = malloc(ret->data_len);
-    ret->type_id = utils.type_id_from_name("str");
+    ret->type_id = type_id_from_name("str");
     strcpy(ret->data, value);    
 }
 
@@ -101,10 +95,14 @@ void str_representation(obj_t * obj, char ** ret) {
 }
 
 void str_constructor(obj_t * ret, obj_t value) {
-    type_t input_type = utils.type_from_id(value.type_id);
-    char * repr;
-    input_type.representation(&value, &repr);
-    str_parser(ret, repr);
+    type_t input_type = type_from_id(value.type_id);
+    type_t str_type = type_from_name("str");
+
+    if (input_type.id == str_type.id) {
+        str_parser(ret, value.data);
+    } else {
+        UNKNOWN_CONVERSION(type_name_from_id(ret->type_id), type_name_from_id(value.type_id));
+    }
 }
 
 void str_destroyer(obj_t * ret) {
@@ -120,9 +118,9 @@ int init (int type_id, module_utils_t utils) {
 
     init_exported(type_id, utils);
 
-    add_type("byte", byte_constructor, byte_parser, byte_representation, byte_destroyer);
-    add_type("int", int_constructor, int_parser, int_representation, int_destroyer);
-    add_type("str", str_constructor, str_parser, str_representation, str_destroyer);
+    add_type("byte", "1 byte (8 bits) of memory, and this corresponds to the C type 'char'", byte_constructor, byte_parser, byte_representation, byte_destroyer);
+    add_type("int", "a system 'int' type, which is normally signed 32 bits", int_constructor, int_parser, int_representation, int_destroyer);
+    add_type("str", "a 'char *' in C, this is a string type implementation", str_constructor, str_parser, str_representation, str_destroyer);
 
     return 0;
 }

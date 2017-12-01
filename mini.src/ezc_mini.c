@@ -617,7 +617,6 @@ void eval(char *code) {
 }
 
 void interperet() {
-	printf(PACKAGE_NAME " (mini)\n");
     keep_alive_if_fail = true;
     
     #ifdef USE_READLINE
@@ -628,6 +627,7 @@ void interperet() {
             add_history(inpt);
         }
     #else
+    #define MAX_INTERPERET_LEN 4096
     	char line[MAX_INTERPERET_LEN];
         char cc;
         printf(" > ");
@@ -653,12 +653,9 @@ void show_help() {
         printf("  -t, --type                         Set the default type (double, mpf, mpfr)\n");
         printf("  -v, --version, -i, --info          Print version and info, then quit\n");
         printf("\n");
-        printf("<" PACKAGE_BUGREPORT ">\n");
 }
 
 void show_info() {
-        printf(PACKAGE_NAME " (mini)\n");
-        printf("Version: " PACKAGE_VERSION "\n");
         printf("\n");
         printf("Compiled with:\n");
         #ifdef USE_GMP
@@ -672,7 +669,6 @@ void show_info() {
         #endif
 
         printf("\n");
-        printf("<" PACKAGE_BUGREPORT ">\n");
 }
 
 int main(int argc, char *argv[]) {

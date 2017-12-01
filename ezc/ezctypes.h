@@ -31,6 +31,8 @@ typedef struct type_t {
 
     char * name;
 
+    char * description;
+
     constructor_t * constructor;
 
     parser_t * parser;
@@ -86,11 +88,15 @@ typedef struct function_t {
 
     char * name;
 
+    char * description;
+
     raw_function_t * function;
 
 } function_t;
 
 typedef struct module_export_t {
+
+    char * description;
 
     int num_types;
     type_t * types;
@@ -106,6 +112,39 @@ typedef bool get_type_id_t(type_t *, int);
 
 typedef bool get_type_name_t(type_t *, char*);
 
+#define RUNNABLE_LIVE 0x0001
+#define RUNNABLE_TEXT 0x0002
+#define RUNNABLE_FILE 0x0003
+#define RUNNABLE_EVAL 0x0004
+
+typedef enum runnable_flag_t { LIVE, TEXT, MODULE, SCRIPT, EVAL } runnable_flag_t;
+
+typedef struct runnable_t {
+
+    // should be runnable_flag
+    runnable_flag_t flag;
+
+    char * from;
+
+    int num_lines;
+    char ** lines;
+
+} runnable_t;
+
+typedef struct module_t {
+
+    // this is the name in string
+    char * name;
+
+    module_export_t exported;
+
+    // where it was loaded from
+    char * path;
+
+    // this is returned by dlopen()
+    void * lib_data;
+
+} module_t;
 
 
 typedef struct module_utils_t {
@@ -124,8 +163,24 @@ typedef struct module_utils_t {
     char *     (* function_name_from_id  )(int);
     int        (* function_id_from_name  )(char *);
 
+    int * num_types;
+    type_t ** types;
+
+    int * num_functions;
+    function_t ** functions;
+
+    int * num_modules;
+    module_t ** modules;
+
+    bool       (* import_module)(char *);
+
+    void       (* raise_exception)(char *, int);
+
 } module_utils_t;
 
+
+// returns status code, takes type_id offset (so that they are unique)
+typedef int module_init_t(int, module_utils_t utils);
 
 
 // MAKE SURE TO INCLUDE 'ezcsymboldefs.h' IN SOME FILE

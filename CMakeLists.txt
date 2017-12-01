@@ -8,6 +8,8 @@ set (CMAKE_C_FLAGS "-O2 -g -Wall -pedantic -std=c99 ${CMAKE_C_FLAGS}")
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D__FILENAME__='\"$(subst ${CMAKE_SOURCE_DIR}/,,$(abspath $<))\"'")
 
+set(EZC_MODULE_DIR "lib/ezc" CACHE STRING "Where to install ezc modules that are build")
+
 configure_file (
   "${PROJECT_SOURCE_DIR}/ezcconfig.h.in"
   "${PROJECT_BINARY_DIR}/ezcconfig.h"

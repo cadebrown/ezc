@@ -1,0 +1,403 @@
+
+#define MODULE_NAME "ezc.functions"
+
+#define MODULE_DESCRIPTION "defines functions in the ezc standard library"
+
+
+#include "ezcmodule.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+
+obj_t repr_obj(obj_t obj) {
+    type_t str_type = type_from_name("str");
+
+    obj_t res;
+
+
+    if (obj.type_id == NULL_TYPE.id) {
+        str_type.parser(&res, "null");
+    } else {
+        char * repr_str;
+
+        type_t obj_type = type_from_id(obj.type_id);
+
+        obj_type.representation(&obj, &repr_str);
+
+        str_type.parser(&res, repr_str);
+    
+        free(repr_str);
+    }
+
+
+    return res;
+}
+
+void repr(runtime_t * runtime) {
+    if (runtime->stack.len <= 0) {
+        raise_exception("no items on stack", 1);
+    }
+
+    if (!type_exists_name("str")) {
+        raise_exception("no 'str' type found for representing", 1);
+    }
+
+    estack_push(&runtime->stack, repr_obj(estack_pop(&runtime->stack)));
+}
+
+void dump(runtime_t * runtime) {
+    int i;
+
+    printf("globals[%d]:\n", runtime->globals.len);
+    obj_t c_repr;
+    type_t c_type;
+    for (i = 0; i < runtime->globals.len; ++i) {
+        c_repr = repr_obj(runtime->globals.vals[i]);
+        c_type = type_from_id(runtime->globals.vals[i].type_id);
+        printf ("  '%s': '%s':%s\n", runtime->globals.keys[i], (char *)c_repr.data, c_type.name);
+        obj_free(&c_repr);
+    }
+
+    printf("stack[%d]:\n", runtime->stack.len);
+
+    for (i = 0; i < runtime->stack.len; ++i) {
+        c_repr = repr_obj(runtime->stack.vals[i]);
+        c_type = type_from_id(runtime->stack.vals[i].type_id);
+        printf ("  %d: '%s':%s\n", i, (char *)c_repr.data, c_type.name);
+        obj_free(&c_repr);
+    }
+}
+
+void delete_last_item(runtime_t * runtime) {
+    ASSURE_NONEMPTY_STACK;
+
+    obj_t last_item = estack_pop(&runtime->stack);
+    obj_free(&last_item);
+}
+
+
+void delete_last_item_repeat(runtime_t * runtime) {
+    while (runtime->stack.len > 0) {
+        delete_last_item(runtime);
+    }
+}
+
+void eval_last_item(runtime_t * runtime) {
+    ASSURE_NONEMPTY_STACK;
+
+    obj_t last_obj = estack_pop(&runtime->stack);
+    char * code_to_run;
+    if (!str_obj_force(&code_to_run, last_obj)) return;
+    
+    runnable_t last_expr;
+    
+    runnable_init_str(&last_expr, code_to_run);
+    run_runnable(runtime, &last_expr);
+}
+
+void concat(runtime_t * runtime) {
+    if (runtime->stack.len <= 1) {
+        raise_exception("not enough items on stack to concatenate", 1);
+    }
+    obj_t a, b, r;
+    type_t str_type = type_from_name("str");
+    b = estack_pop(&runtime->stack);
+    a = estack_pop(&runtime->stack);
+
+    if (a.type_id != str_type.id || b.type_id != str_type.id) {
+        raise_exception("arguments are not 'str' objects", 1);
+    }
+    char * res = malloc(a.data_len + b.data_len);
+    strcpy(res, a.data);
+    strcat(res, b.data);
+    str_type.parser(&r, res);
+
+    free(res);
+
+    estack_push(&runtime->stack, r);
+}
+
+void concat_repeat(runtime_t * runtime) {
+    while (runtime->stack.len >= 2) {
+        concat(runtime);
+    }
+}
+
+void import(runtime_t * runtime) {
+    ASSURE_NONEMPTY_STACK;
+
+    char * module_name;
+    obj_t last_obj = estack_pop(&runtime->stack);
+
+    if (!str_obj_force(&module_name, last_obj)) return;
+
+    import_module(module_name);
+
+    free(module_name);
+    obj_free(&last_obj);
+}
+
+void import_repeat(runtime_t * runtime) {
+    while (runtime->stack.len >= 1) {
+        import(runtime);
+    }
+}
+
+bool print_type_id(int id) {
+    if (!type_exists_id(id)) {
+        raise_exception("unknown type", 1);
+        return false;
+    }
+    type_t type = type_from_id(id);
+
+    printf(":%s\n", type.name);
+    printf("  %s\n\n", type.description);
+    printf("  id: %d\n", type.id);
+    printf("  constructor: %p\n", (void *)type.constructor);
+    printf("  parser: %p\n", (void *)type.parser);
+    printf("  representation: %p\n", (void *)type.representation);
+    printf("  destroyer: %p\n", (void *)type.destroyer);
+
+    return true;
+}
+
+bool print_func_id(int id) {
+    if (!function_exists_id(id)) {
+        raise_exception("unknown function", 1);
+        return false;
+    }
+
+    function_t func = function_from_id(id);
+
+    printf("%s!\n", func.name);
+    printf("  %s\n\n", func.description);
+    printf("  id: %d\n", func.id);
+    printf("  addr: %p\n", (void *)func.function);
+    return true;
+}
+
+bool print_module_name(char * name) {
+    module_t name_module;
+
+    bool found_module = false;
+
+    int i;
+    for (i = 0; i < num_registered_modules; ++i) {
+        if (strcmp(registered_modules[i].name, name) == 0) {
+            name_module = registered_modules[i];
+            found_module = true;
+            break;
+        }
+    }
+
+    if (!found_module) {
+        sprintf(to_raise, "unknown module %s", name);
+        raise_exception(to_raise, 1);
+    } else {
+        printf("[%s]\n", name_module.name);
+        printf("  %s\n\n", name_module.exported.description);
+
+        printf("  types[%d]: ", name_module.exported.num_types);
+        for (i = 0; i < name_module.exported.num_types; ++i) {
+            printf("%s", name_module.exported.types[i].name);
+            if (i != name_module.exported.num_types - 1) printf(", ");
+        }
+        printf("\n");
+
+        printf("  functions[%d]: ", name_module.exported.num_functions);
+        for (i = 0; i < name_module.exported.num_functions; ++i) {
+            printf("%s", name_module.exported.functions[i].name);
+            if (i != name_module.exported.num_functions - 1) printf(", ");
+        }
+        printf("\n");
+    }
+    return found_module;
+}
+
+void funcinfo(runtime_t * runtime) {
+    ASSURE_NONEMPTY_STACK;
+
+    obj_t last_obj = estack_pop(&runtime->stack);
+
+    char * func_name;
+
+    if (!str_obj_force(&func_name, last_obj)) return;
+
+    int func_id = function_id_from_name(func_name);
+
+    print_func_id(func_id);
+
+}
+
+void typeinfo(runtime_t * runtime) {
+    ASSURE_NONEMPTY_STACK;
+
+    obj_t last_obj = estack_pop(&runtime->stack);
+
+    char * type_name;
+
+    if (!str_obj_force(&type_name, last_obj)) return;
+
+    int type_id = type_id_from_name(type_name);
+
+    print_type_id(type_id);
+}
+
+
+
+void moduleinfo(runtime_t * runtime) {
+    if (runtime->stack.len <= 0) {
+        raise_exception("no objects on stack", 1);
+    }
+
+    obj_t last_obj = estack_pop(&runtime->stack);
+
+    char * module_name;
+
+    if (!str_obj_force(&module_name, last_obj)) return;
+
+
+    print_module_name(module_name);
+}
+
+
+void typeinfo_all(runtime_t * runtime) {
+    int i;
+    for (i = 0; i < num_registered_types; ++i) {
+        print_type_id(registered_types[i].id);
+        if (i != num_registered_types - 1) printf("\n");
+    }
+}
+
+void funcinfo_all(runtime_t * runtime) {
+    int i;
+    for (i = 0; i < num_registered_functions; ++i) {
+        print_func_id(registered_functions[i].id);
+        if (i != num_registered_functions - 1) printf("\n");
+    }
+}
+
+void moduleinfo_all(runtime_t * runtime) {
+    int i;
+    for (i = 0; i < num_registered_modules; ++i) {
+        print_module_name(registered_modules[i].name);
+        if (i != num_registered_modules - 1) printf("\n");
+    }
+}
+
+
+
+void list_types(runtime_t * runtime) {
+    int i;
+    for (i = 0; i < num_registered_types; ++i) {
+        printf("%s", registered_types[i].name);
+        if (i != num_registered_types - 1) printf(", ");
+    }
+    printf("\n");
+}
+
+void list_functions(runtime_t * runtime) {
+    int i;
+    for (i = 0; i < num_registered_functions; ++i) {
+        printf("%s", registered_functions[i].name);
+        if (i != num_registered_functions - 1) printf(", ");
+    }
+    printf("\n");
+}
+
+void list_modules(runtime_t * runtime) {
+    int i;
+    for (i = 0; i < num_registered_modules; ++i) {
+        printf("%s", registered_modules[i].name);
+        if (i != num_registered_modules - 1) printf(", ");
+    }
+    printf("\n");
+}
+
+void set_global_dict(runtime_t * runtime) {
+    if (runtime->stack.len <= 1) {
+        raise_exception("not enough items on stack (need value, key)", 1);
+    }
+    
+    obj_t _key, _val;
+
+    _key = estack_pop(&runtime->stack);
+
+    char * _key_str;
+
+    str_obj_force(&_key_str, _key);
+
+    _val = estack_pop(&runtime->stack);
+
+    dict_set(&runtime->globals, _key_str, _val);
+
+}
+
+void get_global_dict(runtime_t * runtime) {
+    if (runtime->stack.len <= 0) {
+        raise_exception("not enough items on stack (need key)", 1);
+    }
+    
+    obj_t _key;
+
+    _key = estack_pop(&runtime->stack);
+
+    char * _key_str;
+
+    str_obj_force(&_key_str, _key);
+
+    obj_t val = dict_get(&runtime->globals, _key_str);
+
+    estack_push(&runtime->stack, val);
+
+}
+
+void put_null(runtime_t * runtime) {
+    estack_push(&runtime->stack, NULL_OBJ);
+}
+
+
+
+int init (int id, module_utils_t utils) {
+    init_exported(id, utils);
+
+    add_function("repr", "pops on a string representation of an object to the stack", repr);
+    add_function("dump", "prints out the global dictionary and the stack", dump);
+    add_function("eval", "evaluates the last item on the stack as ezc source code", eval_last_item);
+
+    add_function("del", "deletes the last item on the stack, clearing any associated memory", delete_last_item);
+    add_function("del&", "deletes all items on the stack", delete_last_item_repeat);
+    add_function("concat", "concatenates the last two objects on the stack", concat);
+    add_function("concat&", "concatentates all objects on the stack", concat_repeat);
+    add_function("import", "imports a module by name", import);
+    add_function("import&", "imports each object on the stack as a module name", import_repeat);
+
+    add_function("type", "prints out info about the type specified by the last object on the stack", typeinfo);
+    add_function("type&", "prints out info about all types", typeinfo_all);
+    add_function("types", "prints out the names of all types", list_types);
+
+    add_function("function", "prints out info about the function that the previous item on the stack names", funcinfo);
+    add_function("function&", "prints out info about all functions", funcinfo_all);
+
+    add_function("functions", "prints out the names of all functions", list_functions);
+
+    add_function("module", "prints out info about the module with the previous item as a name", moduleinfo);
+    add_function("module&", "prints out info about all imported modules", moduleinfo_all);
+    add_function("modules", "prints out the names of all imported modules", list_modules);
+
+
+    add_function("@=", "sets the global dictionary from the last values on the stack being (val, key)", set_global_dict);
+    add_function("@", "gets the global dictionary from the last value on the stack being (key)", get_global_dict);
+
+
+    add_function("null", "puts a null object on the stack", put_null);
+
+
+
+    return 0;
+}
+
+
+

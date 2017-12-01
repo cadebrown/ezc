@@ -16,32 +16,17 @@
 #define LIBRARY_EXT ".so"
 #endif
 
+#include "ezctypes.h"
 
-// returns status code, takes type_id offset (so that they are unique)
-typedef int module_init_t(int, module_utils_t utils);
+int raised_code;
 
-typedef struct module_t {
-
-    // this is the name in string
-    char * name;
-
-    module_export_t exported;
-
-    // where it was loaded from
-    char * path;
-
-    // this is returned by dlopen()
-    void * lib_data;
-
-    module_init_t * init;
-
-} module_t;
-
+char *raised_exception;
 
 
 char ** search_paths;
 int num_search_paths;
 int max_search_path_strlen;
+
 
 // start out large so that system types are enough, and keep this as a block
 int id_index;
@@ -63,6 +48,9 @@ bool import_module(char * name);
 
 void register_type(type_t type);
 void register_module(module_t module);
+
+void raise_exception(char *, int);
+
 
 //// START module_utils methods
 
