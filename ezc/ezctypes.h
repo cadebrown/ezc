@@ -22,6 +22,8 @@ typedef void parser_t(obj_t *, char *);
 
 typedef void representation_t(obj_t *, char **);
 
+typedef void copier_t(obj_t *, obj_t *);
+
 typedef void destroyer_t(obj_t *);
 
 
@@ -35,11 +37,14 @@ typedef struct type_t {
 
     constructor_t * constructor;
 
+    copier_t * copier;
+
     parser_t * parser;
 
     representation_t * representation;
 
     destroyer_t * destroyer;
+
 
 } type_t;
 
@@ -78,9 +83,8 @@ typedef struct runtime_t {
 } runtime_t;
 
 
-
-
 typedef void raw_function_t(runtime_t *);
+
 
 typedef struct function_t {
 
@@ -93,6 +97,7 @@ typedef struct function_t {
     raw_function_t * function;
 
 } function_t;
+
 
 typedef struct module_export_t {
 

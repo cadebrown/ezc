@@ -105,7 +105,7 @@ void add_function(char * name, char * desc, raw_function_t * function) {
 }
 
 
-void add_type(char * name, char * desc, constructor_t * constructor, parser_t * parser, representation_t * representation, destroyer_t * destroyer) {
+void add_type(char * name, char * desc, constructor_t * constructor, copier_t * copier, parser_t * parser, representation_t * representation, destroyer_t * destroyer) {
     exported.num_types++;
     if (exported.types == NULL) {
         exported.types = malloc(sizeof(type_t) * exported.num_types);
@@ -119,6 +119,7 @@ void add_type(char * name, char * desc, constructor_t * constructor, parser_t * 
     made_type.description = malloc(strlen(desc) + 1);
     strcpy(made_type.description, desc);
     made_type.constructor = constructor;
+    made_type.copier = copier;
     made_type.parser = parser;
     made_type.representation = representation;
     made_type.destroyer = destroyer;

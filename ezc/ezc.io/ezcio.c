@@ -15,11 +15,14 @@ typedef struct ezc_file_t {
 
     char * name;
 
+    char * mode;
+
     FILE * fp;
 
 } ezc_file_t;
 
-void file_parser(obj_t * ret, char * value) {
+
+void file_parser(obj_t * ret, char * value) {    
     ret->data_len = sizeof(ezc_file_t);
     ret->data = malloc(ret->data_len);
 
@@ -32,6 +35,22 @@ void file_parser(obj_t * ret, char * value) {
 
     *((ezc_file_t * )ret->data) = efile;
 
+}
+
+void file_copier(obj_t * to, obj_t * from) {    
+    to->data_len = from->data_len;
+    to->data = malloc(to->data_len);
+
+    ezc_file_t * fromv = (ezc_file_t * )from->data;
+    ezc_file_t * tov = (ezc_file_t * )to->data;
+
+    tov->name = malloc(strlen(fromv->name) + 1);
+    strcpy(tov->name, fromv->name);
+
+    tov->mode = malloc(strlen(fromv->mode) + 1);
+    strcpy(tov->mode, fromv->mode);
+
+    tov->fp = fromv->fp;
 }
 
 void file_constructor(obj_t * ret, obj_t value) {
@@ -54,7 +73,8 @@ void file_representation(obj_t * obj, char ** ret) {
 
 void file_destroyer(obj_t * ret) {
     ezc_file_t * v = (ezc_file_t *)ret->data;
-    free(v->name);
+    if (v->name != NULL) free(v->name);
+    if (v->mode != NULL) free(v->mode);
     if (v->fp != NULL) {
         fclose(v->fp);
     }
@@ -65,8 +85,19 @@ void file_destroyer(obj_t * ret) {
 }
 
 
-bool _open_file(ezc_file_t * v) {
-    v->fp = fopen(v->name, "w");
+bool _open_file(ezc_file_t * v, char * _mode) {
+    v->mode = malloc(strlen(_mode) + 1);
+    strcpy(v->mode, _mode);
+
+    if (strcmp(v->name, "stdout") == 0) {
+        v->fp = stdout;
+    } else if (strcmp(v->name, "stderr") == 0) {
+        v->fp = stderr;
+    } else if (strcmp(v->name, "stdin") == 0) {
+        v->fp = stdin;
+    } else {
+        v->fp = fopen(v->name, _mode);
+    }
     
     if (v->fp == NULL) {
         sprintf(to_raise, "opening file '%s' failed, reason: %s", v->name, strerror(errno));
@@ -75,6 +106,19 @@ bool _open_file(ezc_file_t * v) {
     }
 
     return true;
+}
+
+bool _close_file(ezc_file_t * v) {
+    int res = fclose(v->fp);
+    v->fp = NULL;
+    if (v->mode != NULL) {
+        free(v->mode);
+    }
+    if (res == 0) {
+        return true;
+    } else {
+        return false;
+    }
 }
 
 void open_file(runtime_t * runtime) {
@@ -86,7 +130,7 @@ void open_file(runtime_t * runtime) {
 
     if (last_obj.type_id == file_type.id) {
         ezc_file_t * v = (ezc_file_t *)last_obj.data;
-        if (!_open_file(v)) return;
+        if (!_open_file(v, "r+")) return;
         estack_push(&runtime->stack, last_obj);
     } else if (last_obj.type_id == str_type.id) {
         obj_t new_file_obj;
@@ -104,6 +148,61 @@ void open_file(runtime_t * runtime) {
 void write_file(runtime_t * runtime) {
     if (runtime->stack.len <= 1) {
         raise_exception("not enough items on stack (need val, file)", 1);
+        return;       
+    }
+
+    obj_t to_write = estack_pop(&runtime->stack);
+
+    obj_t file_obj = estack_pop(&runtime->stack);
+
+    type_t file_type = type_from_name("file");
+    type_t str_type = type_from_name("str");
+
+
+    if (file_obj.type_id == file_type.id) {
+        
+        ezc_file_t * v = (ezc_file_t *)file_obj.data;
+
+        if (v->fp == NULL && !_open_file(v, "w+")) {
+            raise_exception("file object is null pointer and could not be opened", 1);
+            return;
+        }
+
+        if (to_write.data_len <= 1 || to_write.data == NULL) {
+            raise_exception("data to be written has nothing/is null", 1);
+            return;
+        }
+
+        if (fwrite(to_write.data, 1, to_write.data_len - 1, v->fp) != to_write.data_len - 1) {
+            printf("warning: writing did not complete, errors may have happened\n");
+        }
+
+
+        estack_push(&runtime->stack, file_obj);
+
+    } else if (file_obj.type_id == str_type.id) {
+        obj_t new_file_obj;
+
+        obj_construct(file_type, &new_file_obj, file_obj);
+
+        estack_push(&runtime->stack, new_file_obj);
+
+        open_file(runtime);
+
+        estack_push(&runtime->stack, to_write);
+
+        write_file(runtime);
+
+    } else {
+        
+        UNKNOWN_TYPE(type_name_from_id(file_obj.type_id));
+    }
+}
+
+void read_file(runtime_t * runtime) {
+    if (runtime->stack.len <= 0) {
+        raise_exception("not enough items on stack (need file)", 1);
+        return;
     }
 
     obj_t file_obj = estack_pop(&runtime->stack);
@@ -115,17 +214,60 @@ void write_file(runtime_t * runtime) {
     if (file_obj.type_id == file_type.id) {
         ezc_file_t * v = (ezc_file_t *)file_obj.data;
 
-        obj_t to_write = estack_pop(&runtime->stack);
+        if (v->fp == NULL && !_open_file(v, "r+")) {
+            raise_exception("file object is null pointer", 1);
+            return;
+        }
+        
+        obj_t read_obj;
 
+        char * read_buffer;
 
-        if (to_write.data_len == 0 || to_write.data == NULL) {
-            raise_exception("data to be written has nothing/is null", 1);
+        if (v->fp == stdin) {
+            read_buffer = malloc(1);
+            char * line = NULL;
+            size_t line_len;
+            size_t total_len = 0;
+            //printf("asdfasdf\n");
+            while (getline(&line, &line_len, stdin) != -1) {
+                read_buffer = realloc(read_buffer, total_len + line_len + 1);
+                
+                strcpy(read_buffer + total_len, line);
+                read_buffer[total_len + strlen(line)] = '\n';
+
+                total_len += strlen(line);
+            }
+
+        } else {
+            // normal file
+            fseek(v->fp, 0, SEEK_END);
+            int numbytes = ftell(v->fp);
+            fseek(v->fp, 0, SEEK_SET);
+
+            read_buffer = malloc(numbytes + 1);
+
+            if (read_buffer == NULL) {
+                raise_exception("mallocing buffer failed", 1);
+                return;       
+            }
+
+            int recv_bytes;
+
+            if ((recv_bytes = fread(read_buffer, 1, numbytes, v->fp)) != numbytes) {
+                printf("warning: reading did not complete, errors may have happened, numbytes=%d, recv_bytes=%d\n", numbytes, recv_bytes);
+            }
+
+            read_buffer[numbytes] = 0;
+
         }
 
-        if (fwrite(to_write.data, 1, to_write.data_len, v->fp) != to_write.data_len) {
-            printf("warning: writing did not complete, errors may have happened\n");
-        }
+        obj_parse(str_type, &read_obj, read_buffer);
 
+
+        //free(read_buffer);
+
+        estack_push(&runtime->stack, file_obj);
+        estack_push(&runtime->stack, read_obj);
 
     } else if (file_obj.type_id == str_type.id) {
         obj_t new_file_obj;
@@ -135,13 +277,66 @@ void write_file(runtime_t * runtime) {
         estack_push(&runtime->stack, new_file_obj);
 
         open_file(runtime);
-        write_file(runtime);
+        read_file(runtime);
 
     } else {
         
         UNKNOWN_TYPE(type_name_from_id(file_obj.type_id));
     }
 }
+
+
+
+void clear_file(runtime_t * runtime) {
+    if (runtime->stack.len <= 0) {
+        raise_exception("not enough items on stack (need file)", 1);
+        return;       
+    }
+
+    obj_t file_obj = estack_pop(&runtime->stack);
+
+    type_t file_type = type_from_name("file");
+    type_t str_type = type_from_name("str");
+
+
+    if (file_obj.type_id == file_type.id) {
+        
+        ezc_file_t * v = (ezc_file_t *)file_obj.data;
+
+        if (v->fp == NULL) {
+            if (_open_file(v, "w") && _close_file(v)) {
+            } else {
+                raise_exception("file failed to clear", 1);
+                return;
+            }
+        } else {
+            char * l_mode = malloc(strlen(v->mode) + 1);
+            strcpy(l_mode, v->mode);
+            if (!(_close_file(v) && _open_file(v, "w") && _close_file(v) && _open_file(v, l_mode))) {
+                raise_exception("file failed to clear", 1);
+            } else {
+                free(l_mode);
+            }
+        }
+
+        estack_push(&runtime->stack, file_obj);
+
+    } else if (file_obj.type_id == str_type.id) {
+        obj_t new_file_obj;
+
+        obj_construct(file_type, &new_file_obj, file_obj);
+
+        estack_push(&runtime->stack, new_file_obj);
+
+        open_file(runtime);
+        clear_file(runtime);
+
+    } else {
+        
+        UNKNOWN_TYPE(type_name_from_id(file_obj.type_id));
+    }
+}
+
 
 void close_file(runtime_t * runtime) {
     ASSURE_NONEMPTY_STACK;
@@ -164,10 +359,12 @@ int init (int type_id, module_utils_t utils) {
 
     init_exported(type_id, utils);
 
-    add_type("file", "file pointer, with name, for reading and writing", file_constructor, file_parser, file_representation, file_destroyer);
+    add_type("file", "file pointer, with name, for reading and writing", file_constructor, file_copier, file_parser, file_representation, file_destroyer);
 
     add_function("open", "opens a file or string file name", open_file);
+    add_function("read", "read from a file, assumes stack has (val, file) as last two values", read_file);
     add_function("write", "write to a file, assumes stack has (val, file) as last two values", write_file);
+    add_function("clear", "clear file contents", clear_file);
     add_function("close", "closes a file object", close_file);
 
     return 0;

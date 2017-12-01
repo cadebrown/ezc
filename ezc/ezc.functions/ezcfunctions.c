@@ -16,7 +16,6 @@ obj_t repr_obj(obj_t obj) {
 
     obj_t res;
 
-
     if (obj.type_id == NULL_TYPE.id) {
         str_type.parser(&res, "null");
     } else {
@@ -24,9 +23,9 @@ obj_t repr_obj(obj_t obj) {
 
         type_t obj_type = type_from_id(obj.type_id);
 
-        obj_type.representation(&obj, &repr_str);
+        obj_representation(obj_type, &obj, &repr_str);
 
-        str_type.parser(&res, repr_str);
+        obj_parse(str_type, &res, repr_str);
     
         free(repr_str);
     }
@@ -38,13 +37,68 @@ obj_t repr_obj(obj_t obj) {
 void repr(runtime_t * runtime) {
     if (runtime->stack.len <= 0) {
         raise_exception("no items on stack", 1);
+        return;
     }
 
     if (!type_exists_name("str")) {
         raise_exception("no 'str' type found for representing", 1);
+        return;
     }
 
     estack_push(&runtime->stack, repr_obj(estack_pop(&runtime->stack)));
+}
+
+void _print_obj(obj_t to_print) {
+    char * str_repr;
+
+    obj_representation(type_from_id(to_print.type_id), &to_print, &str_repr);
+
+    printf("%s", str_repr);
+
+    free(str_repr);
+}
+
+void print_obj(runtime_t * runtime) {
+    if (runtime->stack.len <= 0) {
+        raise_exception("no items on stack to print", 1);
+        return;
+    }
+
+    obj_t last_obj = estack_get(&runtime->stack, runtime->stack.len - 1);
+
+    _print_obj(last_obj);
+
+    printf("\n");
+
+}
+
+void swap(runtime_t * runtime) {
+    if (runtime->stack.len <= 1) {
+        raise_exception("not enough items to swap", 1);
+        return;
+    }
+
+    estack_swaptop(&runtime->stack);
+}
+
+void print_obj_recursive(runtime_t * runtime) {
+    int i;
+    for (i = 0; i < runtime->stack.len; ++i) {
+        _print_obj(estack_get(&runtime->stack, i));
+        if (i != runtime->stack.len - 1) printf(", ");
+    }
+    printf("\n");
+}
+
+void copy(runtime_t * runtime) {
+    if (runtime->stack.len <= 0) {
+        raise_exception("no items to copy", 1);
+        return;
+    }
+    obj_t last = estack_get(&runtime->stack, runtime->stack.len - 1);
+    obj_t copyof = obj_copy(last);
+
+    estack_push(&runtime->stack, copyof);
 }
 
 void dump(runtime_t * runtime) {
@@ -68,6 +122,8 @@ void dump(runtime_t * runtime) {
         printf ("  %d: '%s':%s\n", i, (char *)c_repr.data, c_type.name);
         obj_free(&c_repr);
     }
+
+
 }
 
 void delete_last_item(runtime_t * runtime) {
@@ -94,12 +150,16 @@ void eval_last_item(runtime_t * runtime) {
     runnable_t last_expr;
     
     runnable_init_str(&last_expr, code_to_run);
+
+    last_expr.from = "lambda";
+
     run_runnable(runtime, &last_expr);
 }
 
 void concat(runtime_t * runtime) {
     if (runtime->stack.len <= 1) {
         raise_exception("not enough items on stack to concatenate", 1);
+        return;
     }
     obj_t a, b, r;
     type_t str_type = type_from_name("str");
@@ -108,11 +168,12 @@ void concat(runtime_t * runtime) {
 
     if (a.type_id != str_type.id || b.type_id != str_type.id) {
         raise_exception("arguments are not 'str' objects", 1);
+        return;
     }
     char * res = malloc(a.data_len + b.data_len);
     strcpy(res, a.data);
     strcat(res, b.data);
-    str_type.parser(&r, res);
+    obj_parse(str_type, &r, res);
 
     free(res);
 
@@ -163,6 +224,7 @@ bool print_type_id(int id) {
     return true;
 }
 
+
 bool print_func_id(int id) {
     if (!function_exists_id(id)) {
         raise_exception("unknown function", 1);
@@ -195,6 +257,7 @@ bool print_module_name(char * name) {
     if (!found_module) {
         sprintf(to_raise, "unknown module %s", name);
         raise_exception(to_raise, 1);
+        return false;
     } else {
         printf("[%s]\n", name_module.name);
         printf("  %s\n\n", name_module.exported.description);
@@ -212,8 +275,8 @@ bool print_module_name(char * name) {
             if (i != name_module.exported.num_functions - 1) printf(", ");
         }
         printf("\n");
+        return true;
     }
-    return found_module;
 }
 
 void funcinfo(runtime_t * runtime) {
@@ -250,6 +313,7 @@ void typeinfo(runtime_t * runtime) {
 void moduleinfo(runtime_t * runtime) {
     if (runtime->stack.len <= 0) {
         raise_exception("no objects on stack", 1);
+        return;
     }
 
     obj_t last_obj = estack_pop(&runtime->stack);
@@ -319,6 +383,7 @@ void list_modules(runtime_t * runtime) {
 void set_global_dict(runtime_t * runtime) {
     if (runtime->stack.len <= 1) {
         raise_exception("not enough items on stack (need value, key)", 1);
+        return;
     }
     
     obj_t _key, _val;
@@ -338,6 +403,7 @@ void set_global_dict(runtime_t * runtime) {
 void get_global_dict(runtime_t * runtime) {
     if (runtime->stack.len <= 0) {
         raise_exception("not enough items on stack (need key)", 1);
+        return;
     }
     
     obj_t _key;
@@ -359,11 +425,14 @@ void put_null(runtime_t * runtime) {
 }
 
 
-
 int init (int id, module_utils_t utils) {
     init_exported(id, utils);
 
     add_function("repr", "pops on a string representation of an object to the stack", repr);
+    add_function("print", "prints the last object on the stack", print_obj);
+    add_function("print&", "prints all objects on the stack", print_obj_recursive);
+    add_function("swap", "swaps the last two objects on the stack", swap);
+    add_function("copy", "copies the last item on the stack", copy);
     add_function("dump", "prints out the global dictionary and the stack", dump);
     add_function("eval", "evaluates the last item on the stack as ezc source code", eval_last_item);
 

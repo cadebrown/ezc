@@ -14,6 +14,7 @@ int main(int argc, char ** argv) {
         {"include", required_argument, NULL, 'I'},
         {"import", required_argument, NULL, 'i'},
         {"expression", required_argument, NULL, 'e'},
+        {"file", required_argument, NULL, 'f'},
         {NULL, 0, NULL, 0}
     };
     
@@ -24,11 +25,13 @@ int main(int argc, char ** argv) {
     char ** to_import = malloc(sizeof(char *));
 
     char * expression = NULL;
+    char * rfile = NULL;
 
-    while ((c = getopt_long (argc, argv, "hI:i:e:", long_options, &long_index)) != (char)-1)
+    while ((c = getopt_long (argc, argv, "hI:i:e:f:", long_options, &long_index)) != (char)-1)
     switch (c) {
         case 'h':
-            printf("Usage: %s [file0 ...] [-e expr]\n\n", argv[0]);
+            printf("Usage: %s [-f file | -e expr]\n\n", argv[0]);
+            printf("    -f, --file            Evalue a file\n");
             printf("    -e, --expression      Evaluate an expression\n");
             printf("\n");
             printf("    -I, --include         Add a directory to search for modules in\n");
@@ -57,8 +60,22 @@ int main(int argc, char ** argv) {
             if (expression != NULL) {
                 printf("error, already specified '-e'\n");
                 return 1;
+            } else if (rfile != NULL) {
+                printf("error, cannot use '-e' and '-f'\n");
+                return 1;
             } else {
                 expression = optarg;
+            }
+            break;
+        case 'f':
+            if (rfile != NULL) {
+                printf("error, already specified '-f'\n");
+                return 1;
+            } else if (expression != NULL) {
+                printf("error, cannot use '-e' and '-f'\n");
+                return 1;
+            } else {
+                rfile = optarg;
             }
             break;
         case '?':
@@ -89,20 +106,46 @@ int main(int argc, char ** argv) {
     runtime_t runtime;
     init_runtime(&runtime);
 
-    if (expression != NULL) {
+    if (expression == NULL && rfile != NULL) {
+        runnable_t file_run;
+        file_run.from = rfile;
+
+        FILE * fp;
+        fp = fopen(rfile, "r");
+        if (fp == NULL) {
+            printf("error opening file '%s'\n", rfile);
+            return 1;
+        }
+
+        int numbytes;
+        fseek(fp, 0, SEEK_END);
+        numbytes = ftell(fp);
+        fseek(fp, 0, SEEK_SET);  //same as rewind(f);
+
+        char * file_source = malloc(numbytes + 1);
+        fread(file_source, numbytes, 1, fp);
+
+        fclose(fp);
+
+        file_source[numbytes] = 0;
+
+        runnable_init_str(&file_run, file_source);
+        run_runnable(&runtime, &file_run);
+
+    } else if (expression != NULL) {
         runnable_t expr_run;
+        expr_run.from = "-e";
+
         runnable_init_str(&expr_run, expression);
         run_runnable(&runtime, &expr_run);
 
-        if (log_get_level() >= LOG_DEBUG && function_exists_name("dump")) {
-            log_debug("\nfinal results\n");
-            log_debug("-------------\n");
-            function_t dump_func = function_from_name("dump");
-            dump_func.function(&runtime);
-        }
+    }
 
-    } else {
-        log_info("expression was null\n");
+    if (log_get_level() >= LOG_DEBUG && function_exists_name("dump")) {
+        log_debug("\nfinal results\n");
+        log_debug("-------------\n");
+        function_t dump_func = function_from_name("dump");
+        dump_func.function(&runtime);
     }
 
 

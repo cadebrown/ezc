@@ -15,9 +15,10 @@
 
 
 obj_t obj_copy(obj_t input) {
-    obj_t ret = input;
-    ret.data = malloc(input.data_len);
-    strncpy(ret.data, input.data, input.data_len);
+    obj_t ret;
+    ret.type_id = input.type_id;
+    type_t input_type = type_from_id(input.type_id);
+    input_type.copier(&ret, &input);
     return ret;
 }
 
@@ -29,6 +30,16 @@ void obj_free(obj_t * obj) {
 void obj_construct(type_t type, obj_t * to, obj_t from) {
     to->type_id = type.id;
     type.constructor(to, from);    
+}
+
+
+void obj_parse(type_t type, obj_t * to, char * from) {
+    to->type_id = type.id;
+    type.parser(to, from);    
+}
+
+void obj_representation(type_t type, obj_t * from, char ** to) {
+    type.representation(from, to);    
 }
 
 void init_runtime(runtime_t * runtime) {
@@ -96,7 +107,7 @@ void run_runnable(runtime_t * runtime, runnable_t * runnable) {
 }
 
 void run_str(runtime_t * runtime, char * ezc_source_code, runnable_t * runnable, int linenum) {
-    char * tmp = malloc(strlen(ezc_source_code));
+    char * tmp = malloc(strlen(ezc_source_code) + 1);
     
     int c_off = 0;
     int c_obj_off;
@@ -151,15 +162,16 @@ void run_str(runtime_t * runtime, char * ezc_source_code, runnable_t * runnable,
                 craise(to_raise, 1);
             }
 
+
             if (runtime->stack.len <= 0) {
                 sprintf(to_raise, "no objects on stack to cast");
                 craise(to_raise, 1);
             } else {
                 obj_t last_on_stack = estack_pop(&runtime->stack);
                 obj_t new;
-                new.type_id = to_type.id;
-                to_type.constructor(&new, last_on_stack);
-                new.type_id = to_type.id;
+                
+                obj_construct(to_type, &new, last_on_stack);
+
                 estack_push(&runtime->stack, new);
             }
         
@@ -170,6 +182,8 @@ void run_str(runtime_t * runtime, char * ezc_source_code, runnable_t * runnable,
             }
             obj_t last_on_stack = estack_pop(&runtime->stack);
             if (last_on_stack.type_id != str_type.id) {
+                function_t df = function_from_name("dump");
+                df.function(runtime);
                 sprintf(to_raise, "the function you are trying to call is not a string (it is of type '%s')", type_name_from_id(last_on_stack.type_id));
                 craise(to_raise, 1);
                 return;
@@ -236,7 +250,7 @@ void run_str(runtime_t * runtime, char * ezc_source_code, runnable_t * runnable,
                 tmp[c_off - c_obj_off] = 0;
             }
 
-            str_type.parser(&str_obj, tmp);
+            obj_parse(str_type, &str_obj, tmp);
 
             estack_push(&runtime->stack, str_obj);
         }
