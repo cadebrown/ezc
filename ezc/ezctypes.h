@@ -181,7 +181,7 @@ typedef struct module_utils_t {
 
     void       (* raise_exception)(char *, int);
 
-    bool       (* has_exception)();
+    void (* run_runnable)(runtime_t *, runnable_t *);
 
 } module_utils_t;
 

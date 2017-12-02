@@ -21,8 +21,4 @@ void runnable_init_str(runnable_t * runnable, char * src);
 
 bool str_obj_force(char ** out, obj_t in);
 
-void run_runnable(runtime_t * runtime, runnable_t * runnable);
-
-void run_str(runtime_t * runtime, char * ezc_source_code, runnable_t * runnable, int linenum);
-
 #endif

@@ -204,8 +204,6 @@ void write_file(runtime_t * runtime) {
 
         open_file(runtime);
 
-        if (has_exception()) return;
-
         estack_push(&runtime->stack, to_write);
 
         write_file(runtime);

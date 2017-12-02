@@ -7,14 +7,13 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "exec.h"
+
 char ** search_paths = NULL;
 int num_search_paths = 0;
 int max_search_path_strlen = 0;
 
 
-
-int raised_code = 0;
-char *raised_exception = NULL;
 
 
 // start out large so that system types are enough, and keep this as a block
@@ -55,21 +54,8 @@ void init_module_loader() {
     utils.modules = &registered_modules;
     utils.functions = &registered_functions;
 
-    utils.has_exception = &has_exception;
 
-}
-
-void raise_exception(char * exception, int exitcode) {
-    
-    raised_exception = exception;
-
-    if (exitcode != 0) {
-        raised_code = exitcode;
-    }
-}
-
-bool has_exception() {
-    return raised_code != 0;
+    utils.run_runnable = &run_runnable;
 }
 
 void register_type(type_t type) {

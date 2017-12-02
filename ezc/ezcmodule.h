@@ -11,8 +11,8 @@
 #endif
 
 #include "ezcsymboldefs.h"
-
 #include "ezctypes.h"
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
@@ -51,6 +51,8 @@ module_init_t module_init = { init };
 #define registered_modules (*utils.modules)
 #define num_registered_modules (*utils.num_modules)
 
+#define run_runnable utils.run_runnable
+
 
 #define UNKNOWN_CONVERSION(tname, fname) sprintf(to_raise, "don't know how to convert '%s' into '%s'", fname, tname); raise_exception(to_raise, 1); return;
 
@@ -66,7 +68,7 @@ module_init_t module_init = { init };
 char to_raise[16384];
 
 #define has_exception utils.has_exception
-#define raise_exception(reason, code) utils.raise_exception(reason, code);
+#define raise_exception(reason, code) utils.raise_exception(reason, code)
 
 #include "estack.h"
 #include "estack.c"
@@ -76,7 +78,6 @@ char to_raise[16384];
 
 #include "routines.h"
 #include "routines.c"
-
 
 
 int cur_id;

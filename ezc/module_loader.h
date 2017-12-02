@@ -18,10 +18,6 @@
 
 #include "ezctypes.h"
 
-int raised_code;
-
-char *raised_exception;
-
 
 char ** search_paths;
 int num_search_paths;
@@ -30,6 +26,7 @@ int max_search_path_strlen;
 
 // start out large so that system types are enough, and keep this as a block
 int id_index;
+
 
 int num_registered_modules;
 module_t * registered_modules;
@@ -49,9 +46,6 @@ bool import_module(char * name);
 void register_type(type_t type);
 void register_module(module_t module);
 
-void raise_exception(char *, int);
-
-bool has_exception();
 
 
 //// START module_utils methods

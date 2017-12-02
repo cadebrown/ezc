@@ -1,6 +1,8 @@
 
 #include "ec.h"
 #include "ezc.h"
+#include "exec.h"
+
 #include <ezcconfig.h>
 
 
