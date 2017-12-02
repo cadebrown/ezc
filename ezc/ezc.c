@@ -13,8 +13,6 @@
 #include "ezcsymboldefs.h"
 
 void ezc_init(char * execname) {
-    log_init();
-
     char * cwd = malloc(FILENAME_MAX);
     if (getcwd(cwd, FILENAME_MAX) == NULL) {
         log_fatal("getcwd() returned NULL");

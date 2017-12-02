@@ -15,5 +15,16 @@ void run_runnable(runtime_t * runtime, runnable_t * runnable);
 
 void run_str(runtime_t * runtime, char * ezc_source_code);
 
+void run_interactive_fallback(runtime_t * runtime);
+
+#ifdef HAVE_READLINE
+
+char ** cmd_completion(const char *, int, int);
+char * cmd_generator(const char *, int);
+
+#endif
+
+void run_interactive(runtime_t * runtime);
+
 
 #endif

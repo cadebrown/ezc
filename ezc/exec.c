@@ -4,6 +4,8 @@
 #include "module_loader.h"
 #include "ezclang.h"
 
+#include <unistd.h>
+
 #include <string.h>
 
 #include <setjmp.h>
@@ -36,6 +38,7 @@ void set_curchar(int cchar) {
 }
 
 void __runnable_stack_init() {
+    if (__runnable_stack_isinit) return;
     __runnable_stack_isinit = true;
 
     runnable_stack.len = 0;
@@ -47,6 +50,8 @@ void __runnable_stack_init() {
 }
 
 void __runnable_stack_push(runnable_t * new) {
+    ENSURE_RUNNABLE_STACK
+    
     runnable_stack.len++;
     if (runnable_stack.stack == NULL) {
         runnable_stack.stack = malloc(sizeof(runnable_t *) * runnable_stack.len);
@@ -66,6 +71,8 @@ void __runnable_stack_push(runnable_t * new) {
 }
 
 void __runnable_stack_pop() {
+    ENSURE_RUNNABLE_STACK
+    
     if (runnable_stack.stack == NULL || runnable_stack.len <= 0) {
         printf("internal error in a __runable_stack method\n");
         exit(1);
@@ -101,11 +108,11 @@ void raise_exception(char * exception, int exitcode) {
     }
 }
 
+
 void run_runnable(runtime_t * runtime, runnable_t * runnable) {
     ENSURE_RUNNABLE_STACK
 
     __runnable_stack_push(runnable);
-
 
     int i;
     for (i = 0; i < runnable->num_lines; ++i) {
@@ -149,6 +156,7 @@ void run_str(runtime_t * runtime, char * ezc_source_code) {
     char to_raise[EXCEPTION_LEN];
     
     while (c_off < strlen(ezc_source_code)) {
+        
         set_curchar(c_off);
         // cast using `:TYPE`
         if (cchar == CAST) {
@@ -253,17 +261,161 @@ void run_str(runtime_t * runtime, char * ezc_source_code) {
                 );
                 tmp[c_off - c_obj_off] = 0;
             }
-
             obj_parse(str_type, &str_obj, tmp);
 
             estack_push(&runtime->stack, str_obj);
+
         }
 
         // skip whitespace
         TRAVERSE(cchar == SPACE || cchar == SEPARATOR, )
     }
 
+
     free(tmp);
 }
+
+
+char * _getline()
+{
+    int sz = BUFSIZ;
+    char * total_buf = NULL;
+    char * tmp = malloc(sz);
+    int c = 0, c_off = 0;
+    while (fgets(tmp, sz, stdin) != NULL) {
+        c++;
+        total_buf = realloc(total_buf, c * sz);
+        strcpy(total_buf + c_off, tmp);
+        c_off += strlen(tmp);
+        if (tmp[strlen(tmp) - 1] == '\n') break;
+    }
+    free(tmp);
+    if (c == 0) {
+        return NULL; 
+    } else {
+        return total_buf;
+    }
+}
+
+void run_interactive_fallback(runtime_t * runtime) {
+    runnable_t cur_runnable;
+    char * cur_line;
+
+    if (isatty(fileno(stdin))) printf("%s", INTERACTIVE_PROMPT);
+
+    int lines = 0;
+
+    while ((cur_line = _getline()) != NULL) {
+        runnable_init_str(&cur_runnable, cur_line);
+
+        run_runnable(runtime, &cur_runnable);
+        if (isatty(fileno(stdin))) printf("%s", INTERACTIVE_PROMPT);
+
+        free(cur_line);
+        lines++;
+    }
+}
+
+
+#ifndef HAVE_READLINE
+
+
+void run_interactive(runtime_t * runtime) {
+    run_interactive_fallback(runtime);
+}
+
+
+#else
+
+#include <readline/readline.h>
+#include <readline/history.h>
+
+
+char ** cmd_completion(const char *text, int start, int end) {
+    rl_attempted_completion_over = 1;
+    return rl_completion_matches(text, cmd_generator);
+}
+
+
+#define GEN_TYPES   0x03
+#define GEN_FUNCS   0x04
+
+char * cmd_generator(const char * text, int state) {
+    static int i, len, gen_thing;
+
+
+    if (!state) {
+        i = 0;
+        len = strlen(text);
+
+        if (len > 0 && text[0] == CAST) {
+            gen_thing = GEN_TYPES;
+        } else {
+            gen_thing = GEN_FUNCS;
+        }
+    }
+
+    if (gen_thing == GEN_TYPES) {
+        if (i >= num_registered_types) {
+            return NULL;
+        }
+
+        while (i++ < num_registered_types) {
+            if (strncmp(registered_types[i - 1].name, text + 1, len - 1) == 0) {
+                char * to_ret = malloc(strlen(registered_types[i - 1].name) + 2);
+                sprintf(to_ret, ":%s", registered_types[i - 1].name);
+                return to_ret;
+            }
+        }
+
+        // search types
+    } else if (gen_thing == GEN_FUNCS) {
+
+        if (i >= num_registered_functions) {
+            return NULL;
+        }
+        
+
+        while (i++ < num_registered_functions) {
+            if (strncmp(registered_functions[i - 1].name, text, len) == 0) {
+                char * to_ret = malloc(strlen(registered_functions[i - 1].name) + 2);
+                sprintf(to_ret, "%s!", registered_functions[i - 1].name);
+                return to_ret;
+            }
+        }
+    } else {
+        printf("internal error in cmd_generator\n");
+        exit(1);
+    }
+
+    return NULL;
+
+}
+
+void run_interactive(runtime_t * runtime) {
+    runnable_t cur_runnable;
+
+    char * cur_line = NULL;
+
+    //rl_parse_and_bind("TAB: menu-complete");
+
+    rl_attempted_completion_function = cmd_completion;
+    rl_basic_word_break_characters = "\t\n\"\\'`@$><=;|{(";
+
+    while ((cur_line = readline( INTERACTIVE_PROMPT )) != NULL) {
+        runnable_init_str(&cur_runnable, cur_line);
+
+        run_runnable(runtime, &cur_runnable);
+
+        //runnable_free(&cur_runnable);
+        if (cur_line && *cur_line) add_history(cur_line);
+        free(cur_line);
+    }
+}
+
+
+#endif
+
+
 
 

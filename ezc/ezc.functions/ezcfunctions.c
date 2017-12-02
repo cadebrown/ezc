@@ -442,6 +442,23 @@ void put_null(runtime_t * runtime) {
     estack_push(&runtime->stack, NULL_OBJ);
 }
 
+void ezc_exit(runtime_t * runtime) {
+    int exitcode = 0;
+    if (runtime->stack.len > 0 && type_exists_name("int")) {
+        obj_t last_obj = estack_pop(&runtime->stack);
+
+        type_t int_type = type_from_name("int");
+        obj_t conv_to_int;
+
+        obj_construct(int_type, &conv_to_int, last_obj);
+
+        exitcode = *(int *)conv_to_int.data;
+    }
+
+    exit(exitcode);
+    
+}
+
 
 int init (int id, module_utils_t utils) {
     init_exported(id, utils);
@@ -479,6 +496,7 @@ int init (int id, module_utils_t utils) {
     add_function("@", "gets the global dictionary from the last value on the stack being (key)", get_global_dict);
 
 
+    add_function("exit", "exits the program, popping off an exitcode if possible", ezc_exit);
     add_function("null", "puts a null object on the stack", put_null);
 
 

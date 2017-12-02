@@ -10,16 +10,10 @@
 #include <getopt.h>
 #include <unistd.h>
 
+#include <string.h>
+
+
 int main(int argc, char ** argv) {
-    static struct option long_options[] = {
-        {"help", no_argument, NULL, 'h'},
-        {"include", required_argument, NULL, 'I'},
-        {"import", required_argument, NULL, 'i'},
-        {"expression", required_argument, NULL, 'e'},
-        {"file", required_argument, NULL, 'f'},
-        {NULL, 0, NULL, 0}
-    };
-    
     char c;
     int long_index;
 
@@ -29,13 +23,31 @@ int main(int argc, char ** argv) {
     char * expression = NULL;
     char * rfile = NULL;
 
-    while ((c = getopt_long (argc, argv, "hI:i:e:f:", long_options, &long_index)) != (char)-1)
+    static int noreadline = false;
+
+    static struct option long_options[] = {
+        {"help", no_argument, NULL, 'h'},
+        {"include", required_argument, NULL, 'I'},
+        {"import", required_argument, NULL, 'i'},
+        {"expression", required_argument, NULL, 'e'},
+        {"file", required_argument, NULL, 'f'},
+        {"verbosity", required_argument, NULL, 'v'},
+        {"noreadline", no_argument, &noreadline, 1},
+        {NULL, 0, NULL, 0}
+    };
+    
+
+    while ((c = getopt_long (argc, argv, "hI:i:e:f:v:", long_options, &long_index)) != (char)-1)
     switch (c) {
         case 'h':
             printf("Usage: %s [-f file | -e expr]\n\n", argv[0]);
             printf("    -f, --file            Evalue a file\n");
             printf("    -e, --expression      Evaluate an expression\n");
             printf("\n");
+            #ifdef HAVE_READLINE
+            printf("    --noreadline          Force using the non-readline interpreter\n");
+            printf("\n");
+            #endif
             printf("    -I, --include         Add a directory to search for modules in\n");
             printf("    -i, --import          Import module\n");
             printf("    -h, --help            Print out this usage dialogue\n");
@@ -80,10 +92,15 @@ int main(int argc, char ** argv) {
                 rfile = optarg;
             }
             break;
+        case 'v':
+            log_level = atoi(optarg);
+            break;
         case '?':
             printf("Unknown option `%c`\n", optopt);
             printf("Run `%s --help` for usage\n", argv[0]);
             return 1;
+            break;
+        case 0:
             break;
         default:
             printf("Error parsing arguments\n");
@@ -110,7 +127,8 @@ int main(int argc, char ** argv) {
 
     if (expression == NULL && rfile != NULL) {
         runnable_t file_run;
-        file_run.from = rfile;
+        file_run.from = malloc(strlen(rfile) + 1);
+        strcpy(file_run.from, rfile);
 
         FILE * fp;
         fp = fopen(rfile, "r");
@@ -150,10 +168,16 @@ int main(int argc, char ** argv) {
         runnable_init_str(&expr_run, expression);
         run_runnable(&runtime, &expr_run);
 
+    } else {
+        if (noreadline == 1) {
+            run_interactive_fallback(&runtime);
+        } else {
+            run_interactive(&runtime);
+        }
     }
-
-    if (log_get_level() >= LOG_DEBUG && function_exists_name("dump")) {
-        log_debug("\nfinal results\n");
+    
+    if (log_level >= LOG_DEBUG && function_exists_name("dump")) {
+        log_debug("\nfinal results");
         log_debug("-------------\n");
         function_t dump_func = function_from_name("dump");
         dump_func.function(&runtime);

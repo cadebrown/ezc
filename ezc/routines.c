@@ -69,6 +69,15 @@ bool str_obj_force(char ** out, obj_t in) {
 
 }
 
+
+void runnable_add_str(runnable_t * runnable, char * _src) {
+    runnable->num_lines++;
+    runnable->lines = realloc(runnable->lines, sizeof(char *) * runnable->num_lines);
+
+    runnable->lines[runnable->num_lines - 1] = malloc(strlen(_src) + 1);
+    strcpy(runnable->lines[runnable->num_lines - 1], _src);
+}
+
 void runnable_init_str(runnable_t * runnable, char * _src) {
     int lines = 0;
     char * src = malloc(strlen(_src) + 1);
@@ -98,3 +107,16 @@ void runnable_init_str(runnable_t * runnable, char * _src) {
         i++;
     }
 }
+
+void runnable_free(runnable_t * runnable) {
+    if (runnable->from != NULL) {
+        free(runnable->from);
+    }
+    int i;
+    for (i = 0; i < runnable->num_lines; ++i) {
+        free(runnable->lines[i]);
+    }
+    free(runnable->lines);
+    runnable->lines = NULL;
+}
+

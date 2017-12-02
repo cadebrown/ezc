@@ -20,15 +20,7 @@
 #define log_error(...) log_log(LOG_ERROR, __FILE__, __LINE__, __VA_ARGS__)
 #define log_fatal(...) log_log(LOG_FATAL, __FILE__, __LINE__, __VA_ARGS__)
 
-void log_set_udata(void *udata);
-
-bool log_isinit;
-void log_init();
-
-void log_set_fp(FILE *fp);
-int log_get_level();
-void log_set_level(int level);
-void log_set_quiet(int enable);
+int log_level;
 
 void log_log(int level, const char *file, int line, const char *fmt, ...);
 

@@ -14,6 +14,11 @@ add_executable(ec ec.c ec.h)
 
 target_link_libraries(ec ezc ${CMAKE_DL_LIBS})
 
+if(READLINE_FOUND)
+    target_link_libraries(ec ${Readline_LIBRARY})
+endif()
+
+
 
 install (TARGETS ec DESTINATION bin)
 

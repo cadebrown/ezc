@@ -24,6 +24,8 @@
 #define NEWLINE '\n'
 #define NEWLINE_STR "\n"
 
+#define INTERACTIVE_PROMPT " %> "
+
 
 #define __IS_SPECIAL(c) (c == CALL_FUNCTION || c == CAST || c == ESC || c == CHAR0 || c == SPACE || c == SEPARATOR)
 #define IS_SPECIAL(c) __IS_SPECIAL((c))
