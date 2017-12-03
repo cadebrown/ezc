@@ -264,7 +264,7 @@ void import_repeat(runtime_t * runtime) {
     }
 }
 
-#define print_func_addr(ijk, fncaddr) for (ijk=0; ijk<sizeof (fncaddr); ijk++) printf("%.2x", ((unsigned char *)&fncaddr)[ijk]);
+#define print_func_addr(ijk, fncaddr) printf("0x"); for (ijk=0; ijk<sizeof (fncaddr); ijk++) printf("%.2x", ((unsigned char *)&fncaddr)[ijk]);
 
 bool print_type_id(int id) {
     if (!type_exists_id(id)) {
@@ -273,7 +273,7 @@ bool print_type_id(int id) {
     }
     type_t type = type_from_id(id);
 
-    printf(":%s\n", type.name);
+    printf("%s%s\n", CAST, type.name);
     printf("  %s\n\n", type.description);
     printf("  id: %d\n", type.id);
 
@@ -303,7 +303,7 @@ bool print_func_id(int id) {
 
     function_t func = function_from_id(id);
 
-    printf("%s!\n", func.name);
+    printf("%s%s\n", func.name, CALL_FUNCTION);
     printf("  %s\n\n", func.description);
     printf("  id: %d\n", func.id);
     
