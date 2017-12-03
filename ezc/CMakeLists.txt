@@ -19,6 +19,19 @@ if(READLINE_FOUND)
 endif()
 
 
+install (FILES ezc.h DESTINATION include)
+
+install (FILES dict.c DESTINATION include/ezc)
+install (FILES dict.h DESTINATION include/ezc)
+install (FILES estack.c DESTINATION include/ezc)
+install (FILES estack.h DESTINATION include/ezc)
+install (FILES routines.c DESTINATION include/ezc)
+install (FILES routines.h DESTINATION include/ezc)
+
+install (FILES ezclang.h DESTINATION include)
+install (FILES ezcmacros.h DESTINATION include)
+install (FILES ezcsymboldefs.h DESTINATION include)
+install (FILES ezcmodule.h DESTINATION include)
 
 install (TARGETS ec DESTINATION bin)
 

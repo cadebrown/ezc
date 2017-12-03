@@ -1,0 +1,19 @@
+#!ec -f
+
+# a simple example showing how to print out 'helloworld'
+
+# the '->str' does a cast, but it is not neccesary
+"hello"->str "world"->str
+
+# these line produces the same output:
+
+# "hello"->str "world"->str
+# hello world
+# "hello" "world"
+# 'hello' world
+
+concat!print!
+
+# you can exit a program like this
+# 0->int exit!
+

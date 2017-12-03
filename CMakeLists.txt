@@ -34,9 +34,9 @@ endif()
 
 include_directories("${PROJECT_BINARY_DIR}")
 include_directories("${CMAKE_SOURCE_DIR}/ezc")
-include_directories("${CMAKE_SOURCE_DIR}/ezc/exec_code")
 
 add_subdirectory (ezc) 
+add_subdirectory (examples)
 
 install (FILES "${PROJECT_BINARY_DIR}/ezcconfig.h" DESTINATION include)
 

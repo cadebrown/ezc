@@ -2,7 +2,7 @@
 #define __EZCLANG_H__
 
 #ifndef CALL_FUNCTION
-#define CALL_FUNCTION "()"
+#define CALL_FUNCTION "!"
 #endif
 
 #ifndef CAST
@@ -11,6 +11,10 @@
 
 #ifndef ESC
 #define ESC '\\'
+#endif
+
+#ifndef COMMENT
+#define COMMENT "#"
 #endif
 
 #ifndef SEPARATOR
@@ -35,7 +39,7 @@
 #define __MIN(a, b) ((a) > (b) ? (b) : (a))
 #define ISLIM(c, v) (strncmp(c, v, __MIN(strlen(c), strlen(v))) == 0)
 
-#define __IS_SPECIAL(c) (ISLIM(c, CALL_FUNCTION) || ISLIM(c, CAST) || *c == ESC || *c == CHAR0 || *c == SPACE || *c == SEPARATOR)
+#define __IS_SPECIAL(c) (ISLIM(c, CALL_FUNCTION) || ISLIM(c, CAST) || ISLIM(c, COMMENT) || *c == ESC || *c == CHAR0 || *c == SPACE || *c == SEPARATOR)
 #define IS_SPECIAL(c) __IS_SPECIAL((c))
 
 #define __IS_QUOTE(c) (*c == '\'' || *c == '"')

@@ -219,7 +219,7 @@ void run_str(runtime_t * runtime, char * ezc_source_code) {
 
             c_off += strlen(CALL_FUNCTION);
 
-        } else {
+        } else if (!IS_SPECIAL(csrc)) {
             // this section is for adding on a (string object) to the stack
             if (IS_QUOTE(csrc)) {
                 char which_quote_used = cchar;
@@ -270,12 +270,18 @@ void run_str(runtime_t * runtime, char * ezc_source_code) {
 
             estack_push(&runtime->stack, str_obj);
 
+        } else if (ISLIM(csrc, COMMENT)) {
+            goto leave;
+        } else {
+            raise_exception("unexpected character", 1);
         }
 
         // skip whitespace
         TRAVERSE(cchar == SPACE || cchar == SEPARATOR, )
     }
 
+
+    leave:;
 
     free(tmp);
 }
@@ -427,7 +433,7 @@ void run_interactive(runtime_t * runtime) {
     //rl_parse_and_bind("TAB: menu-complete");
 
     rl_attempted_completion_function = cmd_completion;
-    rl_basic_word_break_characters = "\t\n\"\\'`@$=;|{( ";
+    rl_basic_word_break_characters = "\t\n\"\\'`@$=;|{(# ";
 
     char * interact;
 
