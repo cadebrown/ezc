@@ -21,7 +21,7 @@ void runnable_init_str(runnable_t * runnable, char * src);
 
 void runnable_add_str(runnable_t * runnable, char * _src);
 
-bool str_obj_force(char ** out, obj_t in);
+void str_obj_force(char ** out, obj_t in);
 
 void runnable_free(runnable_t * runnable);
 

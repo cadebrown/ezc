@@ -45,7 +45,28 @@ void repr(runtime_t * runtime) {
         return;
     }
 
-    estack_push(&runtime->stack, repr_obj(estack_pop(&runtime->stack)));
+    obj_t cobj = estack_pop(&runtime->stack);
+    estack_push(&runtime->stack, repr_obj(cobj));
+    obj_free(&cobj);
+    
+}
+
+void repr_recursive(runtime_t * runtime) {
+    if (runtime->stack.len <= 0) {
+        return;
+    }
+
+    if (!type_exists_name("str")) {
+        raise_exception("no 'str' type found for representing", 1);
+        return;
+    }
+
+    int i;
+    for (i = 0; i < runtime->stack.len; ++i) {
+        obj_t cobj = estack_get(&runtime->stack, i);
+        estack_set(&runtime->stack, i, repr_obj(cobj));
+        obj_free(&cobj);
+    }
 }
 
 
@@ -124,7 +145,6 @@ void dump(runtime_t * runtime) {
         obj_free(&c_repr);
     }
 
-
 }
 
 void delete_last_item(runtime_t * runtime) {
@@ -146,7 +166,7 @@ void eval_last_item(runtime_t * runtime) {
 
     obj_t last_obj = estack_pop(&runtime->stack);
     char * code_to_run;
-    if (!str_obj_force(&code_to_run, last_obj)) return;
+    str_obj_force(&code_to_run, last_obj);
     
     runnable_t last_expr;
     
@@ -174,17 +194,54 @@ void concat(runtime_t * runtime) {
     char * res = malloc(a.data_len + b.data_len);
     strcpy(res, a.data);
     strcat(res, b.data);
+
     obj_parse(str_type, &r, res);
 
     free(res);
+
+    obj_free(&a);
+    obj_free(&b);
 
     estack_push(&runtime->stack, r);
 }
 
 void concat_repeat(runtime_t * runtime) {
-    while (runtime->stack.len >= 2) {
-        concat(runtime);
+    while (runtime->stack.len <= 1) {
+        return;
     }
+    type_t str_type = type_from_name("str");
+
+    int total_len = 0;
+
+    obj_t cobj;
+
+    int i;
+    for (i = 0; i < runtime->stack.len; ++i) {
+        cobj = estack_get(&runtime->stack, i);
+        if (cobj.type_id != str_type.id) {
+            raise_exception("some objects on the stack are not strings, use repr& function to convert them", 1);
+        }
+        total_len += cobj.data_len - 1;
+    }
+    
+    char * res = malloc(total_len + 1);
+    *res = '\0';
+
+    for (i = 0; i < runtime->stack.len; ++i) {
+        cobj = estack_get(&runtime->stack, i);
+        strcat(res, (char *)cobj.data);
+
+        obj_free(&cobj);
+    }
+
+    obj_t ret;
+
+    obj_parse(str_type, &ret, res);
+
+    free(res);
+
+    estack_push(&runtime->stack, ret);
+
 }
 
 void import(runtime_t * runtime) {
@@ -193,7 +250,7 @@ void import(runtime_t * runtime) {
     char * module_name;
     obj_t last_obj = estack_pop(&runtime->stack);
 
-    if (!str_obj_force(&module_name, last_obj)) return;
+    str_obj_force(&module_name, last_obj);
 
     import_module(module_name);
 
@@ -304,11 +361,13 @@ void funcinfo(runtime_t * runtime) {
 
     char * func_name;
 
-    if (!str_obj_force(&func_name, last_obj)) return;
+    str_obj_force(&func_name, last_obj);
 
     int func_id = function_id_from_name(func_name);
 
     print_func_id(func_id);
+
+    obj_free(&last_obj);
 
 }
 
@@ -319,11 +378,14 @@ void typeinfo(runtime_t * runtime) {
 
     char * type_name;
 
-    if (!str_obj_force(&type_name, last_obj)) return;
+    str_obj_force(&type_name, last_obj);
 
     int type_id = type_id_from_name(type_name);
 
     print_type_id(type_id);
+
+    obj_free(&last_obj);
+    free(type_name);
 }
 
 
@@ -338,10 +400,13 @@ void moduleinfo(runtime_t * runtime) {
 
     char * module_name;
 
-    if (!str_obj_force(&module_name, last_obj)) return;
+    str_obj_force(&module_name, last_obj);
 
 
     print_module_name(module_name);
+
+    obj_free(&last_obj);
+    free(module_name);
 }
 
 
@@ -416,6 +481,9 @@ void set_global_dict(runtime_t * runtime) {
 
     dict_set(&runtime->globals, _key_str, _val);
 
+    obj_free(&_key);
+    free(_key_str);
+
 }
 
 void get_global_dict(runtime_t * runtime) {
@@ -436,6 +504,8 @@ void get_global_dict(runtime_t * runtime) {
 
     estack_push(&runtime->stack, val);
 
+    obj_free(&_key);
+    free(_key_str);
 }
 
 void put_null(runtime_t * runtime) {
@@ -464,6 +534,7 @@ int init (int id, module_utils_t utils) {
     init_exported(id, utils);
 
     add_function("repr", "pops on a string representation of an object to the stack", repr);
+    add_function("repr&", "replaces the stack with the string representation of each object", repr_recursive);
     add_function("print", "prints the last object on the stack", print_obj);
     add_function("print&", "prints all objects on the stack", print_obj_recursive);
     add_function("swap", "swaps the last two objects on the stack", swap);

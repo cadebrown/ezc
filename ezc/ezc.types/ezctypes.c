@@ -21,7 +21,6 @@ void byte_parser(obj_t * ret, char * value) {
     } else {
         sprintf(to_raise, "error parsing byte from '%s'\n", value);
         raise_exception(to_raise, 1);
-        return;
     }
 }
 
@@ -47,7 +46,6 @@ void byte_destroyer(obj_t * ret) {
     if (ret->data != NULL) {
         free(ret->data);
     }
-    *ret = NULL_OBJ;
 }
 
 void byte_copier(obj_t * to, obj_t * from) {
@@ -65,17 +63,62 @@ void int_parser(obj_t * ret, char * value) {
     *((int *)ret->data) = strtol(value, NULL, 0);
 }
 
+int __int_strlen(int _x) {
+    int x = 0;
+    int l = 0;
+    if (_x >= 0) {
+        x = _x;
+    } else {
+        l++;
+        x = -_x;
+    }
+    while (x>9) { 
+        l++; 
+        x /= 10; 
+    }
+    return l;
+}
+
+
+
+// fast method to represent it
 void int_representation(obj_t * obj, char ** ret) {
-    *ret = malloc(44);
-    sprintf(*ret, "%d", *((int *)obj->data));
+    int v = *((int *)obj->data);
+    *ret = malloc(__int_strlen(v) + 1);
+
+    int c_off = 0;
+    int esign_off = 0;
+    int term_idx = 0;
+
+    if (v < 0) {
+        v = -v;
+        (*ret)[c_off] = '-';
+        esign_off = 1;
+    }
+
+    c_off = __int_strlen(v) + esign_off;
+
+    term_idx = c_off + 1;
+
+    while (c_off >= esign_off) {
+        (*ret)[c_off--] = (v % 10) + '0';
+        v /= 10;
+    }
+
+    (*ret)[term_idx] = '\0';
 }
 
 void int_constructor(obj_t * ret, obj_t value) {
     type_t input_type = type_from_id(value.type_id);
     type_t str_type = type_from_name("str");
+    type_t int_type = type_from_name("int");
 
     if (input_type.id == str_type.id) {
         int_parser(ret, value.data);
+    } else if (input_type.id == int_type.id) {
+        ret->data_len = sizeof(int);
+        ret->data = malloc(ret->data_len);
+        *((int *)ret->data) = *(int *)value.data;
     } else {
         UNKNOWN_CONVERSION(type_name_from_id(ret->type_id), type_name_from_id(value.type_id));
     }
@@ -85,7 +128,6 @@ void int_destroyer(obj_t * ret) {
     if (ret->data != NULL) {
         free(ret->data);
     }
-    *ret = NULL_OBJ;
 }
 
 void int_copier(obj_t * to, obj_t * from) {
@@ -98,8 +140,6 @@ void str_parser(obj_t * ret, char * value) {
     ret->data_len = strlen(value) + 1;
     ret->data = malloc(ret->data_len);
     strcpy(ret->data, value);
-    ((char *)ret->data)[strlen(value)] = 0;
-    
 }
 
 void str_representation(obj_t * obj, char ** ret) {
@@ -122,16 +162,13 @@ void str_destroyer(obj_t * ret) {
     if (ret->data != NULL) {
         free(ret->data);
     }
-    *ret = NULL_OBJ;
 }
 
 void str_copier(obj_t * to, obj_t * from) {
     to->data_len = from->data_len;
     to->data = malloc(to->data_len);
     strcpy(to->data, from->data);
-    ((char *)to->data)[to->data_len - 1] = 0;
 }
-
 
 
 int init (int type_id, module_utils_t utils) {

@@ -21,6 +21,7 @@ find_path(Readline_ROOT_DIR
     NAMES include/readline/readline.h
 )
 
+
 find_path(Readline_INCLUDE_DIR
     NAMES readline/readline.h
     HINTS ${Readline_ROOT_DIR}/include

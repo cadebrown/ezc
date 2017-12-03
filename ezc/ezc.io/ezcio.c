@@ -87,9 +87,9 @@ void file_destroyer(obj_t * ret) {
 
 
 bool _open_file(ezc_file_t * v, char * _mode) {
+    if (v->mode != NULL) free(v->mode);
     v->mode = malloc(strlen(_mode) + 1);
     strcpy(v->mode, _mode);
-
 
     if (strcmp(v->name, "stdout") == 0) {
         v->fp = stdout;
@@ -102,7 +102,7 @@ bool _open_file(ezc_file_t * v, char * _mode) {
     }
     
     if (v->fp == NULL) {
-        sprintf(to_raise, "opening file '%s' failed, reason: %s", v->name, strerror(errno));
+        sprintf(to_raise, "opening file '%s' failed: %s", v->name, strerror(errno));
         raise_exception(to_raise, 1);
         return false;
     }
@@ -115,6 +115,7 @@ bool _close_file(ezc_file_t * v) {
     v->fp = NULL;
     if (v->mode != NULL) {
         free(v->mode);
+        v->mode = NULL;
     }
     if (res == 0) {
         return true;
@@ -147,12 +148,13 @@ void open_file(runtime_t * runtime) {
 
         obj_construct(file_type, &new_file_obj, last_obj);
 
+        obj_free(&last_obj);
+
         estack_push(&runtime->stack, new_file_obj);
 
         open_file(runtime);
 
     } else {
-
 
         UNKNOWN_TYPE(type_name_from_id(last_obj.type_id));
     }
@@ -160,7 +162,6 @@ void open_file(runtime_t * runtime) {
 }
 
 void write_file(runtime_t * runtime) {
-    
     if (runtime->stack.len <= 1) {
         raise_exception("not enough items on stack (need val, file)", 1);
         return;       
@@ -195,10 +196,14 @@ void write_file(runtime_t * runtime) {
 
         estack_push(&runtime->stack, file_obj);
 
+        obj_free(&to_write);
+
     } else if (file_obj.type_id == str_type.id) {
         obj_t new_file_obj;
 
         obj_construct(file_type, &new_file_obj, file_obj);
+
+        obj_free(&file_obj);
 
         estack_push(&runtime->stack, new_file_obj);
 
@@ -236,24 +241,24 @@ void read_file(runtime_t * runtime) {
         
         obj_t read_obj;
 
-        char * read_buffer;
+        char * read_buffer = NULL;
 
         if (v->fp == stdin) {
-            read_buffer = malloc(1);
-            #define BUF_SIZE 4096
-            char * line = malloc(BUF_SIZE);
-            size_t line_len;
-            size_t total_len = 0;
+            read_buffer = NULL;
+            char * tmp_buf = malloc(BUFSIZ);
+            size_t tmp_len, total_len = 0;
             //printf("asdfasdf\n");
-            while (fgets(line, BUF_SIZE, stdin) != NULL) {
-                line_len = strlen(line);
-                read_buffer = realloc(read_buffer, total_len + line_len + 1);
+            while (fgets(tmp_buf, BUFSIZ, stdin) != NULL) {
+                tmp_len = strlen(tmp_buf);
+                
+                read_buffer = realloc(read_buffer, total_len + tmp_len + 1);
 
-                strcpy(read_buffer + total_len, line);
-                read_buffer[total_len + strlen(line)] = '\n';
+                strcpy(read_buffer + total_len, tmp_buf);
 
-                total_len += strlen(line);
+                total_len += tmp_len;
             }
+
+            free(tmp_buf);
 
         } else {
             // normal file
@@ -265,7 +270,6 @@ void read_file(runtime_t * runtime) {
 
             if (read_buffer == NULL) {
                 raise_exception("mallocing buffer failed", 1);
-                return;       
             }
 
             int recv_bytes;
@@ -277,9 +281,13 @@ void read_file(runtime_t * runtime) {
             read_buffer[numbytes] = 0;
 
         }
+        if (read_buffer == NULL) {
+            raise_exception("internal error with read buffer", 1);
+        }
 
         obj_parse(str_type, &read_obj, read_buffer);
 
+            
         free(read_buffer);
 
         estack_push(&runtime->stack, file_obj);
@@ -297,6 +305,8 @@ void read_file(runtime_t * runtime) {
             raise_exception(to_raise, 1);
             return;
         }
+
+        obj_free(&file_obj);
 
         estack_push(&runtime->stack, new_file_obj);
 
@@ -349,6 +359,8 @@ void clear_file(runtime_t * runtime) {
 
         obj_construct(file_type, &new_file_obj, file_obj);
 
+        obj_free(&file_obj);
+
         estack_push(&runtime->stack, new_file_obj);
 
         open_file(runtime);
@@ -370,8 +382,11 @@ void close_file(runtime_t * runtime) {
     type_t file_type = type_from_name("file");
 
     if (file_obj.type_id == file_type.id) {
-        ezc_file_t v = *((ezc_file_t *)file_obj.data);
-        if (v.fp != NULL) fclose(v.fp);
+        ezc_file_t * v = (ezc_file_t *)file_obj.data;
+        if (v->fp != NULL) {
+            fclose(v->fp);
+            
+        }
     } else {
         UNKNOWN_TYPE(type_name_from_id(file_obj.type_id));
     }

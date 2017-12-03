@@ -45,42 +45,37 @@ And it will output the help message.
 Here are some quick examples:
 
 ```
- $ ec -e'cade is a boss'
+ $ ec -e'cade is a boss print()'
 
-final results
--------------
-globals[0]:
-stack[4]:
-  0: 'cade':str
-  1: 'is':str
-  2: 'a':str
-  3: 'boss':str
+boss
 
 ```
 
-Use a function like `FUNCTION!`
+The `print` function prints the last item on the stack, which was `boss`
+
+
+Use a function like `FUNCTION()`
 
 ```
- $ ec -e'cade is a boss concat! dump!'
+ $ ec -e'cade is a boss concat() dump()'
 
-globals[0]:
-stack[3]:
-  0: 'cade':str
-  1: 'is':str
-  2: 'aboss':str
+aboss
 
 ```
 
-Some functions are implemented as repeaters, using `FUNCTION&!` (which will repeatedly call the function).
+It concatenated the last two items, then printed the result
+
+
+Some functions are implemented as repeaters, using `FUNCTION&()` (which will repeatedly call the function).
 
 ```
- $ ec -e'cade is a boss concat&! dump!'
+ $ ec -e'cade is a boss concat&() dump()'
 
-globals[0]:
-stack[1]:
-  0: 'cadeisaboss':str
+cadeisaboss
 
 ```
+
+This concatenated all of the stack together
 
 
 ## TODOs

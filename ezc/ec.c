@@ -24,6 +24,7 @@ int main(int argc, char ** argv) {
     char * rfile = NULL;
 
     static int noreadline = false;
+    static int suspend = false;
 
     static struct option long_options[] = {
         {"help", no_argument, NULL, 'h'},
@@ -32,7 +33,8 @@ int main(int argc, char ** argv) {
         {"expression", required_argument, NULL, 'e'},
         {"file", required_argument, NULL, 'f'},
         {"verbosity", required_argument, NULL, 'v'},
-        {"noreadline", no_argument, &noreadline, 1},
+        {"no-readline", no_argument, &noreadline, 1},
+        {"suspend", no_argument, &suspend, 1},
         {NULL, 0, NULL, 0}
     };
     
@@ -45,9 +47,10 @@ int main(int argc, char ** argv) {
             printf("    -e, --expression      Evaluate an expression\n");
             printf("\n");
             #ifdef HAVE_READLINE
-            printf("    --noreadline          Force using the non-readline interpreter\n");
-            printf("\n");
+            printf("    --no-readline         Force using the non-readline interpreter\n");
             #endif
+            printf("    --suspend             Suspend the program (which is useful for checking for memory leaks)\n");
+            printf("\n");
             printf("    -I, --include         Add a directory to search for modules in\n");
             printf("    -i, --import          Import module\n");
             printf("    -h, --help            Print out this usage dialogue\n");
@@ -149,7 +152,7 @@ int main(int argc, char ** argv) {
             exit(1);
         }
 
-        if (numbytes != fread(file_source, numbytes, 1, fp)) {
+        if (numbytes != fread(file_source, 1, numbytes, fp)) {
             log_fatal("could not read file source");
             exit(1);
         }
@@ -169,11 +172,15 @@ int main(int argc, char ** argv) {
         run_runnable(&runtime, &expr_run);
 
     } else {
-        if (noreadline == 1) {
+        #ifdef HAVE_READLINE
+        if (noreadline == 1 || !isatty(STDIN_FILENO)) {
             run_interactive_fallback(&runtime);
         } else {
             run_interactive(&runtime);
         }
+        #else
+        run_interactive_fallback(&runtime);
+        #endif
     }
     
     if (log_level >= LOG_DEBUG && function_exists_name("dump")) {
@@ -181,6 +188,10 @@ int main(int argc, char ** argv) {
         log_debug("-------------\n");
         function_t dump_func = function_from_name("dump");
         dump_func.function(&runtime);
+    }
+
+    if (suspend) {
+        getchar();
     }
 
 

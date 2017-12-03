@@ -5,6 +5,8 @@
 #include "ezclang.h"
 
 #include <unistd.h>
+#include <stdio.h>
+#include <unistd.h>
 
 #include <string.h>
 
@@ -143,6 +145,9 @@ void run_str(runtime_t * runtime, char * ezc_source_code) {
 
     // current character
     #define cchar (ezc_source_code[c_off])
+
+    #define csrc (ezc_source_code + c_off)
+
     // last character
     #define lchar (ezc_source_code[c_off - 1])
 
@@ -159,11 +164,11 @@ void run_str(runtime_t * runtime, char * ezc_source_code) {
         
         set_curchar(c_off);
         // cast using `:TYPE`
-        if (cchar == CAST) {
+        if (ISLIM(csrc, CAST)) {
             // tmp will be equal to TYPE
-            c_off++;
+            c_off += strlen(CAST);
             c_obj_off = c_off;
-            TRAVERSE(!IS_SPECIAL(cchar), 
+            TRAVERSE(!IS_SPECIAL(csrc), 
                 tmp[c_off - c_obj_off] = cchar;
             );
             tmp[c_off - c_obj_off] = CHAR0;
@@ -189,7 +194,7 @@ void run_str(runtime_t * runtime, char * ezc_source_code) {
                 estack_push(&runtime->stack, new);
             }
         
-        } else if (cchar == CALL_FUNCTION) {
+        } else if (ISLIM(csrc, CALL_FUNCTION)) {
             if (runtime->stack.len <= 0) {
                 sprintf(to_raise, "no function on the stack");
                 raise_exception(to_raise, 1);
@@ -212,11 +217,11 @@ void run_str(runtime_t * runtime, char * ezc_source_code) {
 
             cur_func.function(runtime);
 
-            c_off++;
+            c_off += strlen(CALL_FUNCTION);
 
         } else {
             // this section is for adding on a (string object) to the stack
-            if (IS_QUOTE(cchar)) {
+            if (IS_QUOTE(csrc)) {
                 char which_quote_used = cchar;
                 c_off++;
                 c_obj_off = c_off;
@@ -256,7 +261,7 @@ void run_str(runtime_t * runtime, char * ezc_source_code) {
                 }
             } else {
                 c_obj_off = c_off;
-                TRAVERSE(!IS_SPECIAL(cchar), 
+                TRAVERSE(!IS_SPECIAL(csrc), 
                     tmp[c_off - c_obj_off] = cchar;
                 );
                 tmp[c_off - c_obj_off] = 0;
@@ -301,7 +306,7 @@ void run_interactive_fallback(runtime_t * runtime) {
     runnable_t cur_runnable;
     char * cur_line;
 
-    if (isatty(fileno(stdin))) printf("%s", INTERACTIVE_PROMPT);
+    if (isatty(STDIN_FILENO)) printf("%s", INTERACTIVE_PROMPT);
 
     int lines = 0;
 
@@ -309,7 +314,7 @@ void run_interactive_fallback(runtime_t * runtime) {
         runnable_init_str(&cur_runnable, cur_line);
 
         run_runnable(runtime, &cur_runnable);
-        if (isatty(fileno(stdin))) printf("%s", INTERACTIVE_PROMPT);
+        if (isatty(STDIN_FILENO)) printf("%s", INTERACTIVE_PROMPT);
 
         free(cur_line);
         lines++;
@@ -348,7 +353,18 @@ char * cmd_generator(const char * text, int state) {
         i = 0;
         len = strlen(text);
 
-        if (len > 0 && text[0] == CAST) {
+
+
+        bool haslim = false;
+
+        int j;
+        for (j = 0; j < strlen(text); ++j) {
+            if (ISLIM(text + j, CAST)) {
+                haslim = true;
+            }
+        }
+
+        if (len > 0 && haslim) {
             gen_thing = GEN_TYPES;
         } else {
             gen_thing = GEN_FUNCS;
@@ -361,11 +377,20 @@ char * cmd_generator(const char * text, int state) {
         }
 
         while (i++ < num_registered_types) {
-            if (strncmp(registered_types[i - 1].name, text + 1, len - 1) == 0) {
-                char * to_ret = malloc(strlen(registered_types[i - 1].name) + 2);
-                sprintf(to_ret, ":%s", registered_types[i - 1].name);
-                return to_ret;
+            int j;
+
+            char * looking_for = malloc(strlen(registered_types[i - 1].name) + strlen(CAST) + 1);
+            sprintf(looking_for, "%s%s", CAST, registered_types[i - 1].name);
+            for (j = 0; j < strlen(text); ++j) {
+                if (ISLIM(looking_for, text + j)) {
+                    char * res = malloc(j + strlen(looking_for) + 1);
+                    sprintf(res, "%.*s%s", j, text, looking_for);
+                    free(looking_for);
+                    return res;
+                }
             }
+            free(looking_for);
+
         }
 
         // search types
@@ -378,8 +403,8 @@ char * cmd_generator(const char * text, int state) {
 
         while (i++ < num_registered_functions) {
             if (strncmp(registered_functions[i - 1].name, text, len) == 0) {
-                char * to_ret = malloc(strlen(registered_functions[i - 1].name) + 2);
-                sprintf(to_ret, "%s!", registered_functions[i - 1].name);
+                char * to_ret = malloc(strlen(registered_functions[i - 1].name) + strlen(CALL_FUNCTION) + 1);
+                sprintf(to_ret, "%s%s", registered_functions[i - 1].name, CALL_FUNCTION);
                 return to_ret;
             }
         }
@@ -387,6 +412,8 @@ char * cmd_generator(const char * text, int state) {
         printf("internal error in cmd_generator\n");
         exit(1);
     }
+
+    // now search generically
 
     return NULL;
 
@@ -400,9 +427,17 @@ void run_interactive(runtime_t * runtime) {
     //rl_parse_and_bind("TAB: menu-complete");
 
     rl_attempted_completion_function = cmd_completion;
-    rl_basic_word_break_characters = "\t\n\"\\'`@$><=;|{(";
+    rl_basic_word_break_characters = "\t\n\"\\'`@$=;|{( ";
 
-    while ((cur_line = readline( INTERACTIVE_PROMPT )) != NULL) {
+    char * interact;
+
+    if (!isatty(STDIN_FILENO)) {
+        interact = "";
+    } else {
+        interact = INTERACTIVE_PROMPT;
+    }
+
+    while ((cur_line = readline( interact )) != NULL) {
         runnable_init_str(&cur_runnable, cur_line);
 
         run_runnable(runtime, &cur_runnable);

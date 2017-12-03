@@ -26,6 +26,7 @@ obj_t obj_copy(obj_t input) {
 void obj_free(obj_t * obj) {
     type_t obj_type = type_from_id(obj->type_id);
     obj_type.destroyer(obj);
+    *obj = NULL_OBJ;
 }
 
 void obj_construct(type_t type, obj_t * to, obj_t from) {
@@ -48,23 +49,19 @@ void init_runtime(runtime_t * runtime) {
     dict_init(&runtime->globals);
 }
 
-bool str_obj_force(char ** out, obj_t in) {
+void str_obj_force(char ** out, obj_t in) {
     if (!type_exists_name("str")) {
         raise_exception("no str type", 1);
-        return false;
     }
 
     type_t str_type = type_from_name("str");
     if (in.type_id == str_type.id) {
         *out = malloc(in.data_len);
         strcpy(*out, (char *)in.data);
-        return true;
     } else {
         char to_raise[EXCEPTION_LEN];
         sprintf(to_raise, "object is not a string, but is '%s'", type_name_from_id(in.type_id));
-
         raise_exception(to_raise, 1);
-        return false;
     }
 
 }
