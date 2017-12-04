@@ -1,3 +1,6 @@
 
-install (FILES helloworld.ezc DESTINATION share/ezc/examples)
-install (FILES arithmetic.ezc DESTINATION share/ezc/examples)
+FILE(GLOB examples "${CMAKE_CURRENT_SOURCE_DIR}/*.ezc")
+
+install (FILES ${examples} DESTINATION share/ezc/examples PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_WRITE GROUP_EXECUTE WORLD_READ WORLD_WRITE WORLD_EXECUTE)
+
+ 
