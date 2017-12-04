@@ -4,6 +4,7 @@ project (ezc)
 set (EZC_VERSION_MAJOR 0)
 set (EZC_VERSION_MINOR 1)
 
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 set (CMAKE_C_FLAGS "-O2 -g -Wall -pedantic -std=c99 ${CMAKE_C_FLAGS}")
 

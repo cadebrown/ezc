@@ -75,6 +75,9 @@ endif(MPFR_INCLUDES)
 
 find_library(MPFR_LIBRARIES mpfr PATHS $ENV{GMPDIR} ${LIB_INSTALL_DIR})
 
+MESSAGE(STATUS "MPFR libs: " ${MPFR_LIBRARIES})
+
+
 # Epilogue
 
 include(FindPackageHandleStandardArgs)
