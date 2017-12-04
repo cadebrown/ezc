@@ -11,12 +11,10 @@ compiler:
   - gcc
 
 install:
-  - mkdir ezc-dev
-  - mkdir build && cd build
-  - cmake .. -DCMAKE_INSTALL_PREFIX=$PWD/../ezc-dev
-  - make
-  - make install
-  - cd $PWD/../
+  - ./buildgmp.sh
+  - ./buildmpfr.sh
+  - ./buildezc.sh
+  - mv out/ ezc-dev/
   - tar cJf ezc-dev.tar.gz ezc-dev/
   - echo UPLOADING DEV FILE
   - curl --upload-file ./ezc-dev.tar.gz https://transfer.sh/ezc-dev.tar.gz

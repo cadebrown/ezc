@@ -19,6 +19,9 @@ missing
 ezc.pc
 test-driver
 
+out/
+
+
 .vscode/
 
 *.out
