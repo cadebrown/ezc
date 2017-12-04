@@ -2,7 +2,7 @@
     "name": "ezc",
     "displayName": "ezc",
     "description": "EZC Files",
-    "version": "2.10.0",
+    "version": "3.0.0",
     "publisher": "chemdev",
     "engines": {
         "vscode": "^1.5.0"
@@ -10,6 +10,7 @@
     "categories": [
         "Languages"
     ],
+    "icon": "logo.png",
     "contributes": {
         "languages": [
             {

@@ -93,14 +93,6 @@
 			<string>support.type.sys-types.args</string>
 		</dict>
 
-		<!-- User defined function (call). Overrules default functions -->
-
-		<dict>
-			<key>match</key>
-			<string>(int|float|str|byte)</string>
-			<key>name</key>
-			<string>support.type.sys-types.functions</string>
-		</dict>
 
 
 		<!-- Numerical constant (or built in variable, such as ONE, or TWO) -->
@@ -150,6 +142,17 @@
 			<key>name</key>
 			<string>support.function.builtin.call.ezc</string>
 		</dict>  
+
+
+		<!-- User defined function (call). Overrules default functions -->
+
+		<dict>
+			<key>match</key>
+			<string>(int|float|str|byte)</string>
+			<key>name</key>
+			<string>support.type.sys-types.functions</string>
+		</dict>
+
 
         </array>
         <key>uuid</key>

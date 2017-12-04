@@ -20,4 +20,3 @@ v$ 2/ print!
 # cast to a float, then divide by 2, which does not truncate
 v$->float 2/ print!
 
-
