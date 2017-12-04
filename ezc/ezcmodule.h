@@ -65,7 +65,7 @@ module_init_t module_init = { init };
 
 
 #define ASSURE_STACK_LEN(n) if (runtime->stack.len < n) { \
-        raise_exception("not enough object on the stack", 1); \
+        raise_exception("not enough objects on the stack", 1); \
     }
 
 

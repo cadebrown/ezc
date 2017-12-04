@@ -230,18 +230,18 @@ void print_module(module_t module) {
     }
 }
 
-bool import_module(char * name) {
+bool import_module(char * name, bool required) {
     module_t cur_module;
-    bool found = load_module(&cur_module, name);
+    bool found = load_module(&cur_module, name, required);
     if (found) {
         register_module(cur_module);
     }
     return found;
 }
 
-#define FAIL_LOAD_MODULE(reason) log_fatal("while loading module '%s': %s", name, reason); return false;
+#define FAIL_LOAD_MODULE(reason) if (required) { log_fatal("while loading module '%s': %s", name, reason); return false; } else { return false; }
 
-bool load_module(module_t * module, char * name) {
+bool load_module(module_t * module, char * name, bool required) {
     char * cur_search = (char *)malloc(max_search_path_strlen + strlen(LIBRARY_PRE) + 2 * strlen(name) + strlen(LIBRARY_EXT) + 4);
     int i, csoff;
     void * handle = NULL;
@@ -262,7 +262,11 @@ bool load_module(module_t * module, char * name) {
         APPEND(name)
         APPEND(LIBRARY_EXT)
 
+        log_trace("trying module '%s' at '%s'", name, cur_search);
+
         if ((handle = dlopen(cur_search, RTLD_NOW)) != NULL) break;
+
+        log_trace("got dlerror: %s", dlerror());
 
         // also do a copy without the 'name' subfolder
         csoff = 0;
@@ -274,8 +278,13 @@ bool load_module(module_t * module, char * name) {
         APPEND(name)
         APPEND(LIBRARY_EXT)
 
+        log_trace("trying module '%s' at '%s'", name, cur_search);
         
+    
         if ((handle = dlopen(cur_search, RTLD_NOW)) != NULL) break;
+    
+        log_trace("got dlerror: %s", dlerror());
+    
     }
 
     if (handle != NULL) {
@@ -285,7 +294,7 @@ bool load_module(module_t * module, char * name) {
     free(cur_search);
 
     if (handle == NULL) {
-        FAIL_LOAD_MODULE("module not found");
+        FAIL_LOAD_MODULE(dlerror());
     } else {
         module->lib_data = handle;
 

@@ -6,6 +6,10 @@ add_subdirectory (ezc.functions)
 add_subdirectory (ezc.io)
 add_subdirectory (ezc.operators)
 
+if(GMP_FOUND)
+    add_subdirectory (ezc.gmp)
+endif()
+
 add_library(ezc ezc.c module_loader.c log.c exec.c exec.h estack.c dict.c routines.c whereami.c routines.h whereami.h estack.h dict.h ezctypes.h log.h ezc.h module_loader.h)
 
 install (TARGETS ezc DESTINATION lib)
@@ -15,9 +19,11 @@ add_executable(ec ec.c ec.h)
 
 target_link_libraries(ec ezc ${CMAKE_DL_LIBS})
 
+
 if(READLINE_FOUND)
     target_link_libraries(ec ${Readline_LIBRARY})
 endif()
+
 
 
 install (FILES ezc.h DESTINATION include)

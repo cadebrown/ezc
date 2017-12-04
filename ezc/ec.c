@@ -28,8 +28,9 @@ int main(int argc, char ** argv) {
 
     static struct option long_options[] = {
         {"help", no_argument, NULL, 'h'},
+        {"info", no_argument, NULL, 'i'},
         {"include", required_argument, NULL, 'I'},
-        {"import", required_argument, NULL, 'i'},
+        {"module", required_argument, NULL, 'm'},
         {"expression", required_argument, NULL, 'e'},
         {"file", required_argument, NULL, 'f'},
         {"verbosity", required_argument, NULL, 'v'},
@@ -39,36 +40,59 @@ int main(int argc, char ** argv) {
     };
     
 
-    while ((c = getopt_long (argc, argv, "hI:i:e:f:v:", long_options, &long_index)) != (char)-1)
+    while ((c = getopt_long (argc, argv, "hI:im:e:f:v:", long_options, &long_index)) != (char)-1)
     switch (c) {
         case 'h':
             printf("Usage: %s [-f file | -e expr]\n\n", argv[0]);
             printf("    -f, --file            Evalue a file\n");
             printf("    -e, --expression      Evaluate an expression\n");
             printf("\n");
+            printf("    -I, --include         Add a directory to search for modules in\n");
+            printf("    -m, --module          Import module\n");
             #ifdef HAVE_READLINE
             printf("    --no-readline         Force using the non-readline interpreter\n");
             #endif
             printf("    --suspend             Suspend the program (which is useful for checking for memory leaks)\n");
             printf("\n");
-            printf("    -I, --include         Add a directory to search for modules in\n");
-            printf("    -i, --import          Import module\n");
             printf("    -h, --help            Print out this usage dialogue\n");
+            printf("    --info                Print out compilation info\n");
             printf("\n");
             #ifdef EZC_DEV
-            printf("Version: %d.%d [dev version]\n", EZC_VERSION_MAJOR, EZC_VERSION_MINOR);
+            printf("Version: %d.%d [dev version]\n\n", EZC_VERSION_MAJOR, EZC_VERSION_MINOR);
             #else
             printf("Version: %d.%d [release]\n\n", EZC_VERSION_MAJOR, EZC_VERSION_MINOR);
             #endif
             printf("Questions, comments, concerns can go to: <cade@chemicaldevelopment.us>\n");
             return 0;
             break;
+        case 'i':
+            //print info
+            #ifdef EZC_DEV
+            printf("Version: %d.%d [dev version]\n\n", EZC_VERSION_MAJOR, EZC_VERSION_MINOR);
+            #else
+            printf("Version: %d.%d [release]\n\n", EZC_VERSION_MAJOR, EZC_VERSION_MINOR);
+            #endif
+            printf("Compiled on: %s at %s\n\n", __DATE__, __TIME__);
+
+            printf("Compiled with: ");
+            #ifdef HAVE_GMP
+            printf("GMP, ");
+            #endif
+
+            #ifdef HAVE_READLINE
+            printf("Readline, ");
+            #endif
+            printf("\n");
+
+            exit(0);
+           
+            break;
         case 'I':
             if (!add_search_path(optarg)) {
                 exit(1);
             }
             break;
-        case 'i':
+        case 'm':
             num_to_import++;
             to_import = realloc(to_import, sizeof(char *) * num_to_import);
             to_import[num_to_import - 1] = optarg;           
@@ -116,14 +140,19 @@ int main(int argc, char ** argv) {
 
     // import all defaults here
 
-    import_module("ezc.types");
-    import_module("ezc.functions");
-    import_module("ezc.operators");
-    import_module("ezc.io");
+    import_module("ezc.types", true);
+    import_module("ezc.functions", true);
+    import_module("ezc.operators", true);
+    
+    // some platforms (perhaps windows) may not support this
+    import_module("ezc.io", false);
+
+    // this is completely optional
+    import_module("ezc.gmp", false);
 
     int i;
     for (i = 0; i < num_to_import; ++i) {
-        import_module(to_import[i]);
+        import_module(to_import[i], true);
     }
 
     runtime_t runtime;

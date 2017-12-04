@@ -12,12 +12,31 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D__FILENAME__='\"$(subst ${CMAKE_SOURCE_DIR
 set(EZC_MODULE_DIR "lib/ezc" CACHE STRING "Where to install ezc modules that are build")
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}")
+
+
 find_package(Readline)
+find_package(GMP)
+find_package(MPFR)
+
 
 if(READLINE_FOUND)
   include_directories(${Readline_INCLUDE_DIR})
   add_definitions(-DHAVE_READLINE)
 endif()
+
+
+if(GMP_FOUND)
+  include_directories(${GMP_INCLUDE_DIR})
+  add_definitions(-DHAVE_GMP)
+endif()
+
+
+if(MPFR_FOUND)
+  include_directories(${MPFR_INCLUDES})
+  add_definitions(-DHAVE_MPFR)
+endif()
+
+
 
 
 configure_file (

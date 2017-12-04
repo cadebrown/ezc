@@ -13,6 +13,14 @@
 #include <string.h>
 #include <math.h>
 
+#ifdef HAVE_GMP
+#include <gmp.h>
+#endif
+
+#ifdef HAVE_MPFR
+#include <mpfr.h>
+#endif
+
 
 
 #define OPERATOR_MISMATCH(op, t0, t1) sprintf(to_raise, "type mismatch for operator '%s': types %s and %s not a valid combination", op, t0.name, t1.name); raise_exception(to_raise, 1);
@@ -33,13 +41,26 @@ void __reverse_str_inplace(char *str){
     }
 }
 
+int max(int a, int b) {
+    if (a > b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+
 
 obj_t __op_add(obj_t a, obj_t b) {
     obj_t r;
 
     type_t at = OBJ_TYPE(a), bt = OBJ_TYPE(b);
 
+    
     type_t int_type = TYPE("int"), float_type = TYPE("float"), str_type = TYPE("str");
+
+    type_t mpz_type = TYPE("mpz"), mpf_type = TYPE("mpf");
+
+    type_t mpfr_type = TYPE("mpfr");
 
     if (at.id == bt.id) {
         if (ISTYPE(a, int_type)) {
@@ -57,7 +78,32 @@ obj_t __op_add(obj_t a, obj_t b) {
             
             strcpy(OBJ_AS_POINTER(r, char), OBJ_AS_POINTER(a, char));
             strcat(OBJ_AS_POINTER(r, char), OBJ_AS_POINTER(b, char));
-        }  else {
+        } 
+#ifdef HAVE_GMP
+        else if (ISTYPE(a, mpz_type)) {
+            OBJ_ALLOC_STRUCT(r, mpz_t);
+            r.type_id = mpz_type.id;
+            mpz_init(OBJ_AS_STRUCT(r, mpz_t));
+            mpz_add(OBJ_AS_STRUCT(r, mpz_t), OBJ_AS_STRUCT(a, mpz_t), OBJ_AS_STRUCT(b, mpz_t));
+        } else if (ISTYPE(a, mpf_type)) {
+            OBJ_ALLOC_STRUCT(r, mpf_t);
+            r.type_id = mpf_type.id;
+            mpf_t * rf = OBJ_AS_POINTER(r, mpf_t), * af = OBJ_AS_POINTER(a, mpf_t), * bf = OBJ_AS_POINTER(b, mpf_t);
+            mpf_init2(*rf, max(mpf_get_prec(*af), mpf_get_prec(*bf)));
+            mpf_add(*rf, *af, *bf);
+        }
+#endif
+#ifdef HAVE_MPFR
+        else if (ISTYPE(a, mpfr_type)) {
+            OBJ_ALLOC_STRUCT(r, mpfr_t);
+            r.type_id = mpfr_type.id;
+            mpfr_t * rf = OBJ_AS_POINTER(r, mpfr_t), * af = OBJ_AS_POINTER(a, mpfr_t), * bf = OBJ_AS_POINTER(b, mpfr_t);
+
+            mpfr_init2(*rf, max(mpfr_get_prec(*af), mpfr_get_prec(*bf)));
+            mpfr_add(*rf, *af, *bf, EZC_RND);
+        }
+#endif
+        else {
             UNKNOWN_TYPE(at.name);
             return NULL_OBJ;    
         }
@@ -78,9 +124,110 @@ obj_t __op_add(obj_t a, obj_t b) {
             OBJ_AS_STRUCT(r, float) = rv;
             r.type_id = float_type.id;
             return r;
-        } else {
-            OPERATOR_MISMATCH("+", at, bt);
         }
+#ifdef HAVE_MPFR
+        // if there is an mpf, that takes precedence
+        if (ISTYPE(a, mpfr_type) || ISTYPE(b, mpfr_type)) {
+            obj_t * mpfrobj, *oobj;
+            if (ISTYPE(a, mpfr_type)) {
+                mpfrobj = &a;
+                oobj = &b;
+            } else {
+                oobj = &a;
+                mpfrobj = &b;
+            }
+            
+            OBJ_ALLOC_STRUCT(r, mpfr_t);
+            r.type_id = mpfr_type.id;
+            mpfr_init2(OBJ_AS_STRUCT(r, mpfr_t), mpfr_get_prec(OBJ_AS_STRUCT(*mpfrobj, mpfr_t)));
+            
+            if (ISTYPE(*oobj, int_type)) {
+                mpfr_add_si(OBJ_AS_STRUCT(r, mpfr_t), OBJ_AS_STRUCT(*mpfrobj, mpfr_t), OBJ_AS_STRUCT(*oobj, int), EZC_RND);
+                return r;
+            } else if (ISTYPE(*oobj, float_type)) {
+                mpfr_add_d(OBJ_AS_STRUCT(r, mpfr_t), OBJ_AS_STRUCT(*mpfrobj, mpfr_t), OBJ_AS_STRUCT(*oobj, float), EZC_RND);
+                return r;
+            } else if (ISTYPE(*oobj, mpf_type)) {
+                mpfr_t oobj_as_mpfr;
+                mpfr_init2(oobj_as_mpfr, mpf_get_prec(OBJ_AS_STRUCT(*oobj, mpf_t)));
+                mpfr_set_f(oobj_as_mpfr, OBJ_AS_STRUCT(*oobj, mpf_t), EZC_RND);
+                mpfr_add(OBJ_AS_STRUCT(r, mpfr_t), OBJ_AS_STRUCT(*mpfrobj, mpfr_t), oobj_as_mpfr, EZC_RND);
+                return r;
+            } else if (ISTYPE(*oobj, mpz_type)) {
+                mpfr_add_z(OBJ_AS_STRUCT(r, mpfr_t), OBJ_AS_STRUCT(*mpfrobj, mpfr_t), OBJ_AS_STRUCT(*oobj, mpz_t), EZC_RND);
+                return r;
+            }
+        }
+#endif
+#ifdef HAVE_GMP
+        // if there is an mpf, that takes precedence
+        if (ISTYPE(a, mpf_type) || ISTYPE(b, mpf_type)) {
+            obj_t * mpfobj, *oobj;
+            if (ISTYPE(a, mpf_type)) {
+                mpfobj = &a;
+                oobj = &b;
+            } else {
+                oobj = &a;
+                mpfobj = &b;
+            }
+            
+            OBJ_ALLOC_STRUCT(r, mpf_t);
+            r.type_id = mpf_type.id;
+            mpf_init2(OBJ_AS_STRUCT(r, mpf_t), mpf_get_prec(OBJ_AS_STRUCT(*mpfobj, mpf_t)));
+            
+            if (ISTYPE(*oobj, int_type)) {
+                int v = OBJ_AS_STRUCT(*oobj, int);
+                if (v >= 0) {
+                    mpf_add_ui(OBJ_AS_STRUCT(r, mpf_t), OBJ_AS_STRUCT(*mpfobj, mpf_t), v);
+                } else {
+                    mpf_sub_ui(OBJ_AS_STRUCT(r, mpf_t), OBJ_AS_STRUCT(*mpfobj, mpf_t), abs(v));
+                }
+                return r;
+            
+            } else if (ISTYPE(*oobj, float_type)) {
+                mpf_set_d(OBJ_AS_STRUCT(r, mpf_t), OBJ_AS_STRUCT(*oobj, float));
+                mpf_add(OBJ_AS_STRUCT(r, mpf_t), OBJ_AS_STRUCT(*mpfobj, mpf_t), OBJ_AS_STRUCT(r, mpf_t));
+                return r;
+            } else if (ISTYPE(*oobj, mpz_type)) {
+                mpf_set_z(OBJ_AS_STRUCT(r, mpf_t), OBJ_AS_STRUCT(*oobj, mpz_t));
+                mpf_add(OBJ_AS_STRUCT(r, mpf_t), OBJ_AS_STRUCT(*mpfobj, mpf_t), OBJ_AS_STRUCT(r, mpf_t));
+                return r;
+            }
+        } else if (ISTYPE(a, mpz_type) || ISTYPE(b, mpz_type)) {
+            obj_t * mpzobj, *oobj;
+            if (ISTYPE(a, mpz_type)) {
+                mpzobj = &a;
+                oobj = &b;
+            } else {
+                oobj = &a;
+                mpzobj = &b;
+            }
+            
+            OBJ_ALLOC_STRUCT(r, mpz_t);
+            r.type_id = mpz_type.id;
+            mpz_init(OBJ_AS_STRUCT(r, mpz_t));
+            
+            if (ISTYPE(*oobj, int_type)) {
+                int v = OBJ_AS_STRUCT(*oobj, int);
+                if (v >= 0) {
+                    mpz_add_ui(OBJ_AS_STRUCT(r, mpz_t), OBJ_AS_STRUCT(*mpzobj, mpz_t), v);
+                } else {
+                    mpz_sub_ui(OBJ_AS_STRUCT(r, mpz_t), OBJ_AS_STRUCT(*mpzobj, mpz_t), abs(v));
+                }
+                return r;
+            } else if (ISTYPE(*oobj, float_type)) {
+                int v = (int)floor(OBJ_AS_STRUCT(*oobj, float));
+                if (v >= 0) {
+                    mpz_add_ui(OBJ_AS_STRUCT(r, mpz_t), OBJ_AS_STRUCT(*mpzobj, mpz_t), v);
+                } else {
+                    mpz_sub_ui(OBJ_AS_STRUCT(r, mpz_t), OBJ_AS_STRUCT(*mpzobj, mpz_t), abs(v));
+                }
+                return r;
+            }
+        }
+
+#endif
+        OPERATOR_MISMATCH("+", at, bt);
     }
 
     return NULL_OBJ;
@@ -94,6 +241,11 @@ obj_t __op_sub(obj_t a, obj_t b) {
 
     type_t int_type = TYPE("int"), float_type = TYPE("float");
 
+    type_t mpz_type = TYPE("mpz"), mpf_type = TYPE("mpf");
+
+    type_t mpfr_type = TYPE("mpfr");
+
+
     if (at.id == bt.id) {
         if (ISTYPE(a, int_type)) {
             OBJ_ALLOC_STRUCT(r, int);
@@ -103,7 +255,33 @@ obj_t __op_sub(obj_t a, obj_t b) {
             OBJ_ALLOC_STRUCT(r, float);
             r.type_id = float_type.id;
             OBJ_AS_STRUCT(r, float) = OBJ_AS_STRUCT(a, float) - OBJ_AS_STRUCT(b, float);
-        }  else {
+            
+        }
+#ifdef HAVE_GMP
+        else if (ISTYPE(a, mpz_type)) {
+            OBJ_ALLOC_STRUCT(r, mpz_t);
+            r.type_id = mpz_type.id;
+            mpz_init(OBJ_AS_STRUCT(r, mpz_t));
+            mpz_sub(OBJ_AS_STRUCT(r, mpz_t), OBJ_AS_STRUCT(a, mpz_t), OBJ_AS_STRUCT(b, mpz_t));
+        } else if (ISTYPE(a, mpf_type)) {
+            OBJ_ALLOC_STRUCT(r, mpf_t);
+            r.type_id = mpf_type.id;
+            mpf_t * rf = OBJ_AS_POINTER(r, mpf_t), * af = OBJ_AS_POINTER(a, mpf_t), * bf = OBJ_AS_POINTER(b, mpf_t);
+            mpf_init2(*rf, max(mpf_get_prec(*af), mpf_get_prec(*bf)));
+            mpf_sub(*rf, *af, *bf);
+        }
+#endif
+#ifdef HAVE_MPFR
+        else if (ISTYPE(a, mpfr_type)) {
+            OBJ_ALLOC_STRUCT(r, mpfr_t);
+            r.type_id = mpfr_type.id;
+            mpfr_t * rf = OBJ_AS_POINTER(r, mpfr_t), * af = OBJ_AS_POINTER(a, mpfr_t), * bf = OBJ_AS_POINTER(b, mpfr_t);
+
+            mpfr_init2(*rf, max(mpfr_get_prec(*af), mpfr_get_prec(*bf)));
+            mpfr_sub(*rf, *af, *bf, EZC_RND);
+        }
+#endif
+        else {
             UNKNOWN_TYPE(at.name);
             return NULL_OBJ;    
         }
@@ -140,6 +318,11 @@ obj_t __op_mul(obj_t a, obj_t b) {
 
     type_t int_type = TYPE("int"), float_type = TYPE("float"), str_type = TYPE("str");
 
+    type_t mpz_type = TYPE("mpz"), mpf_type = TYPE("mpf");
+
+    type_t mpfr_type = TYPE("mpfr");
+
+
     if (at.id == bt.id) {
         if (ISTYPE(a, int_type)) {
             OBJ_ALLOC_STRUCT(r, int);
@@ -149,7 +332,32 @@ obj_t __op_mul(obj_t a, obj_t b) {
             OBJ_ALLOC_STRUCT(r, float);
             r.type_id = float_type.id;
             OBJ_AS_STRUCT(r, float) = OBJ_AS_STRUCT(a, float) * OBJ_AS_STRUCT(b, float);
-        }  else {
+        }
+#ifdef HAVE_GMP
+        else if (ISTYPE(a, mpz_type)) {
+            OBJ_ALLOC_STRUCT(r, mpz_t);
+            r.type_id = mpz_type.id;
+            mpz_init(OBJ_AS_STRUCT(r, mpz_t));
+            mpz_mul(OBJ_AS_STRUCT(r, mpz_t), OBJ_AS_STRUCT(a, mpz_t), OBJ_AS_STRUCT(b, mpz_t));
+        } else if (ISTYPE(a, mpf_type)) {
+            OBJ_ALLOC_STRUCT(r, mpf_t);
+            r.type_id = mpf_type.id;
+            mpf_t * rf = OBJ_AS_POINTER(r, mpf_t), * af = OBJ_AS_POINTER(a, mpf_t), * bf = OBJ_AS_POINTER(b, mpf_t);
+            mpf_init2(*rf, max(mpf_get_prec(*af), mpf_get_prec(*bf)));
+            mpf_mul(*rf, *af, *bf);
+        }
+#endif
+#ifdef HAVE_MPFR
+        else if (ISTYPE(a, mpfr_type)) {
+            OBJ_ALLOC_STRUCT(r, mpfr_t);
+            r.type_id = mpfr_type.id;
+            mpfr_t * rf = OBJ_AS_POINTER(r, mpfr_t), * af = OBJ_AS_POINTER(a, mpfr_t), * bf = OBJ_AS_POINTER(b, mpfr_t);
+
+            mpfr_init2(*rf, max(mpfr_get_prec(*af), mpfr_get_prec(*bf)));
+            mpfr_mul(*rf, *af, *bf, EZC_RND);
+        }
+#endif
+         else {
             UNKNOWN_TYPE(at.name);
             return NULL_OBJ;    
         }
@@ -221,6 +429,11 @@ obj_t __op_div(obj_t a, obj_t b) {
 
     type_t int_type = TYPE("int"), float_type = TYPE("float");
 
+    type_t mpz_type = TYPE("mpz"), mpf_type = TYPE("mpf");
+
+    type_t mpfr_type = TYPE("mpfr");
+
+
     if (at.id == bt.id) {
         if (ISTYPE(a, int_type)) {
             int bval = OBJ_AS_STRUCT(b, int);
@@ -235,7 +448,32 @@ obj_t __op_div(obj_t a, obj_t b) {
             OBJ_ALLOC_STRUCT(r, float);
             r.type_id = float_type.id;
             OBJ_AS_STRUCT(r, float) = OBJ_AS_STRUCT(a, float) / OBJ_AS_STRUCT(b, float);
-        }  else {
+        }
+#ifdef HAVE_GMP
+        else if (ISTYPE(a, mpz_type)) {
+            OBJ_ALLOC_STRUCT(r, mpz_t);
+            r.type_id = mpz_type.id;
+            mpz_init(OBJ_AS_STRUCT(r, mpz_t));
+            mpz_div(OBJ_AS_STRUCT(r, mpz_t), OBJ_AS_STRUCT(a, mpz_t), OBJ_AS_STRUCT(b, mpz_t));
+        } else if (ISTYPE(a, mpf_type)) {
+            OBJ_ALLOC_STRUCT(r, mpf_t);
+            r.type_id = mpf_type.id;
+            mpf_t * rf = OBJ_AS_POINTER(r, mpf_t), * af = OBJ_AS_POINTER(a, mpf_t), * bf = OBJ_AS_POINTER(b, mpf_t);
+            mpf_init2(*rf, max(mpf_get_prec(*af), mpf_get_prec(*bf)));
+            mpf_div(*rf, *af, *bf);
+        }
+#endif
+#ifdef HAVE_MPFR
+        else if (ISTYPE(a, mpfr_type)) {
+            OBJ_ALLOC_STRUCT(r, mpfr_t);
+            r.type_id = mpfr_type.id;
+            mpfr_t * rf = OBJ_AS_POINTER(r, mpfr_t), * af = OBJ_AS_POINTER(a, mpfr_t), * bf = OBJ_AS_POINTER(b, mpfr_t);
+
+            mpfr_init2(*rf, max(mpfr_get_prec(*af), mpfr_get_prec(*bf)));
+            mpfr_div(*rf, *af, *bf, EZC_RND);
+        }
+#endif
+        else {
             UNKNOWN_TYPE(at.name);
             return NULL_OBJ;    
         }
@@ -294,6 +532,10 @@ obj_t __op_pow(obj_t a, obj_t b) {
 
     type_t int_type = TYPE("int"), float_type = TYPE("float");
 
+    type_t mpz_type = TYPE("mpz"), mpf_type = TYPE("mpf");
+
+    type_t mpfr_type = TYPE("mpfr");
+
     if (at.id == bt.id) {
         if (ISTYPE(a, int_type)) {
             OBJ_ALLOC_STRUCT(r, int);
@@ -303,7 +545,58 @@ obj_t __op_pow(obj_t a, obj_t b) {
             OBJ_ALLOC_STRUCT(r, float);
             r.type_id = float_type.id;
             OBJ_AS_STRUCT(r, float) = pow(OBJ_AS_STRUCT(a, float), OBJ_AS_STRUCT(b, float));
-        }  else {
+        }
+#ifdef HAVE_GMP
+        else if (ISTYPE(a, mpz_type)) {
+            OBJ_ALLOC_STRUCT(r, mpz_t);
+            r.type_id = mpz_type.id;
+            mpz_init(OBJ_AS_STRUCT(r, mpz_t));
+            int pval = mpz_get_si(OBJ_AS_STRUCT(b, mpz_t));
+            if (pval < 0) {
+                mpz_set_ui(OBJ_AS_STRUCT(r, mpz_t), 0);
+            } else {
+                mpz_pow_ui(OBJ_AS_STRUCT(r, mpz_t), OBJ_AS_STRUCT(a, mpz_t), pval);
+            }
+        } else if (ISTYPE(a, mpf_type)) {
+            #ifdef HAVE_MPFR
+            OBJ_ALLOC_STRUCT(r, mpf_t);
+            r.type_id = mpf_type.id;
+            mpfr_t rfr, afr, bfr;
+            mpfr_init2(afr, mpf_get_prec(OBJ_AS_STRUCT(a, mpf_t)));
+            mpfr_init2(bfr, mpf_get_prec(OBJ_AS_STRUCT(b, mpf_t)));
+
+            mpfr_set_f(afr, OBJ_AS_STRUCT(a, mpf_t), EZC_RND);
+            mpfr_set_f(bfr, OBJ_AS_STRUCT(b, mpf_t), EZC_RND);
+
+            mpfr_init2(rfr, max(mpfr_get_prec(afr), mpfr_get_prec(bfr)));
+
+            mpfr_pow(rfr, afr, bfr, EZC_RND);
+
+            mpfr_clear(afr);
+            mpfr_clear(bfr);
+
+            mpf_init2(OBJ_AS_STRUCT(r, mpf_t), mpfr_get_prec(rfr));
+
+            mpfr_get_f(OBJ_AS_STRUCT(r, mpf_t), rfr, EZC_RND);
+
+            mpfr_clear(rfr);
+
+            #else
+            raise_exception("please use mpfr for pow with floats", 1);
+            #endif
+        }
+#endif
+#ifdef HAVE_MPFR
+        else if (ISTYPE(a, mpfr_type)) {
+            OBJ_ALLOC_STRUCT(r, mpfr_t);
+            r.type_id = mpfr_type.id;
+            mpfr_t * rf = OBJ_AS_POINTER(r, mpfr_t), * af = OBJ_AS_POINTER(a, mpfr_t), * bf = OBJ_AS_POINTER(b, mpfr_t);
+
+            mpfr_init2(*rf, max(mpfr_get_prec(*af), mpfr_get_prec(*bf)));
+            mpfr_pow(*rf, *af, *bf, EZC_RND);
+        }
+#endif
+        else {
             UNKNOWN_TYPE(at.name);
             return NULL_OBJ;    
         }
@@ -338,9 +631,9 @@ obj_t __op_pow(obj_t a, obj_t b) {
 obj_t __op_neg(obj_t a) {
     obj_t r;
 
-    type_t at = OBJ_TYPE(a);
-
     type_t int_type = TYPE("int"), float_type = TYPE("float"), str_type = TYPE("str");
+
+    type_t mpz_type = TYPE("mpz"), mpf_type = TYPE("mpf");
 
     if (ISTYPE(a, int_type)) {
         OBJ_ALLOC_STRUCT(r, int);
@@ -356,8 +649,23 @@ obj_t __op_neg(obj_t a) {
         r.type_id = str_type.id;
         strcpy(OBJ_AS_POINTER(r, char), OBJ_AS_POINTER(a, char));
         __reverse_str_inplace(OBJ_AS_POINTER(r, char));
-    }  else {
-        UNKNOWN_TYPE(at.name);
+    }
+#ifdef HAVE_GMP
+    else if (ISTYPE(a, mpz_type)) {
+        OBJ_ALLOC_STRUCT(r, mpz_t);
+        r.type_id = mpz_type.id;
+        mpz_init(OBJ_AS_STRUCT(r, mpz_t));
+        mpz_neg(OBJ_AS_STRUCT(r, mpz_t), OBJ_AS_STRUCT(a, mpz_t));
+    } else if (ISTYPE(a, mpf_type)) {
+        OBJ_ALLOC_STRUCT(r, mpf_t);
+        r.type_id = mpf_type.id;
+        mpf_t * rf = OBJ_AS_POINTER(r, mpf_t), * af = OBJ_AS_POINTER(a, mpf_t);
+        mpf_init2(*rf, mpf_get_prec(*af));
+        mpf_neg(*rf, *af);
+    }
+#endif
+    else {
+        UNKNOWN_TYPE(type_name_from_id(a.type_id));
         return NULL_OBJ;    
     }
     return r;

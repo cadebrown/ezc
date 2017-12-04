@@ -16,4 +16,9 @@
 #define ISTYPE(v, stype) ((v).type_id == (stype).id)
 
 
+
+#define EZC_RND MPFR_RNDN
+#define GMP_MPF_DEFAULT_PREC 256
+
+
 #endif

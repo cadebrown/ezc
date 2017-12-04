@@ -11,6 +11,15 @@
 #include <string.h>
 
 
+#ifdef HAVE_GMP
+#include <gmp.h>
+#endif
+
+#ifdef HAVE_MPFR
+#include <mpfr.h>
+#endif
+
+
 void byte_parser(obj_t * ret, char * value) {
     OBJ_ALLOC_STRUCT(*ret, char)
 
@@ -104,6 +113,13 @@ void int_representation(obj_t * obj, char ** ret) {
 void int_constructor(obj_t * ret, obj_t value) {
     type_t str_type = TYPE("str"), int_type = TYPE("int"), float_type = TYPE("float");
 
+#ifdef HAVE_GMP
+    type_t mpz_type = TYPE("mpz"), mpf_type = TYPE("mpf");
+#endif
+#ifdef HAVE_MPFR
+    type_t mpfr_type = TYPE("mpfr");
+#endif
+
     if (ISTYPE(value, str_type)) {
         int_parser(ret, OBJ_AS_POINTER(value, char));
     } else if (ISTYPE(value, int_type)) {
@@ -112,7 +128,23 @@ void int_constructor(obj_t * ret, obj_t value) {
     } else if (ISTYPE(value, float_type)) {
         OBJ_ALLOC_STRUCT(*ret, int);
         OBJ_AS_STRUCT(*ret, int) = OBJ_AS_STRUCT(value, float);
-    } else {
+    }
+#ifdef HAVE_GMP
+    else if (ISTYPE(value, mpz_type)) {
+        OBJ_ALLOC_STRUCT(*ret, int);
+        OBJ_AS_STRUCT(*ret, int) = mpz_get_si(OBJ_AS_STRUCT(value, mpz_t));
+    } else if (ISTYPE(value, mpf_type)) {
+        OBJ_ALLOC_STRUCT(*ret, int);
+        OBJ_AS_STRUCT(*ret, int) = mpf_get_si(OBJ_AS_STRUCT(value, mpf_t));
+    }
+#endif
+#ifdef HAVE_MPFR
+    else if (ISTYPE(value, mpfr_type)) {
+        OBJ_ALLOC_STRUCT(*ret, int);
+        OBJ_AS_STRUCT(*ret, int) = mpfr_get_si(OBJ_AS_STRUCT(value, mpfr_t), EZC_RND);
+    }
+#endif
+    else {
         UNKNOWN_CONVERSION(type_name_from_id(ret->type_id), type_name_from_id(value.type_id));
     }
 }
@@ -142,6 +174,13 @@ void float_parser(obj_t * ret, char * value) {
 void float_constructor(obj_t * ret, obj_t value) {
     type_t str_type = TYPE("str"), int_type = TYPE("int"), float_type = TYPE("float");
     
+#ifdef HAVE_GMP
+    type_t mpz_type = TYPE("mpz"), mpf_type = TYPE("mpf");
+#endif
+#ifdef HAVE_MPFR
+    type_t mpfr_type = TYPE("mpfr");
+#endif
+
     // if passed in a string, parse it
     if (ISTYPE(value, str_type)) {
         float_parser(ret, (char *)value.data);
@@ -151,7 +190,23 @@ void float_constructor(obj_t * ret, obj_t value) {
     } else if (ISTYPE(value, int_type)) {
         OBJ_ALLOC_STRUCT(*ret, float);
         OBJ_AS_STRUCT(*ret, float) = OBJ_AS_STRUCT(value, int);
-    } else {
+    } 
+#ifdef HAVE_GMP
+    else if (ISTYPE(value, mpz_type)) {
+        OBJ_ALLOC_STRUCT(*ret, float);
+        OBJ_AS_STRUCT(*ret, float) = mpz_get_si(OBJ_AS_STRUCT(value, mpz_t));
+    } else if (ISTYPE(value, mpf_type)) {
+        OBJ_ALLOC_STRUCT(*ret, float);
+        OBJ_AS_STRUCT(*ret, float) = mpf_get_d(OBJ_AS_STRUCT(value, mpf_t));
+    }
+#endif
+#ifdef HAVE_MPFR
+    else if (ISTYPE(value, mpfr_type)) {
+        OBJ_ALLOC_STRUCT(*ret, float);
+        OBJ_AS_STRUCT(*ret, float) = mpfr_get_d(OBJ_AS_STRUCT(value, mpfr_t), EZC_RND);
+    }
+#endif
+    else {
         UNKNOWN_CONVERSION(type_name_from_id(ret->type_id), type_name_from_id(value.type_id));
     }
 }

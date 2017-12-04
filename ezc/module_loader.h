@@ -41,7 +41,7 @@ module_utils_t utils;
 
 void init_module_loader();
 
-bool import_module(char * name);
+bool import_module(char * name, bool required);
 
 void register_type(type_t type);
 void register_module(module_t module);
@@ -91,7 +91,7 @@ void print_modules();
 void print_module(module_t module);
 
 
-bool load_module(module_t * module, char * name);
+bool load_module(module_t * module, char * name, bool required);
 
 void free_module(module_t * module);
 

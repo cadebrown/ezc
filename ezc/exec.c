@@ -112,6 +112,28 @@ void raise_exception(char * exception, int exitcode) {
     }
 }
 
+
+bool __is_valid_mpz(char * v) {
+    int i;
+    for (i = (v[0] == '-'); i < strlen(v); ++v) {
+        if (!isdigit(v[i])) return false;
+    }
+    return true;
+}
+
+
+bool __is_valid_mpf(char * v) {
+    int i;
+    for (i = 0; i < strlen(v); ++i) {
+        if (!(v[i] == '-' || v[i] == '.' || v[i] == 'e' || v[i] == 'E' || isdigit(v[i]))) {
+            return false;
+        }
+    }
+    return true;
+}
+
+
+
 // returns true if it is completely representable
 bool __is_valid_int(char * v) {
     char * vastr = malloc(128);
@@ -138,6 +160,21 @@ bool __is_valid_float(char * v) {
 
 
 type_t implicit_type(char * entered) {
+// uncomment this to allow default values to be mpf s
+
+/*
+    if (type_exists_name("mpz") && __is_valid_mpz(entered)) {
+        return TYPE("mpz");
+    }
+
+    if (type_exists_name("mpf") && __is_valid_mpf(entered)) {
+        if (type_exists_name("mpfr")) {
+            return TYPE("mpfr");
+        } else {
+            return TYPE("mpf");
+        }
+    }
+*/
     if (__is_valid_int(entered)) {
         return type_from_name("int");
     } else if (__is_valid_float(entered)) {
