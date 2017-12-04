@@ -12,6 +12,7 @@
 
 #include "ezcsymboldefs.h"
 #include "ezctypes.h"
+#include "ezcmacros.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -54,14 +55,18 @@ module_init_t module_init = { init };
 #define run_runnable utils.run_runnable
 
 
-#define UNKNOWN_CONVERSION(tname, fname) sprintf(to_raise, "don't know how to convert '%s' into '%s'", fname, tname); raise_exception(to_raise, 1); return;
+#define UNKNOWN_CONVERSION(tname, fname) sprintf(to_raise, "don't know how to convert '%s' into '%s'", fname, tname); raise_exception(to_raise, 1);
 
-#define UNKNOWN_TYPE(tname) sprintf(to_raise, "wrong argument type: '%s'", tname); raise_exception(to_raise, 1); return;
+#define UNKNOWN_TYPE(tname) sprintf(to_raise, "wrong argument type: '%s'", tname); raise_exception(to_raise, 1);
 
 #define ASSURE_NONEMPTY_STACK if (runtime->stack.len <= 0) { \
         raise_exception("no objects on stack", 1); \
     }
 
+
+#define ASSURE_STACK_LEN(n) if (runtime->stack.len < n) { \
+        raise_exception("not enough object on the stack", 1); \
+    }
 
 
 // pre allocated exception buffer

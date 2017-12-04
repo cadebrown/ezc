@@ -118,6 +118,7 @@ int main(int argc, char ** argv) {
 
     import_module("ezc.types");
     import_module("ezc.functions");
+    import_module("ezc.operators");
     import_module("ezc.io");
 
     int i;

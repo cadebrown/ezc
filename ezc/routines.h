@@ -15,6 +15,13 @@ void obj_parse(type_t type, obj_t * to, char * from);
 
 void obj_representation(type_t type, obj_t * from, char ** to);
 
+bool valid_function_name(char * fn);
+
+bool valid_module_name(char * fn);
+
+bool valid_type_name(char * fn);
+
+
 void init_runtime(runtime_t * runtime);
 
 void runnable_init_str(runnable_t * runnable, char * src);

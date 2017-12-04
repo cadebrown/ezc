@@ -7,12 +7,48 @@
 #include "estack.h"
 #include "dict.h"
 
+#include "ezcmacros.h"
+
 #include "ezclang.h"
 
 #ifndef __EZCMODULE_H__
 #include "module_loader.h"
 #include "exec.h"
 #endif
+
+
+bool valid_module_name(char * fn) {
+    int i;
+    for (i = 0; i < strlen(fn); ++i) {
+        if (!((fn[i] >= 'a' && fn[i] <='z') || (fn[i] >='A' && fn[i] <= 'Z') || fn[i] == '.')) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool valid_type_name(char * fn) {
+    int i;
+    for (i = 0; i < strlen(fn); ++i) {
+        if (!((fn[i] >= 'a' && fn[i] <='z') || (fn[i] >='A' && fn[i] <= 'Z'))) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool valid_function_name(char * fn) {
+    if (strstr(fn, CALL_FUNCTION) || strstr(fn, CAST) || IS_BUILTIN(fn)) {
+        return false;
+    }
+    int i;
+    for (i = 0; i < strlen(fn); ++i) {
+        if (fn[i] == ' ') {
+            return false;
+        }
+    }
+    return true;
+}
 
 
 obj_t obj_copy(obj_t input) {
@@ -24,9 +60,11 @@ obj_t obj_copy(obj_t input) {
 }
 
 void obj_free(obj_t * obj) {
-    type_t obj_type = type_from_id(obj->type_id);
-    obj_type.destroyer(obj);
-    *obj = NULL_OBJ;
+    if (!ISTYPE(*obj, NULL_TYPE)) {
+        type_t obj_type = type_from_id(obj->type_id);
+        obj_type.destroyer(obj);
+        *obj = NULL_OBJ;
+    }
 }
 
 void obj_construct(type_t type, obj_t * to, obj_t from) {
@@ -49,6 +87,7 @@ void init_runtime(runtime_t * runtime) {
     dict_init(&runtime->globals);
 }
 
+// allocates memory
 void str_obj_force(char ** out, obj_t in) {
     if (!type_exists_name("str")) {
         raise_exception("no str type", 1);
@@ -75,34 +114,31 @@ void runnable_add_str(runnable_t * runnable, char * _src) {
     strcpy(runnable->lines[runnable->num_lines - 1], _src);
 }
 
-void runnable_init_str(runnable_t * runnable, char * _src) {
+void runnable_init_str(runnable_t * runnable, char * src) {
     int lines = 0;
-    char * src = malloc(strlen(_src) + 1);
-    strcpy(src, _src);
-    char * delim = NEWLINE_STR;
-    char * cur_line = strtok(src, delim);
+    int lc = 0, cc = 0;
 
-    while (cur_line != NULL) {
-        cur_line = strtok(NULL, delim);
-        lines++;
+    #define NEXTLINE while (cc < strlen(src) && src[cc] != '\n') { cc++; }
+
+    char * cur_line = NULL;
+
+    runnable->lines = NULL;
+
+
+    while (cc < strlen(src)) {
+        lc = cc;
+        NEXTLINE
+        cur_line = malloc(cc - lc + 1);
+        strncpy(cur_line, src + lc, cc - lc);
+        cur_line[cc - lc] = '\0';
+        runnable->lines = realloc(runnable->lines, sizeof(char *) * ++lines);
+        runnable->lines[lines - 1] = cur_line;
+        cc++;
     }
 
     runnable->num_lines = lines;
-    runnable->lines = malloc(sizeof(char *) * lines);
     
-    strcpy(src, _src);
-    
-    cur_line = strtok(src, delim);
 
-    int i = 0;
-
-    while (cur_line != NULL) {
-        runnable->lines[i] = malloc(strlen(cur_line) + 1);
-        strcpy(runnable->lines[i], cur_line);
-        
-        cur_line = strtok(NULL, delim);
-        i++;
-    }
 }
 
 void runnable_free(runnable_t * runnable) {

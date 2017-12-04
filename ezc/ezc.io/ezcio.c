@@ -4,6 +4,8 @@
 #define MODULE_DESCRIPTION "defines ezc standard input/output"
 
 #include "ezcmodule.h"
+#include "../ezcmacros.h"
+
 
 #include <stdio.h>
 #include <stdlib.h>

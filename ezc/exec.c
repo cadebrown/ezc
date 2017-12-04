@@ -3,10 +3,12 @@
 #include "routines.h"
 #include "module_loader.h"
 #include "ezclang.h"
+#include "ezcmacros.h"
 
 #include <unistd.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <ctype.h>
 
 #include <string.h>
 
@@ -94,7 +96,7 @@ void raise_exception(char * exception, int exitcode) {
             int char_num = runnable_stack.cur_char[runnable_stack.len - 1];
 
             if (line_num >= 0) {
-                printf("At:\n");
+                printf("At: %s:%d\n", was_running.from, line_num);
                 printf("%s\n", was_running.lines[line_num]);
 
                 if (char_num >= 0) {
@@ -109,6 +111,41 @@ void raise_exception(char * exception, int exitcode) {
         exit(exitcode);
     }
 }
+
+// returns true if it is completely representable
+bool __is_valid_int(char * v) {
+    char * vastr = malloc(128);
+    int vv = strtol(v, NULL, 0);
+    sprintf(vastr, "%d", vv);
+    bool res = strcmp(vastr, v) == 0;
+    free(vastr);
+    return res;
+}
+
+
+// is automatically casted to float if it is completely 
+bool __is_valid_float(char * v) {
+    int i;
+    for (i = 0; i < strlen(v); ++i) {
+        if (v[i] == '-' || v[i] == '.' || v[i] == 'e' || v[i] == 'E' || isdigit(v[i])) {
+            
+        } else {
+            return false;
+        }
+    }
+    return true;
+}
+
+
+type_t implicit_type(char * entered) {
+    if (__is_valid_int(entered)) {
+        return type_from_name("int");
+    } else if (__is_valid_float(entered)) {
+        return type_from_name("float");
+    }
+    return type_from_name("str");
+}
+
 
 
 void run_runnable(runtime_t * runtime, runnable_t * runnable) {
@@ -156,6 +193,12 @@ void run_str(runtime_t * runtime, char * ezc_source_code) {
         c_off++; \
     }
 
+    function_t addfunc = FUNCTION("add"), subfunc = FUNCTION("sub"), mulfunc = FUNCTION("mul"), divfunc = FUNCTION("div"), powfunc = FUNCTION("pow");
+    function_t negfunc = FUNCTION("neg"), floorfunc = FUNCTION("floor");
+    function_t copyfunc = FUNCTION("copy"), nullfunc = FUNCTION("pushnull");
+    function_t dictgetfunc = FUNCTION("dictget"), dictsetfunc = FUNCTION("dictset");
+
+
 
     // preallocated exception buffer
     char to_raise[EXCEPTION_LEN];
@@ -164,7 +207,15 @@ void run_str(runtime_t * runtime, char * ezc_source_code) {
         
         set_curchar(c_off);
         // cast using `:TYPE`
-        if (ISLIM(csrc, CAST)) {
+        if (ISLIM(csrc, BLOCK_START)) {
+            
+            // TODO implment block parsing
+            int c_block = 1;
+            bool is_escaped = false;
+            TRAVERSE(!ISLIM(csrc, BLOCK_END),
+
+            )
+        } else if (ISLIM(csrc, CAST)) {
             // tmp will be equal to TYPE
             c_off += strlen(CAST);
             c_obj_off = c_off;
@@ -193,7 +244,29 @@ void run_str(runtime_t * runtime, char * ezc_source_code) {
 
                 estack_push(&runtime->stack, new);
             }
-        
+        } else if (IS_BUILTIN(csrc)) {
+            #define CASE_BUILTIN(mac, func) if (ISLIM(csrc, mac)) { \
+                c_off += strlen(mac); func.function(runtime); \
+            }
+
+            CASE_BUILTIN(BUILTIN_COPY, copyfunc) 
+            else CASE_BUILTIN(BUILTIN_NULL, nullfunc)
+            else CASE_BUILTIN(BUILTIN_NEG, negfunc)
+            else CASE_BUILTIN(BUILTIN_ADD, addfunc)
+            else CASE_BUILTIN(BUILTIN_SUB, subfunc)
+            else CASE_BUILTIN(BUILTIN_MUL, mulfunc)
+            else CASE_BUILTIN(BUILTIN_DIV, divfunc)
+            else CASE_BUILTIN(BUILTIN_POW, powfunc)
+            else CASE_BUILTIN(BUILTIN_FLOOR, floorfunc)
+            else if (ISLIM(csrc, BUILTIN_DICTSET) && strstr(csrc, BUILTIN_DICTSET) != NULL) {
+                c_off += strlen(BUILTIN_DICTSET); dictsetfunc.function(runtime);
+            }
+            else CASE_BUILTIN(BUILTIN_DICTGET, dictgetfunc)
+            else {
+                sprintf(to_raise, "unknown builtin '%s'", csrc);
+                raise_exception(to_raise, 1);
+            }
+
         } else if (ISLIM(csrc, CALL_FUNCTION)) {
             if (runtime->stack.len <= 0) {
                 sprintf(to_raise, "no function on the stack");
@@ -259,16 +332,31 @@ void run_str(runtime_t * runtime, char * ezc_source_code) {
                 } else {
                     c_off++;
                 }
+                obj_parse(str_type, &str_obj, tmp);
+
+                estack_push(&runtime->stack, str_obj);
             } else {
                 c_obj_off = c_off;
                 TRAVERSE(!IS_SPECIAL(csrc), 
                     tmp[c_off - c_obj_off] = cchar;
                 );
                 tmp[c_off - c_obj_off] = 0;
-            }
-            obj_parse(str_type, &str_obj, tmp);
 
-            estack_push(&runtime->stack, str_obj);
+                if (!ISLIM(csrc, CAST)) {
+                    obj_t ctype_obj;
+
+                    type_t detected_type = implicit_type(tmp);
+
+                    obj_parse(detected_type, &ctype_obj, tmp);
+
+                    estack_push(&runtime->stack, ctype_obj);
+                } else {
+                    obj_parse(str_type, &str_obj, tmp);
+
+                    estack_push(&runtime->stack, str_obj);
+                }
+
+            }
 
         } else if (ISLIM(csrc, COMMENT)) {
             goto leave;

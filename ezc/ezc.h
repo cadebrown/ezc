@@ -12,6 +12,7 @@
 
 #include "log.h"
 
+
 void ezc_init(char * execname);
 
 #endif

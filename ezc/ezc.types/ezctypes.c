@@ -4,6 +4,7 @@
 #define MODULE_DESCRIPTION "defines ezc standard library types"
 
 #include "ezcmodule.h"
+#include "../ezcmacros.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,13 +12,12 @@
 
 
 void byte_parser(obj_t * ret, char * value) {
-    ret->data_len = 1;
-    ret->data = malloc(ret->data_len);
-    
+    OBJ_ALLOC_STRUCT(*ret, char)
+
     if (strlen(value) == 1) {
-        ((char *)ret->data)[0] = value[0];
+        OBJ_AS_STRUCT(*ret, char) = value[0];
     } else if (strlen(value) > 2 && strlen(value) <= 4 && value[0] == '0' && value[1] == 'x' && strtol(value, NULL, 0) <= 0xff) {
-        ((char *)ret->data)[0] = strtol(value, NULL, 0);
+        OBJ_AS_STRUCT(*ret, char) = strtol(value, NULL, 0);
     } else {
         sprintf(to_raise, "error parsing byte from '%s'\n", value);
         raise_exception(to_raise, 1);
@@ -25,43 +25,37 @@ void byte_parser(obj_t * ret, char * value) {
 }
 
 void byte_constructor(obj_t * ret, obj_t value) {
-    type_t str_type = type_from_name("str"), input_type = type_from_id(value.type_id);
-    bool has_str = type_exists_name("str");
-    
+    type_t str_type = TYPE("str"), input_type = OBJ_TYPE(value);
+
     // if passed in a string, parse it
-    if (has_str && str_type.id == input_type.id) {
-        byte_parser(ret, (char *)value.data);
+    if (str_type.id == input_type.id) {
+        byte_parser(ret, OBJ_AS_POINTER(value, char));
     } else {
         UNKNOWN_CONVERSION(type_name_from_id(ret->type_id), type_name_from_id(value.type_id));
     }
 }
 
 void byte_representation(obj_t * obj, char ** ret) {
-    char v = ((char *)obj->data)[0];
     *ret = malloc(6);
-    sprintf(*ret, "0x%x", 0xff & (int)v);
+    sprintf(*ret, "0x%x", 0xff & (int)OBJ_AS_STRUCT(*obj, char));
 }
 
 void byte_destroyer(obj_t * ret) {
-    if (ret->data != NULL) {
-        free(ret->data);
-    }
+    OBJ_FREE_MEM(*ret)
 }
 
 void byte_copier(obj_t * to, obj_t * from) {
-    to->data_len = from->data_len;
-    to->data = malloc(to->data_len);
-    *(char *)to->data = *(char *)from->data;
+    OBJ_ALLOC_STRUCT(*to, char);
+    OBJ_STRUCT_COPY(*to, *from, char);
 }
 
 
 
 void int_parser(obj_t * ret, char * value) {
-    ret->data_len = sizeof(int);
-    ret->data = malloc(ret->data_len);
-
-    *((int *)ret->data) = strtol(value, NULL, 0);
+    OBJ_ALLOC_STRUCT(*ret, int);
+    OBJ_AS_STRUCT(*ret, int) = strtol(value, NULL, 0);
 }
+
 
 int __int_strlen(int _x) {
     int x = 0;
@@ -78,7 +72,6 @@ int __int_strlen(int _x) {
     }
     return l;
 }
-
 
 
 // fast method to represent it
@@ -109,36 +102,84 @@ void int_representation(obj_t * obj, char ** ret) {
 }
 
 void int_constructor(obj_t * ret, obj_t value) {
-    type_t input_type = type_from_id(value.type_id);
-    type_t str_type = type_from_name("str");
-    type_t int_type = type_from_name("int");
+    type_t str_type = TYPE("str"), int_type = TYPE("int"), float_type = TYPE("float");
 
-    if (input_type.id == str_type.id) {
-        int_parser(ret, value.data);
-    } else if (input_type.id == int_type.id) {
-        ret->data_len = sizeof(int);
-        ret->data = malloc(ret->data_len);
-        *((int *)ret->data) = *(int *)value.data;
+    if (ISTYPE(value, str_type)) {
+        int_parser(ret, OBJ_AS_POINTER(value, char));
+    } else if (ISTYPE(value, int_type)) {
+        OBJ_ALLOC_STRUCT(*ret, int);
+        OBJ_STRUCT_COPY(*ret, value, int);
+    } else if (ISTYPE(value, float_type)) {
+        OBJ_ALLOC_STRUCT(*ret, int);
+        OBJ_AS_STRUCT(*ret, int) = OBJ_AS_STRUCT(value, float);
     } else {
         UNKNOWN_CONVERSION(type_name_from_id(ret->type_id), type_name_from_id(value.type_id));
     }
 }
 
 void int_destroyer(obj_t * ret) {
-    if (ret->data != NULL) {
-        free(ret->data);
-    }
+    OBJ_FREE_MEM(*ret);
 }
 
 void int_copier(obj_t * to, obj_t * from) {
-    to->data_len = from->data_len;
-    to->data = malloc(to->data_len);
-    *(int *)to->data = *(int *)from->data;
+    OBJ_ALLOC_STRUCT(*to, *from);
+    OBJ_STRUCT_COPY(*to, *from, int);
 }
 
+
+
+void float_parser(obj_t * ret, char * value) {
+    OBJ_ALLOC_STRUCT(*ret, float);
+    
+    if (strlen(value) >= 1) {
+        OBJ_AS_STRUCT(*ret, float) = strtof(value, NULL);
+    } else {
+        sprintf(to_raise, "error parsing float from '%s'\n", value);
+        raise_exception(to_raise, 1);
+    }
+}
+
+void float_constructor(obj_t * ret, obj_t value) {
+    type_t str_type = TYPE("str"), int_type = TYPE("int"), float_type = TYPE("float");
+    
+    // if passed in a string, parse it
+    if (ISTYPE(value, str_type)) {
+        float_parser(ret, (char *)value.data);
+    } else if (ISTYPE(value, float_type)) {
+        OBJ_ALLOC_STRUCT(*ret, float);
+        OBJ_STRUCT_COPY(*ret, value, float);
+    } else if (ISTYPE(value, int_type)) {
+        OBJ_ALLOC_STRUCT(*ret, float);
+        OBJ_AS_STRUCT(*ret, float) = OBJ_AS_STRUCT(value, int);
+    } else {
+        UNKNOWN_CONVERSION(type_name_from_id(ret->type_id), type_name_from_id(value.type_id));
+    }
+}
+
+void float_representation(obj_t * obj, char ** ret) {
+    float v = OBJ_AS_STRUCT(*obj, float);
+    const char float_fmt[] = "%f";
+    int sz_needed = snprintf(NULL, 0, float_fmt, v);
+    
+    *ret = malloc(sz_needed + 1);
+
+    sprintf(*ret, float_fmt, v);
+}
+
+void float_copier(obj_t * to, obj_t * from) {
+    OBJ_ALLOC_STRUCT(*to, float);
+    OBJ_STRUCT_COPY(*to, *from, float);
+}
+
+
+void float_destroyer(obj_t * ret) {
+    OBJ_FREE_MEM(*ret);
+}
+
+
+
 void str_parser(obj_t * ret, char * value) {
-    ret->data_len = strlen(value) + 1;
-    ret->data = malloc(ret->data_len);
+    OBJ_ALLOC_BYTES(*ret, strlen(value) + 1);
     strcpy(ret->data, value);
 }
 
@@ -147,21 +188,19 @@ void str_representation(obj_t * obj, char ** ret) {
     strcpy(*ret, obj->data);
 }
 
-void str_constructor(obj_t * ret, obj_t value) {
-    type_t input_type = type_from_id(value.type_id);
-    type_t str_type = type_from_name("str");
 
-    if (input_type.id == str_type.id) {
-        str_parser(ret, value.data);
+void str_constructor(obj_t * ret, obj_t value) {
+    type_t str_type = TYPE("str");
+
+    if (ISTYPE(value, str_type)) {
+        str_parser(ret, OBJ_AS_POINTER(value, char));
     } else {
         UNKNOWN_CONVERSION(type_name_from_id(ret->type_id), type_name_from_id(value.type_id));
     }
 }
 
 void str_destroyer(obj_t * ret) {
-    if (ret->data != NULL) {
-        free(ret->data);
-    }
+    OBJ_FREE_MEM(*ret);
 }
 
 void str_copier(obj_t * to, obj_t * from) {
@@ -177,6 +216,7 @@ int init (int type_id, module_utils_t utils) {
 
     add_type("byte", "1 byte (8 bits) of memory, and this corresponds to the C type 'char'", byte_constructor, byte_copier, byte_parser, byte_representation, byte_destroyer);
     add_type("int", "a system 'int' type, which is normally signed 32 bits", int_constructor, int_copier, int_parser, int_representation, int_destroyer);
+    add_type("float", "a system 'float' type, which is normally 32 bits", float_constructor, float_copier, float_parser, float_representation, float_destroyer);
     add_type("str", "a 'char *' in C, this is a string type implementation", str_constructor, str_copier, str_parser, str_representation, str_destroyer);
 
     return 0;

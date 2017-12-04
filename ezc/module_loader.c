@@ -59,6 +59,11 @@ void init_module_loader() {
 }
 
 void register_type(type_t type) {
+    if (!valid_type_name(type.name)) {
+        char to_raise[EXCEPTION_LEN];
+        sprintf(to_raise, "invalid type name: '%s'", type.name);
+        raise_exception(to_raise, 1);
+    }
     num_registered_types++;
     if (registered_types == NULL) {
         registered_types = malloc(sizeof(type_t) * num_registered_types);
@@ -69,6 +74,11 @@ void register_type(type_t type) {
 }
 
 void register_module(module_t module) {
+    if (!valid_module_name(module.name)) {
+        char to_raise[EXCEPTION_LEN];
+        sprintf(to_raise, "invalid module name: '%s'", module.name);
+        raise_exception(to_raise, 1);
+    }
     num_registered_modules++;
     if (registered_modules == NULL) {
         registered_modules = malloc(sizeof(module_t) * num_registered_modules);
@@ -79,6 +89,12 @@ void register_module(module_t module) {
 }
 
 void register_function(function_t function) {
+    if (!valid_function_name(function.name)) {
+        char to_raise[EXCEPTION_LEN];
+        sprintf(to_raise, "invalid function name: '%s'", function.name);
+        raise_exception(to_raise, 1);
+    }
+
     num_registered_functions++;
     if (registered_functions == NULL) {
         registered_functions = malloc(sizeof(function_t) * num_registered_functions);

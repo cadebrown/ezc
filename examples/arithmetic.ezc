@@ -1,0 +1,23 @@
+#!ec -f
+
+# simple example with basic math
+
+# in RPN, operators come after the operands, and it operates on the stack
+# a possible benefit is that PEMDAS is meaningless here (parenthesis aren't needed)
+2 3 +
+
+
+# this sets the global dictionary of 'v' to the result of the operation, which clears the stack
+v$=
+
+# print out the globals and stack, which the stack is empty
+dump!
+
+
+# integer division by 2 (which truncates)
+v$ 2/ print!
+
+# cast to a float, then divide by 2, which does not truncate
+v$->float 2/ print!
+
+

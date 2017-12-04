@@ -16,13 +16,6 @@
         <key>patterns</key>
         <array>
 
-		<dict>
-			<key>match</key>
-			<string>.*;</string>
-			<key>name</key>
-			<string>constant.string</string>
-		</dict>
-
 		<!--  Comments, # is single line, and ### is multiline (with ### ending the comment)  -->
 
 		<dict>
@@ -62,6 +55,31 @@
 					<string>comment.line.ezc</string>
 					
 				</dict>
+
+				<dict>
+					<key>begin</key>
+					<string>"</string>
+					<key>beginCaptures</key>
+					<dict>
+						<key>0</key>
+						<dict>
+							<key>name</key>
+							<string>punctuation.definition.string.begin.ezc</string>
+						</dict>
+					</dict>
+					<key>end</key>
+					<string>"</string>
+					<key>endCaptures</key>
+					<dict>
+						<key>0</key>
+						<dict>
+							<key>name</key>
+							<string>punctuation.definition.string.end.ezc</string>
+						</dict>
+					</dict>
+					<key>name</key>
+					<string>string.quoted.ezc</string>
+				</dict>
 			</array>
 		</dict>
 
@@ -70,7 +88,7 @@
 
 		<dict>
 			<key>match</key>
-			<string>\[([a-zA-Z_0-9]+)\]((?:\ [a-zA-Z0-9_])+)</string>
+			<string></string>
 			<key>name</key>
 			<string>support.type.sys-types.args</string>
 		</dict>
@@ -79,7 +97,7 @@
 
 		<dict>
 			<key>match</key>
-			<string>(@(\{)?[a-zA-Z_0-9]+)(.*\})?</string>
+			<string>(int|float|str|byte)</string>
 			<key>name</key>
 			<string>support.type.sys-types.functions</string>
 		</dict>
@@ -89,7 +107,7 @@
 
 		<dict>
 			<key>match</key>
-			<string>(\+|\-)?[0-9\.]+</string>
+			<string>[0-9\.]+(\~)?</string>
 			<key>name</key>
 			<string>constant.numeric</string>
 		</dict>        
@@ -99,9 +117,9 @@
 
 		<dict>
 			<key>match</key>
-			<string>(\~|\^|choose|\!|\*|\/|\÷|\%|\+|\-|\~|\?)</string>
+			<string>(\-\>|\~|\^|\$=|\$|\_|\+|\-|\*|\/|\:|null)</string>
 			<key>name</key>
-            <string>support.function.builtin.call.ezc</string>
+            <string>constant.language.null</string>
 		</dict>   
 
 
@@ -109,7 +127,7 @@
 
 		<dict>
 			<key>match</key>
-			<string>(<|>|=<|==|>=|!=|\$)</string>
+			<string>(<|>|=<|==|>=|!=)</string>
 			<key>name</key>
 			<string>support.keyword.compare</string>
 		</dict>  
@@ -119,7 +137,7 @@
 
 		<dict>
 			<key>match</key>
-			<string>(rof|__base|for|label|goto|if|fi|set|prec|intvar|var|:|echo|\"\")</string>
+			<string>(\")</string>
 			<key>name</key>
 			<string>keyword.control.ezc</string>
 		</dict>
@@ -128,7 +146,7 @@
 
 		<dict>
 			<key>match</key>
-			<string>(svar|binomcoef|binompdf|binomcdf|binomcdf_1|normalpdf|normalcdf|erf|free|prompt|if|else|file|fi|for|rof|prec|add|sub|mul|div|pow|mod|\"|mpz|var|rawvar|intvar|rawintvar|set|sqrt|\√|cbrt|min|max|near|trunc|rand|fact|echo|printf|hypot|exp|log|agm|gamma|factorial|zeta|\ζ|pi|deg|rad|sin|cos|tan|asin|acos|atan|csc|sec|cot|acsc|asec|acot|sinh|cosh|tanh|asinh|acosh|atanh|csch|sech|coth|acsch|asech|acoth)</string>
+			<string>[a-zA-Z]*[a-zA-Z0-9]*(\&)?[ ]*\!</string>
 			<key>name</key>
 			<string>support.function.builtin.call.ezc</string>
 		</dict>  

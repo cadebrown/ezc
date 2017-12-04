@@ -13,6 +13,8 @@ void raise_exception(char *, int);
 
 void run_runnable(runtime_t * runtime, runnable_t * runnable);
 
+type_t implicit_type(char * entered);
+
 void run_str(runtime_t * runtime, char * ezc_source_code);
 
 void run_interactive_fallback(runtime_t * runtime);
