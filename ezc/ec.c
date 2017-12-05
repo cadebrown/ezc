@@ -225,6 +225,8 @@ int main(int argc, char ** argv) {
     }
 
 
+    return 0;
+
     /*
     type_t str;
     if (!type_exists_name("str")) {
