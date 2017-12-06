@@ -78,6 +78,9 @@ module_init_t module_init = { init };
 #define function_name_from_id _lib.function_name_from_id
 #define function_id_from_name _lib.function_id_from_name
 
+#define str_obj_force _lib.str_obj_force
+#define runnable_init_str _lib.runnable_init_str
+
 #define load_sharedlib _lib.load_sharedlib
 #define import_module _lib.import_module
 

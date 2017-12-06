@@ -208,8 +208,13 @@ typedef struct lib_t {
     bool       (* import_module)(char *, bool);
 
     void       (* raise_exception)(char *, int);
+    void (* runnable_init_str)(runnable_t * runnable, char * src);
+    void (* runnable_free)(runnable_t * runnable);
+
 
     void (* run_runnable)(runtime_t *, runnable_t *);
+
+    void (* str_obj_force)(char ** out, obj_t in);
 
 
 } lib_t;
