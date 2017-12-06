@@ -30,9 +30,14 @@ void ezc_init(char * execname) {
 
         add_search_path(execdir);
 
+        char * ezclibdir = malloc(FILENAME_MAX);
+        sprintf(ezclibdir, "%s/../lib/ezc", execdir);
+        add_search_path(ezclibdir);
+
         char * libdir = malloc(FILENAME_MAX);
-        sprintf(libdir, "%s/../lib/ezc", execdir);
+        sprintf(libdir, "%s/../lib", execdir);
         add_search_path(libdir);
+
     }
 
     add_search_path("/usr/lib");
