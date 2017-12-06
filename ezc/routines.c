@@ -67,19 +67,26 @@ void obj_free(obj_t * obj) {
     }
 }
 
-void obj_construct(type_t type, obj_t * to, obj_t from) {
-    to->type_id = type.id;
-    type.constructor(to, from);    
+obj_t obj_construct(type_t type, obj_t from) {
+    obj_t ret;
+    ret.type_id = type.id;
+    type.constructor(&ret, from);
+    return ret;
+    
 }
 
 
-void obj_parse(type_t type, obj_t * to, char * from) {
-    to->type_id = type.id;
-    type.parser(to, from);    
+obj_t obj_parse(type_t type, char * from) {
+    obj_t ret;
+    ret.type_id = type.id;
+    type.parser(&ret, from);    
+    return ret;
 }
 
-void obj_representation(type_t type, obj_t * from, char ** to) {
-    type.representation(from, to);    
+char * obj_representation(type_t type, obj_t * from) {
+    char * reprstr = NULL;
+    type.representation(from, &reprstr);
+    return reprstr;
 }
 
 void init_runtime(runtime_t * runtime) {

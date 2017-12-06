@@ -37,9 +37,11 @@ type_t * registered_types;
 int num_registered_functions;
 function_t * registered_functions;
 
-module_utils_t utils;
+lib_t lib;
 
 void init_module_loader();
+
+void load_sharedlib(char * name, void ** handle, char ** path);
 
 bool import_module(char * name, bool required);
 

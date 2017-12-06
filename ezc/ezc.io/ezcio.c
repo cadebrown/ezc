@@ -146,9 +146,7 @@ void open_file(runtime_t * runtime) {
         estack_push(&runtime->stack, last_obj);
 
     } else if (last_obj.type_id == str_type.id) {
-        obj_t new_file_obj;
-
-        obj_construct(file_type, &new_file_obj, last_obj);
+        obj_t new_file_obj = obj_construct(file_type, last_obj);
 
         obj_free(&last_obj);
 
@@ -201,9 +199,7 @@ void write_file(runtime_t * runtime) {
         obj_free(&to_write);
 
     } else if (file_obj.type_id == str_type.id) {
-        obj_t new_file_obj;
-
-        obj_construct(file_type, &new_file_obj, file_obj);
+        obj_t new_file_obj =obj_construct(file_type, file_obj);
 
         obj_free(&file_obj);
 
@@ -287,7 +283,7 @@ void read_file(runtime_t * runtime) {
             raise_exception("internal error with read buffer", 1);
         }
 
-        obj_parse(str_type, &read_obj, read_buffer);
+        read_obj = obj_parse(str_type, read_buffer);
 
             
         free(read_buffer);
@@ -296,9 +292,7 @@ void read_file(runtime_t * runtime) {
         estack_push(&runtime->stack, read_obj);
 
     } else if (file_obj.type_id == str_type.id) {
-        obj_t new_file_obj;
-
-        obj_construct(file_type, &new_file_obj, file_obj);
+        obj_t new_file_obj = obj_construct(file_type, file_obj);
 
         ezc_file_t * v = (ezc_file_t *)new_file_obj.data;
 
@@ -357,9 +351,7 @@ void clear_file(runtime_t * runtime) {
         estack_push(&runtime->stack, file_obj);
 
     } else if (file_obj.type_id == str_type.id) {
-        obj_t new_file_obj;
-
-        obj_construct(file_type, &new_file_obj, file_obj);
+        obj_t new_file_obj = obj_construct(file_type, file_obj);
 
         obj_free(&file_obj);
 
@@ -395,9 +387,9 @@ void close_file(runtime_t * runtime) {
 }
 
 
-int init (int type_id, module_utils_t utils) {
+int init (int type_id, lib_t _lib) {
 
-    init_exported(type_id, utils);
+    init_exported(type_id, _lib);
 
     add_type("file", "file pointer, with name, for reading and writing", file_constructor, file_copier, file_parser, file_representation, file_destroyer);
 

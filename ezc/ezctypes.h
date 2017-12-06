@@ -35,6 +35,8 @@ typedef struct type_t {
 
     char * description;
 
+    char * _module_name;
+
     constructor_t * constructor;
 
     copier_t * copier;
@@ -94,6 +96,8 @@ typedef struct function_t {
 
     char * description;
 
+    char * _module_name;
+
     raw_function_t * function;
 
 } function_t;
@@ -152,7 +156,30 @@ typedef struct module_t {
 } module_t;
 
 
-typedef struct module_utils_t {
+// this represents all ezc functions and variables that modules need, which are loaded at runtime so module libraries are small
+typedef struct lib_t {
+    void (* log_log)(int level, const char *file, int line, const char *fmt, ...);
+
+    void * (* dlsym)(void *, char *);
+
+    void (* dict_init)(dict_t * dict);
+    void (* dict_set)(dict_t * dict, char * key, obj_t obj);
+    obj_t (* dict_get)(dict_t * dict, char * key);
+    int (* dict_index)(dict_t * dict, char * key);
+
+    void (* estack_init)(estack_t * stack);
+    void (* estack_push)(estack_t * stack, obj_t obj);
+    obj_t (* estack_pop)(estack_t * estack);
+    obj_t (* estack_get)(estack_t * estack, int i);
+    void (* estack_set)(estack_t * estack, int i, obj_t val);
+    void (* estack_swaptop)(estack_t * estack);
+
+    obj_t (* obj_copy)(obj_t);
+    void (* obj_free)(obj_t *);
+    obj_t (* obj_construct)(type_t type, obj_t from);
+    obj_t (* obj_parse)(type_t type, char * from);
+    char * (* obj_representation)(type_t type, obj_t * from);
+
 
     bool   (* type_exists_id     )(int);
     bool   (* type_exists_name   )(char *);
@@ -177,18 +204,20 @@ typedef struct module_utils_t {
     int * num_modules;
     module_t ** modules;
 
-    bool       (* import_module)(char *);
+    void (* load_sharedlib)(char * name, void ** handle, char ** path);
+    bool       (* import_module)(char *, bool);
 
     void       (* raise_exception)(char *, int);
 
     void (* run_runnable)(runtime_t *, runnable_t *);
 
-} module_utils_t;
+
+} lib_t;
 
 
 typedef struct module_init_t {
 
-    int (*init)(int, module_utils_t);
+    int (*init)(int, lib_t);
 
 } module_init_t;
 

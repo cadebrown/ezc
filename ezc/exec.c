@@ -275,9 +275,7 @@ void run_str(runtime_t * runtime, char * ezc_source_code) {
                 raise_exception(to_raise, 1);
             } else {
                 obj_t last_on_stack = estack_pop(&runtime->stack);
-                obj_t new;
-                
-                obj_construct(to_type, &new, last_on_stack);
+                obj_t new = obj_construct(to_type, last_on_stack);
 
                 estack_push(&runtime->stack, new);
             }
@@ -369,7 +367,7 @@ void run_str(runtime_t * runtime, char * ezc_source_code) {
                 } else {
                     c_off++;
                 }
-                obj_parse(str_type, &str_obj, tmp);
+                str_obj = obj_parse(str_type, tmp);
 
                 estack_push(&runtime->stack, str_obj);
             } else {
@@ -380,15 +378,13 @@ void run_str(runtime_t * runtime, char * ezc_source_code) {
                 tmp[c_off - c_obj_off] = 0;
 
                 if (!ISLIM(csrc, CAST)) {
-                    obj_t ctype_obj;
-
                     type_t detected_type = implicit_type(tmp);
 
-                    obj_parse(detected_type, &ctype_obj, tmp);
+                    obj_t ctype_obj = obj_parse(detected_type, tmp);
 
                     estack_push(&runtime->stack, ctype_obj);
                 } else {
-                    obj_parse(str_type, &str_obj, tmp);
+                    str_obj = obj_parse(str_type, tmp);
 
                     estack_push(&runtime->stack, str_obj);
                 }

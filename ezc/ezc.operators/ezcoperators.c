@@ -13,6 +13,7 @@
 #include <string.h>
 #include <math.h>
 
+
 #ifdef HAVE_GMP
 #include <gmp.h>
 #endif
@@ -21,10 +22,16 @@
 #include <mpfr.h>
 #endif
 
+void * libgmp = NULL;
+#define GMP_LOADED (libgmp != NULL)
+
+void * libmpfr = NULL;
+#define MPFR_LOADED (libmpfr != NULL)
+
+#include "ezcgmpext.h"
 
 
 #define OPERATOR_MISMATCH(op, t0, t1) sprintf(to_raise, "type mismatch for operator '%s': types %s and %s not a valid combination", op, t0.name, t1.name); raise_exception(to_raise, 1);
-
 
 
 // quick method from: https://stackoverflow.com/questions/34035169/fastest-way-to-reverse-a-string-in-c/34035474
@@ -233,7 +240,6 @@ obj_t __op_add(obj_t a, obj_t b) {
     return NULL_OBJ;
 }
 
-
 obj_t __op_sub(obj_t a, obj_t b) {
     obj_t r;
 
@@ -309,6 +315,7 @@ obj_t __op_sub(obj_t a, obj_t b) {
 
     return NULL_OBJ;
 }
+
 
 
 obj_t __op_mul(obj_t a, obj_t b) {
@@ -432,7 +439,6 @@ obj_t __op_div(obj_t a, obj_t b) {
     type_t mpz_type = TYPE("mpz"), mpf_type = TYPE("mpf");
 
     type_t mpfr_type = TYPE("mpfr");
-
 
     if (at.id == bt.id) {
         if (ISTYPE(a, int_type)) {
@@ -673,6 +679,7 @@ obj_t __op_neg(obj_t a) {
     return NULL_OBJ;
 }
 
+/*
 
 obj_t __op_floor(obj_t a) {
     obj_t r;
@@ -699,8 +706,7 @@ obj_t __op_floor(obj_t a) {
     return NULL_OBJ;
 }
 
-
-
+*/
 #define STACK_OP(opfunc) { \
     ASSURE_STACK_LEN(2); \
     obj_t b = estack_pop(&runtime->stack); \
@@ -711,11 +717,14 @@ obj_t __op_floor(obj_t a) {
     obj_free(&b); \
 }
 
-
 // standard operators
 void op_add(runtime_t * runtime) STACK_OP(__op_add)
 void op_sub(runtime_t * runtime) STACK_OP(__op_sub)
+
+
 void op_mul(runtime_t * runtime) STACK_OP(__op_mul)
+
+
 void op_div(runtime_t * runtime) STACK_OP(__op_div)
 
 void op_pow(runtime_t * runtime) STACK_OP(__op_pow)
@@ -733,23 +742,47 @@ void op_pow(runtime_t * runtime) STACK_OP(__op_pow)
 
 // unary operator
 void op_neg(runtime_t * runtime) UNARY_OP(__op_neg)
+
+/*
+
 void op_floor(runtime_t * runtime) UNARY_OP(__op_floor)
 
 
-int init (int id, module_utils_t utils) {
-    init_exported(id, utils);
+*/
+
+int init (int id, lib_t _lib) {
+    init_exported(id, _lib);
+
+    load_sharedlib("gmp", &libgmp, NULL);
+    load_sharedlib("mpfr", &libmpfr, NULL);
+
+    #ifdef HAVE_GMP
+    if (!GMP_LOADED) {
+        log_warn("compiled with gmp, but gmp is not loaded");
+    }
+    #endif
+    #ifdef HAVE_MPFR
+    if (!MPFR_LOADED) {
+        log_warn("compiled with mpfr, but mpfr is not loaded");
+    }
+    #endif
+
 
     add_function("add", "adds the last two items on the stack", op_add);
     add_function("sub", "subtracts the last two items on the stack ('a b sub!' goes to '(a-b)')", op_sub);
+
     add_function("mul", "multiplies the last two items on the stack", op_mul);
+
     add_function("div", "divides the last two items on the stack", op_div);
 
     add_function("pow", "for an (a, b) on the stack, it pops back on a^b", op_pow);
 
     add_function("neg", "if given a number, replaces the top of the stack with the negative value (1-x), or if it is a string, pop on the string reversed", op_neg);
+
+    /*
+
     add_function("floor", "floors the last number", op_floor);
-
-
+*/
     return 0;
 }
 

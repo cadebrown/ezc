@@ -13,46 +13,85 @@
 #include "ezcsymboldefs.h"
 #include "ezctypes.h"
 #include "ezcmacros.h"
+#include "ezclang.h"
+
+
+#include "estack.h"
+//#include "estack.c"
+
+#include "dict.h"
+//#include "dict.c"
+
+#include "routines.h"
+//#include "routines.c"
+
+#include "log.h"
+
 
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <dlfcn.h>
+
 
 module_export_t exported;
-module_utils_t utils;
+lib_t _lib;
 
-int init(int, module_utils_t);
+int init(int, lib_t);
 
 module_init_t module_init = { init };
 
 
 // So that these functions work
-#define type_exists_name utils.type_exists_name
-#define type_exists_id utils.type_exists_id
-#define type_from_name utils.type_from_name
-#define type_from_id utils.type_from_id
-#define type_name_from_id utils.type_name_from_id
-#define type_id_from_name utils.type_id_from_name
 
-#define function_exists_name utils.function_exists_name
-#define function_exists_id utils.function_exists_id
-#define function_from_name utils.function_from_name
-#define function_from_id utils.function_from_id
-#define function_name_from_id utils.function_name_from_id
-#define function_id_from_name utils.function_id_from_name
+#define dlsym _lib.dlsym
 
-#define import_module utils.import_module
+#define estack_init _lib.estack_init
+#define estack_push _lib.estack_push
+#define estack_pop _lib.estack_pop
+#define estack_get _lib.estack_get
+#define estack_set _lib.estack_set
+#define estack_swaptop _lib.estack_swaptop
 
-#define registered_types (*utils.types)
-#define num_registered_types (*utils.num_types)
+#define dict_init _lib.dict_index
+#define dict_set _lib.dict_set
+#define dict_get _lib.dict_get
+#define dict_index _lib.dict_index
 
-#define registered_functions (*utils.functions)
-#define num_registered_functions (*utils.num_functions)
+#define obj_copy _lib.obj_copy
+#define obj_free _lib.obj_free
+#define obj_construct _lib.obj_construct
+#define obj_parse _lib.obj_parse
+#define obj_representation _lib.obj_representation
 
-#define registered_modules (*utils.modules)
-#define num_registered_modules (*utils.num_modules)
+#define type_exists_name _lib.type_exists_name
+#define type_exists_id _lib.type_exists_id
+#define type_from_name _lib.type_from_name
+#define type_from_id _lib.type_from_id
+#define type_name_from_id _lib.type_name_from_id
+#define type_id_from_name _lib.type_id_from_name
 
-#define run_runnable utils.run_runnable
+#define function_exists_name _lib.function_exists_name
+#define function_exists_id _lib.function_exists_id
+#define function_from_name _lib.function_from_name
+#define function_from_id _lib.function_from_id
+#define function_name_from_id _lib.function_name_from_id
+#define function_id_from_name _lib.function_id_from_name
+
+#define load_sharedlib _lib.load_sharedlib
+#define import_module _lib.import_module
+
+#define registered_types (*_lib.types)
+#define num_registered_types (*_lib.num_types)
+
+#define registered_functions (*_lib.functions)
+#define num_registered_functions (*_lib.num_functions)
+
+#define registered_modules (*_lib.modules)
+#define num_registered_modules (*_lib.num_modules)
+
+#define run_runnable _lib.run_runnable
+#define log_log _lib.log_log
 
 
 #define UNKNOWN_CONVERSION(tname, fname) sprintf(to_raise, "don't know how to convert '%s' into '%s'", fname, tname); raise_exception(to_raise, 1);
@@ -72,29 +111,23 @@ module_init_t module_init = { init };
 // pre allocated exception buffer
 char to_raise[16384];
 
-#define has_exception utils.has_exception
-#define raise_exception(reason, code) utils.raise_exception(reason, code)
+#define has_exception _lib.has_exception
+#define raise_exception(reason, code) _lib.raise_exception(reason, code)
 
-#include "estack.h"
-#include "estack.c"
 
-#include "dict.h"
-#include "dict.c"
-
-#include "routines.h"
-#include "routines.c"
+#define LIB_FUNC(libobj, rt, fname, ...) ((rt (*)(__VA_ARGS__))dlsym(libobj, fname))
 
 
 int cur_id;
 
-void init_exported(int id_start, module_utils_t _utils) {
+void init_exported(int id_start, lib_t __lib) {
     cur_id = id_start;
     exported.num_types = 0;
     exported.num_functions = 0;
     exported.types = NULL;
     exported.functions = NULL;
     exported.description = MODULE_DESCRIPTION;
-    utils = _utils;
+    _lib = __lib;
 }
 
 

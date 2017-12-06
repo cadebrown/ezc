@@ -11,11 +11,23 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef HAVE_GMP
 #include <gmp.h>
+#endif
 
 #ifdef HAVE_MPFR
 #include <mpfr.h>
 #endif
+
+void * libgmp = NULL;
+#define GMP_LOADED (libgmp != NULL)
+
+
+void * libmpfr = NULL;
+#define MPFR_LOADED (libmpfr != NULL)
+
+#include "ezcgmpext.h"
+
 
 #include <math.h>
 
@@ -28,13 +40,11 @@ int max(int a, int b) {
     }
 }
 
-
-
 void mpz_parser(obj_t * ret, char * value) {
     OBJ_ALLOC_STRUCT(*ret, mpz_t);
     mpz_init(OBJ_AS_STRUCT(*ret, mpz_t));
 
-    if (gmp_sscanf(value, "%Zd", OBJ_AS_POINTER(*ret, mpz_t)) != 1) {
+    if (mpz_set_str(OBJ_AS_STRUCT(*ret, mpz_t), value, 10) != 0) {
         sprintf(to_raise, "error parsing mpz from '%s'\n", value);
         raise_exception(to_raise, 1);
     }
@@ -72,11 +82,14 @@ void mpz_copier(obj_t * to, obj_t * from) {
 }
 
 
+
+
 void mpf_parser(obj_t * ret, char * value) {
     OBJ_ALLOC_STRUCT(*ret, mpf_t);
     mpf_init(OBJ_AS_STRUCT(*ret, mpf_t));
 
-    if (gmp_sscanf(value, "%Ff", OBJ_AS_POINTER(*ret, mpf_t)) != 1) {
+
+    if (mpf_set_str(OBJ_AS_STRUCT(*ret, mpf_t), value, 10) != 0) {
         sprintf(to_raise, "error parsing mpf from '%s'\n", value);
         raise_exception(to_raise, 1);
     }
@@ -167,7 +180,8 @@ void mpf_destroyer(obj_t * ret) {
 
 void mpf_copier(obj_t * to, obj_t * from) {
     OBJ_ALLOC_STRUCT(*to, mpf_t);
-    mpf_init(OBJ_AS_STRUCT(*to, mpf_t));
+    mpf_init2(OBJ_AS_STRUCT(*to, mpf_t), (OBJ_AS_STRUCT(*to, mpf_t)));
+    
     mpf_set(OBJ_AS_STRUCT(*to, mpf_t), OBJ_AS_STRUCT(*from, mpf_t));
 }
 
@@ -184,6 +198,7 @@ void mpfr_parser(obj_t * ret, char * value) {
 
 void mpfr_constructor(obj_t * ret, obj_t value) {
     type_t str_type = TYPE("str"), float_type = TYPE("float"), mpf_type = TYPE("mpf");
+
 
     // if passed in a string, parse it
     if (ISTYPE(value, str_type)) {
@@ -266,20 +281,34 @@ void mpfr_copier(obj_t * to, obj_t * from) {
 
 
 
-int init (int type_id, module_utils_t utils) {
+int init (int type_id, lib_t _lib) {
 
-    init_exported(type_id, utils);
+    init_exported(type_id, _lib);
 
-    mpf_set_default_prec(GMP_MPF_DEFAULT_PREC);
+    load_sharedlib("gmp", &libgmp, NULL);
+    load_sharedlib("mpfr", &libmpfr, NULL);
 
-    add_type("mpz", "multiprecision integer extension of gmp's mpz_t", mpz_constructor, mpz_copier, mpz_parser, mpz_representation, mpz_destroyer);
-    add_type("mpf", "multiprecision float extension of gmp's mpf_t", mpf_constructor, mpf_copier, mpf_parser, mpf_representation, mpf_destroyer);
-#ifdef HAVE_MPFR
-    mpfr_set_default_prec(GMP_MPF_DEFAULT_PREC);
-    mpfr_set_default_rounding_mode(EZC_RND);
+    #ifdef HAVE_GMP
+    if (!GMP_LOADED) {
+        log_warn("compiled with gmp, but gmp is not loaded");
+        raise_exception("gmp module could not load requirement 'gmp'", 1);
+    } else {
+        add_type("mpz", "multiprecision integer extension of gmp's mpz_t", mpz_constructor, mpz_copier, mpz_parser, mpz_representation, mpz_destroyer);
+        add_type("mpf", "multiprecision float extension of gmp's mpf_t", mpf_constructor, mpf_copier, mpf_parser, mpf_representation, mpf_destroyer);
+        mpf_set_default_prec(GMP_MPF_DEFAULT_PREC);
+    }
+    #endif
 
-    add_type("mpfr", "multiprecision float extension of mpfr's mpfr_t", mpfr_constructor, mpfr_copier, mpfr_parser, mpfr_representation, mpfr_destroyer);
-#endif
+    #ifdef HAVE_MPFR
+    if (!MPFR_LOADED) {
+        log_warn("compiled with mpfr, but mpfr is not loaded");
+    } else {
+        mpfr_set_default_prec(GMP_MPF_DEFAULT_PREC);
+        mpfr_set_default_rounding_mode(EZC_RND);
+
+        add_type("mpfr", "multiprecision float extension of mpfr's mpfr_t", mpfr_constructor, mpfr_copier, mpfr_parser, mpfr_representation, mpfr_destroyer);
+    }
+    #endif
 
     return 0;
 }

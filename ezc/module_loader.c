@@ -8,6 +8,9 @@
 #include <unistd.h>
 
 #include "exec.h"
+#include "estack.h"
+#include "dict.h"
+#include "routines.h"
 
 char ** search_paths = NULL;
 int num_search_paths = 0;
@@ -25,37 +28,59 @@ module_t * registered_modules = NULL;
 int num_registered_types = 0;
 type_t * registered_types = NULL;
 
-module_utils_t utils;
+lib_t lib;
 
 void init_module_loader() {
 
-    utils.type_exists_id = &type_exists_id;
-    utils.type_exists_name = &type_exists_name;
-    utils.type_from_id = &type_from_id;
-    utils.type_from_name = &type_from_name;
-    utils.type_name_from_id = &type_name_from_id;
-    utils.type_id_from_name = &type_id_from_name;
+    lib.log_log = &log_log;
+    lib.dlsym = &dlsym;
+
+    lib.dict_init = &dict_init;
+    lib.dict_set = &dict_set;
+    lib.dict_get = &dict_get;
+    lib.dict_index = &dict_index;
+
+    lib.estack_init = &estack_init;
+    lib.estack_push = &estack_push;
+    lib.estack_pop = &estack_pop;
+    lib.estack_get = &estack_get;
+    lib.estack_set = &estack_set;
+    lib.estack_swaptop = &estack_swaptop;
+
+    lib.obj_copy = &obj_copy;
+    lib.obj_free = &obj_free;
+    lib.obj_construct = &obj_construct;
+    lib.obj_parse = &obj_parse;
+    lib.obj_representation = &obj_representation;
+
+    lib.type_exists_id = &type_exists_id;
+    lib.type_exists_name = &type_exists_name;
+    lib.type_from_id = &type_from_id;
+    lib.type_from_name = &type_from_name;
+    lib.type_name_from_id = &type_name_from_id;
+    lib.type_id_from_name = &type_id_from_name;
     
-    utils.function_exists_id = &function_exists_id;
-    utils.function_exists_name = &function_exists_name;
-    utils.function_from_id = &function_from_id;
-    utils.function_from_name = &function_from_name;
-    utils.function_name_from_id = &function_name_from_id;
-    utils.function_id_from_name = &function_id_from_name;
+    lib.function_exists_id = &function_exists_id;
+    lib.function_exists_name = &function_exists_name;
+    lib.function_from_id = &function_from_id;
+    lib.function_from_name = &function_from_name;
+    lib.function_name_from_id = &function_name_from_id;
+    lib.function_id_from_name = &function_id_from_name;
 
-    utils.import_module = &import_module;
+    lib.load_sharedlib = &load_sharedlib;
+    lib.import_module = &import_module;
 
-    utils.raise_exception = &raise_exception;
+    lib.raise_exception = &raise_exception;
 
-    utils.num_functions = &num_registered_functions;
-    utils.num_types = &num_registered_types;
-    utils.num_modules = &num_registered_modules;
-    utils.types = &registered_types;
-    utils.modules = &registered_modules;
-    utils.functions = &registered_functions;
+    lib.num_functions = &num_registered_functions;
+    lib.num_types = &num_registered_types;
+    lib.num_modules = &num_registered_modules;
+    lib.types = &registered_types;
+    lib.modules = &registered_modules;
+    lib.functions = &registered_functions;
 
 
-    utils.run_runnable = &run_runnable;
+    lib.run_runnable = &run_runnable;
 }
 
 void register_type(type_t type) {
@@ -118,7 +143,7 @@ bool get_module_name(module_t * res, char * name) {
 
 
 
-//// START module_utils methods
+//// START module_lib methods
 
 
 #define SEARCH_TYPES(cmp, rfound, rnfound) { \
@@ -170,7 +195,7 @@ char * function_name_from_id(int id) SEARCH_FUNCTIONS(registered_functions[i].id
 
 
 
-//// END module_utils methods
+//// END module_lib methods
 
 
 
@@ -241,14 +266,14 @@ bool import_module(char * name, bool required) {
 
 #define FAIL_LOAD_MODULE(reason) if (required) { log_fatal("while loading module '%s': %s", name, reason); return false; } else { return false; }
 
-bool load_module(module_t * module, char * name, bool required) {
+#define APPEND(v) strcpy(cur_search + csoff, (v)); csoff = strlen(cur_search);
+
+
+void load_sharedlib(char * name, void ** handle, char ** path) {
     char * cur_search = (char *)malloc(max_search_path_strlen + strlen(LIBRARY_PRE) + 2 * strlen(name) + strlen(LIBRARY_EXT) + 4);
     int i, csoff;
-    void * handle = NULL;
-    module->name = malloc(strlen(name));
-    strcpy(module->name, name);
-    
-    #define APPEND(v) strcpy(cur_search + csoff, (v)); csoff = strlen(cur_search);
+
+    log_debug("trying to load shared library '%s'", name);
     
     for (i = 0; i < num_search_paths; ++i) {
         csoff = 0;
@@ -262,11 +287,12 @@ bool load_module(module_t * module, char * name, bool required) {
         APPEND(name)
         APPEND(LIBRARY_EXT)
 
-        log_trace("trying module '%s' at '%s'", name, cur_search);
-
-        if ((handle = dlopen(cur_search, RTLD_NOW)) != NULL) break;
-
-        log_trace("got dlerror: %s", dlerror());
+        if ((*handle = dlopen(cur_search, RTLD_NOW)) != NULL) {
+            log_trace("shared library '%s' worked", cur_search);
+            break;
+        } else {
+            log_trace("error loading shared library '%s' got dlerror: %s", cur_search, dlerror());
+        }
 
         // also do a copy without the 'name' subfolder
         csoff = 0;
@@ -278,24 +304,40 @@ bool load_module(module_t * module, char * name, bool required) {
         APPEND(name)
         APPEND(LIBRARY_EXT)
 
-        log_trace("trying module '%s' at '%s'", name, cur_search);
-        
     
-        if ((handle = dlopen(cur_search, RTLD_NOW)) != NULL) break;
-    
-        log_trace("got dlerror: %s", dlerror());
+        if ((*handle = dlopen(cur_search, RTLD_NOW)) != NULL) {
+            log_trace("shared library at '%s' worked", cur_search);
+            break;
+        } else {
+            log_trace("error loading shared library '%s' got dlerror: %s", cur_search, dlerror());
+        }
     
     }
 
-    if (handle != NULL) {
-        module->path = malloc(strlen(cur_search));
-        strcpy(module->path, cur_search);
+    if (*handle == NULL) {
+        log_debug("could not find library '%s'", name);
+    } else {
+        log_debug("found library '%s' at '%s'", name, cur_search);
     }
-    free(cur_search);
+
+    if (path != NULL) *path = cur_search;
+}
+
+bool load_module(module_t * module, char * name, bool required) {
+    module->name = malloc(strlen(name));
+    strcpy(module->name, name);
+    
+    void * handle;
+    char * path;
+
+    load_sharedlib(name, &handle, &path);
 
     if (handle == NULL) {
         FAIL_LOAD_MODULE(dlerror());
     } else {
+        module->path = malloc(strlen(path));
+        strcpy(module->path, path);
+        
         module->lib_data = handle;
 
         module_init_t * module_init = (module_init_t *)dlsym(module->lib_data, "module_init");
@@ -303,7 +345,7 @@ bool load_module(module_t * module, char * name, bool required) {
         if (module_init == NULL) {
             FAIL_LOAD_MODULE("module has no module_init object");
         } else {
-            module_init->init(id_index, utils);
+            module_init->init(id_index, lib);
             module_export_t * exported = (module_export_t *)dlsym(module->lib_data, "exported");
             if (exported == NULL) {
                 FAIL_LOAD_MODULE("module lacks an 'exported' symbol");
@@ -315,12 +357,14 @@ bool load_module(module_t * module, char * name, bool required) {
                         id_index = module->exported.types[j].id + 1;
                     }
                     register_type(module->exported.types[j]);
+                    registered_types[num_registered_types - 1]._module_name = module->name;
                 }
                 for (j = 0; j < module->exported.num_functions; ++j) {
                     if (id_index < module->exported.functions[j].id + 1) {
                         id_index = module->exported.functions[j].id + 1;
                     }
                     register_function(module->exported.functions[j]);
+                    registered_functions[num_registered_functions - 1]._module_name = module->name;
                 }
             }
             /*

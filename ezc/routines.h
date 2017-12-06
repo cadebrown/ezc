@@ -9,11 +9,12 @@ obj_t obj_copy(obj_t);
 
 void obj_free(obj_t *);
 
-void obj_construct(type_t type, obj_t * to, obj_t from);
+obj_t obj_construct(type_t type, obj_t from);
 
-void obj_parse(type_t type, obj_t * to, char * from);
+obj_t obj_parse(type_t type, char * from);
 
-void obj_representation(type_t type, obj_t * from, char ** to);
+char * obj_representation(type_t type, obj_t * from);
+
 
 bool valid_function_name(char * fn);
 

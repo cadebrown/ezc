@@ -19,15 +19,15 @@ obj_t repr_obj(obj_t obj) {
     obj_t res;
 
     if (obj.type_id == NULL_TYPE.id) {
-        obj_parse(str_type, &res, "null");
+        res = obj_parse(str_type, "null");
     } else {
         char * repr_str;
 
         type_t obj_type = OBJ_TYPE(obj);
 
-        obj_representation(obj_type, &obj, &repr_str);
+        repr_str = obj_representation(obj_type, &obj);
 
-        obj_parse(str_type, &res, repr_str);
+        res = obj_parse(str_type, repr_str);
     
         free(repr_str);
     }
@@ -60,7 +60,7 @@ void repr_recursive(runtime_t * runtime) {
 void _print_obj(obj_t to_print) {
     char * str_repr;
 
-    obj_representation(OBJ_TYPE(to_print), &to_print, &str_repr);
+    str_repr = obj_representation(OBJ_TYPE(to_print), &to_print);
 
     printf("%s", str_repr);
 
@@ -178,7 +178,7 @@ void concat(runtime_t * runtime) {
     strcpy(res, a.data);
     strcat(res, b.data);
 
-    obj_parse(str_type, &r, res);
+    r = obj_parse(str_type, res);
 
     free(res);
 
@@ -220,7 +220,7 @@ void concat_repeat(runtime_t * runtime) {
 
     obj_t ret;
 
-    obj_parse(str_type, &ret, res);
+    ret = obj_parse(str_type, res);
 
     free(res);
 
@@ -251,7 +251,7 @@ void join(runtime_t * runtime) {
     strcat(res, c.data);
     strcat(res, b.data);
 
-    obj_parse(str_type, &r, res);
+    r = obj_parse(str_type, res);
 
     free(res);
 
@@ -303,9 +303,7 @@ void join_repeat(runtime_t * runtime) {
 
     obj_free(&joiner);
 
-    obj_t ret;
-
-    obj_parse(str_type, &ret, res);
+    obj_t ret = obj_parse(str_type, res);
 
     free(res);
 
@@ -325,7 +323,7 @@ void import(runtime_t * runtime) {
 
     str_obj_force(&module_name, last_obj);
 
-    import_module(module_name);
+    import_module(module_name, true);
 
     free(module_name);
     obj_free(&last_obj);
@@ -597,8 +595,8 @@ void ezc_exit(runtime_t * runtime) {
 }
 
 
-int init (int id, module_utils_t utils) {
-    init_exported(id, utils);
+int init (int id, lib_t _lib) {
+    init_exported(id, _lib);
 
     add_function("repr", "pops on a string representation of an object to the stack", repr);
     add_function("repr&", "replaces the stack with the string representation of each object", repr_recursive);

@@ -11,11 +11,11 @@ compiler:
   - gcc
 
 install:
-  - ./buildgmp.sh
-  - ./buildmpfr.sh
+  - ./buildgmp.sh > /dev/null
+  - ./buildmpfr.sh > /dev/null
   - ./buildezc.sh
-  - mv out/ ezc-dev/
-  - tar cJf ezc-dev.tar.gz ezc-dev/
+  - mv out/ ezc-dev/ > /dev/null
+  - tar cJf ezc-dev.tar.gz ezc-dev/ > /dev/null
   - echo UPLOADING DEV FILE
   - curl --upload-file ./ezc-dev.tar.gz https://transfer.sh/ezc-dev.tar.gz
 

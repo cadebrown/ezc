@@ -35,6 +35,9 @@ void ezc_init(char * execname) {
         add_search_path(libdir);
     }
 
+    add_search_path("/usr/lib");
+    add_search_path("/usr/local/lib");
+
     init_module_loader();
     /*
     import_module("systypes");
