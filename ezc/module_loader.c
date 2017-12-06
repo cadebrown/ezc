@@ -199,6 +199,20 @@ char * function_name_from_id(int id) SEARCH_FUNCTIONS(registered_functions[i].id
 
 
 
+void __append_to_env(char * path, char * envname) {
+    char * cenv = getenv(envname);
+    if (cenv == NULL) {
+        char * newenv = malloc(strlen(path) + 1);
+        strcpy(newenv, path);
+        setenv(envname, newenv, 1);
+    } else {
+        char * newenv = malloc(strlen(cenv) + strlen(path) + 2);
+        strcpy(newenv, cenv);
+        strcat(newenv, path);
+        setenv(envname, newenv, 1);
+    }
+}
+
 bool add_search_path(char * path) {
     struct stat statbuf;
     if (stat(path, &statbuf) != 0) {
@@ -223,6 +237,12 @@ bool add_search_path(char * path) {
     if (strlen(path) > max_search_path_strlen) {
         max_search_path_strlen = strlen(path);
     }
+
+    __append_to_env(path, "LD_LIBRARY_PATH");
+    __append_to_env(path, "DYLD_LIBRARY_PATH");
+
+    // also append to these environment varaible
+
     return true;
 }
 
