@@ -89,7 +89,9 @@ int main(int argc, char ** argv) {
             break;
         case 'I':
             if (!add_search_path(optarg)) {
-                exit(1);
+                char to_raise[EXCEPTION_LEN];
+                sprintf(to_raise, "error adding search path '%s', no such directory\n", optarg);
+                raise_exception(to_raise, 1);
             }
             break;
         case 'm':

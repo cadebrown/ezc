@@ -291,7 +291,8 @@ int init (int type_id, lib_t _lib) {
     #ifdef HAVE_GMP
     if (!GMP_LOADED) {
         log_warn("compiled with gmp, but gmp is not loaded");
-        raise_exception("gmp module could not load requirement 'gmp'", 1);
+        //raise_exception("gmp module could not load requirement 'gmp'", 1);
+        return 1;
     } else {
         add_type("mpz", "multiprecision integer extension of gmp's mpz_t", mpz_constructor, mpz_copier, mpz_parser, mpz_representation, mpz_destroyer);
         add_type("mpf", "multiprecision float extension of gmp's mpf_t", mpf_constructor, mpf_copier, mpf_parser, mpf_representation, mpf_destroyer);
