@@ -208,8 +208,9 @@ void __append_to_env(char * path, char * envname) {
         strcpy(newenv, path);
         setenv(envname, newenv, 1);
     } else {
-        char * newenv = malloc(strlen(cenv) + strlen(path) + 2);
+        char * newenv = malloc(strlen(cenv) + strlen(path) + 4);
         strcpy(newenv, cenv);
+        strcat(newenv, ":");
         strcat(newenv, path);
         setenv(envname, newenv, 1);
     }

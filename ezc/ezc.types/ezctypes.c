@@ -19,14 +19,6 @@
 #include <mpfr.h>
 #endif
 
-void * libgmp = NULL;
-#define GMP_LOADED (libgmp != NULL)
-
-void * libmpfr = NULL;
-#define MPFR_LOADED (libmpfr != NULL)
-
-#include "ezcgmpext.h"
-
 
 
 void byte_parser(obj_t * ret, char * value) {
@@ -139,16 +131,16 @@ void int_constructor(obj_t * ret, obj_t value) {
         OBJ_AS_STRUCT(*ret, int) = OBJ_AS_STRUCT(value, float);
     }
 #ifdef HAVE_GMP
-    else if (ISTYPE(value, mpz_type) && GMP_LOADED) {
+    else if (ISTYPE(value, mpz_type)) {
         OBJ_ALLOC_STRUCT(*ret, int);
         OBJ_AS_STRUCT(*ret, int) = mpz_get_si(OBJ_AS_STRUCT(value, mpz_t));
-    } else if (ISTYPE(value, mpf_type) && GMP_LOADED) {
+    } else if (ISTYPE(value, mpf_type)) {
         OBJ_ALLOC_STRUCT(*ret, int);
         OBJ_AS_STRUCT(*ret, int) = mpf_get_si(OBJ_AS_STRUCT(value, mpf_t));
     }
 #endif
 #ifdef HAVE_MPFR
-    else if (ISTYPE(value, mpfr_type) && MPFR_LOADED) {
+    else if (ISTYPE(value, mpfr_type)) {
         OBJ_ALLOC_STRUCT(*ret, int);
         OBJ_AS_STRUCT(*ret, int) = mpfr_get_si(OBJ_AS_STRUCT(value, mpfr_t), EZC_RND);
     }
@@ -201,16 +193,16 @@ void float_constructor(obj_t * ret, obj_t value) {
         OBJ_AS_STRUCT(*ret, float) = OBJ_AS_STRUCT(value, int);
     } 
 #ifdef HAVE_GMP
-    else if (ISTYPE(value, mpz_type) && GMP_LOADED) {
+    else if (ISTYPE(value, mpz_type)) {
         OBJ_ALLOC_STRUCT(*ret, float);
         OBJ_AS_STRUCT(*ret, float) = mpz_get_si(OBJ_AS_STRUCT(value, mpz_t));
-    } else if (ISTYPE(value, mpf_type) && GMP_LOADED) {
+    } else if (ISTYPE(value, mpf_type)) {
         OBJ_ALLOC_STRUCT(*ret, float);
         OBJ_AS_STRUCT(*ret, float) = mpf_get_d(OBJ_AS_STRUCT(value, mpf_t));
     }
 #endif
 #ifdef HAVE_MPFR
-    else if (ISTYPE(value, mpfr_type) && MPFR_LOADED) {
+    else if (ISTYPE(value, mpfr_type)) {
         OBJ_ALLOC_STRUCT(*ret, float);
         OBJ_AS_STRUCT(*ret, float) = mpfr_get_d(OBJ_AS_STRUCT(value, mpfr_t), EZC_RND);
     }
@@ -277,20 +269,6 @@ void str_copier(obj_t * to, obj_t * from) {
 int init (int type_id, lib_t _lib) {
 
     init_exported(type_id, _lib);
-
-    load_sharedlib("gmp", &libgmp, NULL);
-    load_sharedlib("mpfr", &libmpfr, NULL);
-
-    #ifdef HAVE_GMP
-    if (!GMP_LOADED) {
-        log_warn("compiled with gmp, but gmp is not loaded");
-    }
-    #endif
-    #ifdef HAVE_MPFR
-    if (!MPFR_LOADED) {
-        log_warn("compiled with mpfr, but mpfr is not loaded");
-    }
-    #endif
 
     add_type("byte", "1 byte (8 bits) of memory, and this corresponds to the C type 'char'", byte_constructor, byte_copier, byte_parser, byte_representation, byte_destroyer);
     add_type("int", "a system 'int' type, which is normally signed 32 bits", int_constructor, int_copier, int_parser, int_representation, int_destroyer);

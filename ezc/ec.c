@@ -12,7 +12,6 @@
 
 #include <string.h>
 
-
 int main(int argc, char ** argv) {
     char c;
     int long_index;
@@ -139,6 +138,12 @@ int main(int argc, char ** argv) {
     }
 
     ezc_init(argv[0]);
+
+    // so that the environment variables are updated
+    if (!getenv(EZC_ENV_HASRAN)) {
+        setenv(EZC_ENV_HASRAN, EZC_ENV_HASRAN, 0);
+        return execvp(argv[0], argv);
+    }
 
     // import all defaults here
 

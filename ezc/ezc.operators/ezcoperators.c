@@ -22,14 +22,6 @@
 #include <mpfr.h>
 #endif
 
-void * libgmp = NULL;
-#define GMP_LOADED (libgmp != NULL)
-
-void * libmpfr = NULL;
-#define MPFR_LOADED (libmpfr != NULL)
-
-#include "ezcgmpext.h"
-
 
 #define OPERATOR_MISMATCH(op, t0, t1) sprintf(to_raise, "type mismatch for operator '%s': types %s and %s not a valid combination", op, t0.name, t1.name); raise_exception(to_raise, 1);
 
@@ -752,21 +744,6 @@ void op_floor(runtime_t * runtime) UNARY_OP(__op_floor)
 
 int init (int id, lib_t _lib) {
     init_exported(id, _lib);
-
-    load_sharedlib("gmp", &libgmp, NULL);
-    load_sharedlib("mpfr", &libmpfr, NULL);
-
-    #ifdef HAVE_GMP
-    if (!GMP_LOADED) {
-        log_warn("compiled with gmp, but gmp is not loaded");
-    }
-    #endif
-    #ifdef HAVE_MPFR
-    if (!MPFR_LOADED) {
-        log_warn("compiled with mpfr, but mpfr is not loaded");
-    }
-    #endif
-
 
     add_function("add", "adds the last two items on the stack", op_add);
     add_function("sub", "subtracts the last two items on the stack ('a b sub!' goes to '(a-b)')", op_sub);

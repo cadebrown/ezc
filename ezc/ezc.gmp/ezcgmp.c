@@ -19,15 +19,6 @@
 #include <mpfr.h>
 #endif
 
-void * libgmp = NULL;
-#define GMP_LOADED (libgmp != NULL)
-
-
-void * libmpfr = NULL;
-#define MPFR_LOADED (libmpfr != NULL)
-
-#include "ezcgmpext.h"
-
 
 #include <math.h>
 
@@ -180,7 +171,7 @@ void mpf_destroyer(obj_t * ret) {
 
 void mpf_copier(obj_t * to, obj_t * from) {
     OBJ_ALLOC_STRUCT(*to, mpf_t);
-    mpf_init2(OBJ_AS_STRUCT(*to, mpf_t), (OBJ_AS_STRUCT(*to, mpf_t)));
+    mpf_init2(OBJ_AS_STRUCT(*to, mpf_t), mpf_get_prec(OBJ_AS_STRUCT(*to, mpf_t)));
     
     mpf_set(OBJ_AS_STRUCT(*to, mpf_t), OBJ_AS_STRUCT(*from, mpf_t));
 }
@@ -285,31 +276,14 @@ int init (int type_id, lib_t _lib) {
 
     init_exported(type_id, _lib);
 
-    load_sharedlib("gmp", &libgmp, NULL);
-    load_sharedlib("mpfr", &libmpfr, NULL);
+    add_type("mpz", "multiprecision integer extension of gmp's mpz_t", mpz_constructor, mpz_copier, mpz_parser, mpz_representation, mpz_destroyer);
+    add_type("mpf", "multiprecision float extension of gmp's mpf_t", mpf_constructor, mpf_copier, mpf_parser, mpf_representation, mpf_destroyer);
+    mpf_set_default_prec(GMP_MPF_DEFAULT_PREC);
+    
+    mpfr_set_default_prec(GMP_MPF_DEFAULT_PREC);
+    mpfr_set_default_rounding_mode(EZC_RND);
 
-    #ifdef HAVE_GMP
-    if (!GMP_LOADED) {
-        log_warn("compiled with gmp, but gmp is not loaded");
-        //raise_exception("gmp module could not load requirement 'gmp'", 1);
-        return 1;
-    } else {
-        add_type("mpz", "multiprecision integer extension of gmp's mpz_t", mpz_constructor, mpz_copier, mpz_parser, mpz_representation, mpz_destroyer);
-        add_type("mpf", "multiprecision float extension of gmp's mpf_t", mpf_constructor, mpf_copier, mpf_parser, mpf_representation, mpf_destroyer);
-        mpf_set_default_prec(GMP_MPF_DEFAULT_PREC);
-    }
-    #endif
-
-    #ifdef HAVE_MPFR
-    if (!MPFR_LOADED) {
-        log_warn("compiled with mpfr, but mpfr is not loaded");
-    } else {
-        mpfr_set_default_prec(GMP_MPF_DEFAULT_PREC);
-        mpfr_set_default_rounding_mode(EZC_RND);
-
-        add_type("mpfr", "multiprecision float extension of mpfr's mpfr_t", mpfr_constructor, mpfr_copier, mpfr_parser, mpfr_representation, mpfr_destroyer);
-    }
-    #endif
+    add_type("mpfr", "multiprecision float extension of mpfr's mpfr_t", mpfr_constructor, mpfr_copier, mpfr_parser, mpfr_representation, mpfr_destroyer);
 
     return 0;
 }
