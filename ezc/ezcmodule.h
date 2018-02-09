@@ -94,6 +94,7 @@ module_init_t module_init = { init };
 #define num_registered_modules (*_lib.num_modules)
 
 #define run_runnable _lib.run_runnable
+#define runnable_free _lib.runnable_free
 #define log_log _lib.log_log
 
 

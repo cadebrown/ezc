@@ -37,6 +37,57 @@ bool valid_type_name(char * fn) {
     return true;
 }
 
+
+
+obj_t repr_obj(obj_t obj) {
+    type_t str_type = TYPE("str");
+
+    obj_t res;
+
+    if (obj.type_id == NULL_TYPE.id) {
+        res = obj_parse(str_type, "null");
+    } else {
+        char * repr_str;
+
+        type_t obj_type = OBJ_TYPE(obj);
+
+        repr_str = obj_representation(obj_type, &obj);
+
+        res = obj_parse(str_type, repr_str);
+    
+        free(repr_str);
+    }
+
+    return res;
+}
+
+
+void dump_runtime(runtime_t * runtime) {
+    int i;
+
+    printf("globals[%d]:\n", runtime->globals.len);
+    obj_t c_repr;
+    type_t c_type;
+    for (i = 0; i < runtime->globals.len; ++i) {
+        c_repr = repr_obj(runtime->globals.vals[i]);
+        c_type = type_from_id(runtime->globals.vals[i].type_id);
+        printf ("  '%s': '%s':%s\n", runtime->globals.keys[i], (char *)c_repr.data, c_type.name);
+        obj_free(&c_repr);
+    }
+
+    printf("stack[%d]:\n", runtime->stack.len);
+
+    for (i = 0; i < runtime->stack.len; ++i) {
+        c_repr = repr_obj(runtime->stack.vals[i]);
+        c_type = type_from_id(runtime->stack.vals[i].type_id);
+        printf ("  %d: '%s':%s\n", i, (char *)c_repr.data, c_type.name);
+        obj_free(&c_repr);
+    }
+
+    printf("\n");
+
+}
+
 bool valid_function_name(char * fn) {
     if (strstr(fn, CALL_FUNCTION) || strstr(fn, CAST) || IS_BUILTIN(fn)) {
         return false;
@@ -101,6 +152,7 @@ void str_obj_force(char ** out, obj_t in) {
     }
 
     type_t str_type = type_from_name("str");
+
     if (in.type_id == str_type.id) {
         *out = malloc(in.data_len);
         strcpy(*out, (char *)in.data);
@@ -138,25 +190,26 @@ void runnable_init_str(runnable_t * runnable, char * src) {
         cur_line = malloc(cc - lc + 1);
         strncpy(cur_line, src + lc, cc - lc);
         cur_line[cc - lc] = '\0';
-        runnable->lines = realloc(runnable->lines, sizeof(char *) * ++lines);
+        lines++;
+        runnable->lines = realloc(runnable->lines, sizeof(char *) * lines);
         runnable->lines[lines - 1] = cur_line;
         cc++;
     }
 
     runnable->num_lines = lines;
-    
-
 }
 
 void runnable_free(runnable_t * runnable) {
     if (runnable->from != NULL) {
         free(runnable->from);
     }
+    runnable->from = NULL;
     int i;
     for (i = 0; i < runnable->num_lines; ++i) {
         free(runnable->lines[i]);
     }
     free(runnable->lines);
     runnable->lines = NULL;
+    runnable->num_lines = 0;
 }
 

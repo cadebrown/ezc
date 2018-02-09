@@ -12,6 +12,7 @@
 
 #include <string.h>
 
+
 int main(int argc, char ** argv) {
     char c;
     int long_index;
@@ -24,6 +25,7 @@ int main(int argc, char ** argv) {
 
     static int noreadline = false;
     static int suspend = false;
+    static int dump = false;
 
     static struct option long_options[] = {
         {"help", no_argument, NULL, 'h'},
@@ -32,6 +34,7 @@ int main(int argc, char ** argv) {
         {"module", required_argument, NULL, 'm'},
         {"expression", required_argument, NULL, 'e'},
         {"file", required_argument, NULL, 'f'},
+        {"dump", no_argument, NULL, 'd'},
         {"verbosity", required_argument, NULL, 'v'},
         {"no-readline", no_argument, &noreadline, 1},
         {"suspend", no_argument, &suspend, 1},
@@ -39,7 +42,7 @@ int main(int argc, char ** argv) {
     };
     
 
-    while ((c = getopt_long (argc, argv, "hI:im:e:f:v:", long_options, &long_index)) != (char)-1)
+    while ((c = getopt_long (argc, argv, "hI:dim::e:f:v:", long_options, &long_index)) != (char)-1)
     switch (c) {
         case 'h':
             printf("Usage: %s [-f file | -e expr]\n\n", argv[0]);
@@ -51,6 +54,7 @@ int main(int argc, char ** argv) {
             #ifdef HAVE_READLINE
             printf("    --no-readline         Force using the non-readline interpreter\n");
             #endif
+            printf("    -d, --dump            Dump the stack on exit\n");
             printf("    --suspend             Suspend the program (which is useful for checking for memory leaks)\n");
             printf("\n");
             printf("    -h, --help            Print out this usage dialogue\n");
@@ -85,6 +89,9 @@ int main(int argc, char ** argv) {
 
             exit(0);
            
+            break;
+        case 'd':
+            dump = true;
             break;
         case 'I':
             if (!add_search_path(optarg)) {
@@ -150,6 +157,7 @@ int main(int argc, char ** argv) {
     import_module("ezc.types", true);
     import_module("ezc.functions", true);
     import_module("ezc.operators", true);
+    import_module("ezc.controls", true);
     
     // some platforms (perhaps windows) may not support this
     import_module("ezc.io", false);
@@ -225,6 +233,10 @@ int main(int argc, char ** argv) {
         log_debug("-------------\n");
         function_t dump_func = function_from_name("dump");
         dump_func.function(&runtime);
+    }
+
+    if (dump) {
+        dump_runtime(&runtime);
     }
 
     if (suspend) {

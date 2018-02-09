@@ -5,6 +5,7 @@ add_subdirectory (ezc.types)
 add_subdirectory (ezc.functions)
 add_subdirectory (ezc.io)
 add_subdirectory (ezc.operators)
+add_subdirectory (ezc.controls)
 
 if(GMP_FOUND)
     add_subdirectory (ezc.gmp)

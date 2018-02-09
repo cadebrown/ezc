@@ -150,6 +150,8 @@ void eval_last_item(runtime_t * runtime) {
 
     obj_t last_obj = estack_pop(&runtime->stack);
     char * code_to_run;
+
+
     str_obj_force(&code_to_run, last_obj);
     
     runnable_t last_expr;

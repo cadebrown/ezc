@@ -80,6 +80,9 @@ void init_module_loader() {
     lib.modules = &registered_modules;
     lib.functions = &registered_functions;
 
+    lib.runnable_free = &runnable_free;
+
+    lib.str_obj_force = &str_obj_force;
     lib.runnable_init_str = &runnable_init_str;
     lib.runnable_free = &runnable_free;
     lib.run_runnable = &run_runnable;

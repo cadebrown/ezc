@@ -158,6 +158,10 @@ bool __is_valid_float(char * v) {
     return true;
 }
 
+bool __is_valid_bool(char * v) {
+    return (strcmp(v, "true") == 0) || (strcmp(v, "false") == 0);
+}
+
 
 type_t implicit_type(char * entered) {
 // uncomment this to allow default values to be mpf s
@@ -179,6 +183,8 @@ type_t implicit_type(char * entered) {
         return type_from_name("int");
     } else if (__is_valid_float(entered)) {
         return type_from_name("float");
+    } else if (__is_valid_bool(entered)) {
+        return type_from_name("bool");
     }
     return type_from_name("str");
 }
@@ -209,6 +215,7 @@ void run_str(runtime_t * runtime, char * ezc_source_code) {
 
     obj_t str_obj;
     type_t str_type;
+    type_t block_type;
 
     if (type_exists_name("str")) {
         str_type = type_from_name("str");
@@ -216,6 +223,13 @@ void run_str(runtime_t * runtime, char * ezc_source_code) {
         printf("no 'str' type found\n");
         return;
     }
+    if (type_exists_name("block")) {
+        block_type = type_from_name("block");
+    } else {
+        printf("no 'block' type found\n");
+        return;
+    }
+
 
     // current character
     #define cchar (ezc_source_code[c_off])
@@ -245,13 +259,23 @@ void run_str(runtime_t * runtime, char * ezc_source_code) {
         set_curchar(c_off);
         // cast using `:TYPE`
         if (ISLIM(csrc, BLOCK_START)) {
-            
             // TODO implment block parsing
-            int c_block = 1;
-            bool is_escaped = false;
-            TRAVERSE(!ISLIM(csrc, BLOCK_END),
+            c_off += strlen(BLOCK_START);
 
+            bool is_escaped = false;
+            c_obj_off = c_off;
+            
+            TRAVERSE((!ISLIM(csrc, BLOCK_END)) && !is_escaped,
+                if (IS_QUOTE(csrc)) {
+                    is_escaped = !is_escaped;
+                }
+                tmp[c_off - c_obj_off] = cchar;
             )
+            tmp[c_off - c_obj_off] = '\0';
+            c_off += strlen(BLOCK_END);
+            obj_t cur_block = obj_parse(block_type, tmp);
+
+            estack_push(&runtime->stack, cur_block);
         } else if (ISLIM(csrc, CAST)) {
             // tmp will be equal to TYPE
             c_off += strlen(CAST);

@@ -21,6 +21,56 @@
 
 
 
+void bool_parser(obj_t * ret, char * value) {
+    OBJ_ALLOC_STRUCT(*ret, bool);
+
+    if (strcmp(value, "true") == 0) {
+        OBJ_AS_STRUCT(*ret, bool) = true;
+    } else if (strcmp(value, "false") == 0) {
+        OBJ_AS_STRUCT(*ret, bool) = false;
+    } else {
+        sprintf(to_raise, "error parsing bool '%s'\n", value);
+        raise_exception(to_raise, 1);
+    }
+}
+
+void bool_constructor(obj_t * ret, obj_t value) {
+    type_t str_type = TYPE("str"), int_type = TYPE("int"), input_type = OBJ_TYPE(value);
+
+    // if passed in a string, parse it
+    if (str_type.id == input_type.id) {
+        bool_parser(ret, OBJ_AS_POINTER(value, char));
+        
+    } else if (int_type.id == input_type.id) {
+        OBJ_ALLOC_STRUCT(*ret, bool);
+        OBJ_AS_STRUCT(*ret, bool) = OBJ_AS_STRUCT(value, int) > 0;
+        
+    } else {
+        UNKNOWN_CONVERSION(type_name_from_id(ret->type_id), type_name_from_id(value.type_id));
+    }
+}
+
+void bool_representation(obj_t * obj, char ** ret) {
+    *ret = malloc(7);
+
+    if (OBJ_AS_STRUCT(*obj, bool)) {
+        strcpy(*ret, "true");
+    } else {
+        strcpy(*ret, "false");
+    }
+}
+
+void bool_destroyer(obj_t * ret) {
+    OBJ_FREE_MEM(*ret)
+}
+
+void bool_copier(obj_t * to, obj_t * from) {
+    OBJ_ALLOC_STRUCT(*to, bool);
+    OBJ_STRUCT_COPY(*to, *from, bool);
+}
+
+
+
 void byte_parser(obj_t * ret, char * value) {
     OBJ_ALLOC_STRUCT(*ret, char)
 
@@ -266,14 +316,51 @@ void str_copier(obj_t * to, obj_t * from) {
 }
 
 
+
+
+void block_parser(obj_t * ret, char * value) {
+    OBJ_ALLOC_BYTES(*ret, strlen(value) + 1);
+    strcpy(ret->data, value);
+}
+
+void block_representation(obj_t * obj, char ** ret) {
+    *ret = malloc(obj->data_len + 4);
+    sprintf(*ret, "{%s}", (char *)obj->data);
+}
+
+
+void block_constructor(obj_t * ret, obj_t value) {
+    type_t str_type = TYPE("str");
+
+    if (ISTYPE(value, str_type)) {
+        block_parser(ret, OBJ_AS_POINTER(value, char));
+    } else {
+        UNKNOWN_CONVERSION(type_name_from_id(ret->type_id), type_name_from_id(value.type_id));
+    }
+}
+
+void block_destroyer(obj_t * ret) {
+    OBJ_FREE_MEM(*ret);
+}
+
+void block_copier(obj_t * to, obj_t * from) {
+    to->data_len = from->data_len;
+    to->data = malloc(to->data_len);
+    strcpy(to->data, from->data);
+}
+
+
+
 int init (int type_id, lib_t _lib) {
 
     init_exported(type_id, _lib);
 
+    add_type("bool", "boolean 'true' or 'false'", bool_constructor, bool_copier, bool_parser, bool_representation, bool_destroyer);
     add_type("byte", "1 byte (8 bits) of memory, and this corresponds to the C type 'char'", byte_constructor, byte_copier, byte_parser, byte_representation, byte_destroyer);
     add_type("int", "a system 'int' type, which is normally signed 32 bits", int_constructor, int_copier, int_parser, int_representation, int_destroyer);
     add_type("float", "a system 'float' type, which is normally 32 bits", float_constructor, float_copier, float_parser, float_representation, float_destroyer);
     add_type("str", "a 'char *' in C, this is a string type implementation", str_constructor, str_copier, str_parser, str_representation, str_destroyer);
+    add_type("block", "a block of code", block_constructor, block_copier, block_parser, block_representation, block_destroyer);
 
     return 0;
 }

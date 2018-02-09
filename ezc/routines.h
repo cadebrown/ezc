@@ -15,6 +15,7 @@ obj_t obj_parse(type_t type, char * from);
 
 char * obj_representation(type_t type, obj_t * from);
 
+void dump_runtime(runtime_t * runtime);
 
 bool valid_function_name(char * fn);
 
