@@ -248,6 +248,8 @@ void run_str(runtime_t * runtime, char * ezc_source_code) {
     function_t negfunc = FUNCTION("neg"), floorfunc = FUNCTION("floor");
     function_t copyfunc = FUNCTION("copy"), nullfunc = FUNCTION("pushnull");
     function_t dictgetfunc = FUNCTION("dictget"), dictsetfunc = FUNCTION("dictset");
+    function_t stackgetfunc = FUNCTION("stackget"), stacksetfunc = FUNCTION("stackset");
+    function_t gtfunc = FUNCTION("gt");
 
 
 
@@ -317,6 +319,9 @@ void run_str(runtime_t * runtime, char * ezc_source_code) {
             else CASE_BUILTIN(BUILTIN_DIV, divfunc)
             else CASE_BUILTIN(BUILTIN_POW, powfunc)
             else CASE_BUILTIN(BUILTIN_FLOOR, floorfunc)
+            else CASE_BUILTIN(BUILTIN_STACKGET, stackgetfunc)
+            else CASE_BUILTIN(BUILTIN_STACKSET, stacksetfunc)
+            else CASE_BUILTIN(BUILTIN_GT, gtfunc)
             else if (ISLIM(csrc, BUILTIN_DICTSET) && strstr(csrc, BUILTIN_DICTSET) != NULL) {
                 c_off += strlen(BUILTIN_DICTSET); dictsetfunc.function(runtime);
             }

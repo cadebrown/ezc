@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 
 obj_t repr_obj(obj_t obj) {
@@ -43,6 +44,23 @@ void repr(runtime_t * runtime) {
     obj_free(&cobj);
 }
 
+void ezc_abs(runtime_t * runtime) {
+    ASSURE_STACK_LEN(1);
+
+    type_t int_type = TYPE("int"), float_type = TYPE("float");
+
+    obj_t cobj = estack_pop(&runtime->stack);
+    if (cobj.type_id == int_type.id) {
+        OBJ_AS_STRUCT(cobj, int) = abs(OBJ_AS_STRUCT(cobj, int));
+    } else if (cobj.type_id == float_type.id) {
+        OBJ_AS_STRUCT(cobj, float) = fabs(OBJ_AS_STRUCT(cobj, float));
+    } else {
+        raise_exception("unknown type for 'abs' function", 1);
+    }
+    estack_push(&runtime->stack, cobj);
+}
+
+
 void repr_recursive(runtime_t * runtime) {
     if (runtime->stack.len <= 0) {
         return;
@@ -55,6 +73,70 @@ void repr_recursive(runtime_t * runtime) {
         obj_free(&cobj);
     }
 }
+
+void stackget(runtime_t * runtime) {
+    if (runtime->stack.len <= 0) {
+        return;
+    }
+
+    type_t int_type = TYPE("int");
+
+    obj_t cobj = estack_pop(&runtime->stack);
+
+    if (cobj.type_id == int_type.id) {
+        int idx = OBJ_AS_STRUCT(cobj, int);
+        if (idx < 0) {
+            idx = runtime->stack.len + idx;
+        }
+        if (idx >= runtime->stack.len) {
+            raise_exception("index out of range", 1);
+        }
+        obj_t to_push = estack_get(&runtime->stack, idx);
+        obj_t copied = obj_copy(to_push);
+        estack_push(&runtime->stack, copied);
+    } else {
+        raise_exception("tried to get an object on the stack by an index that wasn't an 'int'", 1);
+    }
+
+    obj_free(&cobj);
+}
+
+
+
+void stackset(runtime_t * runtime) {
+    if (runtime->stack.len <= 0) {
+        return;
+    }
+
+    type_t int_type = TYPE("int");
+
+    obj_t cobj = estack_pop(&runtime->stack);
+    obj_t to_copy = estack_pop(&runtime->stack);
+
+    if (cobj.type_id == int_type.id) {
+        int idx = OBJ_AS_STRUCT(cobj, int);
+        if (idx < 0) {
+            idx = runtime->stack.len + idx;
+        }
+        if (idx >= runtime->stack.len) {
+            raise_exception("index out of range", 1);
+        }
+        obj_t to_overwrite = estack_get(&runtime->stack, idx);
+
+        obj_free(&to_overwrite);
+
+        obj_t copied = obj_copy(to_copy);
+
+        estack_set(&runtime->stack, idx, copied);
+        
+    } else {
+        raise_exception("tried to set an object on the stack by an index that wasn't an 'int'", 1);
+    }
+
+    obj_free(&cobj);
+}
+
+
 
 
 void _print_obj(obj_t to_print) {
@@ -620,6 +702,9 @@ int init (int id, lib_t _lib) {
     add_function("import", "imports a module by name", import);
     add_function("import&", "imports each object on the stack as a module name", import_repeat);
 
+    add_function("abs", "absolute value function", ezc_abs);
+
+
     add_function("type", "prints out info about the type specified by the last object on the stack", typeinfo);
     add_function("type&", "prints out info about all types", typeinfo_all);
     add_function("types", "prints out the names of all types", list_types);
@@ -633,6 +718,9 @@ int init (int id, lib_t _lib) {
     add_function("module&", "prints out info about all imported modules", moduleinfo_all);
     add_function("modules", "prints out the names of all imported modules", list_modules);
 
+
+    add_function("stackget", "gets the stack item by (idx)", stackget);
+    add_function("stackset", "sets the stack item by (val, idx)", stackset);
 
     add_function("dictset", "sets the global dictionary from the last values on the stack being (val, key)", set_global_dict);
     add_function("dictget", "gets the global dictionary from the last value on the stack being (key)", get_global_dict);
