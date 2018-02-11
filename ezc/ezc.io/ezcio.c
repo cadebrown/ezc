@@ -247,6 +247,7 @@ void read_file(runtime_t * runtime) {
             size_t tmp_len, total_len = 0;
             //printf("asdfasdf\n");
             while (fgets(tmp_buf, BUFSIZ, stdin) != NULL) {
+                //printf("tmp_buf: '%s'\n", tmp_buf);
                 tmp_len = strlen(tmp_buf);
                 
                 read_buffer = realloc(read_buffer, total_len + tmp_len + 1);
@@ -254,7 +255,13 @@ void read_file(runtime_t * runtime) {
                 strcpy(read_buffer + total_len, tmp_buf);
 
                 total_len += tmp_len;
+                if (tmp_buf[strlen(tmp_buf) - 1] == '\n') {
+                    read_buffer[total_len - 1] = '\0';
+                    break;
+                }
+
             }
+
 
             free(tmp_buf);
 
