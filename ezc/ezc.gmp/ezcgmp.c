@@ -272,6 +272,23 @@ void mpfr_copier(obj_t * to, obj_t * from) {
 
 
 
+void ezc_set_prec(runtime_t * runtime) {
+    printf("setting prec\n");
+    
+    ASSURE_STACK_LEN(1);
+
+    type_t int_type = TYPE("int");
+
+
+    obj_t cobj = estack_pop(&runtime->stack);
+    if (cobj.type_id == int_type.id) {
+        mpfr_set_default_prec(OBJ_AS_STRUCT(cobj, int));
+    } else {
+        raise_exception("unknown type for 'set_prec' function, need int", 1);
+    }
+}
+
+
 int init (int type_id, lib_t _lib) {
 
     init_exported(type_id, _lib);
@@ -279,6 +296,8 @@ int init (int type_id, lib_t _lib) {
     add_type("mpz", "multiprecision integer extension of gmp's mpz_t", mpz_constructor, mpz_copier, mpz_parser, mpz_representation, mpz_destroyer);
     add_type("mpf", "multiprecision float extension of gmp's mpf_t", mpf_constructor, mpf_copier, mpf_parser, mpf_representation, mpf_destroyer);
     mpf_set_default_prec(GMP_MPF_DEFAULT_PREC);
+
+    add_function("setprec", "set precision (in bits) of all creations", ezc_set_prec);
     
     mpfr_set_default_prec(GMP_MPF_DEFAULT_PREC);
     mpfr_set_default_rounding_mode(EZC_RND);

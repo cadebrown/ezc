@@ -769,7 +769,44 @@ obj_t __op_gt(obj_t a, obj_t b) {
     return NULL_OBJ;
 }
 
+
+
+// greater than
+obj_t __op_lt(obj_t a, obj_t b) {
+    obj_t r;
+
+    type_t at = OBJ_TYPE(a), bt = OBJ_TYPE(b);
+
+    
+    type_t bool_type = TYPE("bool"), int_type = TYPE("int"), float_type = TYPE("float"), str_type = TYPE("str");
+
+    type_t mpz_type = TYPE("mpz"), mpf_type = TYPE("mpf");
+
+    type_t mpfr_type = TYPE("mpfr");
+    
+    OBJ_ALLOC_STRUCT(r, bool);
+    r.type_id = bool_type.id;
+
+    if (at.id == bt.id) {
+        if (ISTYPE(a, int_type)) {
+            OBJ_AS_STRUCT(r, bool) = OBJ_AS_STRUCT(a, int) < OBJ_AS_STRUCT(b, int);
+        } else if (ISTYPE(a, float_type)) {
+            OBJ_AS_STRUCT(r, bool) = OBJ_AS_STRUCT(a, float) < OBJ_AS_STRUCT(b, float);
+        } else if (ISTYPE(a, str_type)) {
+            OBJ_AS_STRUCT(r, bool) = strcmp(OBJ_AS_POINTER(b, char), OBJ_AS_POINTER(a, char)) < 0;
+        } 
+        return r;
+
+    } else {
+        OPERATOR_MISMATCH(">", at, bt);
+    }
+
+    return NULL_OBJ;
+}
+
+
 void op_gt(runtime_t * runtime) STACK_OP(__op_gt)
+void op_lt(runtime_t * runtime) STACK_OP(__op_lt)
 
 
 
@@ -784,6 +821,7 @@ int init (int id, lib_t _lib) {
     init_exported(id, _lib);
 
     add_function("gt", "greater than", op_gt);
+    add_function("lt", "less than", op_lt);
 
     add_function("add", "adds the last two items on the stack", op_add);
     add_function("sub", "subtracts the last two items on the stack ('a b sub!' goes to '(a-b)')", op_sub);

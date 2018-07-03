@@ -89,6 +89,7 @@ void file_destroyer(obj_t * ret) {
 
 
 bool _open_file(ezc_file_t * v, char * _mode) {
+
     if (v->mode != NULL) free(v->mode);
     v->mode = malloc(strlen(_mode) + 1);
     strcpy(v->mode, _mode);
@@ -126,6 +127,51 @@ bool _close_file(ezc_file_t * v) {
     }
 }
 
+void open_file_mode(runtime_t * runtime) {
+    ASSURE_STACK_LEN(2);
+
+    obj_t open_mode = estack_pop(&runtime->stack);
+    obj_t file_name = estack_pop(&runtime->stack);
+
+    type_t file_type = type_from_name("file"), str_type = type_from_name("str");
+
+
+    if (open_mode.type_id != str_type.id) {
+        raise_exception("need a string open mode for opening a file", 1);
+    }
+
+    if (file_name.type_id == file_type.id) {
+        ezc_file_t * v = (ezc_file_t *)file_name.data;
+        v->mode = NULL;
+    
+        if (!_open_file(v, (char *)open_mode.data)) {
+            raise_exception("opening file failed", 1);
+            return;
+        }
+    
+        estack_push(&runtime->stack, file_name);
+
+    } else if (file_name.type_id == str_type.id) {
+        obj_t new_file_obj = obj_construct(file_type, file_name);
+        ezc_file_t * v = (ezc_file_t *)new_file_obj.data;
+        v->mode = NULL;
+
+        v->name = (char *)file_name.data;
+        if (!_open_file(v, (char *)open_mode.data)) {
+            raise_exception("opening file failed", 1);
+            return;
+        }
+
+        obj_free(&file_name);
+
+        estack_push(&runtime->stack, new_file_obj);
+
+    } else {
+
+        UNKNOWN_TYPE(type_name_from_id(file_name.type_id));
+    }
+
+}
 void open_file(runtime_t * runtime) {
     
     ASSURE_NONEMPTY_STACK;
@@ -137,6 +183,7 @@ void open_file(runtime_t * runtime) {
 
     if (last_obj.type_id == file_type.id) {
         ezc_file_t * v = (ezc_file_t *)last_obj.data;
+        v->mode = NULL;
     
         if (!_open_file(v, "w+")) {
             raise_exception("opening file failed", 1);
@@ -147,12 +194,17 @@ void open_file(runtime_t * runtime) {
 
     } else if (last_obj.type_id == str_type.id) {
         obj_t new_file_obj = obj_construct(file_type, last_obj);
+        ezc_file_t * v = (ezc_file_t *)new_file_obj.data;
+        v->mode = NULL;
 
+        v->name = (char *)last_obj.data;
+        if (!_open_file(v, "r")) {
+            raise_exception("opening file failed", 1);
+            return;
+        }
         obj_free(&last_obj);
 
         estack_push(&runtime->stack, new_file_obj);
-
-        open_file(runtime);
 
     } else {
 
@@ -242,24 +294,26 @@ void read_file(runtime_t * runtime) {
         char * read_buffer = NULL;
 
         if (v->fp == stdin) {
-            read_buffer = NULL;
+            read_buffer = malloc(1);
+            read_buffer[0] = 0;
             char * tmp_buf = malloc(BUFSIZ);
             size_t tmp_len, total_len = 0;
             //printf("asdfasdf\n");
             while (fgets(tmp_buf, BUFSIZ, stdin) != NULL) {
                 //printf("tmp_buf: '%s'\n", tmp_buf);
                 tmp_len = strlen(tmp_buf);
-                
+                if (tmp_buf[tmp_len - 1] == '\n') {
+                    tmp_buf[tmp_len - 1] = '\0';
+                    tmp_len--;
+                    break;
+                }
+
                 read_buffer = realloc(read_buffer, total_len + tmp_len + 1);
 
                 strcpy(read_buffer + total_len, tmp_buf);
 
                 total_len += tmp_len;
-                if (tmp_buf[strlen(tmp_buf) - 1] == '\n') {
-                    read_buffer[total_len - 1] = '\0';
-                    break;
-                }
-
+   
             }
 
 
@@ -400,7 +454,7 @@ int init (int type_id, lib_t _lib) {
 
     add_type("file", "file pointer, with name, for reading and writing", file_constructor, file_copier, file_parser, file_representation, file_destroyer);
 
-    add_function("open", "opens a file or string file name", open_file);
+    add_function("open", "(name, mode) opens a file or string file name", open_file_mode);
     add_function("read", "read from a file, assumes stack has (val, file) as last two values", read_file);
     add_function("write", "write to a file, assumes stack has (val, file) as last two values", write_file);
     add_function("clear", "clear file contents", clear_file);

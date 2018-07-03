@@ -250,6 +250,7 @@ void run_str(runtime_t * runtime, char * ezc_source_code) {
     function_t dictgetfunc = FUNCTION("dictget"), dictsetfunc = FUNCTION("dictset");
     function_t stackgetfunc = FUNCTION("stackget"), stacksetfunc = FUNCTION("stackset");
     function_t gtfunc = FUNCTION("gt");
+    function_t ltfunc = FUNCTION("lt");
 
 
 
@@ -322,6 +323,7 @@ void run_str(runtime_t * runtime, char * ezc_source_code) {
             else CASE_BUILTIN(BUILTIN_STACKGET, stackgetfunc)
             else CASE_BUILTIN(BUILTIN_STACKSET, stacksetfunc)
             else CASE_BUILTIN(BUILTIN_GT, gtfunc)
+            else CASE_BUILTIN(BUILTIN_LT, ltfunc)
             else if (ISLIM(csrc, BUILTIN_DICTSET) && strstr(csrc, BUILTIN_DICTSET) != NULL) {
                 c_off += strlen(BUILTIN_DICTSET); dictsetfunc.function(runtime);
             }
