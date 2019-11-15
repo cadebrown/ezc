@@ -13,18 +13,17 @@
 90.0 doSinTest$ eval!
 
 
-# now, define the sum of the first n squares (fns), i.e. 1+2^2+3^2+n^2
+# now, define the sum of the first n squares (fns), i.e. 1+2^2+3^2+...+n^2
 ":1+:2*1-**6/" fns$=
 
 "x$= '1^2+2^2+...' x$repr!concat! '^2='concat!print! x$ fns$ eval! print!" doFnsTest$=
-
 
 1 doFnsTest$eval!
 2 doFnsTest$eval!
 3 doFnsTest$eval!
 4 doFnsTest$eval!
-
 10 doFnsTest$eval!
 100 doFnsTest$eval!
 1000 doFnsTest$eval!
+
 
