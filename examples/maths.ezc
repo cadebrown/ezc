@@ -1,29 +1,20 @@
+#!ec -f
 
-# define a function sin (in degrees)
-":180-*:40500+~/4*" sindeg $=
+#print p alias!
 
-"x$= 'sin ' x$ repr!concat!print! x$ sindeg$ eval!print!" doSinTest $=
-
-#'x$= x$ repr! "hello" concat! print!'  doSinTest $=
-
-10.0 doSinTest$ eval!
-30.0 doSinTest$ eval!
-45.0 doSinTest$ eval!
-60.0 doSinTest$ eval!
-90.0 doSinTest$ eval!
+# computes gcd of numbers, using recursion
+# 1liner:
+# {:0== {del!} {<>_% gcd!} ifel!} gcd funcdef!
+{
+    :0== 
+        {del!} 
+        {<>_% gcd!} ifel! 
+} gcd funcdef!
 
 
-# now, define the sum of the first n squares (fns), i.e. 1+2^2+3^2+...+n^2
-":1+:2*1-**6/" fns$=
 
-"x$= '1^2+2^2+...' x$repr!concat! '^2='concat!print! x$ fns$ eval! print!" doFnsTest$=
-
-1 doFnsTest$eval!
-2 doFnsTest$eval!
-3 doFnsTest$eval!
-4 doFnsTest$eval!
-10 doFnsTest$eval!
-100 doFnsTest$eval!
-1000 doFnsTest$eval!
+5 10 gcd! print! # should print 5
+33 48 gcd! print! # should print 3
+6 :2* gcd! print! # should print 6
 
 

@@ -1,67 +1,16 @@
 
-.DS_Store
+# -*- C compiler outputs
 
-
-*/.DS_Store
-
-*.tar*
-out/
-ezc-dev/
-
-*.orig
-Makefile
-Makefile.in
-aclocal.m4
-ar-lib
-autom4te.cache
-compile
-config.guess
-config.log
-config.status
-config.sub
-configure
-configure.lineno
-depcomp
-install-sh
-libtool
-ltmain.sh
-missing
-ezc.pc
-test-driver
-
-out/
-
-
-.vscode/
-
-*.out
-
-ezcconfig.h
-
-build/
-
-*.orig
-src/ec
-src/ezc
-mini.src/ecm
 *.o
-*.out
+*.a
+*.dll
+*.so
 
-*.tar
-*.tar.*
+# -*- specific binaries from this project
 
+ec/ec
 
-autom4te.cache
-autoscan.log
-autoscan-*.log
-aclocal.m4
-compile
-config.guess
-config.h*
-config.sub
-configure
-configure.scan
-depcomp
-install-sh
-missing
-stamp-h1
+# -*- editors/etc
+
+.vscode
+

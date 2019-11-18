@@ -1,89 +1,33 @@
-# EZC
 
-## What is EZC?
+# ezc
 
-EZC is an RPN language that supports multiprecision, a live interpereter, and more all without the end user needing to know memory management. EZC also includes lots of mathematical functions, even at high precisions (using MPFR).
+`EZC` is an [RPN (Reverse Polish Notation)](https://en.wikipedia.org/wiki/Reverse_Polish_notation), stack-based language which emphasizes terseness, compactness, and innovative problem solving techniques. 
 
+For example, [Euclid's GCD Algorithm](https://en.wikipedia.org/wiki/Euclidean_algorithm) is: `{:0== {del!} {<>_% gcd!} ifel!} gcd funcdef!`
 
-Online documentation: http://chemicaldevelopment.us/ezc/
-
-
-## INSTALLING
-
-### Release
-
-These are found from the releases page, and can be installed like this (uses [cmake](https://cmake.org/runningcmake/) as a buildsystem):
-
-```
-mkdir build && cd build
-cmake ..
-make -j4
-make install
-```
-(you may need to run `sudo make install` if you need priviledges to install in `/usr/local`).
+Parentheses are invalid characters in this language, as they are never needed for grouping expressions, due to the nature of RPN.
 
 
-### Development Versions
 
-Just clone this repo:
+The code to print the square of a number is: `N 2^print!`, i.e. `5 2^print!` prints `25` to the screen
 
-`git clone https://github.com/ChemicalDevelopment/ezc.git`, then follow the `Release` installation.
-
-
-## Usage
-
-Run the program to view help:
-
-`ec -h`
-
-If you are building from a `build/` directory, replace `ec` with `./ezc/ec`
-
-And it will output the help message.
-
-## Examples
-
-Here are some quick examples:
-
-```
- $ ec -e'cade is a boss print()'
-
-boss
-
-```
-
-The `print` function prints the last item on the stack, which was `boss`
+More complicated expressions as well, like `2 3 4*+ print!` results in `14`
 
 
-Use a function like `FUNCTION()`
 
-```
- $ ec -e'cade is a boss concat() dump()'
+## Building
 
-aboss
+To build `ezc`, just clone this [repo](https://github.com/chemicaldevelopment/ezc), or download a [release](https://github.com/ChemicalDevelopment/ezc/releases).
 
-```
+Then, `cd ezc`, or into the folder you downloaded it into.
 
-It concatenated the last two items, then printed the result
+Then `make`. This should build the `ec` binary in the `ec/` directory.
 
+This can be executed like: `./ec/ec -h` for help, or run it with an expression like `./ec/ec -e '2 3+ print!'`, to test it out. That example should print out `5`.
 
-Some functions are implemented as repeaters, using `FUNCTION&()` (which will repeatedly call the function).
-
-```
- $ ec -e'cade is a boss concat&() dump()'
-
-cadeisaboss
-
-```
-
-This concatenated all of the stack together
+In the future, you'll be able to run `make check`, but I haven't implemented this yet.
 
 
-## TODOs
-				 
-  * Add checks
 
 
-## AUTHORS
-
-  * Cade Brown <cade@cade.site>
 

@@ -1,0 +1,19 @@
+#!ec -f
+
+# stack should have | x
+# result: | sqrt(x)
+{ 
+    : 
+    | 10 expand! 
+        {del!__/+2/} foreach! 
+} mysqrt funcdef!
+
+
+9 mysqrt! print! 
+49 mysqrt! print! 
+100 mysqrt! print! 
+1000 mysqrt! print! 
+10201 mysqrt! print!
+100. mysqrt! print!
+
+

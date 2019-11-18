@@ -1,0 +1,2 @@
+#!ec -f
+"Hello World!" print!
