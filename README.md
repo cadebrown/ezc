@@ -27,6 +27,5 @@ To install, run `sudo make install`. By default, this installs to `/usr/local`, 
 
 ## VSCode Extension
 
-
-
+You can install the extension for vscode, by visiting: [https://marketplace.visualstudio.com/items?itemName=chemdev.ezc](https://marketplace.visualstudio.com/items?itemName=chemdev.ezc).
 
