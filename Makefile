@@ -3,7 +3,7 @@
 CC         ?= gcc
 CFLAGS     ?= -O3 -fPIC -std=c99
 
-
+PREFIX     ?= /usr/local
 
 # -*- main ezc library, libezc
 
@@ -20,7 +20,7 @@ ec_src_c   := $(addprefix ec/,ec.c)
 ec_src_h   := $(addprefix ec/,ec.h)
 
 ec_EXE     := ec/ec
-ec_libs    := $(ezc_SHARED)
+ec_libs    := -Lezc -lezc
 
 
 
@@ -33,7 +33,7 @@ ec_o       := $(patsubst %.c,%.o,$(ec_src_c))
 all_o      := $(ezc_o) $(ec_o) $(ezc_SHARED) $(ec_EXE)
 
 
-.PHONY: clean default
+.PHONY: clean default install
 
 # by default, build the `ec` binary
 default: $(ec_EXE)
@@ -42,6 +42,9 @@ default: $(ec_EXE)
 clean:
 	rm -rf $(wildcard $(ec_o) $(ezc_o) $(ec_EXE) $(ezc_SHARED))
 
+install: $(ec_EXE) $(ezc_SHARED)
+	cp $(ec_EXE) $(PREFIX)/bin
+	cp $(ezc_SHARED) $(PREFIX)/lib
 
 ezc/%.o: ezc/%.c $(ezc_src_h)
 	$(CC) $(CFLAGS) $< -c -o $@
@@ -53,7 +56,7 @@ ec/%.o: ec/%.c $(ec_src_h)
 $(ezc_SHARED): $(ezc_o)
 	$(CC) $(CFLAGS) -shared $^ $(ezc_libs) -o $@
 
-$(ec_EXE): $(ec_o) $(ec_libs)
+$(ec_EXE): $(ec_o) | $(ezc_SHARED)
 	$(CC) $(CFLAGS) $^ $(ec_libs) -o $@
 
 

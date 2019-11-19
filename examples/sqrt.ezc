@@ -1,19 +1,40 @@
 #!ec -f
 
-# stack should have | x
-# result: | sqrt(x)
-{ 
-    : 
-    | 10 expand! 
-        {del!__/+2/} foreach! 
-} mysqrt funcdef!
+# sqrt: square root of a number, using Newton-Rhapson approximation
+# S| x
+# R| (sqrt x)
+{
+    # form a guess of x/2,
+    # S| x g
+    :2/
 
+    # x (g) -> x ((g+x/g)/2)
+    # single iteration: __/2+/
+    # this doubles the number of digits of accuracy
 
-9 mysqrt! print! 
-49 mysqrt! print! 
-100 mysqrt! print! 
-1000 mysqrt! print! 
-10201 mysqrt! print!
-100. mysqrt! print!
+    # iterations of newtons method, g = (g + x/g)/2
+    __/+2/
+    __/+2/
+    __/+2/
+    __/+2/
+    __/+2/
+    __/+2/
 
+    # variable iter version here
+    #| 6 expand! {__/+2/} foreach!
+
+    # swap so : g x, then delete the input
+    <>`
+
+} my_sqrt funcdef!
+
+# minimized version: :2/__/+2/__/+2/__/+2/<>`
+# this is accurate to 4 or 5 digits for real numbers <= 100, input != 0
+
+9 my_sqrt! print! 
+49 my_sqrt! print! 
+100 my_sqrt! print! 
+1000 my_sqrt! print! 
+10201 my_sqrt! print!
+10. my_sqrt! print!
 

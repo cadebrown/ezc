@@ -10,7 +10,7 @@
 /* utility macros */
 
 // require N arguments
-#define REQ_N(_n) if (ctx->stk.n < _n) { ezc_error("%d items are required, stack only had %d", _n, ctx->stk.n); return 1; }
+#define REQ_N(_fname, _n) if (ctx->stk.n < _n) { ezc_error("%d items are required for function '" #_fname "', stack only had %d", _n, ctx->stk.n); return 1; }
 
 #define OBJ_T(_obj) (ctx->types[_obj.type])
 #define OBJ_INIT(_obj) (OBJ_T(_obj).f_init(&_obj))
@@ -57,7 +57,7 @@ EZC_TF_FREE(wall) {
 }
 
 EZC_TF_REPR(wall) {
-    ezc_str_from(str, "*WALL", 0);
+    ezc_str_from(str, "|W|", 0);
     return 0;
 }
 
@@ -227,33 +227,40 @@ EZC_FUNC(wall) {
 }
 
 EZC_FUNC(del) {
-    REQ_N(1);
+    REQ_N(del, 1);
     ezc_obj popped = ezc_stk_pop(&ctx->stk);
     OBJ_FREE(popped);
     return 0;
 }
 
 EZC_FUNC(funcdef) {
-    REQ_N(1);
+    REQ_N(funcdef, 2);
     ezc_obj f_name = ezc_stk_pop(&ctx->stk);
     ezc_obj f_body = ezc_stk_pop(&ctx->stk);
 
     if (f_name.type == EZC_TYPE_STR) {
-        ezci i_body = (ezci){ .type = EZCI_BLOCK };
-        i_body._block = *(struct ezci_block*)f_body.custom_s;
-        ezc_ctx_addfunc(ctx, f_name.str_s, EZC_FUNC_EZC(i_body));
-        OBJ_FREE(f_name);
-        return 0;
+        if (f_body.type == EZC_TYPE_BLOCK) {
+            ezci i_body = (ezci){ .type = EZCI_BLOCK };
+            i_body._block = *(struct ezci_block*)f_body.custom_s;
+            ezc_ctx_addfunc(ctx, f_name.str_s, EZC_FUNC_EZC(i_body));
+            OBJ_FREE(f_name);
+            return 0;
+        } else {
+            ezc_stk_push(&ctx->stk, f_body);
+            ezc_stk_push(&ctx->stk, f_name);
+            ezc_error("`body` is not type `block` in:\n[body] [name] funcdef!");
+            return -1;
+        }
     } else {
-        ezc_error("funcdef name is not 'str'");
-        OBJ_FREE(f_name);
-        OBJ_FREE(f_body);
-        return 1;
+        ezc_stk_push(&ctx->stk, f_body);
+        ezc_stk_push(&ctx->stk, f_name);
+        ezc_error("`name` is not type `str` in:\n[body] [name] funcdef!");
+        return -1;
     }
 }
 
 EZC_FUNC(dup) {
-    REQ_N(1);
+    REQ_N(dup, 1);
     ezc_obj top = ezc_stk_peek(&ctx->stk);
 
     ezc_obj new_obj = (ezc_obj){ .type = top.type };
@@ -263,7 +270,7 @@ EZC_FUNC(dup) {
 }
 
 EZC_FUNC(under) {
-    REQ_N(2);
+    REQ_N(under, 2);
     ezc_obj under = ezc_stk_peekn(&ctx->stk, 1);
 
     ezc_obj new_obj = EZC_OBJ_NONE;
@@ -272,14 +279,41 @@ EZC_FUNC(under) {
     return 0;
 }
 
+EZC_FUNC(peek) {
+    REQ_N(peek, 2);
+    ezc_obj ridx = ezc_stk_pop(&ctx->stk);
+
+    if (ridx.type == EZC_TYPE_INT) {
+        if (ridx.int_s >= 0) {
+            ezc_obj peeked = ezc_stk_peekn(&ctx->stk, ridx.int_s);
+            ezc_obj new_obj = EZC_OBJ_NONE;
+            OBJ_COPY(new_obj, peeked);
+            ezc_stk_push(&ctx->stk, new_obj);
+        } else {
+            ezc_error("`ridx` must be >=0 in:\n[ridx] peek! (or @)");
+            return -1;
+        }
+    } else {
+        ezc_stk_push(&ctx->stk, ridx);
+        ezc_error("`ridx` is not type `int` in:\n[ridx] peek! (or @)");
+        return -1;
+    }
+
+    //ezc_obj new_obj = EZC_OBJ_NONE;
+    //OBJ_COPY(new_obj, under);
+    //ezc_stk_push(&ctx->stk, new_obj);
+    OBJ_FREE(ridx);
+    return 0;
+}
+
 EZC_FUNC(swap) {
-    REQ_N(2);
+    REQ_N(swap, 2);
     ezc_stk_swap(&ctx->stk, ctx->stk.n-1, ctx->stk.n-2);
     return 0;
 }
 
 EZC_FUNC(exec) {
-    REQ_N(1);
+    REQ_N(exec, 1);
     ezc_obj popped = ezc_stk_pop(&ctx->stk);
     int stat = 0;
 
@@ -287,9 +321,9 @@ EZC_FUNC(exec) {
         // execute the function byt this name
         int idx = ezc_ctx_getfunci(ctx, popped.str_s);
         if (idx < 0) { 
+            ezc_stk_push(&ctx->stk, popped);
             ezc_error("Unknown function: '%s'", popped.str_s._);
-            OBJ_FREE(popped);
-            return 1;
+            return -1;
         } else {
 
             ezc_func to_exec = ctx->funcs[idx];
@@ -321,14 +355,14 @@ EZC_FUNC(exec) {
         return stat;
     } else {
         // TODO: account for blocks and things, but for now, just ezc_error
-        ezc_error("Invalid type: '%s'", ctx->type_names[popped.type]._);
-        OBJ_FREE(popped);
-        return 1;
+        ezc_stk_push(&ctx->stk, popped);
+        ezc_error("Invalid type for `!` / `exec`: '%s'", TYPE_NAME(popped)._);
+        return -1;
     }
 }
 
 EZC_FUNC(repr) {
-    REQ_N(1);
+    REQ_N(repr, 1);
     ezc_obj popped = ezc_stk_pop(&ctx->stk);
 
     // get the repr
@@ -343,7 +377,7 @@ EZC_FUNC(repr) {
 }
 
 EZC_FUNC(print) {
-    REQ_N(1);
+    REQ_N(print, 1);
 
     // just go ahead and replace the last object with its representation
     EZC_FUNC_NAME(repr)(ctx);
@@ -356,11 +390,28 @@ EZC_FUNC(print) {
         return 0;
     } else {
         // repr should always give a string on top of the stack, so this shouldn't happen
-        ezc_error("Internal; `repr!` didn't give a string");
-        OBJ_FREE(popped);
-        return 1;
+        ezc_stk_push(&ctx->stk, popped);
+        ezc_error("Internal; the item on the top of the stack was not a string! (this means repr! didn't work)");
+        return -1;
     }
 }
+
+EZC_FUNC(printall) {
+    // just go ahead and replace the last object with its representation
+    //EZC_FUNC_NAME(repr)(ctx);
+    ezc_str repr_str = EZC_STR_NULL;
+    int i;
+    for (i = 0; i < ctx->stk.n; ++i) {
+        OBJ_REPR(ctx->stk.base[i], repr_str);
+        ezc_printr("%s ", repr_str._);
+    }
+    ezc_printr("\n");
+
+    ezc_str_free(&repr_str);
+    return 0;
+}
+
+
 
 EZC_FUNC(dump) {
     ezc_str str = EZC_STR_NULL;
@@ -373,125 +424,146 @@ EZC_FUNC(dump) {
     ezc_str_free(&str);
 
     ezc_printr("-----\nstack\n");
+    return 0;
 }
 
 /* math functions */
 
+#define TT_CASE(_Ta, _Tb) (A.type == _Ta && B.type == _Tb)
+#define TT_CASES(_Ta) TT_CASE(_Ta, _Ta)
+#define TT_RESTORE() { ezc_stk_push(&ctx->stk, B); ezc_stk_push(&ctx->stk, A); }
+#define TT_FREE() { OBJ_FREE(A); OBJ_FREE(B); }
+#define TT_TYPE_ER(_fname) { ezc_error("Invalid type combo for func `" #_fname "`: %s, %s", TYPE_NAME(A)._, TYPE_NAME(B)._); TT_RESTORE(); }
+
 EZC_FUNC(add) {
-    REQ_N(2);
+    REQ_N(add, 2);
     // compute A+B
     ezc_obj B = ezc_stk_pop(&ctx->stk);
     ezc_obj A = ezc_stk_pop(&ctx->stk);
 
     if (A.type == B.type) {
-        if (A.type == EZC_TYPE_STR) {
+        if (TT_CASES(EZC_TYPE_STR)) {
             ezc_str new_str = EZC_STR_NULL;
             ezc_str_concat(&new_str, A.str_s, B.str_s);
             ezc_stk_push(&ctx->stk, (ezc_obj){ .type = EZC_TYPE_STR, .str_s = new_str });
-            return 0;
-        } else if (A.type == EZC_TYPE_INT) {
+        } else if (TT_CASES(EZC_TYPE_INT)) {
             ezc_stk_push(&ctx->stk, (ezc_obj){ .type = EZC_TYPE_INT, .int_s = A.int_s + B.int_s });
-        } else if (A.type == EZC_TYPE_REAL) {
+        } else if (TT_CASES(EZC_TYPE_REAL)) {
             ezc_stk_push(&ctx->stk, (ezc_obj){ .type = EZC_TYPE_REAL, .real_s = A.real_s + B.real_s });
         } else {
-            ezc_error("Invalid type for func `add`: %s", TYPE_NAME(A)._);
-            OBJ_FREE(A); OBJ_FREE(B);
-            return 1;
+            TT_TYPE_ER(add);
+            return -1;
         }
-        OBJ_FREE(A); OBJ_FREE(B);
-        return 0;
     } else {
-        ezc_error("Invalid type combo for func `add`: %s, %s", TYPE_NAME(A)._, TYPE_NAME(B)._);
-        OBJ_FREE(A); OBJ_FREE(B);
-        return 1;
+        if (TT_CASE(EZC_TYPE_INT, EZC_TYPE_REAL)) {
+            ezc_stk_push(&ctx->stk, (ezc_obj){ .type = EZC_TYPE_REAL, .real_s = A.int_s + B.real_s });
+        } else if (TT_CASE(EZC_TYPE_REAL, EZC_TYPE_INT)) {
+            ezc_stk_push(&ctx->stk, (ezc_obj){ .type = EZC_TYPE_REAL, .real_s = A.real_s + B.int_s });
+        } else {
+            TT_TYPE_ER(add);
+            return -1;
+        }
     }
+    TT_FREE();
+    return 0;
 }
 
 EZC_FUNC(sub) {
-    REQ_N(2);
+    REQ_N(sub, 2);
     // compute A-B
     ezc_obj B = ezc_stk_pop(&ctx->stk);
     ezc_obj A = ezc_stk_pop(&ctx->stk);
 
     if (A.type == B.type) {
-        if (A.type == EZC_TYPE_INT) {
+        if (TT_CASES(EZC_TYPE_INT)) {
             ezc_stk_push(&ctx->stk, (ezc_obj){ .type = EZC_TYPE_INT, .int_s = A.int_s - B.int_s });
-        } else if (A.type == EZC_TYPE_REAL) {
+        } else if (TT_CASES(EZC_TYPE_REAL)) {
             ezc_stk_push(&ctx->stk, (ezc_obj){ .type = EZC_TYPE_REAL, .real_s = A.real_s - B.real_s });
         } else {
-            ezc_error("Invalid type for func `sub`: %s", TYPE_NAME(A)._);
-            OBJ_FREE(A); OBJ_FREE(B);
-            return 1;
+            TT_TYPE_ER(sub);
+            return -1;
         }
-        OBJ_FREE(A); OBJ_FREE(B);
-        return 0;
     } else {
-        ezc_error("Invalid type combo for func `sub`: %s, %s", TYPE_NAME(A)._, TYPE_NAME(B)._);
-        OBJ_FREE(A); OBJ_FREE(B);
-        return 1;
+        if (TT_CASE(EZC_TYPE_INT, EZC_TYPE_REAL)) {
+            ezc_stk_push(&ctx->stk, (ezc_obj){ .type = EZC_TYPE_REAL, .real_s = A.int_s - B.real_s });
+        } else if (TT_CASE(EZC_TYPE_REAL, EZC_TYPE_INT)) {
+            ezc_stk_push(&ctx->stk, (ezc_obj){ .type = EZC_TYPE_REAL, .real_s = A.real_s - B.int_s });
+        } else {
+            TT_TYPE_ER(sub);
+            return -1;
+        }
     }
+    TT_FREE();
+    return 0;
 }
 
 EZC_FUNC(mul) {
-    REQ_N(2);
+    REQ_N(mul, 2);
     // compute A*B
     ezc_obj B = ezc_stk_pop(&ctx->stk);
     ezc_obj A = ezc_stk_pop(&ctx->stk);
 
     if (A.type == B.type) {
-        if (A.type == EZC_TYPE_INT) {
+        if (TT_CASES(EZC_TYPE_INT)) {
             ezc_stk_push(&ctx->stk, (ezc_obj){ .type = EZC_TYPE_INT, .int_s = A.int_s * B.int_s });
-        } else if (A.type == EZC_TYPE_REAL) {
+        } else if (TT_CASES(EZC_TYPE_REAL)) {
             ezc_stk_push(&ctx->stk, (ezc_obj){ .type = EZC_TYPE_REAL, .real_s = A.real_s * B.real_s });
         } else {
-            ezc_error("Invalid type for func `mul`: %s", TYPE_NAME(A)._);
-            OBJ_FREE(A); OBJ_FREE(B);
-            return 1;
+            TT_TYPE_ER(mul);
+            return -1;
         }
-        OBJ_FREE(A); OBJ_FREE(B);
-        return 0;
     } else {
-        ezc_error("Invalid type combo for func `mul`: %s, %s", TYPE_NAME(A)._, TYPE_NAME(B)._);
-        OBJ_FREE(A); OBJ_FREE(B);
-        return 1;
+        if (TT_CASE(EZC_TYPE_INT, EZC_TYPE_REAL)) {
+            ezc_stk_push(&ctx->stk, (ezc_obj){ .type = EZC_TYPE_REAL, .real_s = A.int_s * B.real_s });
+        } else if (TT_CASE(EZC_TYPE_REAL, EZC_TYPE_INT)) {
+            ezc_stk_push(&ctx->stk, (ezc_obj){ .type = EZC_TYPE_REAL, .real_s = A.real_s * B.int_s });
+        } else {
+            TT_TYPE_ER(mul);
+            return -1;
+        }
     }
+    TT_FREE();
+    return 0;
 }
 
 EZC_FUNC(div) {
-    REQ_N(2);
+    REQ_N(div, 2);
     // compute A/B
     ezc_obj B = ezc_stk_pop(&ctx->stk);
     ezc_obj A = ezc_stk_pop(&ctx->stk);
 
     if (A.type == B.type) {
-        if (A.type == EZC_TYPE_INT) {
+        if (TT_CASES(EZC_TYPE_INT)) {
             ezc_stk_push(&ctx->stk, (ezc_obj){ .type = EZC_TYPE_INT, .int_s = A.int_s / B.int_s });
-        } else if (A.type == EZC_TYPE_REAL) {
+        } else if (TT_CASES(EZC_TYPE_REAL)) {
             ezc_stk_push(&ctx->stk, (ezc_obj){ .type = EZC_TYPE_REAL, .real_s = A.real_s / B.real_s });
         } else {
-            ezc_error("Invalid type for func `div`: %s", TYPE_NAME(A)._);
-            OBJ_FREE(A); OBJ_FREE(B);
-            return 1;
+            TT_TYPE_ER(div);
+            return -1;
         }
-        OBJ_FREE(A); OBJ_FREE(B);
-        return 0;
     } else {
-        ezc_error("Invalid type combo for func `div`: %s, %s", TYPE_NAME(A)._, TYPE_NAME(B)._);
-        OBJ_FREE(A); OBJ_FREE(B);
-        return 1;
+        if (TT_CASE(EZC_TYPE_INT, EZC_TYPE_REAL)) {
+            ezc_stk_push(&ctx->stk, (ezc_obj){ .type = EZC_TYPE_REAL, .real_s = A.int_s / B.real_s });
+        } else if (TT_CASE(EZC_TYPE_REAL, EZC_TYPE_INT)) {
+            ezc_stk_push(&ctx->stk, (ezc_obj){ .type = EZC_TYPE_REAL, .real_s = A.real_s / B.int_s });
+        } else {
+            TT_TYPE_ER(div);
+            return -1;
+        }
     }
+    TT_FREE();
 }
 
 EZC_FUNC(mod) {
-    REQ_N(2);
+    REQ_N(mod, 2);
     // compute A%B
     ezc_obj B = ezc_stk_pop(&ctx->stk);
     ezc_obj A = ezc_stk_pop(&ctx->stk);
 
     if (A.type == B.type) {
-        if (A.type == EZC_TYPE_INT) {
+        if (TT_CASES(EZC_TYPE_INT)) {
             ezc_stk_push(&ctx->stk, (ezc_obj){ .type = EZC_TYPE_INT, .int_s = A.int_s % B.int_s });
-        } else if (A.type == EZC_TYPE_REAL) {
+        } else if (TT_CASES(EZC_TYPE_REAL)) {
             ezc_stk_push(&ctx->stk, (ezc_obj){ .type = EZC_TYPE_REAL, .real_s = fmod(A.real_s, B.real_s) });
         } else {
             ezc_error("Invalid type for func `mod`: %s", TYPE_NAME(A)._);
@@ -508,7 +580,7 @@ EZC_FUNC(mod) {
 }
 
 EZC_FUNC(pow) {
-    REQ_N(2);
+    REQ_N(pow, 2);
     // compute A^B
     ezc_obj B = ezc_stk_pop(&ctx->stk);
     ezc_obj A = ezc_stk_pop(&ctx->stk);
@@ -552,7 +624,7 @@ EZC_FUNC(pow) {
 /* comparison functions */
 
 EZC_FUNC(eq) {
-    REQ_N(2);
+    REQ_N(eq, 2);
     // compute A==B
     ezc_obj B = ezc_stk_pop(&ctx->stk);
     ezc_obj A = ezc_stk_pop(&ctx->stk);
@@ -579,7 +651,7 @@ EZC_FUNC(eq) {
 
 /* control loops */
 EZC_FUNC(ifel) {
-    REQ_N(3);
+    REQ_N(ifel, 3);
     // | condition {code if true} {code if not} ifel!
 
     ezc_obj b_else = ezc_stk_pop(&ctx->stk);
@@ -604,7 +676,7 @@ EZC_FUNC(ifel) {
 }
 
 EZC_FUNC(foreach) {
-    REQ_N(2);
+    REQ_N(foreach, 2);
     // | a b c ... d {body} foreach!
     // runs body for each a, b, c
     ezc_obj body = ezc_stk_pop(&ctx->stk);
@@ -645,7 +717,7 @@ EZC_FUNC(foreach) {
 // generators
 
 EZC_FUNC(expand) {
-    REQ_N(1);
+    REQ_N(expand, 1);
     ezc_obj arg = ezc_stk_pop(&ctx->stk);
 
     if (arg.type == EZC_TYPE_INT) {
@@ -692,6 +764,7 @@ int EZC_FUNC_NAME(register_module)(ezc_ctx* ctx) {
     EZC_REGISTER_FUNC(ctx, exec)
     EZC_REGISTER_FUNC(ctx, repr)
     EZC_REGISTER_FUNC(ctx, print)
+    EZC_REGISTER_FUNC(ctx, printall)
     EZC_REGISTER_FUNC(ctx, dump)
 
     EZC_REGISTER_FUNC(ctx, add)
@@ -702,6 +775,7 @@ int EZC_FUNC_NAME(register_module)(ezc_ctx* ctx) {
     EZC_REGISTER_FUNC(ctx, pow)
 
     EZC_REGISTER_FUNC(ctx, under)
+    EZC_REGISTER_FUNC(ctx, peek)
     EZC_REGISTER_FUNC(ctx, eq)
 
     EZC_REGISTER_FUNC(ctx, ifel)

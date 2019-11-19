@@ -6,11 +6,12 @@ int ezc_exec(ezc_ctx* ctx, ezcp* prog) {
     // required functions
     int _bidx;
     #define EZC_BUILTIN(name) ezc_func bi_##name = ctx->funcs[_bidx = ezc_ctx_getfunci(ctx, EZC_STR_CONST(#name))]; if (_bidx < 0 || (bi_##name).type != EZC_FUNC_TYPE_C) { ezc_error("Couldn't find builtin function '%s'", #name); return 1; }
-    #define RUN_BUILTIN(name) if ((status = bi_##name._c(ctx)) != 0) { ezc_printmeta(cur.meta); exit(1); }
+    #define RUN_BUILTIN(name) if ((status = bi_##name._c(ctx)) != 0) {  ezc_print(""); ezc_printmeta(cur.meta); bi_dump._c(ctx); exit(1); }
     #define CASE_BUILTIN(code, name) else if (cur.type == code) { RUN_BUILTIN(name) }
 
     EZC_BUILTIN(exec)
     EZC_BUILTIN(dup)
+    EZC_BUILTIN(del)
     EZC_BUILTIN(dump)
     EZC_BUILTIN(swap)
     EZC_BUILTIN(add)
@@ -20,6 +21,7 @@ int ezc_exec(ezc_ctx* ctx, ezcp* prog) {
     EZC_BUILTIN(mod)
     EZC_BUILTIN(pow)
     EZC_BUILTIN(under)
+    EZC_BUILTIN(peek)
     EZC_BUILTIN(wall)
     EZC_BUILTIN(eq)
 
@@ -43,6 +45,7 @@ int ezc_exec(ezc_ctx* ctx, ezcp* prog) {
             ezc_stk_push(&ctx->stk, new_block);
         } 
         CASE_BUILTIN(EZCI_BANG, exec)
+        CASE_BUILTIN(EZCI_DEL, del)
         CASE_BUILTIN(EZCI_COPY, dup)
         CASE_BUILTIN(EZCI_ADD, add)
         CASE_BUILTIN(EZCI_SUB, sub)
@@ -51,6 +54,7 @@ int ezc_exec(ezc_ctx* ctx, ezcp* prog) {
         CASE_BUILTIN(EZCI_MOD, mod)
         CASE_BUILTIN(EZCI_POW, pow)
         CASE_BUILTIN(EZCI_UNDER, under)
+        CASE_BUILTIN(EZCI_PEEK, peek)
         CASE_BUILTIN(EZCI_EQ, eq)
         CASE_BUILTIN(EZCI_SWAP, swap)
         CASE_BUILTIN(EZCI_WALL, wall)

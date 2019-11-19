@@ -1,0 +1,19 @@
+#!ec -f
+
+# computes gcd of numbers, using recursion
+# euclid's algorithm, psuedocode:
+# gcd(a, b): if b == 0 return a, else return gcd(b, a % b)
+# 1-liner:
+# {:0== {`} {<>_% gcd!} ifel!} gcd funcdef!
+{
+  :0== 
+    {`} 
+    {<>_% my_gcd!}
+    ifel! 
+
+} my_gcd funcdef!
+
+5 10 my_gcd! print! # should print 5
+33 48 my_gcd! print! # should print 3
+6 :2* my_gcd! print! # should print 6
+

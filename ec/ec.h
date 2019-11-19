@@ -7,10 +7,6 @@
 
 #include "ezc.h"
 
-// force include the standard module
-#define EZC_MODULE_NAME std
-#include "ezc-module.h"
-
 int main(int argc, char** argv);
 
 #endif /* EC_H_ */

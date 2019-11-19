@@ -77,6 +77,7 @@ void ezc_printmeta(ezcim meta) {
         }
     }
     ezc_print(EC_RST);
+
 }
 
 

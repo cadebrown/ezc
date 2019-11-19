@@ -4,7 +4,7 @@
 #define IS_DIGIT(_c) ((_c) >= '0' && (_c) <= '9')
 #define IS_WHITE(_c) ((_c) == ' ' || (_c) == '\t' || (_c) == '\n')
 #define IS_IDENT_START(_c) ((_c) >= 'a' && (_c) <= 'z')
-#define IS_IDENT_MIDDLE(_c) (IS_IDENT_START(_c))
+#define IS_IDENT_MIDDLE(_c) (IS_IDENT_START(_c) || (_c) == '_')
 
 // compile into a list of instructions
 int ezc_compile(ezcp* ret, ezc_str src_name, ezc_str src) {
@@ -36,8 +36,8 @@ int ezc_compile(ezcp* ret, ezc_str src_name, ezc_str src) {
         blocks[block_idx]->children[blocks[block_idx]->n-1] = _inst;  \
     }
 
-    #define casec(_c, _type) else if (c == _c) { ezci new_op = (ezci){ .type = _type, .meta = _c_meta }; _c_adv; _c_add(new_op); }
-    #define cases(_str, _type) else if (strncmp(_str, str, strlen(_str)) == 0) { ezci new_op = (ezci){ .type = _type, .meta = _c_meta }; int _i; for (_i = 0; _i < strlen(_str); ++_i) { _c_adv }; _c_add(new_op); }
+    #define casec(_c, _type) else if (c == _c) {  _c_adv; ezci new_op = (ezci){ .type = _type, .meta = _c_meta }; _c_add(new_op); }
+    #define cases(_str, _type) else if (strncmp(_str, str, strlen(_str)) == 0) { int _i; for (_i = 0; _i < strlen(_str); ++_i) { _c_adv }; ezci new_op = (ezci){ .type = _type, .meta = _c_meta }; _c_add(new_op); }
 
     char* tokstart = NULL;
 
@@ -93,6 +93,7 @@ int ezc_compile(ezcp* ret, ezc_str src_name, ezc_str src) {
         cases("==", EZCI_EQ)
         cases("<>", EZCI_SWAP)
         casec('!', EZCI_BANG)
+        casec('`', EZCI_DEL)
         casec(':', EZCI_COPY)
         casec('+', EZCI_ADD)
         casec('-', EZCI_SUB)
@@ -101,6 +102,7 @@ int ezc_compile(ezcp* ret, ezc_str src_name, ezc_str src) {
         casec('%', EZCI_MOD)
         casec('^', EZCI_POW)
         cases("_", EZCI_UNDER)
+        cases("@", EZCI_PEEK)
         cases("|", EZCI_WALL)
         else if (IS_DIGIT(c)) {
             char* start = str;

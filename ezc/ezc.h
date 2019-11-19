@@ -156,13 +156,24 @@ enum ezci_type {
     // execute the last item on the stack (!)
     EZCI_BANG,
 
+    // delete the last item on the stack (`)
+    EZCI_DEL,
+
     // copy the last item on the stack (:)
     EZCI_COPY,
 
     // swaps the last 2 items (<>)
     EZCI_SWAP,
 
+    // gets the item by backwards index (@)
+    // or, by string key into the dictionary
+    // i.e. UNDER == PEEK(1)
+    EZCI_PEEK,
+
+    // adds a block of instructions to the stack
     EZCI_BLOCK,
+
+    // adds a literal wall (|) to the stack
     EZCI_WALL,
 
     // operators
