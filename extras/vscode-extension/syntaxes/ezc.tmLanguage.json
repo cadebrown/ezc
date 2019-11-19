@@ -1,0 +1,92 @@
+ {
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "ezc",
+	"patterns": [
+		{
+			"include": "#comments"
+		},
+		{
+			"include": "#keywords"
+		},
+		{
+			"include": "#strings"
+		},
+		{
+			"include": "#supports"
+		},
+		{
+			"include": "#constants"
+		},
+		{
+			"include": "#variables"
+		}
+	],
+	"repository": {
+		"comments": {
+			"patterns": [{
+				"name": "comment.block.ezc",
+					"begin": "###",
+					"beginCaptures": {
+						"0": {
+							"name": "punctuation.definition.comment.ezc"
+						}
+					},
+					"end": "###",
+					"endCaptures": {
+						"0": {
+							"name": "punctuation.definition.comment.ezc"
+						}
+					}
+			},{
+				"name": "comment.line.number-sign.ezc",
+				"match": "#.*"
+			}]
+		},
+
+		"keywords": {
+			"patterns": [{
+				"name": "keyword.control.ezc",
+				"match": "\\b(if|ifel|foreach)!"
+			},{
+				"name": "keyword.builtin.ezc",
+				"match": "\\b(print|funcdef)!"
+			},{
+				"name": "keyword.operator.ezc",
+				"match": "(\\!|\\@|\\$|\\%|\\^|\\*|\\-|\\+|\\||\\:|\\=\\=)"
+			}]
+		},
+
+		"supports": {
+			"patterns": [{
+				"name": "support.function.ezc",
+				"match": "\\b(TTT)!"
+			}]
+		},
+		
+		"strings": {
+			"name": "string.quoted.double.ezc",
+			"begin": "\"",
+			"end": "\"",
+			"patterns": [
+				{
+					"name": "constant.character.escape.ezc",
+					"match": "\\\\."
+				}
+			]
+		},
+		"constants": {
+			"patterns": [{
+				"name": "constant.numeric.integer.ezc",
+				"match": "(\\.[0-9]+|[0-9]+(\\.[0-9]*)?)"
+			}]
+		},
+		"variables": {
+			"patterns": [{
+				"name": "variable.other.ezc",
+				"match": "([a-zA-Z][a-zA-Z_]+)"
+			}]
+		}
+
+	},
+	"scopeName": "source.ezc"
+}

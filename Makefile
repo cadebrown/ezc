@@ -13,7 +13,6 @@ ezc_src_h  := $(addprefix ezc/,ezc.h ezc-module.h ezc-impl.h)
 ezc_SHARED := ezc/libezc.so
 ezc_libs   := -lm
 
-
 # -*- ec, a commandline usage for it
 
 ec_src_c   := $(addprefix ec/,ec.c)
@@ -21,7 +20,6 @@ ec_src_h   := $(addprefix ec/,ec.h)
 
 ec_EXE     := ec/ec
 ec_libs    := -Lezc -lezc
-
 
 
 # -*- auto-generated outputs used
@@ -43,8 +41,12 @@ clean:
 	rm -rf $(wildcard $(ec_o) $(ezc_o) $(ec_EXE) $(ezc_SHARED))
 
 install: $(ec_EXE) $(ezc_SHARED)
-	cp $(ec_EXE) $(PREFIX)/bin
-	cp $(ezc_SHARED) $(PREFIX)/lib
+	install -d $(PREFIX)/lib
+	install -d $(PREFIX)/include
+	install -d $(PREFIX)/bin
+	install -m 644 $(ezc_SHARED) $(PREFIX)/lib
+	install -m 644 $(ezc_src_h) $(PREFIX)/include
+	install -m 655 $(ec_EXE) $(PREFIX)/bin
 
 ezc/%.o: ezc/%.c $(ezc_src_h)
 	$(CC) $(CFLAGS) $< -c -o $@

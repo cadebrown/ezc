@@ -1,0 +1,29 @@
+{
+    "name": "ezc",
+    "displayName": "ezc",
+    "description": "EZC Language Support",
+    "version": "3.0.1",
+    "repository": "https://github.com/ChemicalDevelopment/ezc",
+    "publisher": "chemdev",
+    "engines": {
+        "vscode": "^1.5.0"
+    },
+    "categories": [
+        "Programming Languages",
+        "Language Packs"
+    ],
+    "icon": "logo.png",
+    "contributes": {
+        "languages": [{
+            "id": "ezc",
+            "aliases": ["ezc", "EZC file"],
+            "extensions": [".ezc",".ec"],
+            "configuration": "./language-configuration.json"
+        }],
+        "grammars": [{
+            "language": "ezc",
+            "scopeName": "source.ezc",
+            "path": "./syntaxes/ezc.tmLanguage.json"
+        }]
+    }
+}

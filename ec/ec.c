@@ -83,8 +83,8 @@ int main(int argc, char** argv) {
         case 'h':
             printf("Usage: %s [-e expr | -f file] [-A,-h]\n", argv[0]);
             printf("  -h,--help              Prints this help message\n");
-            printf("  -e,--expr [EXPR]       Executes [EXPR], which is a valid EZC expression\n");
-            printf("  -f,--file [FILE]       Reads \n");
+            printf("  -e,--expr [EXPR]       Compiles [EXPR], then executes it\n");
+            printf("  -f,--file [FILE]       Reads [FILE], compiles it, then executes it\n");
             return 0;
             break;
         case '?':

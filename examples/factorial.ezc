@@ -10,11 +10,9 @@
     ifel!
 } my_fact funcdef!
 
-
 0 my_fact! print!
 1 my_fact! print!
 4 my_fact! print!
 7 my_fact! print!
-
 10 my_fact! print!
 
