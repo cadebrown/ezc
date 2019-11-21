@@ -9,11 +9,33 @@
 
 #include "ezc-impl.h"
 
+// executes on a VM
 int ezc_vm_exec(ezc_vm* vm, ezcp prog) {
+    ezc_trace("ezc_vm_exec(%p, {...})", vm);
+
     // required functions
+
+    #define EZC_BUILTIN(name) int bidx_##name = -1; ezc_func bi_##name;
+    #define RUN_BUILTIN(name) if (bidx_##name < 0) { \
+        bidx_##name = ezc_vm_getfunci(vm, EZC_STR_CONST(#name)); \
+        if (bidx_##name < 0) { \
+            ezc_error("Couldn't find builtin function '%s'", #name); \
+            ezc_printmeta(cur); \
+            return 1; \
+        } else { \
+            bi_##name = vm->funcs.vals[bidx_##name]; \
+        } \
+    } \
+    bi_##name._c(vm);
+
+    /*
     int _bidx;
     #define EZC_BUILTIN(name) ezc_func bi_##name = vm->funcs.vals[_bidx = ezc_vm_getfunci(vm, EZC_STR_CONST(#name))]; if (_bidx < 0 || (bi_##name).type != EZC_FUNC_TYPE_C) { ezc_error("Couldn't find builtin function '%s'", #name); return 1; }
     #define RUN_BUILTIN(name) if ((status = bi_##name._c(vm)) != 0) {  printf("\n"); ezc_printmeta(cur); bi_dump._c(vm); exit(1); }
+    */
+
+
+
     #define CASE_BUILTIN(code, name) else if (cur.type == code) { RUN_BUILTIN(name) }
 
     EZC_BUILTIN(exec)
@@ -50,7 +72,7 @@ int ezc_vm_exec(ezc_vm* vm, ezcp prog) {
             ezc_obj new_block = (ezc_obj){ .type = EZC_TYPE_BLOCK };
             new_block._block = prog.body._block.children[i];
             ezc_stk_push(&vm->stk, new_block);
-        } 
+        }
         CASE_BUILTIN(EZCI_EXEC, exec)
         CASE_BUILTIN(EZCI_DEL, del)
         CASE_BUILTIN(EZCI_COPY, dup)

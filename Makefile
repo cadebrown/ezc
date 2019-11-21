@@ -17,7 +17,7 @@ CFLAGS     ?= -O3 -std=c99
 CFLAGS     += -fPIC
 
 # -*- main ezc library, libezc
-ezc_src_c  := $(addprefix ezc/,mem.c log.c str.c stk.c ezcp.c vm.c exec.c ezc-std.c)
+ezc_src_c  := $(addprefix ezc/,mem.c log.c str.c stk.c ezcp.c vm.c exec.c ezc.c ezc-std.c)
 ezc_src_h  := $(addprefix ezc/,ezc-types.h ezc-funcs.h ezc.h ezc-impl.h ezc-module.h)
 
 ezc_SHARED := ezc/libezc.so

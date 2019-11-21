@@ -34,22 +34,30 @@
 //   and return 
 #define REQ_N(_fname, _n) if (vm->stk.n < _n) { ezc_error("%d items are required for function '" #_fname "', stack only had %d", _n, vm->stk.n); return 1; }
 
+// gets the type of the object, as the structure containing the function pointers
 #define OBJ_T(_obj) (vm->types.vals[_obj.type])
+// Initializes an object (assumes .type is valid & correct)
 #define OBJ_INIT(_obj) (OBJ_T(_obj).f_init(&_obj))
+// Frees an object (assumes .type is valid & correct)
 #define OBJ_FREE(_obj) (OBJ_T(_obj).f_free(&_obj))
+// Copies `_from` to `_obj`, setting its type as well
 #define OBJ_COPY(_obj, _from) { _obj.type = _from.type; OBJ_T(_obj).f_copy(&_obj, &_from); }
+// Gets the string representation of an object (assumes .type is valid & correct)
 #define OBJ_REPR(_obj, _str) (OBJ_T(_obj).f_repr(&_obj, &_str))
 
+// converts an object to its truthy-ness value
 #define OBJ_TRUTHY(_obj, _val) { if (_obj.type == EZC_TYPE_BOOL) { _val = _obj._bool; } else if (_obj.type == EZC_TYPE_INT) { _val = _obj._int != 0; } else { _val = false; } }
 
+// returns the type name as an ezc_str
 #define TYPE_NAME(_obj) (vm->types.keys[_obj.type])
 
-
+// pops and frees from the stack
+#define POP_FREE() { ezc_obj _popped = ezc_stk_pop(&vm->stk); OBJ_FREE(_popped); }
 
 /* static constants */
 
 // the characters representings digits in different bases
-static const char digitstr[] = "0123456789abcdefghijklmnopqrstuvwxyz";
+static const char digitstr[] = EZC_DIGIT_STR;
 
 
 /* TYPE DEFINITIONS */
@@ -107,11 +115,19 @@ EZC_TF_FREE(int) {
 }
 
 EZC_TF_REPR(int) {
+    /*
+    char strs[10];
+
+    sprintf(strs, "%ld", obj->_int);
+    int len = strlen(strs);
+
+    ezc_str_copy_cp(str, strs, len);
+    */
     ezc_int val = obj->_int;
     int base = 10;
 
     // output here
-    char strs[100];
+    char strs[64];
 
     int i = 0;
     bool is_neg = false;
@@ -294,6 +310,8 @@ EZC_TF_COPY(block) {
 
 /* functions in this module */
 
+/* basic functions */
+
 EZC_FUNC(none) {
     ezc_stk_push(&vm->stk, (ezc_obj){ .type = EZC_TYPE_NONE });
     return 0;
@@ -306,33 +324,8 @@ EZC_FUNC(wall) {
 
 EZC_FUNC(del) {
     REQ_N(del, 1);
-    ezc_obj popped = ezc_stk_pop(&vm->stk);
-    OBJ_FREE(popped);
+    POP_FREE();
     return 0;
-}
-
-EZC_FUNC(funcdef) {
-    REQ_N(funcdef, 2);
-    ezc_obj f_name = ezc_stk_pop(&vm->stk);
-    ezc_obj f_body = ezc_stk_pop(&vm->stk);
-
-    if (f_name.type == EZC_TYPE_STR) {
-        if (f_body.type == EZC_TYPE_BLOCK) {
-            ezc_vm_addfunc(vm, f_name._str, EZC_FUNC_EZC(f_body._block));
-            OBJ_FREE(f_name);
-            return 0;
-        } else {
-            ezc_stk_push(&vm->stk, f_body);
-            ezc_stk_push(&vm->stk, f_name);
-            ezc_error("`body` is not type `block` in:\n[body] [name] funcdef!");
-            return -1;
-        }
-    } else {
-        ezc_stk_push(&vm->stk, f_body);
-        ezc_stk_push(&vm->stk, f_name);
-        ezc_error("`name` is not type `str` in:\n[body] [name] funcdef!");
-        return -1;
-    }
 }
 
 EZC_FUNC(dup) {
@@ -355,63 +348,84 @@ EZC_FUNC(under) {
     return 0;
 }
 
-EZC_FUNC(get) {
-    REQ_N(get, 1);
-    ezc_obj idx = ezc_stk_pop(&vm->stk);
-
-    if (idx.type == EZC_TYPE_INT) {
-        if (idx._int >= 0) {
-            ezc_obj peeked = ezc_stk_get(&vm->stk, idx._int);
-            ezc_obj new_obj = EZC_OBJ_EMPTY;
-            OBJ_COPY(new_obj, peeked);
-            ezc_stk_push(&vm->stk, new_obj);
-        } else if (idx._int < 0) {
-            ezc_obj peeked = ezc_stk_get(&vm->stk, vm->stk.n + idx._int);
-            ezc_obj new_obj = EZC_OBJ_EMPTY;
-            OBJ_COPY(new_obj, peeked);
-            ezc_stk_push(&vm->stk, new_obj);
-        } else {
-            ezc_stk_push(&vm->stk, idx);
-            ezc_error("`idx` must be >=0 in:\n[idx] get! (or $)");
-            return -1;
-        }
-    } else {
-        ezc_stk_push(&vm->stk, idx);
-        ezc_error("`idx` is not type `int` in:\n[idx] get! (or $)");
-        return -1;
-    }
-
-    //ezc_obj new_obj = EZC_OBJ_EMPTY;
-    //OBJ_COPY(new_obj, under);
-    //ezc_stk_push(&vm->stk, new_obj);
-    OBJ_FREE(idx);
-    return 0;
-}
-
 EZC_FUNC(swap) {
     REQ_N(swap, 2);
     ezc_stk_swap(&vm->stk, vm->stk.n-1, vm->stk.n-2);
     return 0;
 }
 
+// {body} name funcdef!
+// defines a function named 'name', with the code body as 'body'
+// it can now be executed like any other EZC function:
+// name! will execute the contents of body on the current stack 
+EZC_FUNC(funcdef) {
+    REQ_N(funcdef, 2);
+    ezc_obj f_name = ezc_stk_peekn(&vm->stk, 0);
+    ezc_obj f_body = ezc_stk_peekn(&vm->stk, 1);
+
+    if (f_name.type == EZC_TYPE_STR) {
+        if (f_body.type == EZC_TYPE_BLOCK) {
+            ezc_vm_addfunc(vm, f_name._str, EZC_FUNC_EZC(f_body._block));
+            POP_FREE(); POP_FREE();
+            return 0;
+        } else {
+            ezc_error("`body` is not type `block` in:\n[body] [name] funcdef!");
+            return -1;
+        }
+    } else {
+        ezc_error("`name` is not type `str` in:\n[body] [name] funcdef!");
+        return -1;
+    }
+}
+
+
+EZC_FUNC(get) {
+    REQ_N(get, 1);
+    ezc_obj idx = ezc_stk_peekn(&vm->stk, 0);
+
+    if (idx.type == EZC_TYPE_INT) {
+        if (idx._int >= 0) {
+            ezc_obj peeked = ezc_stk_get(&vm->stk, idx._int);
+            ezc_obj new_obj = EZC_OBJ_EMPTY;
+            OBJ_COPY(new_obj, peeked);
+            // replace top of stack
+            vm->stk.base[vm->stk.n - 1] = new_obj;
+        } else if (idx._int < 0) {
+            ezc_obj peeked = ezc_stk_peekn(&vm->stk, 1 + idx._int);
+            ezc_obj new_obj = EZC_OBJ_EMPTY;
+            OBJ_COPY(new_obj, peeked);
+            // replace top of stack
+            vm->stk.base[vm->stk.n - 1] = new_obj;
+        } else {
+            ezc_error("`idx` must be >=0 in:\n[idx] get! (or $)");
+            return -1;
+        }
+    } else {
+        ezc_error("`idx` is not type `int` in:\n[idx] get! (or $)");
+        return -1;
+    }
+
+    return 0;
+}
+
 EZC_FUNC(exec) {
     REQ_N(exec, 1);
-    ezc_obj popped = ezc_stk_pop(&vm->stk);
+    ezc_obj code = ezc_stk_peekn(&vm->stk, 0);
     int stat = 0;
 
-    if (popped.type == EZC_TYPE_STR) {
+    if (code.type == EZC_TYPE_STR) {
         // execute the function byt this name
-        int idx = ezc_vm_getfunci(vm, popped._str);
+        int idx = ezc_vm_getfunci(vm, code._str);
         if (idx < 0) { 
-            ezc_stk_push(&vm->stk, popped);
-            ezc_error("Unknown function: '%s'", popped._str._);
+            ezc_error("Unknown function: '%s'", code._str._);
             return -1;
         } else {
 
             ezc_func to_exec = vm->funcs.vals[idx];
             //vm->funcs[idx](vm);
             if (to_exec.type == EZC_FUNC_TYPE_C) {
-                OBJ_FREE(popped);
+                ezc_stk_pop(&vm->stk);
+                OBJ_FREE(code);
                 return to_exec._c(vm);
             } else if (to_exec.type == EZC_FUNC_TYPE_EZC) {
                 ezcp _prog = EZCP_EMPTY;
@@ -419,38 +433,40 @@ EZC_FUNC(exec) {
                 _prog.src = to_exec._ezc.m_prog->src;
                 _prog.src_name = to_exec._ezc.m_prog->src_name;
                 stat = ezc_vm_exec(vm, _prog);
-                OBJ_FREE(popped);
+                ezc_stk_pop(&vm->stk);
+                OBJ_FREE(code);
                 return stat;
             }
         }
-    } else if (popped.type == EZC_TYPE_BLOCK) {
+    } else if (code.type == EZC_TYPE_BLOCK) {
         ezcp _prog = EZCP_EMPTY;
-        _prog.body = popped._block;
-        _prog.src =  popped._block.m_prog->src;
-        _prog.src_name =  popped._block.m_prog->src_name;
+        _prog.body = code._block;
+        _prog.src =  code._block.m_prog->src;
+        _prog.src_name = code._block.m_prog->src_name;
         stat = ezc_vm_exec(vm, _prog);
-        OBJ_FREE(popped);
+        ezc_stk_pop(&vm->stk);
+        OBJ_FREE(code);
         return stat;
     } else {
         // TODO: account for blocks and things, but for now, just ezc_error
-        ezc_stk_push(&vm->stk, popped);
-        ezc_error("Invalid type for `!` / `exec`: '%s'", TYPE_NAME(popped)._);
+        ezc_error("Invalid type for `!` / `exec`: '%s'", TYPE_NAME(code)._);
         return -1;
     }
 }
 
 EZC_FUNC(repr) {
     REQ_N(repr, 1);
-    ezc_obj popped = ezc_stk_pop(&vm->stk);
+    ezc_obj A = ezc_stk_peekn(&vm->stk, 0);
+
+    ezct TA = OBJ_T(A);
 
     // get the repr
     ezc_obj new_str = (ezc_obj){ .type = EZC_TYPE_STR, ._str = EZC_STR_NULL };
-    OBJ_REPR(popped, new_str._str);
+    TA.f_repr(&A, &new_str._str);
 
-    // push it onto the stack
-    ezc_stk_push(&vm->stk, new_str);
+    vm->stk.base[vm->stk.n - 1] = new_str;
 
-    OBJ_FREE(popped);
+    TA.f_free(&A);
     return 0;
 }
 
@@ -458,20 +474,18 @@ EZC_FUNC(print) {
     REQ_N(print, 1);
 
     // just go ahead and replace the last object with its representation
-    EZC_FUNC_NAME(repr)(vm);
+    //EZC_FUNC_NAME(repr)(vm);
 
-    ezc_obj popped = ezc_stk_pop(&vm->stk);
+    ezc_obj A = ezc_stk_pop(&vm->stk);
+    ezct TA = OBJ_T(A);
+    ezc_str reprA = EZC_STR_EMPTY;
 
-    if (popped.type == EZC_TYPE_STR) {
-        printf("%s\n", popped._str._);
-        OBJ_FREE(popped);
-        return 0;
-    } else {
-        // repr should always give a string on top of the stack, so this shouldn't happen
-        ezc_stk_push(&vm->stk, popped);
-        ezc_error("Internal; the item on the top of the stack was not a string! (this means repr! didn't work)");
-        return -1;
-    }
+    TA.f_repr(&A, &reprA);
+
+    fprintf(stdout, "%s\n", reprA._);
+
+    TA.f_free(&A);
+    return 0;
 }
 
 EZC_FUNC(printall) {
@@ -511,157 +525,211 @@ EZC_FUNC(dump) {
 #define TT_CASES(_Ta) TT_CASE(_Ta, _Ta)
 #define TT_RESTORE() { ezc_stk_push(&vm->stk, B); ezc_stk_push(&vm->stk, A); }
 #define TT_FREE() { OBJ_FREE(A); OBJ_FREE(B); }
-#define TT_TYPE_ER(_fname) { ezc_error("Invalid type combo for func `" #_fname "`: %s, %s", TYPE_NAME(A)._, TYPE_NAME(B)._); TT_RESTORE(); }
+#define TT_TYPE_ER(_fname) { ezc_error("Invalid type combo for func `" #_fname "`: %s, %s", TYPE_NAME(A)._, TYPE_NAME(B)._); }
 
 EZC_FUNC(add) {
     REQ_N(add, 2);
     // compute A+B
-    ezc_obj B = ezc_stk_pop(&vm->stk);
-    ezc_obj A = ezc_stk_pop(&vm->stk);
-    //ezc_stk_push(&vm->stk, B);
-    //return 0;
+    ezc_obj B = ezc_stk_peekn(&vm->stk, 0);
+    ezc_obj A = ezc_stk_peekn(&vm->stk, 1);
+
     if (A.type == B.type) {
+        // these should only really pop off one, and free the other one.
+        // Most primitive types shouldn't even need to be freed
         if (TT_CASES(EZC_TYPE_STR)) {
-            // optimized method, without complete replication
             ezc_str_append(&A._str, B._str);
-            ezc_stk_push(&vm->stk, A);
+            vm->stk.base[--vm->stk.n - 1] = A;
             OBJ_FREE(B);
             return 0;
-            // naive method:
-            //ezc_str new_str = EZC_STR_NULL;
-            //ezc_str_concat(&new_str, A._str, B._str);
-            //ezc_stk_push(&vm->stk, (ezc_obj){ .type = EZC_TYPE_STR, ._str = new_str });
         } else if (TT_CASES(EZC_TYPE_INT)) {
-            ezc_stk_push(&vm->stk, (ezc_obj){ .type = EZC_TYPE_INT, ._int = A._int + B._int });
+            A._int += B._int;
+            vm->stk.base[--vm->stk.n - 1] = A;
+            return 0;
         } else if (TT_CASES(EZC_TYPE_REAL)) {
-            ezc_stk_push(&vm->stk, (ezc_obj){ .type = EZC_TYPE_REAL, ._real = A._real + B._real });
+            A._real += B._real;
+            vm->stk.base[--vm->stk.n - 1] = A;
+            return 0;
         } else {
             TT_TYPE_ER(add);
             return -1;
         }
     } else {
         if (TT_CASE(EZC_TYPE_INT, EZC_TYPE_REAL)) {
-            ezc_stk_push(&vm->stk, (ezc_obj){ .type = EZC_TYPE_REAL, ._real = A._int + B._real });
+            ezc_real res = A._int + B._real;
+            B.type = EZC_TYPE_REAL;
+            B._real = res;
+            vm->stk.base[--vm->stk.n - 1] = B;
+            return 0;
         } else if (TT_CASE(EZC_TYPE_REAL, EZC_TYPE_INT)) {
-            ezc_stk_push(&vm->stk, (ezc_obj){ .type = EZC_TYPE_REAL, ._real = A._real + B._int });
+            A._real += B._int;
+            vm->stk.base[--vm->stk.n - 1] = A;
+            return 0;
         } else {
             TT_TYPE_ER(add);
             return -1;
         }
     }
-    TT_FREE();
     return 0;
 }
 
 EZC_FUNC(sub) {
     REQ_N(sub, 2);
     // compute A-B
-    ezc_obj B = ezc_stk_pop(&vm->stk);
-    ezc_obj A = ezc_stk_pop(&vm->stk);
+    ezc_obj B = ezc_stk_peekn(&vm->stk, 0);
+    ezc_obj A = ezc_stk_peekn(&vm->stk, 1);
 
     if (A.type == B.type) {
+        // these should only really pop off one, and free the other one.
+        // Most primitive types shouldn't even need to be freed
         if (TT_CASES(EZC_TYPE_INT)) {
-            ezc_stk_push(&vm->stk, (ezc_obj){ .type = EZC_TYPE_INT, ._int = A._int - B._int });
+            A._int -= B._int;
+            vm->stk.base[--vm->stk.n - 1] = A;
+            return 0;
         } else if (TT_CASES(EZC_TYPE_REAL)) {
-            ezc_stk_push(&vm->stk, (ezc_obj){ .type = EZC_TYPE_REAL, ._real = A._real - B._real });
+            A._real -= B._real;
+            vm->stk.base[--vm->stk.n - 1] = A;
+            return 0;
         } else {
             TT_TYPE_ER(sub);
             return -1;
         }
     } else {
         if (TT_CASE(EZC_TYPE_INT, EZC_TYPE_REAL)) {
-            ezc_stk_push(&vm->stk, (ezc_obj){ .type = EZC_TYPE_REAL, ._real = A._int - B._real });
+            ezc_real res = A._int + B._real;
+            B.type = EZC_TYPE_REAL;
+            B._real = res;
+            vm->stk.base[--vm->stk.n - 1] = B;
+            return 0;
         } else if (TT_CASE(EZC_TYPE_REAL, EZC_TYPE_INT)) {
-            ezc_stk_push(&vm->stk, (ezc_obj){ .type = EZC_TYPE_REAL, ._real = A._real - B._int });
+            A._real += B._int;
+            vm->stk.base[--vm->stk.n - 1] = A;
+            return 0;
         } else {
             TT_TYPE_ER(sub);
             return -1;
         }
     }
-    TT_FREE();
     return 0;
 }
 
 EZC_FUNC(mul) {
     REQ_N(mul, 2);
     // compute A*B
-    ezc_obj B = ezc_stk_pop(&vm->stk);
-    ezc_obj A = ezc_stk_pop(&vm->stk);
+    ezc_obj B = ezc_stk_peekn(&vm->stk, 0);
+    ezc_obj A = ezc_stk_peekn(&vm->stk, 1);
 
     if (A.type == B.type) {
+        // these should only really pop off one, and free the other one.
+        // Most primitive types shouldn't even need to be freed
         if (TT_CASES(EZC_TYPE_INT)) {
-            ezc_stk_push(&vm->stk, (ezc_obj){ .type = EZC_TYPE_INT, ._int = A._int * B._int });
+            A._int *= B._int;
+            vm->stk.base[--vm->stk.n - 1] = A;
+            return 0;
         } else if (TT_CASES(EZC_TYPE_REAL)) {
-            ezc_stk_push(&vm->stk, (ezc_obj){ .type = EZC_TYPE_REAL, ._real = A._real * B._real });
+            A._real *= B._real;
+            vm->stk.base[--vm->stk.n - 1] = A;
+            return 0;
         } else {
             TT_TYPE_ER(mul);
             return -1;
         }
     } else {
         if (TT_CASE(EZC_TYPE_INT, EZC_TYPE_REAL)) {
-            ezc_stk_push(&vm->stk, (ezc_obj){ .type = EZC_TYPE_REAL, ._real = A._int * B._real });
+            ezc_real res = A._int * B._real;
+            B.type = EZC_TYPE_REAL;
+            B._real = res;
+            vm->stk.base[--vm->stk.n - 1] = B;
+            return 0;
         } else if (TT_CASE(EZC_TYPE_REAL, EZC_TYPE_INT)) {
-            ezc_stk_push(&vm->stk, (ezc_obj){ .type = EZC_TYPE_REAL, ._real = A._real * B._int });
+            A._real *= B._int;
+            vm->stk.base[--vm->stk.n - 1] = A;
+            return 0;
         } else {
             TT_TYPE_ER(mul);
             return -1;
         }
     }
-    TT_FREE();
     return 0;
 }
 
 EZC_FUNC(div) {
     REQ_N(div, 2);
     // compute A/B
-    ezc_obj B = ezc_stk_pop(&vm->stk);
-    ezc_obj A = ezc_stk_pop(&vm->stk);
+    ezc_obj B = ezc_stk_peekn(&vm->stk, 0);
+    ezc_obj A = ezc_stk_peekn(&vm->stk, 1);
 
     if (A.type == B.type) {
+        // these should only really pop off one, and free the other one.
+        // Most primitive types shouldn't even need to be freed
         if (TT_CASES(EZC_TYPE_INT)) {
-            ezc_stk_push(&vm->stk, (ezc_obj){ .type = EZC_TYPE_INT, ._int = A._int / B._int });
+            A._int /= B._int;
+            vm->stk.base[--vm->stk.n - 1] = A;
+            return 0;
         } else if (TT_CASES(EZC_TYPE_REAL)) {
-            ezc_stk_push(&vm->stk, (ezc_obj){ .type = EZC_TYPE_REAL, ._real = A._real / B._real });
+            A._real /= B._real;
+            vm->stk.base[--vm->stk.n - 1] = A;
+            return 0;
         } else {
             TT_TYPE_ER(div);
             return -1;
         }
     } else {
         if (TT_CASE(EZC_TYPE_INT, EZC_TYPE_REAL)) {
-            ezc_stk_push(&vm->stk, (ezc_obj){ .type = EZC_TYPE_REAL, ._real = A._int / B._real });
+            ezc_real res = A._int / B._real;
+            B.type = EZC_TYPE_REAL;
+            B._real = res;
+            vm->stk.base[--vm->stk.n - 1] = B;
+            return 0;
         } else if (TT_CASE(EZC_TYPE_REAL, EZC_TYPE_INT)) {
-            ezc_stk_push(&vm->stk, (ezc_obj){ .type = EZC_TYPE_REAL, ._real = A._real / B._int });
+            A._real /= B._int;
+            vm->stk.base[--vm->stk.n - 1] = A;
+            return 0;
         } else {
             TT_TYPE_ER(div);
             return -1;
         }
     }
-    TT_FREE();
+    return 0;
 }
 
 EZC_FUNC(mod) {
     REQ_N(mod, 2);
     // compute A%B
-    ezc_obj B = ezc_stk_pop(&vm->stk);
-    ezc_obj A = ezc_stk_pop(&vm->stk);
+    ezc_obj B = ezc_stk_peekn(&vm->stk, 0);
+    ezc_obj A = ezc_stk_peekn(&vm->stk, 1);
 
     if (A.type == B.type) {
+        // these should only really pop off one, and free the other one.
+        // Most primitive types shouldn't even need to be freed
         if (TT_CASES(EZC_TYPE_INT)) {
-            ezc_stk_push(&vm->stk, (ezc_obj){ .type = EZC_TYPE_INT, ._int = A._int % B._int });
+            A._int %= B._int;
+            vm->stk.base[--vm->stk.n - 1] = A;
+            return 0;
         } else if (TT_CASES(EZC_TYPE_REAL)) {
-            ezc_stk_push(&vm->stk, (ezc_obj){ .type = EZC_TYPE_REAL, ._real = fmod(A._real, B._real) });
+            A._real = fmod(A._real, B._real);
+            vm->stk.base[--vm->stk.n - 1] = A;
+            return 0;
         } else {
-            ezc_error("Invalid type for func `mod`: %s", TYPE_NAME(A)._);
-            OBJ_FREE(A); OBJ_FREE(B);
-            return 1;
+            TT_TYPE_ER(mod);
+            return -1;
         }
-        OBJ_FREE(A); OBJ_FREE(B);
-        return 0;
     } else {
-        ezc_error("Invalid type combo for func `mod`: %s, %s", TYPE_NAME(A)._, TYPE_NAME(B)._);
-        OBJ_FREE(A); OBJ_FREE(B);
-        return 1;
+        if (TT_CASE(EZC_TYPE_INT, EZC_TYPE_REAL)) {
+            ezc_real res = fmod((ezc_real)A._int, B._real);
+            B.type = EZC_TYPE_REAL;
+            B._real = res;
+            vm->stk.base[--vm->stk.n - 1] = B;
+            return 0;
+        } else if (TT_CASE(EZC_TYPE_REAL, EZC_TYPE_INT)) {
+            A._real = fmod(A._real, (ezc_real)B._int);
+            vm->stk.base[--vm->stk.n - 1] = A;
+            return 0;
+        } else {
+            TT_TYPE_ER(mod);
+            return -1;
+        }
     }
+    return 0;
 }
 
 EZC_FUNC(pow) {
@@ -840,11 +908,16 @@ EZC_FUNC(X) {
     if (arg.type == EZC_TYPE_INT) {
         // do 0...arg-1
         ezc_int i;
+        int start_idx = vm->stk.n;
+        //printf("%lu\n", arg._int);
+        ezc_stk_resize(&vm->stk, arg._int);
+
         ezc_obj new_int = EZC_OBJ_EMPTY;
         new_int.type = EZC_TYPE_INT;
-        for (i = 0; i < arg._int; ++i) {
+        for (i = start_idx; i < vm->stk.n; ++i) {
             new_int._int = i;
-            ezc_stk_push(&vm->stk, new_int);
+            vm->stk.base[i] = new_int;
+//            ezc_stk_push(&vm->stk, new_int);
         }
         OBJ_FREE(arg);
         return 0;        
@@ -870,20 +943,30 @@ int EZC_FUNC_NAME(register_module)(ezc_vm* vm) {
     EZC_REGISTER_TYPE(str)
     EZC_REGISTER_TYPE(block)
 
-    // functions
-
+    // functions that just pop on a value
     EZC_REGISTER_FUNC(none)
     EZC_REGISTER_FUNC(wall)
-    EZC_REGISTER_FUNC(del)
-    EZC_REGISTER_FUNC(funcdef)
+    
+    // duplication, stack getting
     EZC_REGISTER_FUNC(dup)
+    EZC_REGISTER_FUNC(under)
     EZC_REGISTER_FUNC(swap)
+    EZC_REGISTER_FUNC(get)
+    
+    // deletion/mem management
+    EZC_REGISTER_FUNC(del)
+
+    // builtin keyword kinda stuff, important
     EZC_REGISTER_FUNC(exec)
     EZC_REGISTER_FUNC(repr)
     EZC_REGISTER_FUNC(print)
     EZC_REGISTER_FUNC(printall)
     EZC_REGISTER_FUNC(dump)
+    
+    // registering functions/types
+    EZC_REGISTER_FUNC(funcdef)
 
+    // operators/math
     EZC_REGISTER_FUNC(add)
     EZC_REGISTER_FUNC(sub)
     EZC_REGISTER_FUNC(mul)
@@ -891,15 +974,15 @@ int EZC_FUNC_NAME(register_module)(ezc_vm* vm) {
     EZC_REGISTER_FUNC(mod)
     EZC_REGISTER_FUNC(pow)
 
-    EZC_REGISTER_FUNC(under)
-    EZC_REGISTER_FUNC(get)
+    // comparison
     EZC_REGISTER_FUNC(eq)
 
+    // control functions
     EZC_REGISTER_FUNC(ifel)
     EZC_REGISTER_FUNC(foreach)
 
+    // higher order utility functions
     EZC_REGISTER_FUNC(X)
 
 }
-
 

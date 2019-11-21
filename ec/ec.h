@@ -1,6 +1,11 @@
-// ec.h - the commandline interface to EZC's header
-//   biggest notes are that it requires to be linked to EZC built with the
-//   `std module`
+// ezc/ec.h - main header for the commandline interface to run EZC
+//
+// Just defines a `main` to be ran
+//
+// @author   : Cade Brown <cade@chemicaldevelopment.us>
+// @license  : WTFPL (http://www.wtfpl.net/)
+// @date     : 2019-11-21
+//
 
 #ifndef EC_H_
 #define EC_H_

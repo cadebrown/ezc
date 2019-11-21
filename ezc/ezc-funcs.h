@@ -155,5 +155,20 @@ int ezc_vm_gettypei(ezc_vm* vm, ezc_str name);
 int ezc_vm_exec(ezc_vm* vm, ezcp prog);
 
 
+/* random utility functions */
+
+// initializes the library. This should be called before anything else
+int ezc_init();
+// finalizes the library. This should be called at the end of your program
+void ezc_finalize();
+// returns time since ezc_init() was called (in seconds)
+double ezc_time();
+
+// return the prefix for this number of bytes (KB, MB, etc)
+const char* ezc_bytesize_name(size_t bytes);
+// returns the number of ezc_bytesize_name (like 1KB for 1024)
+size_t ezc_bytesize_dig(size_t bytes);
+
+
 #endif /* EZC_FUNCS_H_ */
 
