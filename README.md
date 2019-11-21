@@ -3,7 +3,7 @@
 
 `EZC` is an [RPN (Reverse Polish Notation)](https://en.wikipedia.org/wiki/Reverse_Polish_notation), stack-based language which emphasizes terseness, compactness, and innovative problem solving techniques. 
 
-For example, [Euclid's GCD Algorithm](https://en.wikipedia.org/wiki/Euclidean_algorithm) is: `{:0== {\`} {<>_% gcd!} ifel!} gcd funcdef!`
+For example, [Euclid's GCD Algorithm](https://en.wikipedia.org/wiki/Euclidean_algorithm) is: ```{:0== {\\} {<>_% gcd!} ifel!} gcd funcdef!```
 
 Every function just operates on the stack, which is both dangerous, and useful at times. See more in the [examples folder](https://github.com/ChemicalDevelopment/ezc/tree/master/examples).
 
