@@ -3,6 +3,7 @@
 # sqrt: square root of a number, using Newton-Rhapson approximation
 # S| x
 # R| (sqrt x)
+
 {
     # form a guess of x/2,
     # S| x g

@@ -9,6 +9,7 @@
 # -*- specific binaries from this project
 
 ec/ec
+ezc-config.h
 
 # -*- editors/etc
 

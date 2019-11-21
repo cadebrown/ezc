@@ -9,11 +9,13 @@
   :0== 
     {`} 
     {<>_% my_gcd!}
-    ifel! 
+    ifel!
 
 } my_gcd funcdef!
 
 5 10 my_gcd! print! # should print 5
 33 48 my_gcd! print! # should print 3
 6 :2* my_gcd! print! # should print 6
+
+#0 | 100 1+ expand! {2^+} foreach!
 

@@ -15,11 +15,10 @@
 int main(int argc, char** argv) {
 
     // initialize the global context
-    ezc_ctx ctx;
-    ezc_ctx_init(&ctx);
+    ezc_vm vm = EZC_VM_EMPTY;
 
     // this should be defined by `ezc-module.h`, for module standard 
-    F_std_register_module(&ctx);
+    F_std_register_module(&vm);
 
     // here are the programs to be executed
     int status = 0;
@@ -48,18 +47,13 @@ int main(int argc, char** argv) {
             break;
         case 'e':
             progs = ezc_realloc(progs, sizeof(ezcp) * ++n_progs);
-            progs[n_progs - 1] = EZCP_NONE;
-            status = ezc_compile(&progs[n_progs - 1], EZC_STR_CONST("-e"), EZC_STR_CONST(optarg));
-
-            if (status == 0) {
-                ezc_exec(&ctx, &progs[n_progs - 1]);
-            } else {
-                return 1;
-            }
+            progs[n_progs - 1] = EZCP_EMPTY;
+            ezcp_init(&progs[n_progs - 1], EZC_STR_CONST("-e"), EZC_STR_CONST(optarg));
+            ezc_vm_exec(&vm, progs[n_progs - 1]);
             break;
         case 'f':
             progs = ezc_realloc(progs, sizeof(ezcp) * ++n_progs);
-            progs[n_progs - 1] = EZCP_NONE;
+            progs[n_progs - 1] = EZCP_EMPTY;
             FILE* fp = fopen(optarg, "r");
             if (fp == NULL) {
                 ezc_error("Couldn't open file '%s'", optarg);
@@ -71,13 +65,9 @@ int main(int argc, char** argv) {
                 char* src = ezc_malloc(size+1);
                 if (size != fread(src, 1, size, fp)) ezc_warn("File wasn't read correctly... '%s'", optarg);
                 src[size] = '\0';
-                status = ezc_compile(&progs[n_progs - 1], EZC_STR_CONST(optarg), EZC_STR_VIEW(src, size));
+                ezcp_init(&progs[n_progs - 1], EZC_STR_CONST(optarg), EZC_STR_VIEW(src, size));
                 ezc_free(src);
-                if (status == 0) {
-                    ezc_exec(&ctx, &progs[n_progs - 1]);
-                } else {
-                    return 1;
-                }
+                ezc_vm_exec(&vm, progs[n_progs - 1]);
             }
             break;
         case 'h':
@@ -158,22 +148,24 @@ int main(int argc, char** argv) {
 
     // print the entire stack
     if (fA) {
-        ezcp printall_p = EZCP_NONE;
-        ezc_compile(&printall_p, EZC_STR_CONST("__printall"), EZC_STR_CONST("printall!"));
-        ezc_exec(&ctx, &printall_p);
+        ezcp printall_p = EZCP_EMPTY;
+        ezcp_init(&printall_p, EZC_STR_CONST("__printall"), EZC_STR_CONST("printall!"));
+        ezc_vm_exec(&vm, printall_p);
     } else {
         // just print top
-        if (ctx.stk.n > 0) {
+        if (vm.stk.n > 0) {
 
-            ezcp print_p = EZCP_NONE;
-            ezc_compile(&print_p, EZC_STR_CONST("__print"), EZC_STR_CONST("print!"));
-            ezc_exec(&ctx, &print_p);
+
+            ezcp print_p = EZCP_EMPTY;
+            ezcp_init(&print_p, EZC_STR_CONST("__print"), EZC_STR_CONST("print!"));
+            ezc_vm_exec(&vm, print_p);
         } else {
             // just blank it
         }
     }
 
-    ezc_ctx_free(&ctx);
+   ezc_vm_free(&vm);
+
 
     return 0;
 }
