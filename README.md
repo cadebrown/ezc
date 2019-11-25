@@ -18,6 +18,8 @@ To build `ezc`, just clone this [repo](https://github.com/chemicaldevelopment/ez
 
 Then, `cd ezc`, or into the folder you downloaded it into.
 
+First, run `cp ezc-config.h.template ezc-config.h`, now modify `ezc-config.h`. The comments in that file should help you determine what options you should build with. I would recommend building with `readline` at the very minimum
+
 Then `make`. This should build the `ec` binary in the `ec/` directory.
 
 This can be executed like: `./ec/ec -h` for help, or run it with an expression like `./ec/ec -e '2 3+ print!'`, to test it out. That example should print out `5`.

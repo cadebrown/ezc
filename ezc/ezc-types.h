@@ -18,6 +18,11 @@
 #include <string.h>
 #include <stddef.h>
 
+
+#ifdef EZC_HAVE_GMP
+#include <gmp.h>
+#endif
+
 /* forward declarations */
 
 typedef struct ezci ezci;

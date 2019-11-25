@@ -15,17 +15,148 @@
 #include <stddef.h>
 
 #include <getopt.h>
+#include <unistd.h>
 
 // force include the standard module (which should be linked wit -lezc)
 #define EZC_MODULE_NAME std
 #include "ezc-module.h"
 
+#define EC_PROMPT " %> "
+
+
+/* static variables */
+
+static ezc_vm vm;
+
+
+#ifndef EZC_HAVE_READLINE
+
+void ec_run_repl(ezc_vm* vm) {
+    ezc_str curline = EZC_STR_EMPTY;
+
+    // read from stdin
+    bool do_prompt = isatty(STDIN_FILENO);
+
+    ezcp* progs = NULL;
+    int n_progs = 0;
+
+    if (do_prompt) printf("%s", EC_PROMPT);
+
+    int lines = 0;
+    for (;;) {
+
+        char c = fgetc(stdin);
+        if (c == EOF || c == '\n') {
+            // execute
+            int pidx = n_progs++;
+            progs = realloc(progs, sizeof(ezcp) * n_progs);
+            progs[pidx] = EZCP_EMPTY;
+            ezcp_init(&progs[pidx], EZC_STR_CONST("-"), curline);
+
+            int status = ezc_vm_exec(vm, progs[pidx]);
+
+            ezc_str_copy(&curline, EZC_STR_CONST(""));
+
+        } else {
+            ezc_str_append_c(&curline, c);
+        }
+
+        if (c == '\n' && do_prompt) printf("%s", EC_PROMPT);
+        if (c == EOF) break;
+
+    }
+
+    free(progs);
+
+    //while (getline(&line, &size, stdin) != -1) {
+    //    if (do_prompt) printf("%s", EC_PROMPT)0;
+    //    lines++;
+    //}
+}
+
+
+#else
+
+#include <readline/readline.h>
+#include <readline/history.h>
+
+#define GEN_TYPES   0x03
+#define GEN_FUNCS   0x04
+
+char *
+ec_rl_generator(const char *text, int state) {
+    static int list_index, len;
+    char *name;
+
+    if (!state) {
+        list_index = 0;
+        len = strlen(text);
+    }
+
+    while ((name = vm.funcs.keys[list_index++]._)) {
+        if (strncmp(name, text, len) == 0) {
+            char* new_name = malloc(strlen(name) + 2);
+            sprintf(new_name, "%s!", name);
+            return new_name;
+        }
+    }
+
+    return NULL;
+}
+
+
+char ** ec_rl_completion(const char *text, int start, int end) {
+    rl_attempted_completion_over = 1;
+    return rl_completion_matches(text, ec_rl_generator);
+}
+
+
+void ec_run_repl_rl(ezc_vm* vm) {
+
+    ezcp* progs = NULL;
+    int n_progs = 0;
+
+    char * cur_line = NULL;
+
+    //rl_parse_and_bind("TAB: menu-complete");
+
+    rl_attempted_completion_function = ec_rl_completion;
+    rl_basic_word_break_characters = "\t\n\"\\'`@$=;|{(# ";
+
+    bool do_prompt = isatty(STDIN_FILENO);
+
+    char * interact = NULL;
+
+    if (do_prompt) {
+        interact = EC_PROMPT;
+    }
+
+    while ((cur_line = readline(interact)) != NULL) {
+        //runnable_free(&cur_runnable);
+        int pidx = n_progs++;
+        progs = realloc(progs, sizeof(ezcp) * n_progs);
+        progs[pidx] = EZCP_EMPTY;
+        ezcp_init(&progs[pidx], EZC_STR_CONST("-"), EZC_STR_VIEW(cur_line, strlen(cur_line)));
+
+        int status = ezc_vm_exec(vm, progs[pidx]);
+
+        if (cur_line && *cur_line) add_history(cur_line);
+        free(cur_line);
+    }
+
+    free(progs);
+}
+
+
+#endif
+
+
+
 int main(int argc, char** argv) {
 
     ezc_init();
 
-    // initialize the global context
-    ezc_vm vm = EZC_VM_EMPTY;
+    vm = EZC_VM_EMPTY;
 
     // this should be defined by `ezc-module.h`, for module standard 
     F_std_register_module(&vm);
@@ -42,6 +173,7 @@ int main(int argc, char** argv) {
     static struct option long_options[] = {
         {"expr", required_argument, NULL, 'e'},
         {"file", required_argument, NULL, 'f'},
+        {"INTERACTIVE_PROMPT", no_argument, NULL, 'i'},
         {"all", no_argument, NULL, 'A'},
         {"v", no_argument, NULL, 'v'},
         {"help", no_argument, NULL, 'h'},
@@ -51,16 +183,25 @@ int main(int argc, char** argv) {
 
     int c;
 
-    while ((c = getopt_long (argc, argv, "e:f:Avh", long_options, NULL)) != -1)
+    while ((c = getopt_long (argc, argv, "e:f:Aivh", long_options, NULL)) != -1)
     switch (c){
         case 'A':
             fA = true;
+            break;
+        case 'i':
+            #ifdef EZC_HAVE_READLINE
+            ec_run_repl_rl(&vm);
+            #else
+            ec_run_repl(&vm);
+            #endif
             break;
         case 'e':
             progs = ezc_realloc(progs, sizeof(ezcp) * ++n_progs);
             progs[n_progs - 1] = EZCP_EMPTY;
             ezcp_init(&progs[n_progs - 1], EZC_STR_CONST("-e"), EZC_STR_CONST(optarg));
+            ezc_debug("Running `-e`: '%s' (compiled to %d instructions)", progs[n_progs - 1].src._, progs[n_progs - 1].body._block.n);
             ezc_vm_exec(&vm, progs[n_progs - 1]);
+
             break;
         case 'f':
             progs = ezc_realloc(progs, sizeof(ezcp) * ++n_progs);
@@ -76,6 +217,7 @@ int main(int argc, char** argv) {
                 char* src = ezc_malloc(size+1);
                 if (size != fread(src, 1, size, fp)) ezc_warn("File wasn't read correctly... '%s'", optarg);
                 src[size] = '\0';
+                ezc_debug("Running `-f`: %s (compiled to %d instructions)", progs[n_progs - 1].src_name._, progs[n_progs - 1].body._block.n);
                 ezcp_init(&progs[n_progs - 1], EZC_STR_CONST(optarg), EZC_STR_VIEW(src, size));
                 ezc_free(src);
                 ezc_vm_exec(&vm, progs[n_progs - 1]);
@@ -113,7 +255,7 @@ int main(int argc, char** argv) {
     // print the entire stack
     if (fA) {
         ezcp printall_p = EZCP_EMPTY;
-        ezcp_init(&printall_p, EZC_STR_CONST("__printall"), EZC_STR_CONST("printall!"));
+        ezcp_init(&printall_p, EZC_STR_CONST("__printall"), EZC_STR_CONST("dump!"));
         ezc_vm_exec(&vm, printall_p);
     } else {
         // just print top

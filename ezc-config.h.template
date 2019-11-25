@@ -1,1 +1,31 @@
-// ezc-config.h
+// ezc/ezc-config.h - the configuration for EZC, including conventions,
+//                      options, and what dependencies were included
+//
+// Copy this file and make sure its named exactly as `ezc-config.h`
+//
+// ::GENERATED::
+//
+// @author   : Cade Brown <cade@chemicaldevelopment.us>
+// @license  : WTFPL (http://www.wtfpl.net/)
+// @date     : 2019-11-24
+//
+
+#ifndef EZC_CONFIG_H_
+#define EZC_CONFIG_H_
+
+/* behavior configuration */
+
+// what are the characters for digits
+// first 10 should be base 10, then hex uses first 16, etc
+#define EZC_DIGIT_STR "0123456789abcdefghijklmnopqrstuvwxyz"
+
+
+/* optional dependencies (uncomment to build with) */
+
+// whether or not we have readline build support
+//#define EZC_HAVE_READLINE
+
+// whether or not to build with GMP support
+//#define EZC_HAVE_GMP
+
+#endif /* EZC_CONFIG_H_ */

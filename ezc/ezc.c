@@ -24,7 +24,6 @@ static const char* g_sizestr[] = {
     "EB"
 };
 
-
 int ezc_init() {
     ezc_debug("ezc_init() called");
     gettimeofday(&g_stime, NULL);

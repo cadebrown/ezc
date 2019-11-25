@@ -13,8 +13,7 @@
 int ezc_vm_exec(ezc_vm* vm, ezcp prog) {
     ezc_trace("ezc_vm_exec(%p, {...})", vm);
 
-    // required functions
-
+    // macros to declare required 'builtins'
     #define EZC_BUILTIN(name) int bidx_##name = -1; ezc_func bi_##name;
     #define RUN_BUILTIN(name) if (bidx_##name < 0) { \
         bidx_##name = ezc_vm_getfunci(vm, EZC_STR_CONST(#name)); \
@@ -26,20 +25,14 @@ int ezc_vm_exec(ezc_vm* vm, ezcp prog) {
             bi_##name = vm->funcs.vals[bidx_##name]; \
         } \
     } \
-    bi_##name._c(vm);
+    if ((status = bi_##name._c(vm)) != 0) { return status; } \
 
-    /*
-    int _bidx;
-    #define EZC_BUILTIN(name) ezc_func bi_##name = vm->funcs.vals[_bidx = ezc_vm_getfunci(vm, EZC_STR_CONST(#name))]; if (_bidx < 0 || (bi_##name).type != EZC_FUNC_TYPE_C) { ezc_error("Couldn't find builtin function '%s'", #name); return 1; }
-    #define RUN_BUILTIN(name) if ((status = bi_##name._c(vm)) != 0) {  printf("\n"); ezc_printmeta(cur); bi_dump._c(vm); exit(1); }
-    */
-
-
-
+    // macro to simplify the `else if`s
     #define CASE_BUILTIN(code, name) else if (cur.type == code) { RUN_BUILTIN(name) }
 
+    // list of builtins callable
     EZC_BUILTIN(exec)
-    EZC_BUILTIN(dup)
+    EZC_BUILTIN(copy)
     EZC_BUILTIN(del)
     EZC_BUILTIN(dump)
     EZC_BUILTIN(swap)
@@ -57,6 +50,7 @@ int ezc_vm_exec(ezc_vm* vm, ezcp prog) {
     int status = 0;
     int i;
     for (i = 0; i < prog.body._block.n; ++i) {
+        // get current instruction
         ezci cur = prog.body._block.children[i];
         if (cur.type == EZCI_INT) {
             ezc_obj new_int = (ezc_obj){ .type = EZC_TYPE_INT, ._int = cur._int };
@@ -73,9 +67,10 @@ int ezc_vm_exec(ezc_vm* vm, ezcp prog) {
             new_block._block = prog.body._block.children[i];
             ezc_stk_push(&vm->stk, new_block);
         }
+        // all the builtins
         CASE_BUILTIN(EZCI_EXEC, exec)
         CASE_BUILTIN(EZCI_DEL, del)
-        CASE_BUILTIN(EZCI_COPY, dup)
+        CASE_BUILTIN(EZCI_COPY, copy)
         CASE_BUILTIN(EZCI_ADD, add)
         CASE_BUILTIN(EZCI_SUB, sub)
         CASE_BUILTIN(EZCI_MUL, mul)
@@ -92,11 +87,9 @@ int ezc_vm_exec(ezc_vm* vm, ezcp prog) {
         } else {
             ezc_warn("Unhandled instruction type!");
         }
-
-        /*if (i == prog.body._block.n - 1) {
-            RUN_BUILTIN(dump);
-        }*/
     }
+
+    // return 0 (success)
     return 0;
 }
 

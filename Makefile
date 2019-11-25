@@ -12,9 +12,15 @@ PREFIX     ?= /usr/local
 CC         ?= cc
 CFLAGS     ?= -O3 -std=c99
 
+# the location of the config file for building
+EZC_CONFIG ?= ezc-config.h
 
 # always use -fPIC
 CFLAGS     += -fPIC
+
+# now, figure out what we're building with:
+HAVE_READLINE := $(shell grep '^\#define EZC_HAVE_READLINE' "$(EZC_CONFIG)")
+HAVE_GMP  := $(shell grep '^\#define EZC_HAVE_GMP' "$(EZC_CONFIG)")
 
 # -*- main ezc library, libezc
 ezc_src_c  := $(addprefix ezc/,mem.c log.c str.c stk.c ezcp.c vm.c exec.c ezc.c ezc-std.c)
@@ -32,6 +38,13 @@ ec_src_h   := $(addprefix ec/,ec.h)
 ec_EXE     := ec/ec
 ec_libs    := -Lezc -lezc -lm
 
+ifneq ($(HAVE_READLINE),)
+  ec_libs  += -lreadline
+endif
+
+ifneq ($(HAVE_GMP),)
+  ec_libs += -lgmp
+endif
 
 # -*- auto-generated outputs used
 

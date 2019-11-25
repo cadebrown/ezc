@@ -59,62 +59,75 @@
 // the characters representings digits in different bases
 static const char digitstr[] = EZC_DIGIT_STR;
 
-
 /* TYPE DEFINITIONS */
 
 /* none */
 
+
+// the none-type has no associated data, so nothing to init
 EZC_TF_INIT(none) {
     return 0;
 }
 
+// the none-type has no associated data, so nothing to free
 EZC_TF_FREE(none) {
     // do nothing
     return 0;
 }
 
+// just always give the same string representation
+// TODO: Maybe add a special character? something to distinguish it form a str
 EZC_TF_REPR(none) {
     ezc_str_copy_cp(str, "none", 4);
     return 0;
 }
 
+// also, nothing to copy
 EZC_TF_COPY(none) {
     return 0;
 }
 
 /* none */
 
+// the wall-type has no associated data, so nothing to init
 EZC_TF_INIT(wall) {
     return 0;
 }
 
+// the wall-type has no associated data, so nothing to free
 EZC_TF_FREE(wall) {
     // do nothing
     return 0;
 }
 
+// Just the same as the builtin-operator
 EZC_TF_REPR(wall) {
     ezc_str_copy_cp(str, "|", 1);
     return 0;
 }
 
+// nothing to do
 EZC_TF_COPY(wall) {
     return 0;
 }
 
 /* int */
 
+// default integer state is 0
 EZC_TF_INIT(int) {
     obj->_int = 0;
     return 0;
 }
 
+// nothing to free either
 EZC_TF_FREE(int) {
     // do nothing
     return 0;
 }
 
+// returns the string representation (in base 10)
 EZC_TF_REPR(int) {
+    // using builtin functions
     /*
     char strs[10];
 
@@ -123,6 +136,9 @@ EZC_TF_REPR(int) {
 
     ezc_str_copy_cp(str, strs, len);
     */
+
+    // custom version built for EZC
+
     ezc_int val = obj->_int;
     int base = 10;
 
@@ -156,6 +172,7 @@ EZC_TF_REPR(int) {
     return 0;
 }
 
+// copying an integer just copies the builtin value
 EZC_TF_COPY(int) {
     obj->_int = from->_int;
     return 0;
@@ -163,16 +180,21 @@ EZC_TF_COPY(int) {
 
 /* bool */
 
+// default for bool is always false
 EZC_TF_INIT(bool) {
     obj->_bool = false;
     return 0;
 }
 
+// no external data, so nothing is required
 EZC_TF_FREE(bool) {
     // do nothing
     return 0;
 }
 
+// the string representation of the boolean
+// TODO: Maybe use `T` or `F`? This would be nice, because they would always
+//         have the same width.
 EZC_TF_REPR(bool) {
     if (obj->_bool) {
         ezc_str_copy_cp(str, "true", 4);
@@ -182,30 +204,37 @@ EZC_TF_REPR(bool) {
     return 0;
 }
 
+// copies the boolean value
 EZC_TF_COPY(bool) {
     obj->_bool = from->_bool;
     return 0;
 }
+
 /* real */
 
+// real defaults to zero
 EZC_TF_INIT(real) {
-    obj->_real = 0;
+    obj->_real = 0.0;
     return 0;
 }
 
+// nothing to free
 EZC_TF_FREE(real) {
-    // do nothing
     return 0;
 }
 
+// returns the string representation of a real. Currently uses sprintf
+// TODO: Width, accuracy, etc maybe should change. I'm considering 
+// using environemnt variables, or like the global dictionary in the VM
+// In any case, this should be more changeable
 EZC_TF_REPR(real) {
     char strs[100];
 
-    // using C functions:
+    // using standard C functions:
     sprintf(strs, "%lf", obj->_real);
     ezc_str_copy_cp(str, strs, strlen(strs));
 
-    // custom impl
+    // custom impl, which has some nasty rounding issues
     /*
     // what base to use
     int base = 10;
@@ -256,6 +285,7 @@ EZC_TF_REPR(real) {
     return 0;
 }
 
+// just copy the data
 EZC_TF_COPY(real) {
     obj->_real = from->_real;
     return 0;
@@ -263,21 +293,27 @@ EZC_TF_COPY(real) {
 
 /* str */
 
+// initialize to the NULL string (so doesn't malloc anything)
 EZC_TF_INIT(str) {
     obj->_str = EZC_STR_NULL;
     return 0;
 }
 
+// use the string free method, which will work on the NULL string
 EZC_TF_FREE(str) {
     ezc_str_free(&obj->_str);
     return 0;
 }
 
+// returns the representation of the string (which is just itself)
+// TODO: Maybe in the future, have a `toString` and `repr` that are different,
+// so the string class will have "" around it, so it is a representation, rather than data
 EZC_TF_REPR(str) {
     ezc_str_copy(str, obj->_str);
     return 0;
 }
 
+// copy the entire string using the ezc_str method
 EZC_TF_COPY(str) {
     obj->_str = EZC_STR_NULL;
     ezc_str_copy(&obj->_str, from->_str);
@@ -286,16 +322,25 @@ EZC_TF_COPY(str) {
 
 /* block type */
 
+// by default, the block should be an empty instruction
 EZC_TF_INIT(block) {
     obj->_block = EZCI_EMPTY;
     return 0;
 }
 
+// don't actually free the instruction, because its just a reference to the
+//   compiler's data, which we shouldn't free. If people (or just me) start
+//   writing meta-compilers and things that are reaching up against memory walls,
+//   or, they are constructing their own blocks somehow, I may want to look at copying
+//   and freeing blocks. But for now, this is fine
 EZC_TF_FREE(block) {
     // do nothing
     return 0;
 }
 
+// returns the representation of the block. Right now, that is just {} with 
+//   how many instructions it is. However, I should make this just print out the
+//   actual string of the instructions, pretty printed if possible
 EZC_TF_REPR(block) {
     char strs[100];
     sprintf(strs, "{...[%d]}", obj->_block.type);
@@ -303,6 +348,7 @@ EZC_TF_REPR(block) {
     return 0;
 }
 
+// just copylicate the data; nothing is freed so this is fine
 EZC_TF_COPY(block) {
     obj->_block = from->_block;
     return 0;
@@ -312,61 +358,102 @@ EZC_TF_COPY(block) {
 
 /* basic functions */
 
+// | none!
+// pushes a `none` onto the stack
 EZC_FUNC(none) {
     ezc_stk_push(&vm->stk, (ezc_obj){ .type = EZC_TYPE_NONE });
     return 0;
 }
 
+// | wall!
+// pushes a `wall` (i.e. `|`) onto the stack
+// this is equivalent to the builtin command |
 EZC_FUNC(wall) {
     ezc_stk_push(&vm->stk, (ezc_obj){ .type = EZC_TYPE_WALL });
     return 0;
 }
 
+// | A del!
+// pops of the top of the stack, freeing its resources
+// this is equivalent to the builtin command: `
+// NOTE: Requires the stack to have >= 1 item
 EZC_FUNC(del) {
     REQ_N(del, 1);
     POP_FREE();
     return 0;
 }
 
-EZC_FUNC(dup) {
-    REQ_N(dup, 1);
+// | A copy!
+// copies the top of the stack, also copying its resources (i.e. it is a 
+//   deep-copy, and the two objects are now independent of each other)
+// this is equivalent to the builtin command: :
+// NOTE: Requires the stack to have >= 1 item
+EZC_FUNC(copy) {
+    REQ_N(copy, 1);
     ezc_obj top = ezc_stk_peek(&vm->stk);
 
+    // copy using the type's `copy` func
     ezc_obj new_obj = (ezc_obj){ .type = top.type };
     OBJ_COPY(new_obj, top);
+
+    // push on the copy
     ezc_stk_push(&vm->stk, new_obj);
     return 0;
 }
 
+// | A B under!
+// copies the object under the top of the stack (B), also copying its resources
+//    (i.e. it is a deep copy), and the two objects are now independent of each
+//    other
+// this is equivalent to the builtin command: _
+// NOTE: Requires the stack to have >= 2 items
 EZC_FUNC(under) {
     REQ_N(under, 2);
     ezc_obj under = ezc_stk_peekn(&vm->stk, 1);
 
+    // copy using the type's `copy` func
     ezc_obj new_obj = EZC_OBJ_EMPTY;
     OBJ_COPY(new_obj, under);
+
+    // push on the copy
     ezc_stk_push(&vm->stk, new_obj);
     return 0;
 }
 
+
+// | A B swap!
+// swaps the top 2 items on the stack (A, B) so the resultant stack is (B, A)
+// this is equivalent to the builtin command: <>
+// NOTE: Requires the stack to have >= 2 items
 EZC_FUNC(swap) {
     REQ_N(swap, 2);
+
+    // internal method to swap indexes
     ezc_stk_swap(&vm->stk, vm->stk.n-1, vm->stk.n-2);
     return 0;
 }
 
-// {body} name funcdef!
+// | {body} name funcdef!
 // defines a function named 'name', with the code body as 'body'
-// it can now be executed like any other EZC function:
-// name! will execute the contents of body on the current stack 
+// it can now be executed like any other EZC function: name! 
+//   will execute the contents of body on the current stack 
+// body must be a block, so must be like: `{code here}`
+// NOTE: Requires the stack to have >= 2 items
+// TODO: Make this also a builtin, maybe like `()`
 EZC_FUNC(funcdef) {
     REQ_N(funcdef, 2);
-    ezc_obj f_name = ezc_stk_peekn(&vm->stk, 0);
-    ezc_obj f_body = ezc_stk_peekn(&vm->stk, 1);
 
+    // pop off both
+    ezc_obj f_name = ezc_stk_pop(&vm->stk);
+    ezc_obj f_body = ezc_stk_pop(&vm->stk);
+
+    // check types
     if (f_name.type == EZC_TYPE_STR) {
         if (f_body.type == EZC_TYPE_BLOCK) {
+            // only valid combination, so add to the VM
             ezc_vm_addfunc(vm, f_name._str, EZC_FUNC_EZC(f_body._block));
-            POP_FREE(); POP_FREE();
+            OBJ_FREE(f_name);
+            OBJ_FREE(f_body);
             return 0;
         } else {
             ezc_error("`body` is not type `block` in:\n[body] [name] funcdef!");
@@ -378,10 +465,16 @@ EZC_FUNC(funcdef) {
     }
 }
 
-
+// | idx get!
+// basically dereferences an index, and gets that item on the stack
+// if idx is negative, get relative to the top (-1 -> top of stack), 
+//   (-2 -> under top), etc...
+// NOTE: Requires 1 item, but can throw an error if the index is out of range
+// TODO: Add strings as lookups to the global dictionary
+// TODO: Add range checks for valid values
 EZC_FUNC(get) {
     REQ_N(get, 1);
-    ezc_obj idx = ezc_stk_peekn(&vm->stk, 0);
+    ezc_obj idx = ezc_stk_pop(&vm->stk);
 
     if (idx.type == EZC_TYPE_INT) {
         if (idx._int >= 0) {
@@ -408,86 +501,116 @@ EZC_FUNC(get) {
     return 0;
 }
 
+// | code exec!
+// executes the last item on the stack.
+// if `code` is a string, then look up a function by that name, and call 
+//   that function
+// if `code` is a block, then call `ezc_vm_exec` with that block of code
+// NOTE: Requires 1 item on the stack
 EZC_FUNC(exec) {
     REQ_N(exec, 1);
-    ezc_obj code = ezc_stk_peekn(&vm->stk, 0);
-    int stat = 0;
+    ezc_obj code = ezc_stk_pop(&vm->stk);
 
     if (code.type == EZC_TYPE_STR) {
-        // execute the function byt this name
+        // then we are executing a function by a given name
+
+        // lookup the index, -1 if not found
         int idx = ezc_vm_getfunci(vm, code._str);
+
         if (idx < 0) { 
             ezc_error("Unknown function: '%s'", code._str._);
             return -1;
         } else {
-
+            // we have a valid function in the VM
             ezc_func to_exec = vm->funcs.vals[idx];
-            //vm->funcs[idx](vm);
+
             if (to_exec.type == EZC_FUNC_TYPE_C) {
-                ezc_stk_pop(&vm->stk);
+                // this is a function implemented in C, so just call it on our VM
                 OBJ_FREE(code);
                 return to_exec._c(vm);
             } else if (to_exec.type == EZC_FUNC_TYPE_EZC) {
+                // else, construct a phony program
                 ezcp _prog = EZCP_EMPTY;
                 _prog.body = to_exec._ezc;
                 _prog.src = to_exec._ezc.m_prog->src;
                 _prog.src_name = to_exec._ezc.m_prog->src_name;
-                stat = ezc_vm_exec(vm, _prog);
-                ezc_stk_pop(&vm->stk);
+
+                // evaluate it using the EZC library
+                int status = ezc_vm_exec(vm, _prog);
                 OBJ_FREE(code);
-                return stat;
+                return status;
             }
         }
     } else if (code.type == EZC_TYPE_BLOCK) {
+        // construct a phony program to execute
         ezcp _prog = EZCP_EMPTY;
         _prog.body = code._block;
         _prog.src =  code._block.m_prog->src;
         _prog.src_name = code._block.m_prog->src_name;
-        stat = ezc_vm_exec(vm, _prog);
-        ezc_stk_pop(&vm->stk);
+
+        // execute using the EZC library
+        int status = ezc_vm_exec(vm, _prog);
         OBJ_FREE(code);
-        return stat;
+        return status;
     } else {
-        // TODO: account for blocks and things, but for now, just ezc_error
+        // TODO: Maybe support other things? I can't think of more things that could be exec'd
         ezc_error("Invalid type for `!` / `exec`: '%s'", TYPE_NAME(code)._);
         return -1;
     }
 }
 
+// | A repr!
+// pops off `A`, then pops on its string representation
+// So, strings are unaffected, integers become strings in base 10, other types
+//   have their class's `repr` method called
+// NOTE: Requires 1 item
 EZC_FUNC(repr) {
     REQ_N(repr, 1);
     ezc_obj A = ezc_stk_peekn(&vm->stk, 0);
 
+    // get the type of the object
     ezct TA = OBJ_T(A);
 
     // get the repr
     ezc_obj new_str = (ezc_obj){ .type = EZC_TYPE_STR, ._str = EZC_STR_NULL };
     TA.f_repr(&A, &new_str._str);
 
+    // replace it
     vm->stk.base[vm->stk.n - 1] = new_str;
 
+    // free the object
     TA.f_free(&A);
     return 0;
 }
 
+// | A print!
+// pops off `A`, then prints it to console (i.e. its `repr` is printed)
+// To print without destroying it, run `:print!` instead, which makes a copy
+//   to print
+// NOTE: Requires 1 item
 EZC_FUNC(print) {
     REQ_N(print, 1);
 
-    // just go ahead and replace the last object with its representation
-    //EZC_FUNC_NAME(repr)(vm);
-
+    // pop off from the stack
     ezc_obj A = ezc_stk_pop(&vm->stk);
-    ezct TA = OBJ_T(A);
-    ezc_str reprA = EZC_STR_EMPTY;
 
+    // get the type
+    ezct TA = OBJ_T(A);
+
+    // get the repr
+    ezc_str reprA = EZC_STR_EMPTY;
     TA.f_repr(&A, &reprA);
 
+    // print it to stdout
     fprintf(stdout, "%s\n", reprA._);
 
+    // free the original object
     TA.f_free(&A);
     return 0;
 }
 
+// TODO: Replace this with a better function, 
+// this should be renamed and maybe redone
 EZC_FUNC(printall) {
     // just go ahead and replace the last object with its representation
     //EZC_FUNC_NAME(repr)(vm);
@@ -503,19 +626,25 @@ EZC_FUNC(printall) {
     return 0;
 }
 
-
-
+// | ... dump!
+// dumps the entire contents of the stack (without deleting or modifying it)
+// also prints indexes, types, and their repr's
 EZC_FUNC(dump) {
+
     ezc_str str = EZC_STR_NULL;
     int i;
+
+    // loop through, printing everything each loop
     for (i = vm->stk.n - 1; i >= 0; --i) {
         ezc_obj cur = ezc_stk_get(&vm->stk, i);
         OBJ_REPR(cur, str);
-        printf("%*d: %s\n", 2, i, str._);
+        printf("%*d<%s>: %s\n", 2, i, TYPE_NAME(cur)._, str._);
     }
+
+    // the only thing allocated is this string
     ezc_str_free(&str);
 
-    printf("-----\nstack\n");
+    printf("-----\nstack[%d]\n", vm->stk.n);
     return 0;
 }
 
@@ -565,6 +694,8 @@ EZC_FUNC(add) {
             vm->stk.base[--vm->stk.n - 1] = A;
             return 0;
         } else {
+            POP_FREE();
+            POP_FREE();
             TT_TYPE_ER(add);
             return -1;
         }
@@ -605,6 +736,8 @@ EZC_FUNC(sub) {
             vm->stk.base[--vm->stk.n - 1] = A;
             return 0;
         } else {
+            POP_FREE();
+            POP_FREE();
             TT_TYPE_ER(sub);
             return -1;
         }
@@ -645,6 +778,8 @@ EZC_FUNC(mul) {
             vm->stk.base[--vm->stk.n - 1] = A;
             return 0;
         } else {
+            POP_FREE();
+            POP_FREE();
             TT_TYPE_ER(mul);
             return -1;
         }
@@ -685,6 +820,8 @@ EZC_FUNC(div) {
             vm->stk.base[--vm->stk.n - 1] = A;
             return 0;
         } else {
+            POP_FREE();
+            POP_FREE();
             TT_TYPE_ER(div);
             return -1;
         }
@@ -725,6 +862,8 @@ EZC_FUNC(mod) {
             vm->stk.base[--vm->stk.n - 1] = A;
             return 0;
         } else {
+            POP_FREE();
+            POP_FREE();
             TT_TYPE_ER(mod);
             return -1;
         }
@@ -935,6 +1074,7 @@ int EZC_FUNC_NAME(register_module)(ezc_vm* vm) {
 
     /* register the built in types. MUST BE IN THIS ORDER */
 
+    // builtin types
     EZC_REGISTER_TYPE(none)
     EZC_REGISTER_TYPE(wall)
     EZC_REGISTER_TYPE(int)
@@ -947,26 +1087,27 @@ int EZC_FUNC_NAME(register_module)(ezc_vm* vm) {
     EZC_REGISTER_FUNC(none)
     EZC_REGISTER_FUNC(wall)
     
-    // duplication, stack getting
-    EZC_REGISTER_FUNC(dup)
+    // copying, stack getting, management
+    EZC_REGISTER_FUNC(copy)
     EZC_REGISTER_FUNC(under)
     EZC_REGISTER_FUNC(swap)
     EZC_REGISTER_FUNC(get)
-    
-    // deletion/mem management
     EZC_REGISTER_FUNC(del)
 
-    // builtin keyword kinda stuff, important
+    // keywords/builtin important funcs
     EZC_REGISTER_FUNC(exec)
+    
+    // printing/string conversions
     EZC_REGISTER_FUNC(repr)
     EZC_REGISTER_FUNC(print)
-    EZC_REGISTER_FUNC(printall)
     EZC_REGISTER_FUNC(dump)
-    
-    // registering functions/types
+
+    EZC_REGISTER_FUNC(printall)
+
+    // registration functions
     EZC_REGISTER_FUNC(funcdef)
 
-    // operators/math
+    // math operators
     EZC_REGISTER_FUNC(add)
     EZC_REGISTER_FUNC(sub)
     EZC_REGISTER_FUNC(mul)
@@ -974,14 +1115,18 @@ int EZC_FUNC_NAME(register_module)(ezc_vm* vm) {
     EZC_REGISTER_FUNC(mod)
     EZC_REGISTER_FUNC(pow)
 
-    // comparison
+    // comparisons
     EZC_REGISTER_FUNC(eq)
+
+
+
 
     // control functions
     EZC_REGISTER_FUNC(ifel)
     EZC_REGISTER_FUNC(foreach)
 
-    // higher order utility functions
+
+    // misc. utility functions
     EZC_REGISTER_FUNC(X)
 
 }

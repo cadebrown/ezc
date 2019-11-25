@@ -61,7 +61,6 @@ extern int EZC_FUNC_NAME(register_module)(ezc_vm* vm);
 
 #else /* ifdef EZC_MODULE_NAME */
 
-
 #error EZC_MODULE_NAME was not defined
 
 
