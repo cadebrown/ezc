@@ -54,8 +54,14 @@ ec_o       := $(patsubst %.c,%.o,$(ec_src_c))
 # only used for removing/cleaning
 all_o      := $(ezc_o) $(ec_o) $(ezc_SHARED) $(ezc_STATIC) $(ec_EXE)
 
+# all installation files
+install_mf := $(wildcard \
+    $(addprefix $(PREFIX)/bin/,$(notdir $(ec_EXE))) \
+    $(addprefix $(PREFIX)/include/,$(notdir $(ezc_src_h) $(EZC_CONFIG))) \
+    $(addprefix $(PREFIX)/lib/,$(notdir $(ezc_SHARED) $(ezc_STATIC))) \
+)
 
-.PHONY: clean default install
+.PHONY: clean default install uninstall
 
 # by default, build the `ec` binary
 default: $(ec_EXE)
@@ -64,6 +70,7 @@ default: $(ec_EXE)
 clean:
 	rm -rf $(wildcard $(all_o))
 
+
 install: $(ec_EXE) $(ezc_SHARED)
 	install -d $(PREFIX)/lib
 	install -d $(PREFIX)/include
@@ -71,7 +78,11 @@ install: $(ec_EXE) $(ezc_SHARED)
 	install -m 644 $(ezc_SHARED) $(PREFIX)/lib
 	install -m 644 $(ezc_STATIC) $(PREFIX)/lib
 	install -m 644 $(ezc_src_h) $(PREFIX)/include
+	install -m 644 $(EZC_CONFIG) $(PREFIX)/include
 	install -m 655 $(ec_EXE) $(PREFIX)/bin
+
+uninstall:
+	rm -r $(install_mf)
 
 ezc/%.o: ezc/%.c $(ezc_src_h)
 	$(CC) -I./ $(CFLAGS) $< -c -o $@
@@ -89,5 +100,4 @@ $(ec_EXE): $(ec_o) $(ezc_STATIC)
 	$(CC) $(CFLAGS) $< $(ec_libs) -o $@
 
 
-
-
+ 
