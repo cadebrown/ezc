@@ -354,6 +354,38 @@ EZC_TF_COPY(block) {
     return 0;
 }
 
+/* file type */
+
+EZC_TF_INIT(file) {
+    obj->_file = EZC_FILE_EMPTY;
+    return 0;
+}
+
+EZC_TF_FREE(file) {
+    if (obj->_file.fp != NULL) {
+        fclose(obj->_file.fp);
+        obj->_file.fp = NULL;
+    }
+    ezc_str_free(&obj->_file.src_name);
+    return 0;
+}
+
+// returns the representation of the block. Right now, that is just {} with 
+//   how many instructions it is. However, I should make this just print out the
+//   actual string of the instructions, pretty printed if possible
+EZC_TF_REPR(file) {
+    char strs[100];
+    sprintf(strs, "FILE: %p [%s]", obj->_file.fp, obj->_file.src_name._);
+    ezc_str_copy_cp(str, strs, strlen(strs));
+    return 0;
+}
+
+// just copylicate the data; nothing is freed so this is fine
+EZC_TF_COPY(file) {
+    obj->_block = from->_block;
+    return 0;
+}
+
 /* functions in this module */
 
 /* basic functions */
@@ -557,6 +589,30 @@ EZC_FUNC(exec) {
         ezc_error("Invalid type for `!` / `exec`: '%s'", TYPE_NAME(code)._);
         return -1;
     }
+}
+
+// just exits, with an optional return code
+EZC_FUNC(exit) {
+
+    if (vm->stk.n == 0) {
+        exit(0);
+    }
+
+    REQ_N(exit, 1);
+
+    ezc_obj rcode = ezc_stk_pop(&vm->stk);
+
+    if (rcode.type == EZC_TYPE_INT) {
+        exit(rcode._int);
+    } else {
+        ezc_warn("exit! had a exit code of invalid type %s", TYPE_NAME(rcode)._);
+        OBJ_FREE(rcode);
+        exit(0);
+
+    }
+
+    return 0;
+
 }
 
 // | A repr!
@@ -915,6 +971,13 @@ EZC_FUNC(pow) {
 
 /* comparison functions */
 
+// | A B eq!
+// pops off A and B, and pops on a boolean describing whether or not they are equal
+// for ints, this does a direct comparison `A.int==B.int`, for strings, it uses 
+//   `ezc_str_eq`, which is very efficient
+// for reals, I am considering adding an epsilon of about 1e-10 to compare, but right 
+//   now it is using exact equals
+// TODO: Perhaps use epsilon in float comparison
 EZC_FUNC(eq) {
     REQ_N(eq, 2);
     // compute A==B
@@ -942,9 +1005,15 @@ EZC_FUNC(eq) {
 
 
 /* control loops */
+
+// | cond {code-if-true} {code-if-false} ifel!
+// pops off two blocks of code, and a boolean condition (if not a bool, then
+//   convert to a 'truthiness' value)
+// if the condition is true, then `code-if-true` is ran, otherwise, `code-if-false`
+//   is ran
+// TODO: Document & regularize 'truthiness' value
 EZC_FUNC(ifel) {
     REQ_N(ifel, 3);
-    // | condition {code if true} {code if not} ifel!
 
     ezc_obj b_else = ezc_stk_pop(&vm->stk);
     ezc_obj b_if = ezc_stk_pop(&vm->stk);
@@ -967,12 +1036,19 @@ EZC_FUNC(ifel) {
     return 0;
 }
 
+// | A... {code-to-run} foreach!
+// pops off a block of instructions, and then takes however many arguments are on 
+//   the stack, or until a wall (|) is encountered. If the wall is encountered, it
+//   is popped too. Then, each object that was popped off is popped back on, and the
+//   code-to-run block is ran.
+// Example: | A B C {print!} foreach! prints A, then B, then C
+// NOTE: Requires at least 1 argument
 EZC_FUNC(foreach) {
     REQ_N(foreach, 1);
-    // | a b c ... d {body} foreach!
-    // runs body for each a, b, c
+    // first pop off the body
     ezc_obj body = ezc_stk_pop(&vm->stk);
 
+    // TODO: Also allow other things to be executed
     if (body.type != EZC_TYPE_BLOCK) {
         ezc_stk_push(&vm->stk, body);
         ezc_error("Expected the block for `foreach` to be of type `block` (like {...}), but got `%s`", TYPE_NAME(body)._);
@@ -993,28 +1069,26 @@ EZC_FUNC(foreach) {
         return 0;
     }
 
-    // offset of where to start iterating
+    // offset of the start of objects to be popped off
     int stk_offset = vm->stk.n - num_to_iter;
 
-    // start another temporary stack
+    // start another temporary stack, storing everything popped off
     ezc_stk argstack = EZC_STK_EMPTY;
     ezc_stk_resize(&argstack, num_to_iter);
 
-
-    // copy over the results
+    // now, basically pop off all the objects onto the temporary stack
     int i;
     for (i = 0; i < num_to_iter; ++i) {
         argstack.base[i] = vm->stk.base[i + stk_offset];
     }
 
-    // remove the popped off objects
+    // reset the main stack back
     vm->stk.n -= num_to_iter;
 
     // consume the wall if used
     if (ezc_stk_peek(&vm->stk).type == EZC_TYPE_WALL) {
         ezc_stk_pop(&vm->stk);
     }
-
 
     // create the program to run on each iteration
     ezcp _prog = EZCP_EMPTY;
@@ -1025,6 +1099,7 @@ EZC_FUNC(foreach) {
     // find the status of the evaluation
     int status = 0;
 
+    // just run through, popping the arguments on the stack
     for (i = 0; i < num_to_iter; ++i) {
         ezc_stk_push(&vm->stk, argstack.base[i]);
         status = ezc_vm_exec(vm, _prog);
@@ -1036,6 +1111,77 @@ EZC_FUNC(foreach) {
 
     return 0;
 }
+
+
+/* FILE IO FUNCTIONS */
+
+// opens a file by name
+EZC_FUNC(open) {
+    REQ_N(open, 1);
+
+    ezc_obj arg = ezc_stk_pop(&vm->stk);
+
+
+    if (arg.type == EZC_TYPE_STR) {
+
+        ezc_obj new_fp = (ezc_obj){ .type = EZC_TYPE_FILE };
+        char* fname = arg._str._;
+        FILE* fp = fopen(fname, "w");
+        if (fp == NULL) {
+            ezc_error("Couldn't open file '%s'", fname);
+            OBJ_FREE(arg);
+            return -1;
+        }
+        new_fp._file.fp = fp;
+        // don't free arg, since we use the string as the metadata for the FP
+        new_fp._file.src_name = arg._str;
+        ezc_stk_push(&vm->stk, new_fp);
+        return 0;
+    } else {
+        OBJ_FREE(arg);
+        ezc_error("Unsupported type for `open!`: %s", TYPE_NAME(arg)._);
+        return 2;
+    }
+}
+   
+   
+// | fp A write!
+// writes `A` to fp, and keeps fp on the stack
+EZC_FUNC(write) {
+    REQ_N(write, 2);
+
+    ezc_obj arg = ezc_stk_pop(&vm->stk);
+
+    ezc_obj fp = ezc_stk_peek(&vm->stk);
+
+    if (fp.type != EZC_TYPE_FILE) {
+        ezc_error("Object under top is not a FILE type (in write!)");
+        OBJ_FREE(arg);
+        return 1;
+    }
+
+    if (fp._file.fp == NULL) {
+        ezc_error("FILE for write! is NULL");
+        OBJ_FREE(arg);
+        return 1;
+    }
+
+
+    if (arg.type == EZC_TYPE_STR) {
+        int nbytes = fwrite(arg._str._, 1, arg._str.len, fp._file.fp);
+        fprintf(fp._file.fp, "\n");
+        if (nbytes != arg._str.len) {
+            ezc_warn("Writing %d bytes to '%s' failed, wrote %d", arg._str.len, fp._file.src_name._, nbytes);
+        }
+        OBJ_FREE(arg);
+        return 0;
+    } else {
+        OBJ_FREE(arg);
+        ezc_error("Unsupported type for `open!`: %s", TYPE_NAME(arg)._);
+        return 2;
+    }
+}
+
 
 // generators
 
@@ -1049,12 +1195,12 @@ EZC_FUNC(X) {
         ezc_int i;
         int start_idx = vm->stk.n;
         //printf("%lu\n", arg._int);
-        ezc_stk_resize(&vm->stk, arg._int);
+        ezc_stk_resize(&vm->stk, vm->stk.n + arg._int);
 
         ezc_obj new_int = EZC_OBJ_EMPTY;
         new_int.type = EZC_TYPE_INT;
         for (i = start_idx; i < vm->stk.n; ++i) {
-            new_int._int = i;
+            new_int._int = i - start_idx;
             vm->stk.base[i] = new_int;
 //            ezc_stk_push(&vm->stk, new_int);
         }
@@ -1082,6 +1228,7 @@ int EZC_FUNC_NAME(register_module)(ezc_vm* vm) {
     EZC_REGISTER_TYPE(real)
     EZC_REGISTER_TYPE(str)
     EZC_REGISTER_TYPE(block)
+    EZC_REGISTER_TYPE(file)
 
     // functions that just pop on a value
     EZC_REGISTER_FUNC(none)
@@ -1096,6 +1243,7 @@ int EZC_FUNC_NAME(register_module)(ezc_vm* vm) {
 
     // keywords/builtin important funcs
     EZC_REGISTER_FUNC(exec)
+    EZC_REGISTER_FUNC(exit)
     
     // printing/string conversions
     EZC_REGISTER_FUNC(repr)
@@ -1118,13 +1266,13 @@ int EZC_FUNC_NAME(register_module)(ezc_vm* vm) {
     // comparisons
     EZC_REGISTER_FUNC(eq)
 
-
-
-
     // control functions
     EZC_REGISTER_FUNC(ifel)
     EZC_REGISTER_FUNC(foreach)
 
+    // IO functions
+    EZC_REGISTER_FUNC(open)
+    EZC_REGISTER_FUNC(write)
 
     // misc. utility functions
     EZC_REGISTER_FUNC(X)

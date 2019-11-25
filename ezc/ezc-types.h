@@ -16,6 +16,7 @@
 #include <stdint.h>
 #include <float.h>
 #include <string.h>
+#include <stdio.h>
 #include <stddef.h>
 
 
@@ -97,6 +98,22 @@ typedef struct {
 typedef uint32_t ezc_hash_t; 
 
 #define EZC_HASH_EMPTY ((ezc_hash_t)0)
+
+
+typedef struct {
+
+    // a human-readable source for the file
+    ezc_str src_name;
+
+    // file pointer
+    FILE* fp;
+
+
+} ezc_file;
+
+#define EZC_FILE_EMPTY ((ezc_file){ .src_name = EZC_STR_NULL, .fp = NULL })
+
+
 
 // structure representing a type within EZC, so just the 4 type functions required
 typedef struct {
@@ -246,6 +263,8 @@ enum {
     // an EZC-instruction as an object (see ezci for info)
     // note: this will, most of the time, be a block `{}`
     EZC_TYPE_BLOCK,
+    // a file pointer (i.e. FILE*) with some metadata
+    EZC_TYPE_FILE,
 
     // this is the first index of the non-primitive types, which 
     //   can be tested against to see if the object is builtin or 
@@ -268,6 +287,8 @@ struct ezc_obj {
         ezc_str _str;
         // the instruction value of the object (only valid if type==EZCI_TYPE_BLOCK)
         ezci _block;
+
+        ezc_file _file;
 
         // generic pointer, used for custom types
         void* _ptr;

@@ -77,22 +77,22 @@ void ec_run_repl(ezc_vm* vm) {
 
 #else
 
+// readline headers
 #include <readline/readline.h>
 #include <readline/history.h>
 
-#define GEN_TYPES   0x03
-#define GEN_FUNCS   0x04
-
-char *
-ec_rl_generator(const char *text, int state) {
+// readline match generator
+char* ec_rl_generator(const char *text, int state) {
     static int list_index, len;
     char *name;
 
+    // if state is zero, we are just beginning
     if (!state) {
         list_index = 0;
         len = strlen(text);
     }
 
+    // return every match that occurs
     while ((name = vm.funcs.keys[list_index++]._)) {
         if (strncmp(name, text, len) == 0) {
             char* new_name = malloc(strlen(name) + 2);
@@ -100,17 +100,19 @@ ec_rl_generator(const char *text, int state) {
             return new_name;
         }
     }
+    // TODO: Also autocomplete with variables in the global dictionary
 
+    // if nothing is found this iteration, return NULL
     return NULL;
 }
 
-
-char ** ec_rl_completion(const char *text, int start, int end) {
+// just call our generator
+char** ec_rl_completion(const char *text, int start, int end) {
     rl_attempted_completion_over = 1;
     return rl_completion_matches(text, ec_rl_generator);
 }
 
-
+// begins a repl, using readline for easier usage
 void ec_run_repl_rl(ezc_vm* vm) {
 
     ezcp* progs = NULL;
@@ -121,7 +123,7 @@ void ec_run_repl_rl(ezc_vm* vm) {
     //rl_parse_and_bind("TAB: menu-complete");
 
     rl_attempted_completion_function = ec_rl_completion;
-    rl_basic_word_break_characters = "\t\n\"\\'`@$=;|{(# ";
+    rl_basic_word_break_characters = "\t\n\"\\'`+-*/%^<>0123456789!@$=;|{(# ";
 
     bool do_prompt = isatty(STDIN_FILENO);
 
@@ -140,6 +142,7 @@ void ec_run_repl_rl(ezc_vm* vm) {
 
         int status = ezc_vm_exec(vm, progs[pidx]);
 
+        // this will allow readline to display prior command when the user hits the up arrow
         if (cur_line && *cur_line) add_history(cur_line);
         free(cur_line);
     }
@@ -147,10 +150,7 @@ void ec_run_repl_rl(ezc_vm* vm) {
     free(progs);
 }
 
-
 #endif
-
-
 
 int main(int argc, char** argv) {
 
@@ -267,8 +267,6 @@ int main(int argc, char** argv) {
             // print nothing
         }
     }
-
-
 
     // free and finalize the library
     ezc_vm_free(&vm);

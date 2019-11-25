@@ -1,0 +1,15 @@
+#!ec -f
+
+# example showing how to use files in EZC
+
+# filename
+
+
+#"test.txt" write!
+
+"test.txt" open! 
+  | 10X! {2^repr!write!} foreach!
+`
+
+#"test.txt"o! "Hello World!" w!
+
