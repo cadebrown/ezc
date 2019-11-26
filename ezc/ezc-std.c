@@ -1112,6 +1112,68 @@ EZC_FUNC(foreach) {
     return 0;
 }
 
+// | A B {code} forrange!
+// pops off code to run, a maximum, and a minimum
+// NOTE: Requires 3 arguments
+EZC_FUNC(forrange) {
+    REQ_N(forrange, 3);
+
+    // first pop off the body
+    ezc_obj body = ezc_stk_pop(&vm->stk);
+    ezc_obj omax = ezc_stk_pop(&vm->stk);
+    ezc_obj omin = ezc_stk_pop(&vm->stk);
+
+    // TODO: Also allow other things to be executed
+    if (body.type != EZC_TYPE_BLOCK) {
+        ezc_error("forrange!: body was not type `block` (got `%s`)", TYPE_NAME(body)._);
+        return 1;
+    }
+
+    if (omax.type != EZC_TYPE_INT) {
+        ezc_error("forrange!: upper bound was not type `int` (got `%s`)", TYPE_NAME(omax)._);
+        return 1;
+    }
+
+    if (omin.type != EZC_TYPE_INT) {
+        ezc_error("forrange!: lower bound was not type `int` (got `%s`)", TYPE_NAME(omin)._);
+        return 1;
+    }
+
+    int imax = omax._int;
+    int imin = omin._int;
+
+    // current index
+    ezc_obj oi = (ezc_obj){ .type = EZC_TYPE_INT };
+
+    // create the program to run on each iteration
+    ezcp _prog = EZCP_EMPTY;
+    _prog.body = body._block;
+    _prog.src = body._block.m_prog->src;
+    _prog.src_name = body._block.m_prog->src_name;
+
+    // find the status of the evaluation
+    int status = 0;
+
+    int i;
+    for (i = imin; i < imax; ++i) {
+        oi._int = i;
+        ezc_stk_push(&vm->stk, oi);
+        status = ezc_vm_exec(vm, _prog);
+        if (status != 0) {
+            OBJ_FREE(body);
+            OBJ_FREE(omin);
+            OBJ_FREE(omax);
+            return status;
+        }
+    }
+
+    OBJ_FREE(body);
+    OBJ_FREE(omin);
+    OBJ_FREE(omax);
+
+    return 0;
+}
+
 
 /* FILE IO FUNCTIONS */
 
@@ -1269,6 +1331,8 @@ int EZC_FUNC_NAME(register_module)(ezc_vm* vm) {
     // control functions
     EZC_REGISTER_FUNC(ifel)
     EZC_REGISTER_FUNC(foreach)
+    EZC_REGISTER_FUNC(forrange)
+
 
     // IO functions
     EZC_REGISTER_FUNC(open)
