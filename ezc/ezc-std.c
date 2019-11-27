@@ -510,13 +510,16 @@ EZC_FUNC(get) {
 
     if (idx.type == EZC_TYPE_INT) {
         if (idx._int >= 0) {
+            REQ_N(get, idx._int+1);
             ezc_obj peeked = ezc_stk_get(&vm->stk, idx._int);
             ezc_obj new_obj = EZC_OBJ_EMPTY;
             OBJ_COPY(new_obj, peeked);
             // replace top of stack
             vm->stk.base[vm->stk.n - 1] = new_obj;
         } else if (idx._int < 0) {
-            ezc_obj peeked = ezc_stk_peekn(&vm->stk, 1 + idx._int);
+            REQ_N(get, -idx._int);
+
+            ezc_obj peeked = ezc_stk_get(&vm->stk, vm->stk.n + idx._int);
             ezc_obj new_obj = EZC_OBJ_EMPTY;
             OBJ_COPY(new_obj, peeked);
             // replace top of stack
