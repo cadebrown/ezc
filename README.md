@@ -11,6 +11,7 @@ The code to print the square of a number is: `N 2^print!`, i.e. `5 2^print!` pri
 
 More complicated expressions as well, like `2 3 4*+ print!` results in `14`
 
+To run an expression, run `ec -e 'EXPR'`, i.e. like `ec -e '5 2^print!'`
 
 ## Building
 
