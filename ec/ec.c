@@ -279,6 +279,16 @@ int main(int argc, char** argv) {
         ezc_error("Unhandled arguments!");
     }
 
+    if (n_progs == 0) {
+        // no programs/tasks passed, so do an interactive mode
+        #ifdef EZC_HAVE_READLINE
+        ec_run_repl_rl(&vm);
+        #else
+        ec_run_repl(&vm);
+        #endif
+
+    }
+
     // print the entire stack
     if (fA) {
         ezcp printall_p = EZCP_EMPTY;
