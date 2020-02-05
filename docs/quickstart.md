@@ -13,30 +13,35 @@ For example, open `~/Documents/`, and create a file called `test.ezc` inside it.
 Now, write this:
 
 ``` bash
-'Square root of 2: ' print
-2 sqrt print
+"11^2: " print!
+11 2^ print!
 ```
-
-<button class="btn" data-clipboard-text="'Square root of 2: ' print
-2 sqrt print"
-</button>
-
 
 Now, back in your terminal, make sure you are in the same directory as the file you've created, and run (when it asks for a number, type one and hit `Enter`)
 
 ``` bash
- $ ec -f test.ezc
+$ ec test.ezc
 
- Square root of 2: 1.41421356237309504879
+11^2:
+121
 ```
 
-## Passing as an argument
+If you are running without installing EZC, you need the entire path, i.e.:
+
+``` bash
+$ ../ezc/ec/ec test.ezc
+
+11^2:
+121
+```
+
 
 You don't need a file to run, use:
 
 ``` bash
- $ ec -e "2 sqrt"
- 1.41421356237309504879
+$ ec -e "1 2+"
+
+3
 ```
 
 This compiles whatever you put right after the `-e` argument, and then executes it, showing you the result.
@@ -48,10 +53,10 @@ This is good for quick prototyping, but you can also compute and see results in 
 You can run an interactive shell as well:
 
 ``` bash
-  $ ec -
+$ ec -i
 
-  > 
+ %> 
 ```
 
-Now, you can enter expressions, functions, and run `q` or `quit` to end.
+Now, you can enter expressions, functions, and run `exit!` to end
 
