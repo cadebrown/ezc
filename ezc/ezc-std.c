@@ -965,6 +965,23 @@ EZC_FUNC(pow) {
         OBJ_FREE(A); OBJ_FREE(B);
         return 0;
     } else {
+        if (TT_CASE(EZC_TYPE_INT, EZC_TYPE_REAL)) {
+            ezc_real res = pow((ezc_real)A._int, B._real);
+            B.type = EZC_TYPE_REAL;
+            B._real = res;
+            vm->stk.base[vm->stk.n++] = B;
+            return 0;
+        } else if (TT_CASE(EZC_TYPE_REAL, EZC_TYPE_INT)) {
+            A._real = pow(A._real, (ezc_real)B._int);
+            vm->stk.base[vm->stk.n++] = A;
+            return 0;
+        } else {
+            POP_FREE();
+            POP_FREE();
+            TT_TYPE_ER(mod);
+            return -1;
+        }
+
         ezc_error("Invalid type combo for func `pow`: %s, %s", TYPE_NAME(A)._, TYPE_NAME(B)._);
         OBJ_FREE(A); OBJ_FREE(B);
         return 1;

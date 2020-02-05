@@ -21,6 +21,7 @@
 #define EZC_MODULE_NAME std
 #include "ezc-module.h"
 
+// the prompt before each line you enter
 #define EC_PROMPT " %> "
 
 

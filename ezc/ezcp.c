@@ -164,7 +164,7 @@ void ezcp_init(ezcp* ret, ezc_str src_name, ezc_str src) {
         BUILTIN_CASE("%", EZCI_MOD)
         BUILTIN_CASE("^", EZCI_POW)
         BUILTIN_CASE("|", EZCI_WALL)
-        else if (IS_DIGIT_BASE(c, 10)) {
+        else if (c == '.' || IS_DIGIT_BASE(c, 10)) {
             // if its a digit, it means it starts a numeric constant
             char* start = str;
             // whether or not its had a `.` in the constant
