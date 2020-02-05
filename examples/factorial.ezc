@@ -1,4 +1,4 @@
-#!ec -f
+#!ec
 
 # Factorial, product of numbers <= x
 # S| x

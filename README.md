@@ -1,4 +1,3 @@
-
 # ezc
 
 `EZC` is an [RPN (Reverse Polish Notation)](https://en.wikipedia.org/wiki/Reverse_Polish_notation), stack-based language which emphasizes terseness, compactness, and innovative problem solving techniques. 

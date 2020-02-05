@@ -1,6 +1,8 @@
 # Makefile - basic rules for building ezc, and ec, the command line interface
 #
-# 
+# You should copy (and possibly modify) `ezc-config.h.template` to `ezc-config.h`. If not, this makefile
+#   will copy it for you, and emit a message
+# Just run `make` to build the EZC library
 #
 #
 
@@ -14,6 +16,11 @@ CFLAGS     ?= -O3 -std=c99
 
 # the location of the config file for building
 EZC_CONFIG ?= ezc-config.h
+
+ifeq ($(wildcard $(EZC_CONFIG)),)
+    $(warning No EZC config found, copying the default one)
+    $(shell cp ezc-config.h.template ezc-config.h)
+endif
 
 # always use -fPIC
 CFLAGS     += -fPIC

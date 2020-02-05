@@ -1,2 +1,8 @@
-#!ec -f
-"Hello World!" print!
+#!ec
+# ^ above is a shebang, which will allow execution like `./hello_world.ezc`
+# this only works if you have installed EZC via `make install`
+# more correctly, use:
+#!/usr/bin/env ec
+
+"Hello World" print!
+

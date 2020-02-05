@@ -28,7 +28,7 @@
 
 static ezc_vm vm;
 
-
+// if there is no readline support, run a non-interactive version
 #ifndef EZC_HAVE_READLINE
 
 void ec_run_repl(ezc_vm* vm) {
@@ -76,6 +76,7 @@ void ec_run_repl(ezc_vm* vm) {
 
 
 #else
+// use readline autocomplete
 
 // readline headers
 #include <readline/readline.h>
@@ -228,7 +229,7 @@ int main(int argc, char** argv) {
             ezc_log_set_level(ezc_log_get_level() - 1);
             break;
         case 'h':
-            printf("Usage: %s [-e expr | -f file] [-A,-h]\n", argv[0]);
+            printf("Usage: %s [-e expr|-f file] [-A,-h] [files...]\n", argv[0]);
             printf("  -h,--help              Prints this help message\n");
             printf("  -e,--expr [EXPR]       Compiles [EXPR], then executes it\n");
             printf("  -f,--file [FILE]       Reads [FILE], compiles it, then executes it\n");
@@ -248,6 +249,31 @@ int main(int argc, char** argv) {
             break;
     }
 
+    while (optind < argc) {
+        // treat the input as a file
+        optarg = argv[optind];
+        progs = ezc_realloc(progs, sizeof(ezcp) * ++n_progs);
+        progs[n_progs - 1] = EZCP_EMPTY;
+        FILE* fp = fopen(optarg, "r");
+        if (fp == NULL) {
+            ezc_error("Couldn't open file '%s'", optarg);
+            return 1;
+        } else {
+            fseek(fp, 0, SEEK_END);
+            int size = ftell(fp);
+            fseek(fp, 0, SEEK_SET);
+            char* src = ezc_malloc(size+1);
+            if (size != fread(src, 1, size, fp)) ezc_warn("File wasn't read correctly... '%s'", optarg);
+            src[size] = '\0';
+            ezc_debug("Running `-f`: %s (compiled to %d instructions)", progs[n_progs - 1].src_name._, progs[n_progs - 1].body._block.n);
+            ezcp_init(&progs[n_progs - 1], EZC_STR_CONST(optarg), EZC_STR_VIEW(src, size));
+            ezc_free(src);
+            ezc_vm_exec(&vm, progs[n_progs - 1]);
+        }
+
+        optind++;
+    }
+    // shouldn't happen
     if (optind < argc) {
         ezc_error("Unhandled arguments!");
     }
