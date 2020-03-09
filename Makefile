@@ -27,7 +27,7 @@ CFLAGS     += -fPIC
 
 # now, figure out what we're building with:
 HAVE_READLINE := $(shell grep '^\#define EZC_HAVE_READLINE' "$(EZC_CONFIG)")
-HAVE_GMP  := $(shell grep '^\#define EZC_HAVE_GMP' "$(EZC_CONFIG)")
+HAVE_GMP   := $(shell grep '^\#define EZC_HAVE_GMP' "$(EZC_CONFIG)")
 
 # -*- main ezc library, libezc
 ezc_src_c  := $(addprefix ezc/,mem.c log.c str.c stk.c ezcp.c vm.c exec.c ezc.c ezc-std.c)
