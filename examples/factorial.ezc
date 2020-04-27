@@ -1,4 +1,4 @@
-#!ec
+#!/usr/bin/env ec
 
 # Factorial, product of numbers <= x
 # S| x

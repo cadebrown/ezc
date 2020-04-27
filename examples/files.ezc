@@ -1,4 +1,4 @@
-#!ec -f
+#!/usr/bin/env ec
 
 # example showing how to use files in EZC
 

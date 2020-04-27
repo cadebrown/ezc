@@ -1,4 +1,4 @@
-#!ec -f
+#!/usr/bin/env ec
 
 # computes gcd of numbers, using recursion
 # euclid's algorithm, psuedocode:
