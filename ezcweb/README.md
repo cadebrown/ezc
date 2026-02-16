@@ -47,10 +47,10 @@ Output:
 
 `../target/dx/ezcweb/release/web/public/` (when run from `ezcweb/`)
 
-## GitHub Pages
+## Cloudflare Pages
 
-Automated build/test/deploy is configured at:
+Infrastructure for Cloudflare Pages lives in:
 
-- `.github/workflows/ci-pages.yml`
+- `../infra/cloudflare/main.tf`
 
-The workflow passes the GitHub Pages base path into `dx build` so project pages and user pages both resolve assets correctly.
+The default build config in infra is set up for this Rust/Dioxus workspace and publishes `ezcweb` to `ezc.cade.io`.

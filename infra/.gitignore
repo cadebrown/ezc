@@ -1,0 +1,5 @@
+# OpenTofu / Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+terraform.tfvars

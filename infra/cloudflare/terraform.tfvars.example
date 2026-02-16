@@ -1,0 +1,11 @@
+account_id   = "YOUR_CLOUDFLARE_ACCOUNT_ID"
+github_owner = "YOUR_GITHUB_USER_OR_ORG"
+
+# Optional overrides:
+# github_repo              = "ezc"
+# zone_name                = "cade.io"
+# pages_project_name       = "ezc"
+# pages_custom_domain      = "ezc.cade.io"
+# pages_production_branch  = "main"
+# pages_root_dir           = ""
+# pages_destination_dir    = "target/dx/ezcweb/release/web/public"

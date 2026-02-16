@@ -47,18 +47,30 @@ cargo check --workspace
 cargo check -p ezcweb
 ```
 
-## CI/CD
+## Deployment (Cloudflare Pages)
 
-GitHub Actions workflow: `.github/workflows/ci-pages.yml`
+Deployment infra is managed in `infra/` using OpenTofu/Terraform.
 
-- Pull requests run workspace verification (`fmt`, `check`, `test`) and web build.
-- Pushes to `main`/`master` also deploy static output to GitHub Pages.
+- Cloudflare Pages project is configured for this repo.
+- Custom domain target is `ezc.cade.io`.
 
-To enable Pages deployment in your repository settings:
+Quick start:
 
-1. Open `Settings -> Pages`
-2. Set `Source` to `GitHub Actions`
-3. Push to `main` (or run workflow manually via `workflow_dispatch`)
+```bash
+cd infra/cloudflare
+cp terraform.tfvars.example terraform.tfvars
+```
+
+Set `account_id`, `github_owner`, and export your API token:
+
+```bash
+export CLOUDFLARE_API_TOKEN="..."
+tofu init
+tofu plan
+tofu apply
+```
+
+This repo intentionally does not use GitHub Actions deployment.
 
 ## Webapp
 
