@@ -71,6 +71,8 @@ tofu apply
 ```
 
 This repo intentionally does not use GitHub Actions deployment.
+Cloudflare build tooling bootstrap uses `infra/cloudflare/pages_build.sh` with
+`cargo-binstall` fast-path and `cargo install` fallback.
 
 ## Webapp
 

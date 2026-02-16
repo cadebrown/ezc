@@ -44,6 +44,7 @@ tofu apply
 - `infra/cloudflare/main.tf`: all Cloudflare resources for this site
 - `infra/cloudflare/terraform.tfvars.example`: required variable template
 - `infra/cloudflare/.terraform.lock.hcl`: provider lockfile (commit this)
+- `infra/cloudflare/pages_build.sh`: Cloudflare build script (uses `cargo-binstall` when possible)
 
 ## What to commit vs ignore
 
@@ -52,6 +53,7 @@ Commit:
 - `infra/cloudflare/main.tf`
 - `infra/cloudflare/terraform.tfvars.example`
 - `infra/cloudflare/.terraform.lock.hcl`
+- `infra/cloudflare/pages_build.sh`
 
 Ignore (already covered by `infra/.gitignore`):
 

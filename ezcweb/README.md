@@ -52,5 +52,6 @@ Output:
 Infrastructure for Cloudflare Pages lives in:
 
 - `../infra/cloudflare/main.tf`
+- `../infra/cloudflare/pages_build.sh`
 
 The default build config in infra is set up for this Rust/Dioxus workspace and publishes `ezcweb` to `ezc.cade.io`.

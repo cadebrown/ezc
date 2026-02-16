@@ -60,7 +60,8 @@ variable "github_repo" {
 variable "pages_build_command" {
   description = "Build command executed by Cloudflare Pages."
   type        = string
-  default     = "if ! command -v cargo >/dev/null 2>&1; then curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain stable; fi && . \"$HOME/.cargo/env\" && rustup target add wasm32-unknown-unknown && cargo install dioxus-cli --version 0.7.2 --locked && cargo install wasm-bindgen-cli --locked && dx build -p ezcweb --web --release --debug-symbols false"
+  # Script uses cargo-binstall fast-path for dx/wasm-bindgen with cargo install fallback.
+  default     = "bash infra/cloudflare/pages_build.sh"
 }
 
 variable "pages_destination_dir" {
