@@ -1,0 +1,2 @@
+# delayed code block + immediate execute
+(5 dup * prt)!

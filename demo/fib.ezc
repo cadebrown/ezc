@@ -1,0 +1,16 @@
+# ======================================
+# EZC Demo: Fibonacci (loop-driven)
+# Prints fibonacci values below 100
+# State layout: a b
+# ======================================
+
+"fibonacci numbers below 100:" prt
+
+0 1
+(
+  dup prt      # emit current b
+  swp ovr +    # evolve pair: (a b) -> (b a+b)
+  dup 100 <    # continue while new b < 100
+) ^
+
+del del

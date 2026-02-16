@@ -1,0 +1,16 @@
+# ======================================
+# EZC Demo: Powers of Two
+# Prints powers of two below 1024
+# State layout: n
+# ======================================
+
+"powers of two below 1024:" prt
+
+1
+(
+  dup prt
+  2 *
+  dup 1024 <
+) ^
+
+del

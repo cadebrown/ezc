@@ -1,0 +1,17 @@
+# ======================================
+# EZC Demo: Triangular Numbers
+# Prints T_n for n = 1..10
+# State layout: n acc
+# ======================================
+
+"triangular numbers 1..10:" prt
+
+1 0
+(
+  ovr +      # acc = acc + n
+  dup prt    # emit triangular number
+  swp 1 + swp
+  ovr 11 <   # continue while n < 11
+) ^
+
+del del

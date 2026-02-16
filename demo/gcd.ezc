@@ -1,0 +1,15 @@
+# ======================================
+# EZC Demo: Euclidean GCD
+# Computes gcd(252, 105)
+# State layout: a b
+# ======================================
+
+"gcd(252, 105):" prt
+
+252 105
+(
+  swp ovr %       # (a b) -> (b a%b)
+  dup 0 = not     # continue while remainder != 0
+) ^
+
+del prt           # drop remainder, print gcd

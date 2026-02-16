@@ -1,0 +1,51 @@
+[package]
+name = "ezc"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+authors = ["EZC Contributors"]
+description = "EZC language toolkit: ezclang frontend, ezcbc compiler, and ezcvm runtime"
+default-run = "ezc"
+
+[lib]
+name = "ezc"
+path = "src/lib.rs"
+
+[[bin]]
+name = "ezc"
+path = "src/main.rs"
+
+[[test]]
+name = "source_programs"
+path = "test/source_programs.rs"
+
+[dependencies]
+ariadne = "0.4"
+chumsky = "0.9"
+clap = { version = "4.5", features = ["derive"] }
+logos = "0.14"
+thiserror = "1.0"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+crossterm = "0.28"
+ratatui = "0.29"
+unicode-width = "0.2"
+
+[dev-dependencies]
+pretty_assertions = "1.4"
+
+[workspace]
+members = ["ezcweb"]
+resolver = "2"
+
+[profile.wasm-dev]
+inherits = "dev"
+opt-level = 1
+
+[profile.server-dev]
+inherits = "dev"
+
+[profile.android-dev]
+inherits = "dev"

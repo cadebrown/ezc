@@ -1,0 +1,12 @@
+[package]
+name = "ezcweb"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "EZC web docs + REPL + book (Dioxus WASM)"
+
+[dependencies]
+ezc = { path = ".." }
+dioxus = { version = "=0.7.2", features = ["web", "router"] }
+pulldown-cmark = "0.12"
+wasm-bindgen = "0.2"

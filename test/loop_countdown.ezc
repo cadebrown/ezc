@@ -1,0 +1,2 @@
+# prints 3,2,1 then leaves 0
+3 (dup prt 1 - dup) ^

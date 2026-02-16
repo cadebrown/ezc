@@ -1,0 +1,6 @@
+# ======================================
+# EZC Demo: Hello World
+# Demonstrates text objects + print
+# ======================================
+
+"hello, world" prt

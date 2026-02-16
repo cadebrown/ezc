@@ -1,0 +1,16 @@
+# ======================================
+# EZC Demo: Factorial
+# Computes 10! with a loop
+# State layout: n acc
+# ======================================
+
+"10!:" prt
+
+1 1
+(
+  ovr *      # acc = acc * n
+  swp 1 + swp
+  ovr 11 <   # continue while n < 11
+) ^
+
+swp del prt
