@@ -221,6 +221,13 @@ impl Engine {
                             span: span.clone(),
                         });
                     }
+                    (Value::Block(mut a_block), Value::Block(b_block)) => {
+                        a_block.body.extend(b_block.body);
+                        self.stack.push(Tagged {
+                            value: Value::Block(a_block),
+                            span: span.clone(),
+                        });
+                    }
                     (Value::Str(a_str), Value::Str(b_str)) => {
                         let combined = format!("{}{}", a_str.0, b_str.0);
                         self.stack.push(Tagged {
@@ -232,7 +239,7 @@ impl Engine {
                         return Err(EvalError {
                             kind: EvalErrorKind::TypeMismatch {
                                 op: "|".into(),
-                                expected: "two lists or two strings".into(),
+                                expected: "two lists, strings, or blocks".into(),
                                 found: format!("{} and {}", a_val.type_name(), b_val.type_name()),
                             },
                             span: Some(span),
@@ -810,6 +817,7 @@ impl Default for Engine {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::types::EzStr;
     use crate::{lexer, parser};
     use num_bigint::BigInt;
 
@@ -951,6 +959,20 @@ mod tests {
                 Value::int(3),
                 Value::int(4),
             ])]
+        );
+    }
+
+    #[test]
+    fn compose_blocks() {
+        // (1 +) (2 *) | → block that does 1+ then 2*
+        assert_eq!(run("3 (1 +) (2 *) | !"), vec![Value::int(8)]);
+    }
+
+    #[test]
+    fn compose_strings() {
+        assert_eq!(
+            run(r#""hello" " world" |"#),
+            vec![Value::Str(EzStr::new("hello world"))]
         );
     }
 
