@@ -1,5 +1,5 @@
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use ezc::eval::Machine;
+use ezc::eval::{Engine, Tagged};
 use ezc::types::Value;
 
 /// Operators with short descriptions, for tab completion.
@@ -59,7 +59,7 @@ impl CompletionState {
 }
 
 pub struct App {
-    pub machine: Machine,
+    pub engine: Engine,
 
     pub input: String,
     pub cursor: usize,
@@ -71,7 +71,7 @@ pub struct App {
     pub cmd_history_idx: Option<usize>,
     pub cmd_draft: String,
 
-    pub snapshots: Vec<Vec<Value>>,
+    pub snapshots: Vec<Vec<Tagged>>,
     pub completion: Option<CompletionState>,
     pub should_quit: bool,
 }
@@ -91,7 +91,7 @@ pub enum EntryKind {
 impl App {
     pub fn new() -> Self {
         App {
-            machine: Machine::new(),
+            engine: Engine::new(),
             input: String::new(),
             cursor: 0,
             history: Vec::new(),
@@ -158,7 +158,7 @@ impl App {
 
             // Clear
             KeyCode::Char('l') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                self.machine.set_stack(vec![]);
+                self.engine.set_stack(vec![]);
                 self.history.clear();
                 self.snapshots.clear();
                 self.history_scroll = 0;
@@ -262,12 +262,13 @@ impl App {
             self.cmd_history.push(line.clone());
         }
 
-        let before = self.machine.stack().to_vec();
+        let before: Vec<Value> = self.engine.stack().into_iter().cloned().collect();
+        let raw_snapshot = self.engine.clone_raw_stack();
 
-        let entry = match ezc::eval_line(&mut self.machine, &line) {
+        let entry = match ezc::eval_line(&mut self.engine, &line) {
             Ok(()) => {
-                let after = self.machine.stack().to_vec();
-                self.snapshots.push(before.clone());
+                let after: Vec<Value> = self.engine.stack().into_iter().cloned().collect();
+                self.snapshots.push(raw_snapshot);
                 HistoryEntry {
                     input: line,
                     kind: EntryKind::Ok,
@@ -276,6 +277,7 @@ impl App {
                 }
             }
             Err(e) => {
+                // Full ariadne report with ANSI colors — parsed into ratatui styles.
                 let msg = e.report_string("<repl>", &line);
                 HistoryEntry {
                     input: line,
@@ -292,7 +294,7 @@ impl App {
 
     fn undo(&mut self) {
         if let Some(snapshot) = self.snapshots.pop() {
-            self.machine.set_stack(snapshot);
+            self.engine.set_stack(snapshot);
             if let Some(pos) = self
                 .history
                 .iter()

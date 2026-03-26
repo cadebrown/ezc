@@ -2,6 +2,7 @@
 source: crates/ezc/tests/snapshot.rs
 assertion_line: 30
 expression: output
-input_file: tests/ezc/equal/diff_int.ezc
+input_file: tests/ezc/scope/nested.ezc
 ---
-0
+2
+1

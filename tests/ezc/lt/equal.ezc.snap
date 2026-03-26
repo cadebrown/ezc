@@ -4,4 +4,4 @@ assertion_line: 30
 expression: output
 input_file: tests/ezc/lt/equal.ezc
 ---
-false
+0

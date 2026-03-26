@@ -4,4 +4,4 @@ assertion_line: 30
 expression: output
 input_file: tests/ezc/gteq/equal.ezc
 ---
-true
+1

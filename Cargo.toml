@@ -19,6 +19,8 @@ ezc = { path = "crates/ezc" }
 num-bigint = "0.4"
 num-traits = "0.2"
 thiserror = "2"
+ethnum = "1"
+half = { version = "2", features = ["num-traits"] }
 
 # Parsing & error reporting
 chumsky = "1.0.0-alpha.8"

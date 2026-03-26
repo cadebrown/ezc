@@ -4,4 +4,4 @@ assertion_line: 30
 expression: output
 input_file: tests/ezc/equal/same_list.ezc
 ---
-true
+1

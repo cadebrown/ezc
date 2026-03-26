@@ -31,8 +31,18 @@ impl fmt::Display for Op {
 /// via `Spanned<Token>`.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Token {
-    /// Integer literal (stored as raw string, parsed to BigInt later).
+    /// Integer literal (raw string, parsed to BigInt in the parser).
     Int(String),
+    /// Typed integer literal: value + suffix (e.g. "42" + "u8").
+    TypedInt(String, String),
+    /// Float literal (raw string, defaults to f64).
+    Float(String),
+    /// Typed float literal: value + suffix (e.g. "3.14" + "f32").
+    TypedFloat(String, String),
+    /// String literal (escape-processed).
+    Str(String),
+    /// Bare identifier (type constructors, future keywords).
+    Ident(String),
     /// Arithmetic operator.
     Op(Op),
     /// `!` — execute.
@@ -67,10 +77,10 @@ pub enum Token {
     Colon,
     /// `_` — over.
     Underscore,
-    /// `$` — reserved.
-    Dollar,
-    /// `@` — reserved.
-    At,
+    /// `@name` — bind: pop and store in variable.
+    Bind(String),
+    /// `$name` — recall: push variable value.
+    Recall(String),
     /// `(` — open block.
     OpenParen,
     /// `)` — close block.
@@ -79,12 +89,21 @@ pub enum Token {
     OpenBracket,
     /// `]` — close list.
     CloseBracket,
+    /// `{` — open scope.
+    OpenBrace,
+    /// `}` — close scope.
+    CloseBrace,
 }
 
 impl fmt::Display for Token {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Token::Int(s) => write!(f, "{s}"),
+            Token::TypedInt(s, suffix) => write!(f, "{s}{suffix}"),
+            Token::Float(s) => write!(f, "{s}"),
+            Token::TypedFloat(s, suffix) => write!(f, "{s}{suffix}"),
+            Token::Str(s) => write!(f, "\"{s}\""),
+            Token::Ident(s) => write!(f, "{s}"),
             Token::Op(op) => write!(f, "{op}"),
             Token::Bang => write!(f, "!"),
             Token::DoubleQuestion => write!(f, "??"),
@@ -102,12 +121,14 @@ impl fmt::Display for Token {
             Token::Tilde => write!(f, "~"),
             Token::Colon => write!(f, ":"),
             Token::Underscore => write!(f, "_"),
-            Token::Dollar => write!(f, "$"),
-            Token::At => write!(f, "@"),
+            Token::Bind(name) => write!(f, "@{name}"),
+            Token::Recall(name) => write!(f, "${name}"),
             Token::OpenParen => write!(f, "("),
             Token::CloseParen => write!(f, ")"),
             Token::OpenBracket => write!(f, "["),
             Token::CloseBracket => write!(f, "]"),
+            Token::OpenBrace => write!(f, "{{"),
+            Token::CloseBrace => write!(f, "}}"),
         }
     }
 }
@@ -136,5 +157,9 @@ mod tests {
         assert_eq!(Token::AmpBang.to_string(), "&!");
         assert_eq!(Token::Eq.to_string(), "==");
         assert_eq!(Token::Int("42".into()).to_string(), "42");
+        assert_eq!(Token::Bind("x".into()).to_string(), "@x");
+        assert_eq!(Token::Recall("x".into()).to_string(), "$x");
+        assert_eq!(Token::OpenBrace.to_string(), "{");
+        assert_eq!(Token::CloseBrace.to_string(), "}");
     }
 }

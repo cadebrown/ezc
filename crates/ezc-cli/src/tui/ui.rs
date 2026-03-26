@@ -8,15 +8,16 @@ use ezc::types::Value;
 
 use super::app::{App, EntryKind};
 
-const PROMPT: &str = "Σ  ";
-const PROMPT_DISPLAY_WIDTH: u16 = 3;
+const PROMPT: &str = "Σ ";
+const PROMPT_DISPLAY_WIDTH: u16 = 2; // Σ (1 cell) + 1 space
 
 // ── Value rendering ───────────────────────────────────────────────────────────
 
 fn value_color(v: &Value) -> Color {
     match v {
-        Value::Int(_) => Color::Cyan,
-        Value::Bool(_) => Color::Yellow,
+        Value::Num(_) => Color::Cyan,
+        Value::Str(_) => Color::Green,
+        Value::Bin(_) => Color::LightRed,
         Value::Block(_) => Color::Magenta,
         Value::List(_) => Color::Blue,
     }
@@ -59,7 +60,13 @@ use ezc::token::Token;
 /// Color for a lexer token.
 fn token_style(tok: &Token) -> Style {
     match tok {
-        Token::Int(_) => Style::default().fg(Color::Cyan),
+        Token::Int(_) | Token::TypedInt(..) | Token::Float(_) | Token::TypedFloat(..) => {
+            Style::default().fg(Color::Cyan)
+        }
+        Token::Str(_) => Style::default().fg(Color::Green),
+        Token::Ident(_) => Style::default()
+            .fg(Color::White)
+            .add_modifier(Modifier::ITALIC),
         Token::Op(_) => Style::default()
             .fg(Color::White)
             .add_modifier(Modifier::BOLD),
@@ -84,7 +91,9 @@ fn token_style(tok: &Token) -> Style {
         | Token::Underscore => Style::default()
             .fg(Color::White)
             .add_modifier(Modifier::BOLD),
-        Token::Dollar | Token::At => Style::default().fg(Color::DarkGray),
+        Token::Bind(_) => Style::default().fg(Color::Red),
+        Token::Recall(_) => Style::default().fg(Color::Green),
+        Token::OpenBrace | Token::CloseBrace => Style::default().fg(Color::Yellow),
     }
 }
 
@@ -131,7 +140,7 @@ fn highlight_input(input: &str) -> Vec<Span<'static>> {
 // ── Top-level draw ────────────────────────────────────────────────────────────
 
 pub fn draw(frame: &mut Frame, app: &mut App) {
-    let stack_depth = app.machine.stack().len();
+    let stack_depth = app.engine.stack().len();
     let term_height = frame.area().height;
     let max_stack = (term_height / 3).max(4);
     let stack_h = ((stack_depth as u16) + 2).clamp(3, max_stack);
@@ -157,7 +166,7 @@ pub fn draw(frame: &mut Frame, app: &mut App) {
 // ── Stack pane ────────────────────────────────────────────────────────────────
 
 fn render_stack(frame: &mut Frame, app: &App, area: Rect) {
-    let stack = app.machine.stack();
+    let stack = app.engine.stack();
     let depth = stack.len();
 
     let items: Vec<ListItem> = if stack.is_empty() {
@@ -204,15 +213,19 @@ fn render_stack(frame: &mut Frame, app: &App, area: Rect) {
     frame.render_widget(list, area);
 }
 
-// ── Trace pane ────────────────────────────────────────────────────────────────
+// ── Trace output ──────────────────────────────────────────────────────────
+// No border — raw scrolling output, full terminal width.
+// Errors render as multi-line ariadne reports.
 
 fn render_trace(frame: &mut Frame, app: &App, area: Rect) {
     let max_snap = 6;
 
-    let items: Vec<ListItem> = app
+    let lines: Vec<Line> = app
         .history
         .iter()
         .flat_map(|entry| {
+            let mut out: Vec<Line> = Vec::new();
+
             match &entry.kind {
                 EntryKind::Ok => {
                     let after = entry.after.as_deref().unwrap_or(&[]);
@@ -225,14 +238,11 @@ fn render_trace(frame: &mut Frame, app: &App, area: Rect) {
                     spans.extend(stack_spans(&entry.before, max_snap));
                     spans.push(Span::styled(" → ", Style::default().fg(Color::DarkGray)));
                     spans.extend(stack_spans(after, max_snap));
-
-                    let line1 = ListItem::new(Line::from(spans));
+                    out.push(Line::from(spans));
 
                     // Line 2: ╰ pop/push diff
                     let (consumed, produced) = stack_diff(&entry.before, after);
-                    if consumed.is_empty() && produced.is_empty() {
-                        vec![line1]
-                    } else {
+                    if !consumed.is_empty() || !produced.is_empty() {
                         let mut diff: Vec<Span> =
                             vec![Span::styled("   ╰ ", Style::default().fg(Color::DarkGray))];
 
@@ -265,43 +275,33 @@ fn render_trace(frame: &mut Frame, app: &App, area: Rect) {
                                 diff.push(value_span(v));
                             }
                         }
-
-                        vec![line1, ListItem::new(Line::from(diff))]
+                        out.push(Line::from(diff));
                     }
                 }
                 EntryKind::Err(msg) => {
-                    vec![ListItem::new(Line::from(vec![
-                        Span::styled(" ✗ ", Style::default().fg(Color::Red)),
-                        Span::styled(
-                            entry.input.clone(),
-                            Style::default().add_modifier(Modifier::BOLD),
-                        ),
-                        Span::styled(
-                            format!("   {msg}"),
-                            Style::default().fg(Color::Red).add_modifier(Modifier::DIM),
-                        ),
-                    ]))]
+                    // Ariadne report with ANSI colors, parsed into ratatui spans.
+                    // Base style is dim so structural parts (box drawing) stay subtle
+                    // while colored labels (red/yellow/cyan) pop.
+                    let base = Style::default().add_modifier(Modifier::DIM);
+                    for line in msg.lines() {
+                        let spans = parse_ansi(line, base);
+                        out.push(Line::from(spans));
+                    }
                 }
             }
+
+            out
         })
         .collect();
 
-    let total = items.len();
-    let visible = (area.height as usize).saturating_sub(2);
+    let total = lines.len();
+    let visible = area.height as usize;
     let scroll = app.history_scroll.min(total.saturating_sub(visible));
     let start = total.saturating_sub(visible + scroll);
     let end = total.saturating_sub(scroll);
-    let visible_items: Vec<ListItem> = items.into_iter().skip(start).take(end - start).collect();
+    let visible_lines: Vec<Line> = lines.into_iter().skip(start).take(end - start).collect();
 
-    let list = List::new(visible_items).block(
-        Block::default()
-            .title(" trace ")
-            .borders(Borders::ALL)
-            .border_type(BorderType::Rounded)
-            .border_style(Style::default().fg(Color::DarkGray)),
-    );
-
-    frame.render_widget(list, area);
+    frame.render_widget(Paragraph::new(visible_lines), area);
 }
 
 fn stack_diff<'a>(before: &'a [Value], after: &'a [Value]) -> (Vec<&'a Value>, Vec<&'a Value>) {
@@ -314,6 +314,98 @@ fn stack_diff<'a>(before: &'a [Value], after: &'a [Value]) -> (Vec<&'a Value>, V
         before[common..].iter().collect(),
         after[common..].iter().collect(),
     )
+}
+
+// ── ANSI → ratatui span converter ──────────────────────────────────────────────
+// Parses the subset of SGR codes that ariadne produces.
+
+fn parse_ansi(input: &str, base: Style) -> Vec<Span<'static>> {
+    let mut spans = Vec::new();
+    let mut style = base;
+    let mut buf = String::new();
+    let mut chars = input.chars().peekable();
+
+    while let Some(c) = chars.next() {
+        if c == '\x1b' {
+            // Flush text accumulated so far.
+            if !buf.is_empty() {
+                spans.push(Span::styled(std::mem::take(&mut buf), style));
+            }
+
+            // Expect '['.
+            if chars.next() != Some('[') {
+                continue;
+            }
+
+            // Read SGR parameters: semicolon-separated numbers ending with 'm'.
+            let mut params = Vec::new();
+            let mut num = String::new();
+            loop {
+                match chars.next() {
+                    Some('m') => {
+                        if !num.is_empty() {
+                            params.push(num.parse::<u16>().unwrap_or(0));
+                        }
+                        break;
+                    }
+                    Some(';') => {
+                        params.push(num.parse::<u16>().unwrap_or(0));
+                        num = String::new();
+                    }
+                    Some(d) if d.is_ascii_digit() => num.push(d),
+                    _ => break,
+                }
+            }
+
+            // Apply SGR params.
+            style = apply_sgr(&params, style, base);
+        } else {
+            buf.push(c);
+        }
+    }
+
+    if !buf.is_empty() {
+        spans.push(Span::styled(buf, style));
+    }
+
+    if spans.is_empty() {
+        spans.push(Span::raw(""));
+    }
+    spans
+}
+
+fn apply_sgr(params: &[u16], mut style: Style, base: Style) -> Style {
+    let mut i = 0;
+    while i < params.len() {
+        match params[i] {
+            0 => style = base,
+            1 => style = style.add_modifier(Modifier::BOLD),
+            2 => style = style.add_modifier(Modifier::DIM),
+            3 => style = style.add_modifier(Modifier::ITALIC),
+            4 => style = style.add_modifier(Modifier::UNDERLINED),
+            // Basic foreground colors 30-37.
+            30 => style = style.fg(Color::Black),
+            31 => style = style.fg(Color::Red),
+            32 => style = style.fg(Color::Green),
+            33 => style = style.fg(Color::Yellow),
+            34 => style = style.fg(Color::Blue),
+            35 => style = style.fg(Color::Magenta),
+            36 => style = style.fg(Color::Cyan),
+            37 => style = style.fg(Color::White),
+            // 256-color: 38;5;N
+            38 if params.get(i + 1) == Some(&5) => {
+                if let Some(&n) = params.get(i + 2) {
+                    style = style.fg(Color::Indexed(n as u8));
+                    i += 2;
+                }
+            }
+            // Reset foreground.
+            39 => style = style.fg(Color::Reset),
+            _ => {}
+        }
+        i += 1;
+    }
+    style
 }
 
 // ── Input line ────────────────────────────────────────────────────────────────

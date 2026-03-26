@@ -17,13 +17,15 @@
 pub mod ast;
 pub mod error;
 pub mod eval;
+pub mod intern;
 pub mod lexer;
+pub mod number;
 pub mod parser;
 pub mod token;
 pub mod types;
 
 use error::{EzError, ParseError};
-use eval::Machine;
+use eval::Engine;
 use types::Value;
 
 /// Lex and parse source into an AST, returning structured errors via `EzError`.
@@ -68,16 +70,16 @@ fn lex_and_parse(src: &str) -> Result<Vec<ast::Spanned<ast::Expr>>, EzError> {
 /// `EzError`.
 pub fn run(src: &str) -> Result<Vec<Value>, EzError> {
     let ast = lex_and_parse(src)?;
-    let mut machine = Machine::new();
-    machine.eval(&ast).map_err(EzError::Eval)?;
-    Ok(machine.into_stack())
+    let mut engine = Engine::new();
+    engine.eval(&ast).map_err(EzError::Eval)?;
+    Ok(engine.into_stack())
 }
 
-/// Evaluate a line of source against an existing machine.
+/// Evaluate a line of source against an existing engine.
 ///
-/// Used by the REPL to maintain a persistent stack across inputs.
+/// Used by the REPL to maintain a persistent stack and environment across inputs.
 /// Returns `Ok(())` on success, or `EzError` with full span information.
-pub fn eval_line(machine: &mut Machine, src: &str) -> Result<(), EzError> {
+pub fn eval_line(engine: &mut Engine, src: &str) -> Result<(), EzError> {
     let ast = lex_and_parse(src)?;
-    machine.eval(&ast).map_err(EzError::Eval)
+    engine.eval(&ast).map_err(EzError::Eval)
 }

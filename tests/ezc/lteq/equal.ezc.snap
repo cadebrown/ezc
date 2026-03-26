@@ -4,4 +4,4 @@ assertion_line: 30
 expression: output
 input_file: tests/ezc/lteq/equal.ezc
 ---
-true
+1

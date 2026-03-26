@@ -2,6 +2,6 @@
 source: crates/ezc/tests/snapshot.rs
 assertion_line: 30
 expression: output
-input_file: tests/ezc/equal/diff_int.ezc
+input_file: tests/ezc/variables/named_function.ezc
 ---
-0
+25

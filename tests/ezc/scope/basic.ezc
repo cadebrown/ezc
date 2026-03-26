@@ -1,0 +1,2 @@
+# Scope isolates bindings — result passes through stack
+{ 10 @temp $temp 2 * }

@@ -24,20 +24,30 @@ pub struct ParseError {
 #[derive(Debug, Clone)]
 pub struct EvalError {
     pub kind: EvalErrorKind,
+    /// Span of the operator/expression that failed.
     pub span: Option<std::ops::Range<usize>>,
+    /// Additional labeled spans for context (e.g., operand source locations).
+    pub labels: Vec<ErrorLabel>,
+}
+
+/// A labeled source span for error context.
+#[derive(Debug, Clone)]
+pub struct ErrorLabel {
+    pub span: std::ops::Range<usize>,
+    pub message: String,
 }
 
 /// Specific kinds of evaluation errors.
 #[derive(Debug, Clone, thiserror::Error)]
 pub enum EvalErrorKind {
-    #[error("stack underflow: `{op}` requires {expected} value(s), found {found}")]
+    #[error("`{op}` needs {expected} value(s) on the stack, got {found}")]
     StackUnderflow {
         op: String,
         expected: usize,
         found: usize,
     },
 
-    #[error("type mismatch: `{op}` expected {expected}, found {found}")]
+    #[error("`{op}` got {found} — needs {expected}")]
     TypeMismatch {
         op: String,
         expected: String,
@@ -46,6 +56,9 @@ pub enum EvalErrorKind {
 
     #[error("division by zero")]
     DivisionByZero,
+
+    #[error("undefined: ${name}")]
+    UndefinedVariable { name: String },
 }
 
 impl fmt::Display for EzError {
@@ -97,15 +110,28 @@ impl EzError {
                 .collect(),
             EzError::Eval(err) => {
                 let span = err.span.clone().unwrap_or(0..0);
-                vec![Report::build(ReportKind::Error, (filename, span.clone()))
+                let mut builder = Report::build(ReportKind::Error, (filename, span.clone()))
                     .with_config(config)
                     .with_message(err.kind.to_string())
                     .with_label(
                         Label::new((filename, span))
                             .with_message(err.kind.to_string())
                             .with_color(Color::Red),
-                    )
-                    .finish()]
+                    );
+
+                // Add operand context labels with distinct colors.
+                let context_colors = [Color::Yellow, Color::Cyan, Color::Magenta];
+                for (i, label) in err.labels.iter().enumerate() {
+                    let color = context_colors[i % context_colors.len()];
+                    builder = builder.with_label(
+                        Label::new((filename, label.span.clone()))
+                            .with_message(&label.message)
+                            .with_color(color)
+                            .with_order(-(i as i32) - 1), // render below the primary
+                    );
+                }
+
+                vec![builder.finish()]
             }
         }
     }

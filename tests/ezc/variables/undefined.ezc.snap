@@ -1,0 +1,13 @@
+---
+source: crates/ezc/tests/snapshot.rs
+assertion_line: 35
+expression: report
+input_file: tests/ezc/variables/undefined.ezc
+---
+Error: undefined: $nope
+   ╭─[ undefined.ezc:1:1 ]
+   │
+ 1 │ $nope
+   │ ──┬──  
+   │   ╰──── undefined: $nope
+───╯

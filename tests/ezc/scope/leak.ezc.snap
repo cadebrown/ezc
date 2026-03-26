@@ -1,0 +1,11 @@
+---
+source: crates/ezc/tests/snapshot.rs
+assertion_line: 35
+expression: report
+input_file: tests/ezc/scope/leak.ezc
+---
+Error: undefined: $temp
+   ╭─[ leak.ezc:2:16 ]
+   │
+   │ 
+───╯

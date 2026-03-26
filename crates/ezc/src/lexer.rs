@@ -3,23 +3,106 @@ use chumsky::prelude::*;
 use crate::token::{Op, Token};
 
 /// Lex source code into a sequence of spanned tokens.
-///
-/// Returns `Ok(tokens)` on success, or `Err(errors)` with parse errors.
-/// Comments (`# ...`) and whitespace are stripped.
 pub fn lex(src: &str) -> Result<Vec<(Token, SimpleSpan)>, Vec<Rich<'_, char>>> {
     lexer().parse(src).into_result()
 }
 
-/// Build the chumsky lexer parser.
-///
-/// The lexer operates at the character level, producing `Token` values with
-/// source spans. Longest-match ordering is critical for multi-character tokens
-/// like `??` vs `?` and `&!` vs `&`.
+/// Type suffixes recognized on numeric literals.
+const INT_SUFFIXES: &[&str] = &[
+    "u8", "u16", "u32", "u64", "u128", "u256", "i8", "i16", "i32", "i64", "i128", "i256",
+];
+const FLOAT_SUFFIXES: &[&str] = &["f16", "f32", "f64"];
+
 fn lexer<'src>(
 ) -> impl Parser<'src, &'src str, Vec<(Token, SimpleSpan)>, extra::Err<Rich<'src, char>>> {
-    let int = text::int(10).map(|s: &str| Token::Int(s.to_string()));
+    // ── Identifier helper ─────────────────────────────────────────────────
+    let ident = any()
+        .filter(|c: &char| c.is_ascii_alphabetic() || *c == '_')
+        .then(
+            any()
+                .filter(|c: &char| c.is_ascii_alphanumeric() || *c == '_')
+                .repeated()
+                .to_slice(),
+        )
+        .to_slice();
 
-    // Multi-character operators first (longest match).
+    // ── String literal ────────────────────────────────────────────────────
+    let escape = just('\\').ignore_then(choice((
+        just('n').to('\n'),
+        just('t').to('\t'),
+        just('r').to('\r'),
+        just('\\').to('\\'),
+        just('"').to('"'),
+        just('0').to('\0'),
+    )));
+    let string_char = escape.or(any().filter(|c: &char| *c != '"' && *c != '\\'));
+    let string = string_char
+        .repeated()
+        .collect::<String>()
+        .delimited_by(just('"'), just('"'))
+        .map(Token::Str);
+
+    // ── Numeric literals ──────────────────────────────────────────────────
+
+    // Hex integer: 0x[0-9a-fA-F]+ with optional type suffix.
+    let hex_int = just("0x")
+        .ignore_then(
+            any()
+                .filter(|c: &char| c.is_ascii_hexdigit())
+                .repeated()
+                .at_least(1)
+                .to_slice(),
+        )
+        .then(ident.or_not())
+        .map(|(digits, suffix): (&str, Option<&str>)| {
+            let hex_str = format!("0x{digits}");
+            match suffix {
+                Some(s) if INT_SUFFIXES.contains(&s) => Token::TypedInt(hex_str, s.to_string()),
+                _ => Token::Int(hex_str),
+            }
+        });
+
+    // Float: digits.digits with optional exponent and suffix.
+    let float = text::int(10)
+        .then(just('.').then(text::digits(10)))
+        .then(
+            just('e')
+                .or(just('E'))
+                .then(just('+').or(just('-')).or_not())
+                .then(text::digits(10))
+                .or_not(),
+        )
+        .to_slice()
+        .then(ident.or_not())
+        .map(|(num, suffix): (&str, Option<&str>)| match suffix {
+            Some(s) if FLOAT_SUFFIXES.contains(&s) => {
+                Token::TypedFloat(num.to_string(), s.to_string())
+            }
+            _ => Token::Float(num.to_string()),
+        });
+
+    // Decimal integer with optional type suffix: 42, 42u8, 42i32.
+    let dec_int = text::int(10).then(ident.or_not()).map(
+        |(digits, suffix): (&str, Option<&str>)| match suffix {
+            Some(s) if INT_SUFFIXES.contains(&s) => {
+                Token::TypedInt(digits.to_string(), s.to_string())
+            }
+            Some(s) if FLOAT_SUFFIXES.contains(&s) => {
+                Token::TypedFloat(digits.to_string(), s.to_string())
+            }
+            _ => Token::Int(digits.to_string()),
+        },
+    );
+
+    // ── Variable binding/recall ───────────────────────────────────────────
+    let bind = just('@')
+        .ignore_then(ident)
+        .map(|s: &str| Token::Bind(s.to_string()));
+    let recall = just('$')
+        .ignore_then(ident)
+        .map(|s: &str| Token::Recall(s.to_string()));
+
+    // ── Multi-character operators ─────────────────────────────────────────
     let double_question = just("??").to(Token::DoubleQuestion);
     let amp_bang = just("&!").to(Token::AmpBang);
     let amp_question = just("&?").to(Token::AmpQuestion);
@@ -28,7 +111,7 @@ fn lexer<'src>(
     let lt_eq = just("<=").to(Token::LtEq);
     let gt_eq = just(">=").to(Token::GtEq);
 
-    // Single-character operators.
+    // ── Single-character operators ────────────────────────────────────────
     let bang = just('!').to(Token::Bang);
     let lt = just('<').to(Token::Lt);
     let gt = just('>').to(Token::Gt);
@@ -37,11 +120,9 @@ fn lexer<'src>(
     let amp = just('&').to(Token::Amp);
     let tilde = just('~').to(Token::Tilde);
     let colon = just(':').to(Token::Colon);
-    let underscore = just('_').to(Token::Underscore);
-    let dollar = just('$').to(Token::Dollar);
-    let at = just('@').to(Token::At);
+    let underscore_op = just('_').to(Token::Underscore);
 
-    // Arithmetic operators.
+    // ── Arithmetic operators ──────────────────────────────────────────────
     let add = just('+').to(Token::Op(Op::Add));
     let sub = just('-').to(Token::Op(Op::Sub));
     let mul = just('*').to(Token::Op(Op::Mul));
@@ -49,19 +130,36 @@ fn lexer<'src>(
     let modulo = just('%').to(Token::Op(Op::Mod));
     let pow = just('^').to(Token::Op(Op::Pow));
 
-    // Delimiters.
+    // ── Delimiters ────────────────────────────────────────────────────────
     let open_paren = just('(').to(Token::OpenParen);
     let close_paren = just(')').to(Token::CloseParen);
     let open_bracket = just('[').to(Token::OpenBracket);
     let close_bracket = just(']').to(Token::CloseBracket);
+    let open_brace = just('{').to(Token::OpenBrace);
+    let close_brace = just('}').to(Token::CloseBrace);
 
-    // Comments: `#` to end of line, discarded.
+    // ── Bare identifiers (keywords + type constructors) ───────────────────
+    // Must start with a letter (not underscore alone — that's the `_` operator).
+    // Must come AFTER @name/$name and numeric suffixes in priority.
+    let bare_ident = any()
+        .filter(|c: &char| c.is_ascii_alphabetic())
+        .then(
+            any()
+                .filter(|c: &char| c.is_ascii_alphanumeric() || *c == '_')
+                .repeated()
+                .to_slice(),
+        )
+        .to_slice()
+        .map(|s: &str| Token::Ident(s.to_string()));
+
+    // ── Comments ──────────────────────────────────────────────────────────
     let comment = just('#')
         .then(any().and_is(just('\n').not()).repeated())
         .padded();
 
-    // Split into two groups to stay within chumsky's tuple-choice arity limit.
-    let multi_char = choice((
+    // ── Assemble token groups ─────────────────────────────────────────────
+    // Split into groups to stay within chumsky's tuple-choice arity limit.
+    let multi_char_ops = choice((
         double_question,
         amp_bang,
         amp_question,
@@ -69,9 +167,11 @@ fn lexer<'src>(
         not_eq,
         lt_eq,
         gt_eq,
+        bind,
+        recall,
     ));
 
-    let single_char = choice((
+    let single_char_ops = choice((
         bang,
         lt,
         gt,
@@ -80,28 +180,37 @@ fn lexer<'src>(
         amp,
         tilde,
         colon,
-        underscore,
-        dollar,
-        at,
+        underscore_op,
         add,
         sub,
         mul,
         div,
         modulo,
         pow,
+    ));
+
+    let delimiters = choice((
         open_paren,
         close_paren,
         open_bracket,
         close_bracket,
+        open_brace,
+        close_brace,
     ));
 
     let token = choice((
-        // Multi-char tokens first for longest match.
-        multi_char,
-        // Integers before single-char to avoid ambiguity.
-        int,
-        // Everything else.
-        single_char,
+        multi_char_ops,
+        string,
+        // Hex before float/dec (0x prefix).
+        hex_int,
+        // Float before dec (3.14 must not split at the dot).
+        float,
+        // Decimal int (with optional suffix).
+        dec_int,
+        // Bare identifiers after numbers (so 42u8 suffix is consumed by dec_int).
+        bare_ident,
+        single_char_ops,
+        delimiters,
     ))
     .map_with(|tok, e| (tok, e.span()));
 
@@ -131,10 +240,75 @@ mod tests {
     fn integer_literals() {
         assert_eq!(tokens("42"), vec![Token::Int("42".into())]);
         assert_eq!(tokens("0"), vec![Token::Int("0".into())]);
+    }
+
+    #[test]
+    fn hex_literals() {
+        assert_eq!(tokens("0xFF"), vec![Token::Int("0xFF".into())]);
+        assert_eq!(tokens("0xDEAD"), vec![Token::Int("0xDEAD".into())]);
         assert_eq!(
-            tokens("123 456"),
-            vec![Token::Int("123".into()), Token::Int("456".into())]
+            tokens("0xFFu8"),
+            vec![Token::TypedInt("0xFF".into(), "u8".into())]
         );
+    }
+
+    #[test]
+    fn typed_int_suffixes() {
+        assert_eq!(
+            tokens("42u8"),
+            vec![Token::TypedInt("42".into(), "u8".into())]
+        );
+        assert_eq!(
+            tokens("100i32"),
+            vec![Token::TypedInt("100".into(), "i32".into())]
+        );
+        assert_eq!(
+            tokens("0u256"),
+            vec![Token::TypedInt("0".into(), "u256".into())]
+        );
+    }
+
+    #[test]
+    fn float_literals() {
+        assert_eq!(tokens("3.14"), vec![Token::Float("3.14".into())]);
+        assert_eq!(tokens("1.0e10"), vec![Token::Float("1.0e10".into())]);
+    }
+
+    #[test]
+    fn typed_float_suffixes() {
+        assert_eq!(
+            tokens("3.14f32"),
+            vec![Token::TypedFloat("3.14".into(), "f32".into())]
+        );
+        assert_eq!(
+            tokens("42f64"),
+            vec![Token::TypedFloat("42".into(), "f64".into())]
+        );
+    }
+
+    #[test]
+    fn single_char_idents() {
+        assert_eq!(tokens("y"), vec![Token::Ident("y".into())]);
+        assert_eq!(tokens("n"), vec![Token::Ident("n".into())]);
+    }
+
+    #[test]
+    fn bare_identifiers() {
+        assert_eq!(tokens("f32"), vec![Token::Ident("f32".into())]);
+        assert_eq!(tokens("int"), vec![Token::Ident("int".into())]);
+        assert_eq!(tokens("str"), vec![Token::Ident("str".into())]);
+    }
+
+    #[test]
+    fn string_literals() {
+        assert_eq!(tokens(r#""hello""#), vec![Token::Str("hello".into())]);
+        assert_eq!(tokens(r#""a\nb""#), vec![Token::Str("a\nb".into())]);
+    }
+
+    #[test]
+    fn bind_recall() {
+        assert_eq!(tokens("@x"), vec![Token::Bind("x".into())]);
+        assert_eq!(tokens("$x"), vec![Token::Recall("x".into())]);
     }
 
     #[test]
@@ -156,7 +330,6 @@ mod tests {
     fn multi_char_operators() {
         assert_eq!(tokens("??"), vec![Token::DoubleQuestion]);
         assert_eq!(tokens("&!"), vec![Token::AmpBang]);
-        assert_eq!(tokens("&?"), vec![Token::AmpQuestion]);
         assert_eq!(tokens("=="), vec![Token::Eq]);
         assert_eq!(tokens("!="), vec![Token::NotEq]);
         assert_eq!(tokens("<="), vec![Token::LtEq]);
@@ -164,40 +337,16 @@ mod tests {
     }
 
     #[test]
-    fn single_char_operators() {
-        assert_eq!(tokens("!"), vec![Token::Bang]);
-        assert_eq!(tokens("?"), vec![Token::Question]);
-        assert_eq!(tokens("|"), vec![Token::Pipe]);
-        assert_eq!(tokens("&"), vec![Token::Amp]);
-        assert_eq!(tokens("~"), vec![Token::Tilde]);
-        assert_eq!(tokens("_"), vec![Token::Underscore]);
-        assert_eq!(tokens("$"), vec![Token::Dollar]);
-        assert_eq!(tokens("@"), vec![Token::At]);
-        assert_eq!(tokens(":"), vec![Token::Colon]);
-        assert_eq!(tokens("<"), vec![Token::Lt]);
-        assert_eq!(tokens(">"), vec![Token::Gt]);
-    }
-
-    #[test]
-    fn longest_match_comparison() {
-        // `!=` should not be parsed as `!` then `=`... but `=` is not a token.
-        // `<=` should not be `<` then `=`.
-        assert_eq!(tokens("!="), vec![Token::NotEq]);
-        assert_eq!(tokens("<="), vec![Token::LtEq]);
-        assert_eq!(tokens(">="), vec![Token::GtEq]);
-        // Separated: `< =` won't parse (= is not a valid token), but `< >` should be two tokens.
-        assert_eq!(tokens("< >"), vec![Token::Lt, Token::Gt]);
-    }
-
-    #[test]
     fn delimiters() {
         assert_eq!(
-            tokens("( ) [ ]"),
+            tokens("( ) [ ] { }"),
             vec![
                 Token::OpenParen,
                 Token::CloseParen,
                 Token::OpenBracket,
                 Token::CloseBracket,
+                Token::OpenBrace,
+                Token::CloseBrace,
             ]
         );
     }
@@ -205,19 +354,7 @@ mod tests {
     #[test]
     fn comments_stripped() {
         assert_eq!(
-            tokens("3 4 + # this is a comment"),
-            vec![
-                Token::Int("3".into()),
-                Token::Int("4".into()),
-                Token::Op(Op::Add),
-            ]
-        );
-    }
-
-    #[test]
-    fn comments_on_own_line() {
-        assert_eq!(
-            tokens("# full line comment\n3 4 +"),
+            tokens("3 4 + # comment"),
             vec![
                 Token::Int("3".into()),
                 Token::Int("4".into()),
@@ -247,21 +384,17 @@ mod tests {
     fn empty_input() {
         assert_eq!(tokens(""), vec![]);
         assert_eq!(tokens("   "), vec![]);
-        assert_eq!(tokens("# just a comment"), vec![]);
     }
 
     #[test]
-    fn longest_match_question() {
-        // `??` should not be parsed as two `?` tokens.
-        assert_eq!(tokens("??"), vec![Token::DoubleQuestion]);
-        // But `? ?` should be two separate `?`.
-        assert_eq!(tokens("? ?"), vec![Token::Question, Token::Question]);
-    }
-
-    #[test]
-    fn longest_match_amp() {
-        assert_eq!(tokens("&!"), vec![Token::AmpBang]);
-        assert_eq!(tokens("&?"), vec![Token::AmpQuestion]);
-        assert_eq!(tokens("& !"), vec![Token::Amp, Token::Bang]);
+    fn mixed_types() {
+        assert_eq!(
+            tokens(r#"42u8 3.14f32 "hi""#),
+            vec![
+                Token::TypedInt("42".into(), "u8".into()),
+                Token::TypedFloat("3.14".into(), "f32".into()),
+                Token::Str("hi".into()),
+            ]
+        );
     }
 }

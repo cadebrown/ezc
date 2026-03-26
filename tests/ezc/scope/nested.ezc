@@ -1,0 +1,2 @@
+# Inner scope shadows outer; outer restored after
+1 @x { 2 @x $x } $x

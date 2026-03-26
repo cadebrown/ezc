@@ -1,39 +1,126 @@
-use num_bigint::BigInt;
-use num_traits::{ToPrimitive, Zero};
+use std::collections::HashMap;
+
 use tracing::{debug, trace};
 
 use crate::ast::{Expr, Spanned};
-use crate::error::{EvalError, EvalErrorKind};
+use crate::error::{ErrorLabel, EvalError, EvalErrorKind};
+use crate::intern::Interner;
+use crate::number::{self, ArithOp, Number};
 use crate::token::Op;
 use crate::types::{Block, Value};
 
-/// The ezc stack machine.
-///
-/// Evaluates a sequence of AST expressions against a value stack.
-/// All operations modify the stack in place.
-pub struct Machine {
-    stack: Vec<Value>,
+/// A value tagged with the source span where it was produced.
+#[derive(Debug, Clone)]
+pub struct Tagged {
+    pub value: Value,
+    pub span: std::ops::Range<usize>,
 }
 
-impl Machine {
+/// The ezc engine — a stack machine with dynamically scoped variable bindings.
+///
+/// All operations modify the stack in place. Variables are stored in a scope
+/// chain (innermost scope last). Blocks use dynamic scoping — they see whatever
+/// bindings exist at execution time.
+pub struct Engine {
+    stack: Vec<Tagged>,
+    /// Scope chain: index 0 is the outermost (top-level), last is innermost.
+    env: Vec<HashMap<String, Value>>,
+    /// Interner for deduplicating strings, bins, and big integers.
+    pub interner: Interner,
+}
+
+impl Engine {
     pub fn new() -> Self {
-        Machine { stack: Vec::new() }
+        Engine {
+            stack: Vec::new(),
+            env: vec![HashMap::new()],
+            interner: Interner::new(),
+        }
     }
 
-    /// Returns a view of the current stack.
-    pub fn stack(&self) -> &[Value] {
-        &self.stack
+    // ── Stack access ──────────────────────────────────────────────────────
+
+    /// Returns a view of the current stack values.
+    pub fn stack(&self) -> Vec<&Value> {
+        self.stack.iter().map(|t| &t.value).collect()
     }
 
-    /// Consumes the machine, returning the final stack.
+    /// Consumes the engine, returning the final stack values.
     pub fn into_stack(self) -> Vec<Value> {
-        self.stack
+        self.stack.into_iter().map(|t| t.value).collect()
     }
 
-    /// Replace the stack with the given values (used for undo).
-    pub fn set_stack(&mut self, stack: Vec<Value>) {
+    /// Replace the stack (used for undo in the REPL).
+    pub fn set_stack(&mut self, stack: Vec<Tagged>) {
         self.stack = stack;
     }
+
+    /// Returns a clone of the raw tagged stack (for snapshotting/undo).
+    pub fn clone_raw_stack(&self) -> Vec<Tagged> {
+        self.stack.clone()
+    }
+
+    /// Push a value onto the stack with its source span.
+    pub fn push(&mut self, value: Value, span: std::ops::Range<usize>) {
+        self.stack.push(Tagged { value, span });
+    }
+
+    /// Pop a value from the stack, or `None` if empty.
+    pub fn pop_value(&mut self) -> Option<Value> {
+        self.stack.pop().map(|t| t.value)
+    }
+
+    /// Reset the engine: clear stack and all bindings except the top-level scope.
+    pub fn reset(&mut self) {
+        self.stack.clear();
+        self.env.clear();
+        self.env.push(HashMap::new());
+        self.interner = Interner::new();
+    }
+
+    // ── Environment ───────────────────────────────────────────────────────
+
+    /// Bind a name in the current (innermost) scope.
+    fn bind(&mut self, name: String, value: Value) {
+        if let Some(scope) = self.env.last_mut() {
+            scope.insert(name, value);
+        }
+    }
+
+    /// Look up a name, walking from innermost scope outward.
+    fn lookup(&self, name: &str) -> Option<&Value> {
+        for scope in self.env.iter().rev() {
+            if let Some(v) = scope.get(name) {
+                return Some(v);
+            }
+        }
+        None
+    }
+
+    /// Push a new empty scope (for `{...}` and block execution).
+    fn push_scope(&mut self) {
+        self.env.push(HashMap::new());
+    }
+
+    /// Pop the innermost scope.
+    fn pop_scope(&mut self) {
+        // Never pop the top-level scope.
+        if self.env.len() > 1 {
+            self.env.pop();
+        }
+    }
+
+    /// Create a child engine: empty stack, cloned environment.
+    /// Used for list evaluation, map, and filter sub-computations.
+    fn child(&self) -> Engine {
+        Engine {
+            stack: Vec::new(),
+            env: self.env.clone(),
+            interner: Interner::new(), // child gets its own interner
+        }
+    }
+
+    // ── Evaluation ────────────────────────────────────────────────────────
 
     /// Evaluate a sequence of expressions.
     pub fn eval(&mut self, program: &[Spanned<Expr>]) -> Result<(), EvalError> {
@@ -46,53 +133,77 @@ impl Machine {
 
     fn eval_expr(&mut self, expr: &Expr, span: std::ops::Range<usize>) -> Result<(), EvalError> {
         match expr {
-            Expr::Literal(s) => {
-                let n: BigInt = s.parse().expect("lexer guarantees valid integers");
-                debug!(value = %n, "push int");
-                self.stack.push(Value::Int(n));
+            Expr::Literal(num) => {
+                debug!("push {}", num.type_name());
+                let num = match num {
+                    Number::Int(n) => self.interner.intern_int(n.as_ref().clone()),
+                    other => other.clone(),
+                };
+                self.stack.push(Tagged {
+                    value: Value::Num(num),
+                    span: span.clone(),
+                });
+            }
+
+            Expr::StrLiteral(s) => {
+                debug!("push str");
+                self.stack.push(Tagged {
+                    value: Value::Str(self.interner.intern_str(s)),
+                    span: span.clone(),
+                });
+            }
+
+            Expr::Ident(name) => {
+                self.eval_builtin(name, &span)?;
             }
 
             Expr::Op(op) => {
                 let b = self.pop("binary op", &span)?;
                 let a = self.pop("binary op", &span)?;
                 let result = self.apply_op(*op, a, b, &span)?;
-                self.stack.push(result);
+                self.stack.push(Tagged {
+                    value: result,
+                    span: span.clone(),
+                });
             }
 
             Expr::Execute => {
-                let val = self.pop("!", &span)?;
-                match val {
+                let tagged = self.pop("!", &span)?;
+                match tagged.value {
                     Value::Block(block) => {
                         debug!("executing block");
+                        // Dynamic scope: block sees current env, not definition-time env.
                         self.eval(&block.body)?;
                     }
                     other => {
                         return Err(EvalError {
                             kind: EvalErrorKind::TypeMismatch {
                                 op: "!".into(),
-                                expected: "block".into(),
+                                expected: "a block".into(),
                                 found: other.type_name().into(),
                             },
                             span: Some(span),
+                            labels: vec![ErrorLabel {
+                                span: tagged.span,
+                                message: format!("this is {}", other.type_name()),
+                            }],
                         });
                     }
                 }
             }
 
             Expr::Cond => {
-                // `a ?` — if a is falsy, pop another value.
                 let condition = self.pop("?", &span)?;
-                if !condition.is_truthy() {
+                if !condition.value.is_truthy() {
                     let _ = self.pop("? (discard)", &span)?;
                 }
             }
 
             Expr::Ternary => {
-                // `a b c ??` — if c is truthy, keep b (discard a); if falsy, keep a (discard b).
                 let condition = self.pop("??", &span)?;
                 let truthy_val = self.pop("??", &span)?;
                 let falsy_val = self.pop("??", &span)?;
-                if condition.is_truthy() {
+                if condition.value.is_truthy() {
                     self.stack.push(truthy_val);
                 } else {
                     self.stack.push(falsy_val);
@@ -100,22 +211,41 @@ impl Machine {
             }
 
             Expr::Compose => {
-                // `[a] [b] |` — concatenate two lists.
                 let b = self.pop("|", &span)?;
                 let a = self.pop("|", &span)?;
-                match (a, b) {
+                match (a.value, b.value) {
                     (Value::List(mut a_items), Value::List(b_items)) => {
                         a_items.extend(b_items);
-                        self.stack.push(Value::List(a_items));
+                        self.stack.push(Tagged {
+                            value: Value::List(a_items),
+                            span: span.clone(),
+                        });
                     }
-                    (a, b) => {
+                    (Value::Str(a_str), Value::Str(b_str)) => {
+                        let combined = format!("{}{}", a_str.0, b_str.0);
+                        self.stack.push(Tagged {
+                            value: Value::Str(self.interner.intern_str(&combined)),
+                            span: span.clone(),
+                        });
+                    }
+                    (a_val, b_val) => {
                         return Err(EvalError {
                             kind: EvalErrorKind::TypeMismatch {
                                 op: "|".into(),
-                                expected: "list, list".into(),
-                                found: format!("{}, {}", a.type_name(), b.type_name()),
+                                expected: "two lists or two strings".into(),
+                                found: format!("{} and {}", a_val.type_name(), b_val.type_name()),
                             },
                             span: Some(span),
+                            labels: vec![
+                                ErrorLabel {
+                                    span: a.span,
+                                    message: format!("this is {}", a_val.type_name()),
+                                },
+                                ErrorLabel {
+                                    span: b.span,
+                                    message: format!("this is {}", b_val.type_name()),
+                                },
+                            ],
                         });
                     }
                 }
@@ -124,85 +254,32 @@ impl Machine {
             Expr::Equal => {
                 let b = self.pop("==", &span)?;
                 let a = self.pop("==", &span)?;
-                self.stack.push(Value::Bool(a == b));
+                self.stack.push(Tagged {
+                    value: Value::int(if a.value == b.value { 1 } else { 0 }),
+                    span: span.clone(),
+                });
             }
 
             Expr::NotEqual => {
                 let b = self.pop("!=", &span)?;
                 let a = self.pop("!=", &span)?;
-                self.stack.push(Value::Bool(a != b));
+                self.stack.push(Tagged {
+                    value: Value::int(if a.value != b.value { 1 } else { 0 }),
+                    span: span.clone(),
+                });
             }
 
             Expr::Lt => {
-                let b = self.pop("<", &span)?;
-                let a = self.pop("<", &span)?;
-                match (a, b) {
-                    (Value::Int(a), Value::Int(b)) => self.stack.push(Value::Bool(a < b)),
-                    (a, b) => {
-                        return Err(EvalError {
-                            kind: EvalErrorKind::TypeMismatch {
-                                op: "<".into(),
-                                expected: "int, int".into(),
-                                found: format!("{}, {}", a.type_name(), b.type_name()),
-                            },
-                            span: Some(span),
-                        });
-                    }
-                }
+                self.compare_nums("<", &span, |o| o.is_lt())?;
             }
-
             Expr::Gt => {
-                let b = self.pop(">", &span)?;
-                let a = self.pop(">", &span)?;
-                match (a, b) {
-                    (Value::Int(a), Value::Int(b)) => self.stack.push(Value::Bool(a > b)),
-                    (a, b) => {
-                        return Err(EvalError {
-                            kind: EvalErrorKind::TypeMismatch {
-                                op: ">".into(),
-                                expected: "int, int".into(),
-                                found: format!("{}, {}", a.type_name(), b.type_name()),
-                            },
-                            span: Some(span),
-                        });
-                    }
-                }
+                self.compare_nums(">", &span, |o| o.is_gt())?;
             }
-
             Expr::LtEq => {
-                let b = self.pop("<=", &span)?;
-                let a = self.pop("<=", &span)?;
-                match (a, b) {
-                    (Value::Int(a), Value::Int(b)) => self.stack.push(Value::Bool(a <= b)),
-                    (a, b) => {
-                        return Err(EvalError {
-                            kind: EvalErrorKind::TypeMismatch {
-                                op: "<=".into(),
-                                expected: "int, int".into(),
-                                found: format!("{}, {}", a.type_name(), b.type_name()),
-                            },
-                            span: Some(span),
-                        });
-                    }
-                }
+                self.compare_nums("<=", &span, |o| o.is_le())?;
             }
-
             Expr::GtEq => {
-                let b = self.pop(">=", &span)?;
-                let a = self.pop(">=", &span)?;
-                match (a, b) {
-                    (Value::Int(a), Value::Int(b)) => self.stack.push(Value::Bool(a >= b)),
-                    (a, b) => {
-                        return Err(EvalError {
-                            kind: EvalErrorKind::TypeMismatch {
-                                op: ">=".into(),
-                                expected: "int, int".into(),
-                                found: format!("{}, {}", a.type_name(), b.type_name()),
-                            },
-                            span: Some(span),
-                        });
-                    }
-                }
+                self.compare_nums(">=", &span, |o| o.is_ge())?;
             }
 
             Expr::Swap => {
@@ -213,14 +290,12 @@ impl Machine {
             }
 
             Expr::Dup => {
-                // `a :` → `a a` — duplicate top of stack.
                 let a = self.pop(":", &span)?;
                 self.stack.push(a.clone());
                 self.stack.push(a);
             }
 
             Expr::Over => {
-                // `a b _` → `a b a` — copy second element to top.
                 if self.stack.len() < 2 {
                     return Err(EvalError {
                         kind: EvalErrorKind::StackUnderflow {
@@ -229,41 +304,79 @@ impl Machine {
                             found: self.stack.len(),
                         },
                         span: Some(span),
+                        labels: vec![],
                     });
                 }
                 let second = self.stack[self.stack.len() - 2].clone();
                 self.stack.push(second);
             }
 
+            // ── Variables ─────────────────────────────────────────────────
+            Expr::Bind(name) => {
+                let tagged = self.pop(&format!("@{name}"), &span)?;
+                debug!(name, "bind");
+                self.bind(name.clone(), tagged.value);
+            }
+
+            Expr::Recall(name) => {
+                let val = self
+                    .lookup(name)
+                    .ok_or_else(|| EvalError {
+                        kind: EvalErrorKind::UndefinedVariable { name: name.clone() },
+                        span: Some(span.clone()),
+                        labels: vec![],
+                    })?
+                    .clone();
+                debug!(name, "recall");
+                self.stack.push(Tagged {
+                    value: val,
+                    span: span.clone(),
+                });
+            }
+
+            // ── Containers ────────────────────────────────────────────────
             Expr::Block(body) => {
                 debug!("push block ({} exprs)", body.len());
-                self.stack.push(Value::Block(Block {
-                    body: body.iter().map(|(e, s)| (e.clone(), s.clone())).collect(),
-                }));
+                self.stack.push(Tagged {
+                    value: Value::Block(Block { body: body.clone() }),
+                    span: span.clone(),
+                });
             }
 
             Expr::List(body) => {
-                // Evaluate on a sub-stack, collect results.
                 debug!("evaluating list ({} exprs)", body.len());
-                let mut sub = Machine::new();
+                let mut sub = self.child();
                 sub.eval(body)?;
-                self.stack.push(Value::List(sub.into_stack()));
+                self.stack.push(Tagged {
+                    value: Value::List(sub.into_stack()),
+                    span: span.clone(),
+                });
             }
 
+            Expr::Scope(body) => {
+                debug!("entering scope ({} exprs)", body.len());
+                self.push_scope();
+                let result = self.eval(body);
+                self.pop_scope();
+                result?;
+            }
+
+            // ── Higher-order operators ────────────────────────────────────
             Expr::Map => {
-                // `[...] (block) &!` — apply block to each element.
                 let block = self.pop("&!", &span)?;
                 let list = self.pop("&!", &span)?;
-                match (list, &block) {
+                match (list.value, &block.value) {
                     (Value::List(items), Value::Block(b)) => {
                         let mut result = Vec::with_capacity(items.len());
                         for item in items {
-                            let mut sub = Machine::new();
-                            sub.stack.push(item);
+                            let mut sub = self.child();
+                            sub.stack.push(Tagged {
+                                value: item,
+                                span: span.clone(),
+                            });
                             sub.eval(&b.body)?;
-                            // Take the top of the sub-stack as the mapped value.
                             match sub.stack.pop() {
-                                Some(v) => result.push(v),
+                                Some(t) => result.push(t.value),
                                 None => {
                                     return Err(EvalError {
                                         kind: EvalErrorKind::StackUnderflow {
@@ -272,69 +385,101 @@ impl Machine {
                                             found: 0,
                                         },
                                         span: Some(span),
+                                        labels: vec![],
                                     });
                                 }
                             }
                         }
-                        self.stack.push(Value::List(result));
+                        self.stack.push(Tagged {
+                            value: Value::List(result),
+                            span: span.clone(),
+                        });
                     }
-                    (list, _) => {
+                    (list_val, _) => {
                         return Err(EvalError {
                             kind: EvalErrorKind::TypeMismatch {
                                 op: "&!".into(),
-                                expected: "list, block".into(),
-                                found: format!("{}, {}", list.type_name(), block.type_name()),
+                                expected: "a list and a block".into(),
+                                found: format!(
+                                    "{} and {}",
+                                    list_val.type_name(),
+                                    block.value.type_name()
+                                ),
                             },
                             span: Some(span),
+                            labels: vec![
+                                ErrorLabel {
+                                    span: list.span,
+                                    message: format!("this is {}", list_val.type_name()),
+                                },
+                                ErrorLabel {
+                                    span: block.span,
+                                    message: format!("this is {}", block.value.type_name()),
+                                },
+                            ],
                         });
                     }
                 }
             }
 
             Expr::Filter => {
-                // `[...] (block) &?` — keep elements where block produces truthy.
                 let block = self.pop("&?", &span)?;
                 let list = self.pop("&?", &span)?;
-                match (list, &block) {
+                match (list.value, &block.value) {
                     (Value::List(items), Value::Block(b)) => {
                         let mut result = Vec::new();
                         for item in items {
-                            let mut sub = Machine::new();
-                            sub.stack.push(item.clone());
+                            let mut sub = self.child();
+                            sub.stack.push(Tagged {
+                                value: item.clone(),
+                                span: span.clone(),
+                            });
                             sub.eval(&b.body)?;
                             match sub.stack.pop() {
-                                Some(v) if v.is_truthy() => result.push(item),
+                                Some(t) if t.value.is_truthy() => result.push(item),
                                 _ => {}
                             }
                         }
-                        self.stack.push(Value::List(result));
+                        self.stack.push(Tagged {
+                            value: Value::List(result),
+                            span: span.clone(),
+                        });
                     }
-                    (list, _) => {
+                    (list_val, _) => {
                         return Err(EvalError {
                             kind: EvalErrorKind::TypeMismatch {
                                 op: "&?".into(),
-                                expected: "list, block".into(),
-                                found: format!("{}, {}", list.type_name(), block.type_name()),
+                                expected: "a list and a block".into(),
+                                found: format!(
+                                    "{} and {}",
+                                    list_val.type_name(),
+                                    block.value.type_name()
+                                ),
                             },
                             span: Some(span),
+                            labels: vec![
+                                ErrorLabel {
+                                    span: list.span,
+                                    message: format!("this is {}", list_val.type_name()),
+                                },
+                                ErrorLabel {
+                                    span: block.span,
+                                    message: format!("this is {}", block.value.type_name()),
+                                },
+                            ],
                         });
                     }
                 }
             }
 
             Expr::Loop => {
-                // `cond_block body_block &`
-                // Pop body then condition. While cond leaves a truthy value on the stack,
-                // execute body. The condition runs inline — it is ordinary stack code and
-                // must leave exactly one value (consumed as the predicate). Use `:` to
-                // inspect a value without consuming it: `(: 0 !=)` peeks at the top.
                 let body = self.pop("&", &span)?;
                 let cond = self.pop("&", &span)?;
-                match (cond, body) {
+                match (cond.value, body.value) {
                     (Value::Block(cond_block), Value::Block(body_block)) => loop {
                         self.eval(&cond_block.body)?;
                         let flag = self.pop("& (condition result)", &span)?;
-                        if !flag.is_truthy() {
+                        if !flag.value.is_truthy() {
                             break;
                         }
                         self.eval(&body_block.body)?;
@@ -343,18 +488,23 @@ impl Machine {
                         return Err(EvalError {
                             kind: EvalErrorKind::TypeMismatch {
                                 op: "&".into(),
-                                expected: "block, block".into(),
-                                found: format!("{}, {}", c.type_name(), b.type_name()),
+                                expected: "two blocks".into(),
+                                found: format!("{} and {}", c.type_name(), b.type_name()),
                             },
                             span: Some(span),
+                            labels: vec![
+                                ErrorLabel {
+                                    span: cond.span,
+                                    message: format!("this is {}", c.type_name()),
+                                },
+                                ErrorLabel {
+                                    span: body.span,
+                                    message: format!("this is {}", b.type_name()),
+                                },
+                            ],
                         });
                     }
                 }
-            }
-
-            Expr::Dollar | Expr::At => {
-                // Reserved — not yet implemented.
-                debug!(?expr, "reserved operator (no-op)");
             }
         }
 
@@ -362,63 +512,283 @@ impl Machine {
         Ok(())
     }
 
-    fn apply_op(
-        &self,
-        op: Op,
-        a: Value,
-        b: Value,
-        span: &std::ops::Range<usize>,
-    ) -> Result<Value, EvalError> {
-        match (&a, &b) {
-            (Value::Int(a), Value::Int(b)) => {
-                let result = match op {
-                    Op::Add => a + b,
-                    Op::Sub => a - b,
-                    Op::Mul => a * b,
-                    Op::Div => {
-                        if b.is_zero() {
-                            return Err(EvalError {
-                                kind: EvalErrorKind::DivisionByZero,
-                                span: Some(span.clone()),
-                            });
-                        }
-                        a / b
+    /// Evaluate a built-in identifier (type constructor / conversion function).
+    fn eval_builtin(&mut self, name: &str, span: &std::ops::Range<usize>) -> Result<(), EvalError> {
+        use crate::number::Number;
+
+        let tagged = self.pop(name, span)?;
+        let val = tagged.value;
+        let result = match name {
+            // ── Numeric constructors ──────────────────────────────────────
+            "int" => match val {
+                Value::Num(n) => match n {
+                    Number::Int(_) => Value::Num(n),
+                    _ => {
+                        let bi = n.to_bigint_lossy();
+                        Value::Num(self.interner.intern_int(bi))
                     }
-                    Op::Mod => {
-                        if b.is_zero() {
-                            return Err(EvalError {
-                                kind: EvalErrorKind::DivisionByZero,
-                                span: Some(span.clone()),
-                            });
-                        }
-                        a % b
+                },
+                _ => return Err(self.cast_error(name, &val, span)),
+            },
+            "u8" => Value::Num(self.cast_uint::<u8>(&val, span, Number::U8)?),
+            "u16" => Value::Num(self.cast_uint::<u16>(&val, span, Number::U16)?),
+            "u32" => Value::Num(self.cast_uint::<u32>(&val, span, Number::U32)?),
+            "u64" => Value::Num(self.cast_uint::<u64>(&val, span, Number::U64)?),
+            "u128" => Value::Num(self.cast_uint::<u128>(&val, span, Number::U128)?),
+            "i8" => Value::Num(self.cast_sint::<i8>(&val, span, Number::I8)?),
+            "i16" => Value::Num(self.cast_sint::<i16>(&val, span, Number::I16)?),
+            "i32" => Value::Num(self.cast_sint::<i32>(&val, span, Number::I32)?),
+            "i64" => Value::Num(self.cast_sint::<i64>(&val, span, Number::I64)?),
+            "i128" => Value::Num(self.cast_sint::<i128>(&val, span, Number::I128)?),
+            "f16" => match &val {
+                Value::Num(n) => Value::Num(Number::F16(half::f16::from_f64(n.to_f64_lossy()))),
+                _ => return Err(self.cast_error(name, &val, span)),
+            },
+            "f32" => match &val {
+                Value::Num(n) => Value::Num(Number::F32(n.to_f64_lossy() as f32)),
+                _ => return Err(self.cast_error(name, &val, span)),
+            },
+            "f64" => match &val {
+                Value::Num(n) => Value::Num(Number::F64(n.to_f64_lossy())),
+                _ => return Err(self.cast_error(name, &val, span)),
+            },
+            // ── String / binary constructors ──────────────────────────────
+            "str" => {
+                let s = match &val {
+                    Value::Num(n) => n.to_string(),
+                    Value::Str(_) => {
+                        self.stack.push(Tagged {
+                            value: val,
+                            span: span.clone(),
+                        });
+                        return Ok(());
                     }
-                    Op::Pow => {
-                        let exp = b.to_u32().ok_or_else(|| EvalError {
-                            kind: EvalErrorKind::TypeMismatch {
-                                op: "^".into(),
-                                expected: "non-negative exponent that fits in u32".into(),
-                                found: format!("{b}"),
-                            },
-                            span: Some(span.clone()),
-                        })?;
-                        num_traits::pow::Pow::pow(a, exp)
-                    }
+                    _ => return Err(self.cast_error(name, &val, span)),
                 };
-                Ok(Value::Int(result))
+                Value::Str(self.interner.intern_str(&s))
+            }
+            "bin" => match &val {
+                Value::Str(s) => Value::Bin(self.interner.intern_bin(s.0.as_bytes())),
+                Value::Bin(_) => val,
+                _ => return Err(self.cast_error(name, &val, span)),
+            },
+
+            _ => {
+                return Err(EvalError {
+                    kind: EvalErrorKind::UndefinedVariable {
+                        name: name.to_string(),
+                    },
+                    span: Some(span.clone()),
+                    labels: vec![],
+                });
+            }
+        };
+        self.stack.push(Tagged {
+            value: result,
+            span: span.clone(),
+        });
+        Ok(())
+    }
+
+    fn cast_error(&self, target: &str, val: &Value, span: &std::ops::Range<usize>) -> EvalError {
+        EvalError {
+            kind: EvalErrorKind::TypeMismatch {
+                op: target.into(),
+                expected: "a number".into(),
+                found: val.type_name().into(),
+            },
+            span: Some(span.clone()),
+            labels: vec![],
+        }
+    }
+
+    fn cast_uint<T>(
+        &self,
+        val: &Value,
+        span: &std::ops::Range<usize>,
+        wrap: fn(T) -> Number,
+    ) -> Result<Number, EvalError>
+    where
+        T: TryFrom<u64> + TryFrom<u128>,
+        u64: TryFrom<T>,
+    {
+        use num_traits::ToPrimitive;
+        match val {
+            Value::Num(n) => {
+                let big = n.to_bigint_lossy();
+                let v: u128 = big.to_u128().ok_or_else(|| EvalError {
+                    kind: EvalErrorKind::TypeMismatch {
+                        op: std::any::type_name::<T>().into(),
+                        expected: "value in range".into(),
+                        found: "out of range".into(),
+                    },
+                    span: Some(span.clone()),
+                    labels: vec![],
+                })?;
+                let t = T::try_from(v).map_err(|_| EvalError {
+                    kind: EvalErrorKind::TypeMismatch {
+                        op: std::any::type_name::<T>().into(),
+                        expected: "value in range".into(),
+                        found: "out of range".into(),
+                    },
+                    span: Some(span.clone()),
+                    labels: vec![],
+                })?;
+                Ok(wrap(t))
+            }
+            _ => Err(self.cast_error(std::any::type_name::<T>(), val, span)),
+        }
+    }
+
+    fn cast_sint<T>(
+        &self,
+        val: &Value,
+        span: &std::ops::Range<usize>,
+        wrap: fn(T) -> Number,
+    ) -> Result<Number, EvalError>
+    where
+        T: TryFrom<i64> + TryFrom<i128>,
+    {
+        use num_traits::ToPrimitive;
+        match val {
+            Value::Num(n) => {
+                let big = n.to_bigint_lossy();
+                let v: i128 = big.to_i128().ok_or_else(|| EvalError {
+                    kind: EvalErrorKind::TypeMismatch {
+                        op: std::any::type_name::<T>().into(),
+                        expected: "value in range".into(),
+                        found: "out of range".into(),
+                    },
+                    span: Some(span.clone()),
+                    labels: vec![],
+                })?;
+                let t = T::try_from(v).map_err(|_| EvalError {
+                    kind: EvalErrorKind::TypeMismatch {
+                        op: std::any::type_name::<T>().into(),
+                        expected: "value in range".into(),
+                        found: "out of range".into(),
+                    },
+                    span: Some(span.clone()),
+                    labels: vec![],
+                })?;
+                Ok(wrap(t))
+            }
+            _ => Err(self.cast_error(std::any::type_name::<T>(), val, span)),
+        }
+    }
+
+    /// Compare two numeric values.
+    fn compare_nums(
+        &mut self,
+        op: &str,
+        span: &std::ops::Range<usize>,
+        f: fn(std::cmp::Ordering) -> bool,
+    ) -> Result<(), EvalError> {
+        let b = self.pop(op, span)?;
+        let a = self.pop(op, span)?;
+        match (&a.value, &b.value) {
+            (Value::Num(an), Value::Num(bn)) => {
+                let ord = number::compare(an, bn).map_err(|e| self.arith_to_eval(e, span))?;
+                self.stack.push(Tagged {
+                    value: Value::int(if f(ord) { 1 } else { 0 }),
+                    span: span.clone(),
+                });
+                Ok(())
+            }
+            (Value::Str(a_str), Value::Str(b_str)) => {
+                let ord = a_str.0.cmp(&b_str.0);
+                self.stack.push(Tagged {
+                    value: Value::int(if f(ord) { 1 } else { 0 }),
+                    span: span.clone(),
+                });
+                Ok(())
             }
             _ => Err(EvalError {
                 kind: EvalErrorKind::TypeMismatch {
-                    op: op.to_string(),
-                    expected: "int, int".into(),
-                    found: format!("{}, {}", a.type_name(), b.type_name()),
+                    op: op.into(),
+                    expected: "two comparable values".into(),
+                    found: format!("{} and {}", a.value.type_name(), b.value.type_name()),
                 },
                 span: Some(span.clone()),
+                labels: vec![
+                    ErrorLabel {
+                        span: a.span,
+                        message: format!("this is {}", a.value.type_name()),
+                    },
+                    ErrorLabel {
+                        span: b.span,
+                        message: format!("this is {}", b.value.type_name()),
+                    },
+                ],
             }),
         }
     }
 
-    fn pop(&mut self, op: &str, span: &std::ops::Range<usize>) -> Result<Value, EvalError> {
+    fn apply_op(
+        &self,
+        op: Op,
+        a: Tagged,
+        b: Tagged,
+        span: &std::ops::Range<usize>,
+    ) -> Result<Value, EvalError> {
+        match (&a.value, &b.value) {
+            (Value::Num(an), Value::Num(bn)) => {
+                let arith_op = match op {
+                    Op::Add => ArithOp::Add,
+                    Op::Sub => ArithOp::Sub,
+                    Op::Mul => ArithOp::Mul,
+                    Op::Div => ArithOp::Div,
+                    Op::Mod => ArithOp::Mod,
+                    Op::Pow => ArithOp::Pow,
+                };
+                let result = number::arith(an.clone(), bn.clone(), arith_op)
+                    .map_err(|e| self.arith_to_eval(e, span))?;
+                Ok(Value::Num(result))
+            }
+            _ => Err(EvalError {
+                kind: EvalErrorKind::TypeMismatch {
+                    op: op.to_string(),
+                    expected: "two numbers".into(),
+                    found: format!("{} and {}", a.value.type_name(), b.value.type_name()),
+                },
+                span: Some(span.clone()),
+                labels: vec![
+                    ErrorLabel {
+                        span: a.span,
+                        message: format!("this is {}", a.value.type_name()),
+                    },
+                    ErrorLabel {
+                        span: b.span,
+                        message: format!("this is {}", b.value.type_name()),
+                    },
+                ],
+            }),
+        }
+    }
+
+    /// Convert a number::ArithError into an EvalError.
+    fn arith_to_eval(&self, err: number::ArithError, span: &std::ops::Range<usize>) -> EvalError {
+        let kind = match err {
+            number::ArithError::Overflow => EvalErrorKind::TypeMismatch {
+                op: "arithmetic".into(),
+                expected: "result within range".into(),
+                found: "overflow".into(),
+            },
+            number::ArithError::DivisionByZero => EvalErrorKind::DivisionByZero,
+            number::ArithError::IncompatibleTypes { left, right } => EvalErrorKind::TypeMismatch {
+                op: "arithmetic".into(),
+                expected: "same numeric family (e.g. both unsigned, or both signed)".into(),
+                found: format!("{left} and {right}"),
+            },
+        };
+        EvalError {
+            kind,
+            span: Some(span.clone()),
+            labels: vec![],
+        }
+    }
+
+    fn pop(&mut self, op: &str, span: &std::ops::Range<usize>) -> Result<Tagged, EvalError> {
         self.stack.pop().ok_or_else(|| EvalError {
             kind: EvalErrorKind::StackUnderflow {
                 op: op.into(),
@@ -426,11 +796,12 @@ impl Machine {
                 found: 0,
             },
             span: Some(span.clone()),
+            labels: vec![],
         })
     }
 }
 
-impl Default for Machine {
+impl Default for Engine {
     fn default() -> Self {
         Self::new()
     }
@@ -440,120 +811,134 @@ impl Default for Machine {
 mod tests {
     use super::*;
     use crate::{lexer, parser};
+    use num_bigint::BigInt;
 
     fn run(src: &str) -> Vec<Value> {
         let tokens = lexer::lex(src).expect("lex failed");
         let ast = parser::parse(&tokens, src.len()).expect("parse failed");
-        let mut machine = Machine::new();
-        machine.eval(&ast).expect("eval failed");
-        machine.into_stack()
+        let mut engine = Engine::new();
+        engine.eval(&ast).expect("eval failed");
+        engine.into_stack()
     }
 
     fn run_err(src: &str) -> EvalError {
         let tokens = lexer::lex(src).expect("lex failed");
         let ast = parser::parse(&tokens, src.len()).expect("parse failed");
-        let mut machine = Machine::new();
-        machine.eval(&ast).expect_err("expected eval error")
+        let mut engine = Engine::new();
+        engine.eval(&ast).expect_err("expected eval error")
     }
+
+    // ── Arithmetic ────────────────────────────────────────────────────────
 
     #[test]
     fn push_integer() {
-        assert_eq!(run("42"), vec![Value::Int(42.into())]);
+        assert_eq!(run("42"), vec![Value::int(42)]);
     }
 
     #[test]
     fn addition() {
-        assert_eq!(run("3 4 +"), vec![Value::Int(7.into())]);
+        assert_eq!(run("3 4 +"), vec![Value::int(7)]);
     }
 
     #[test]
     fn subtraction() {
-        assert_eq!(run("10 3 -"), vec![Value::Int(7.into())]);
+        assert_eq!(run("10 3 -"), vec![Value::int(7)]);
     }
 
     #[test]
     fn multiplication() {
-        assert_eq!(run("6 7 *"), vec![Value::Int(42.into())]);
+        assert_eq!(run("6 7 *"), vec![Value::int(42)]);
     }
 
     #[test]
     fn division() {
-        assert_eq!(run("15 4 /"), vec![Value::Int(3.into())]);
+        assert_eq!(run("15 4 /"), vec![Value::int(3)]);
     }
 
     #[test]
     fn modulo() {
-        assert_eq!(run("15 4 %"), vec![Value::Int(3.into())]);
+        assert_eq!(run("15 4 %"), vec![Value::int(3)]);
     }
 
     #[test]
     fn power() {
-        assert_eq!(run("2 10 ^"), vec![Value::Int(1024.into())]);
+        assert_eq!(run("2 10 ^"), vec![Value::int(1024)]);
     }
 
     #[test]
     fn chained_arithmetic() {
-        // (3 + 4) * 2 = 14
-        assert_eq!(run("3 4 + 2 *"), vec![Value::Int(14.into())]);
+        assert_eq!(run("3 4 + 2 *"), vec![Value::int(14)]);
     }
+
+    // ── Stack ops ─────────────────────────────────────────────────────────
 
     #[test]
     fn swap() {
-        assert_eq!(
-            run("1 2 ~"),
-            vec![Value::Int(2.into()), Value::Int(1.into())]
-        );
+        assert_eq!(run("1 2 ~"), vec![Value::int(2), Value::int(1)]);
     }
 
     #[test]
     fn dup() {
-        assert_eq!(run("5 :"), vec![Value::Int(5.into()), Value::Int(5.into())]);
+        assert_eq!(run("5 :"), vec![Value::int(5), Value::int(5)]);
     }
 
     #[test]
     fn dup_square() {
-        // n : * => n^2
-        assert_eq!(run("7 : *"), vec![Value::Int(49.into())]);
+        assert_eq!(run("7 : *"), vec![Value::int(49)]);
     }
 
     #[test]
     fn over() {
-        // `1 2 _` → [1, 2, 1]
         assert_eq!(
             run("1 2 _"),
-            vec![
-                Value::Int(1.into()),
-                Value::Int(2.into()),
-                Value::Int(1.into())
-            ]
+            vec![Value::int(1), Value::int(2), Value::int(1)]
         );
     }
 
+    // ── Blocks & control flow ─────────────────────────────────────────────
+
     #[test]
     fn block_execute() {
-        // Push 3, push block (4 +), execute → 7.
-        assert_eq!(run("3 (4 +) !"), vec![Value::Int(7.into())]);
+        assert_eq!(run("3 (4 +) !"), vec![Value::int(7)]);
     }
+
+    #[test]
+    fn conditional_truthy() {
+        assert_eq!(run("5 1 ?"), vec![Value::int(5)]);
+    }
+
+    #[test]
+    fn conditional_falsy() {
+        assert_eq!(run("5 0 ?"), vec![]);
+    }
+
+    #[test]
+    fn ternary_truthy() {
+        assert_eq!(run("10 20 1 ??"), vec![Value::int(20)]);
+    }
+
+    #[test]
+    fn ternary_falsy() {
+        assert_eq!(run("10 20 0 ??"), vec![Value::int(10)]);
+    }
+
+    // ── Lists ─────────────────────────────────────────────────────────────
 
     #[test]
     fn list_creation() {
         assert_eq!(
             run("[1 2 3]"),
             vec![Value::List(vec![
-                Value::Int(1.into()),
-                Value::Int(2.into()),
-                Value::Int(3.into()),
+                Value::int(1),
+                Value::int(2),
+                Value::int(3),
             ])]
         );
     }
 
     #[test]
     fn list_with_arithmetic() {
-        // [3 4 +] should evaluate to [7].
-        assert_eq!(
-            run("[3 4 +]"),
-            vec![Value::List(vec![Value::Int(7.into())])]
-        );
+        assert_eq!(run("[3 4 +]"), vec![Value::List(vec![Value::int(7)])]);
     }
 
     #[test]
@@ -561,72 +946,171 @@ mod tests {
         assert_eq!(
             run("[1 2] [3 4] |"),
             vec![Value::List(vec![
-                Value::Int(1.into()),
-                Value::Int(2.into()),
-                Value::Int(3.into()),
-                Value::Int(4.into()),
+                Value::int(1),
+                Value::int(2),
+                Value::int(3),
+                Value::int(4),
             ])]
         );
     }
 
+    // ── Comparison ────────────────────────────────────────────────────────
+
     #[test]
     fn equality() {
-        assert_eq!(run("3 3 =="), vec![Value::Bool(true)]);
-        assert_eq!(run("3 4 =="), vec![Value::Bool(false)]);
+        assert_eq!(run("3 3 =="), vec![Value::int(1)]);
+        assert_eq!(run("3 4 =="), vec![Value::int(0)]);
     }
 
     #[test]
-    fn conditional_truthy() {
-        // `5 1 ?` — 1 is truthy, so 5 stays.
-        assert_eq!(run("5 1 ?"), vec![Value::Int(5.into())]);
+    fn not_equal() {
+        assert_eq!(run("3 4 !="), vec![Value::int(1)]);
+        assert_eq!(run("3 3 !="), vec![Value::int(0)]);
     }
 
     #[test]
-    fn conditional_falsy() {
-        // `5 0 ?` — 0 is falsy, so 5 is also popped.
-        assert_eq!(run("5 0 ?"), vec![]);
+    fn less_than() {
+        assert_eq!(run("3 4 <"), vec![Value::int(1)]);
+        assert_eq!(run("4 3 <"), vec![Value::int(0)]);
+        assert_eq!(run("3 3 <"), vec![Value::int(0)]);
     }
 
     #[test]
-    fn ternary_truthy() {
-        // `10 20 1 ??` — 1 is truthy, keep 20 (discard 10).
-        assert_eq!(run("10 20 1 ??"), vec![Value::Int(20.into())]);
+    fn greater_than() {
+        assert_eq!(run("4 3 >"), vec![Value::int(1)]);
+        assert_eq!(run("3 4 >"), vec![Value::int(0)]);
     }
 
     #[test]
-    fn ternary_falsy() {
-        // `10 20 0 ??` — 0 is falsy, keep 10 (discard 20).
-        assert_eq!(run("10 20 0 ??"), vec![Value::Int(10.into())]);
+    fn less_than_or_equal() {
+        assert_eq!(run("3 4 <="), vec![Value::int(1)]);
+        assert_eq!(run("3 3 <="), vec![Value::int(1)]);
+        assert_eq!(run("4 3 <="), vec![Value::int(0)]);
     }
+
+    #[test]
+    fn greater_than_or_equal() {
+        assert_eq!(run("4 3 >="), vec![Value::int(1)]);
+        assert_eq!(run("3 3 >="), vec![Value::int(1)]);
+        assert_eq!(run("3 4 >="), vec![Value::int(0)]);
+    }
+
+    // ── Map, filter, loop ─────────────────────────────────────────────────
 
     #[test]
     fn map() {
-        // [1 2 3] (1 +) &! → [2 3 4]
         assert_eq!(
             run("[1 2 3] (1 +) &!"),
             vec![Value::List(vec![
-                Value::Int(2.into()),
-                Value::Int(3.into()),
-                Value::Int(4.into()),
+                Value::int(2),
+                Value::int(3),
+                Value::int(4),
             ])]
         );
     }
 
     #[test]
     fn filter() {
-        // [1 2 3 4 5] (3 >) -- wait, we don't have > yet.
-        // Let's use equality: [1 2 3] (2 ==) &? → [2]
-        // Actually `==` returns bool. Let's filter for values equal to 2.
-        // Hmm, we need a proper predicate. Since we don't have comparison yet
-        // beyond ==, let's test truthiness: filter non-zero from a list.
-        // Actually, any int is truthy except 0, so:
-        // [0 1 0 2 0 3] (_ *) &? → multiply by self (square), non-zero stays.
-        // Simpler: [1 2 3] (1 ==) &? → [1]
         assert_eq!(
             run("[1 2 3] (1 ==) &?"),
-            vec![Value::List(vec![Value::Int(1.into())])]
+            vec![Value::List(vec![Value::int(1)])]
         );
     }
+
+    #[test]
+    fn filter_with_comparison() {
+        assert_eq!(
+            run("[1 2 3 4 5] (3 >) &?"),
+            vec![Value::List(vec![Value::int(4), Value::int(5)])]
+        );
+    }
+
+    #[test]
+    fn loop_countdown() {
+        assert_eq!(run("5 (: 0 !=) (1 -) &"), vec![Value::int(0)]);
+    }
+
+    #[test]
+    fn loop_zero_iters() {
+        assert_eq!(run("0 (: 0 !=) (1 +) &"), vec![Value::int(0)]);
+    }
+
+    // ── Variables ─────────────────────────────────────────────────────────
+
+    #[test]
+    fn bind_recall() {
+        assert_eq!(run("5 @x $x $x +"), vec![Value::int(10)]);
+    }
+
+    #[test]
+    fn named_function() {
+        assert_eq!(run("(: *) @square 5 $square !"), vec![Value::int(25)]);
+    }
+
+    #[test]
+    fn scope_isolation() {
+        // Binding inside {} should not leak out.
+        assert_eq!(run("{ 10 @temp $temp 2 * }"), vec![Value::int(20)]);
+        let err = run_err("{ 10 @temp } $temp");
+        assert!(matches!(err.kind, EvalErrorKind::UndefinedVariable { .. }));
+    }
+
+    #[test]
+    fn scope_shadowing() {
+        // Inner scope shadows outer, outer unaffected after.
+        assert_eq!(
+            run("1 @x { 2 @x $x } $x"),
+            vec![Value::int(2), Value::int(1)]
+        );
+    }
+
+    #[test]
+    fn dynamic_scope() {
+        // Blocks use dynamic scope — they see bindings at execution time.
+        assert_eq!(run("5 @x ($x 1 +) @inc $inc !"), vec![Value::int(6)]);
+    }
+
+    #[test]
+    fn variables_in_list() {
+        assert_eq!(
+            run("3 @x [$x $x $x]"),
+            vec![Value::List(vec![
+                Value::int(3),
+                Value::int(3),
+                Value::int(3),
+            ])]
+        );
+    }
+
+    #[test]
+    fn variables_in_map() {
+        assert_eq!(
+            run("2 @n [1 2 3] ($n *) &!"),
+            vec![Value::List(vec![
+                Value::int(2),
+                Value::int(4),
+                Value::int(6),
+            ])]
+        );
+    }
+
+    #[test]
+    fn undefined_variable() {
+        let err = run_err("$nope");
+        assert!(matches!(
+            err.kind,
+            EvalErrorKind::UndefinedVariable { ref name } if name == "nope"
+        ));
+    }
+
+    #[test]
+    fn named_block_forward_ref() {
+        // Block defined before binding is visible via dynamic scope.
+        // Define @double, then use it.
+        assert_eq!(run("(2 *) @double 7 $double !"), vec![Value::int(14)]);
+    }
+
+    // ── Errors ────────────────────────────────────────────────────────────
 
     #[test]
     fn division_by_zero() {
@@ -648,81 +1132,17 @@ mod tests {
 
     #[test]
     fn big_integers() {
-        // 2^100 is a big number.
         let result = run("2 100 ^");
         assert_eq!(result.len(), 1);
         let expected: BigInt = BigInt::from(2).pow(100);
-        assert_eq!(result[0], Value::Int(expected));
+        assert_eq!(result[0], Value::int(expected));
     }
 
     #[test]
     fn multiple_values_on_stack() {
         assert_eq!(
             run("1 2 3"),
-            vec![
-                Value::Int(1.into()),
-                Value::Int(2.into()),
-                Value::Int(3.into())
-            ]
-        );
-    }
-
-    #[test]
-    fn not_equal() {
-        assert_eq!(run("3 4 !="), vec![Value::Bool(true)]);
-        assert_eq!(run("3 3 !="), vec![Value::Bool(false)]);
-    }
-
-    #[test]
-    fn less_than() {
-        assert_eq!(run("3 4 <"), vec![Value::Bool(true)]);
-        assert_eq!(run("4 3 <"), vec![Value::Bool(false)]);
-        assert_eq!(run("3 3 <"), vec![Value::Bool(false)]);
-    }
-
-    #[test]
-    fn greater_than() {
-        assert_eq!(run("4 3 >"), vec![Value::Bool(true)]);
-        assert_eq!(run("3 4 >"), vec![Value::Bool(false)]);
-        assert_eq!(run("3 3 >"), vec![Value::Bool(false)]);
-    }
-
-    #[test]
-    fn less_than_or_equal() {
-        assert_eq!(run("3 4 <="), vec![Value::Bool(true)]);
-        assert_eq!(run("3 3 <="), vec![Value::Bool(true)]);
-        assert_eq!(run("4 3 <="), vec![Value::Bool(false)]);
-    }
-
-    #[test]
-    fn greater_than_or_equal() {
-        assert_eq!(run("4 3 >="), vec![Value::Bool(true)]);
-        assert_eq!(run("3 3 >="), vec![Value::Bool(true)]);
-        assert_eq!(run("3 4 >="), vec![Value::Bool(false)]);
-    }
-
-    #[test]
-    fn loop_countdown() {
-        // `: 0 !=` peeks at top without consuming it (dup, compare, pop bool)
-        // 5 (: 0 !=) (1 -) & → while top != 0, decrement → result 0
-        assert_eq!(run("5 (: 0 !=) (1 -) &"), vec![Value::Int(0.into())]);
-    }
-
-    #[test]
-    fn loop_zero_iters() {
-        // Condition is immediately false — body never runs.
-        assert_eq!(run("0 (: 0 !=) (1 +) &"), vec![Value::Int(0.into())]);
-    }
-
-    #[test]
-    fn filter_with_comparison() {
-        // [1 2 3 4 5] (3 >) &? → keep values where x > 3 → [4 5]
-        assert_eq!(
-            run("[1 2 3 4 5] (3 >) &?"),
-            vec![Value::List(vec![
-                Value::Int(4.into()),
-                Value::Int(5.into())
-            ])]
+            vec![Value::int(1), Value::int(2), Value::int(3)]
         );
     }
 }

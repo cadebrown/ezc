@@ -1,0 +1,2 @@
+# Binding inside scope should not leak — this should error
+{ 10 @temp } $temp

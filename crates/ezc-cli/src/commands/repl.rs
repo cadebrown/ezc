@@ -8,7 +8,7 @@ use reedline::{
     PromptHistorySearch, PromptHistorySearchStatus, Reedline, Signal, Span, StyledText, Suggestion,
 };
 
-use ezc::eval::Machine;
+use ezc::eval::Engine;
 
 use crate::tui::{is_operator, COMPLETIONS};
 
@@ -26,7 +26,7 @@ impl Prompt for EzcPrompt {
     }
 
     fn render_prompt_indicator(&self, _mode: PromptEditMode) -> Cow<'_, str> {
-        Cow::Borrowed("  ")
+        Cow::Borrowed(" ")
     }
 
     fn render_prompt_multiline_indicator(&self) -> Cow<'_, str> {
@@ -164,7 +164,7 @@ fn plain() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let prompt = EzcPrompt;
-    let mut machine = Machine::new();
+    let mut engine = Engine::new();
 
     println!("ezc repl — Tab to complete, Ctrl-R to search history, Ctrl-D to exit");
 
@@ -176,9 +176,9 @@ fn plain() -> Result<(), Box<dyn std::error::Error>> {
                     continue;
                 }
 
-                match ezc::eval_line(&mut machine, line) {
+                match ezc::eval_line(&mut engine, line) {
                     Ok(()) => {
-                        let stack = machine.stack();
+                        let stack = engine.stack();
                         if !stack.is_empty() {
                             let parts: Vec<_> = stack.iter().map(|v| v.to_string()).collect();
                             println!("  {}", parts.join("  "));
