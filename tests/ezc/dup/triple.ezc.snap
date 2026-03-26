@@ -1,0 +1,9 @@
+---
+source: crates/ezc/tests/snapshot.rs
+assertion_line: 30
+expression: output
+input_file: tests/ezc/dup/triple.ezc
+---
+3
+3
+3

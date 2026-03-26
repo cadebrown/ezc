@@ -1,0 +1,13 @@
+---
+source: crates/ezc/tests/snapshot.rs
+assertion_line: 35
+expression: report
+input_file: tests/ezc/errors/stack_underflow.ezc
+---
+Error: stack underflow: `binary op` requires 1 value(s), found 0
+   ╭─[ stack_underflow.ezc:1:3 ]
+   │
+ 1 │ 3 +
+   │   ┬  
+   │   ╰── stack underflow: `binary op` requires 1 value(s), found 0
+───╯

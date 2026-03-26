@@ -1,0 +1,8 @@
+---
+source: crates/ezc/tests/snapshot.rs
+assertion_line: 30
+expression: output
+input_file: tests/ezc/block/dup_exec.ezc
+---
+9
+16

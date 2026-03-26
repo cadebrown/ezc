@@ -1,0 +1,2 @@
+# 0 ~ - => swap to get (n 0), then subtract => 0 - n
+[1 2 3] (0 ~ -) &!

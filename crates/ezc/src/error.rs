@@ -1,0 +1,138 @@
+use std::fmt;
+
+use ariadne::{Color, Config, Label, Report, ReportKind, Source};
+
+/// Top-level error type for the ezc language pipeline.
+#[derive(Debug)]
+pub enum EzError {
+    /// One or more parse errors from the lexer or parser stage.
+    Parse(Vec<ParseError>),
+    /// A runtime evaluation error.
+    Eval(EvalError),
+}
+
+/// A single parse error with source span and message.
+#[derive(Debug, Clone)]
+pub struct ParseError {
+    pub span: std::ops::Range<usize>,
+    pub message: String,
+    pub expected: Vec<String>,
+    pub found: Option<String>,
+}
+
+/// A runtime error during evaluation.
+#[derive(Debug, Clone)]
+pub struct EvalError {
+    pub kind: EvalErrorKind,
+    pub span: Option<std::ops::Range<usize>>,
+}
+
+/// Specific kinds of evaluation errors.
+#[derive(Debug, Clone, thiserror::Error)]
+pub enum EvalErrorKind {
+    #[error("stack underflow: `{op}` requires {expected} value(s), found {found}")]
+    StackUnderflow {
+        op: String,
+        expected: usize,
+        found: usize,
+    },
+
+    #[error("type mismatch: `{op}` expected {expected}, found {found}")]
+    TypeMismatch {
+        op: String,
+        expected: String,
+        found: String,
+    },
+
+    #[error("division by zero")]
+    DivisionByZero,
+}
+
+impl fmt::Display for EzError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            EzError::Parse(errors) => {
+                for (i, e) in errors.iter().enumerate() {
+                    if i > 0 {
+                        writeln!(f)?;
+                    }
+                    write!(f, "{e}")?;
+                }
+                Ok(())
+            }
+            EzError::Eval(e) => write!(f, "{}", e.kind),
+        }
+    }
+}
+
+impl std::error::Error for EzError {}
+
+impl fmt::Display for ParseError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.message)
+    }
+}
+
+impl EzError {
+    /// Build ariadne reports for this error.
+    fn build_reports<'a>(
+        &'a self,
+        filename: &'a str,
+        config: Config,
+    ) -> Vec<Report<'a, (&'a str, std::ops::Range<usize>)>> {
+        match self {
+            EzError::Parse(errors) => errors
+                .iter()
+                .map(|err| {
+                    Report::build(ReportKind::Error, (filename, err.span.clone()))
+                        .with_config(config)
+                        .with_message(&err.message)
+                        .with_label(
+                            Label::new((filename, err.span.clone()))
+                                .with_message(&err.message)
+                                .with_color(Color::Red),
+                        )
+                        .finish()
+                })
+                .collect(),
+            EzError::Eval(err) => {
+                let span = err.span.clone().unwrap_or(0..0);
+                vec![Report::build(ReportKind::Error, (filename, span.clone()))
+                    .with_config(config)
+                    .with_message(err.kind.to_string())
+                    .with_label(
+                        Label::new((filename, span))
+                            .with_message(err.kind.to_string())
+                            .with_color(Color::Red),
+                    )
+                    .finish()]
+            }
+        }
+    }
+
+    /// Render this error as a pretty-printed ariadne report to stderr.
+    pub fn report(&self, filename: &str, src: &str) {
+        for report in self.build_reports(filename, Config::default()) {
+            let _ = report.eprint((filename, Source::from(src)));
+        }
+    }
+
+    /// Render this error as a colored string (for REPLs with ANSI support).
+    pub fn report_string(&self, filename: &str, src: &str) -> String {
+        let mut buf = Vec::new();
+        for report in self.build_reports(filename, Config::default()) {
+            let _ = report.write((filename, Source::from(src)), &mut buf);
+        }
+        String::from_utf8_lossy(&buf).into_owned()
+    }
+
+    /// Render this error as a plain-text string (no ANSI colors, for tests).
+    pub fn report_plain(&self, filename: &str, src: &str) -> String {
+        let config = Config::default().with_color(false);
+        let mut buf = Vec::new();
+        for report in self.build_reports(filename, config) {
+            let _ = report.write((filename, Source::from(src)), &mut buf);
+        }
+        String::from_utf8_lossy(&buf).into_owned()
+    }
+}

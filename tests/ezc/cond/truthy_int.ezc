@@ -1,0 +1,2 @@
+# nonzero is truthy => keep value below
+42 1 ?

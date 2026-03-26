@@ -1,0 +1,2 @@
+# block that executes a block
+3 ((4 +) !) !

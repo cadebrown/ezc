@@ -1,0 +1,13 @@
+---
+source: crates/ezc/tests/snapshot.rs
+assertion_line: 35
+expression: report
+input_file: tests/ezc/errors/type_mismatch.ezc
+---
+Error: type mismatch: `+` expected int, int, found list, int
+   ╭─[ type_mismatch.ezc:1:11 ]
+   │
+ 1 │ [1 2 3] 4 +
+   │           ┬  
+   │           ╰── type mismatch: `+` expected int, int, found list, int
+───╯

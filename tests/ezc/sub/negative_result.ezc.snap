@@ -1,0 +1,7 @@
+---
+source: crates/ezc/tests/snapshot.rs
+assertion_line: 30
+expression: output
+input_file: tests/ezc/sub/negative_result.ezc
+---
+-7

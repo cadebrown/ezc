@@ -1,0 +1,2 @@
+# block that uses dup and swap
+3 7 (~ -) !

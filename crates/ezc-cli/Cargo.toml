@@ -1,0 +1,22 @@
+[package]
+name = "ezc-cli"
+description = "CLI/TUI interface for the ezc language"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[[bin]]
+name = "ezc"
+path = "src/main.rs"
+
+[dependencies]
+ezc.workspace = true
+clap.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+ariadne.workspace = true
+ratatui.workspace = true
+crossterm.workspace = true
+reedline.workspace = true
+nu-ansi-term.workspace = true

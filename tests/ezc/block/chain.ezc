@@ -1,0 +1,2 @@
+# apply two blocks sequentially
+10 (2 *) ! (3 +) !

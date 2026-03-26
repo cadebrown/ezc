@@ -1,0 +1,2 @@
+# 0 is falsy => pop value below too, stack empty
+42 0 ?

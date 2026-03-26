@@ -1,0 +1,7 @@
+---
+source: crates/ezc/tests/snapshot.rs
+assertion_line: 30
+expression: output
+input_file: tests/ezc/list/literals.ezc
+---
+[1 2 3 4 5]

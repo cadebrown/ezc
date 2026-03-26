@@ -1,0 +1,2 @@
+# dup a list and check equality
+[1 2 3] : ==

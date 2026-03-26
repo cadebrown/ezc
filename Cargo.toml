@@ -1,0 +1,39 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/ezc",
+    "crates/ezc-cli",
+    "crates/ezc-lsp",
+    "crates/ezc-web",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+rust-version = "1.85"
+
+[workspace.dependencies]
+# Core language
+ezc = { path = "crates/ezc" }
+num-bigint = "0.4"
+num-traits = "0.2"
+thiserror = "2"
+
+# Parsing & error reporting
+chumsky = "1.0.0-alpha.8"
+ariadne = "0.6"
+
+# CLI & logging
+clap = { version = "4", features = ["derive"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# TUI / REPL
+ratatui = "0.30"
+crossterm = "0.29"
+reedline = "0.46"
+nu-ansi-term = "0.50"
+
+# Testing
+insta = { version = "1", features = ["glob"] }

@@ -1,0 +1,2 @@
+# arithmetic is evaluated eagerly
+[3 4 + 10 2 *]

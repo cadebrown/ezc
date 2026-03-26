@@ -1,0 +1,18 @@
+[package]
+name = "ezc"
+description = "Core language implementation for ezc — a stack-based RPN language"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+num-bigint.workspace = true
+num-traits.workspace = true
+thiserror.workspace = true
+chumsky.workspace = true
+ariadne.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+insta.workspace = true

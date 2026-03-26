@@ -1,0 +1,2 @@
+# sum pair while keeping both: a b _ _ + => a b (a+b)
+3 5 _ _ +

@@ -1,0 +1,9 @@
+---
+source: crates/ezc/tests/snapshot.rs
+assertion_line: 30
+expression: output
+input_file: tests/ezc/over/add_both.ezc
+---
+3
+5
+8

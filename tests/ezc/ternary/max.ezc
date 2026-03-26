@@ -1,0 +1,4 @@
+# max(3,7): push both twice, subtract, check sign via == 0
+# simpler: just use a known condition
+# 3 7 <true> ?? => 7
+3 7 1 ??

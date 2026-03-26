@@ -1,0 +1,13 @@
+---
+source: crates/ezc/tests/snapshot.rs
+assertion_line: 35
+expression: report
+input_file: tests/ezc/errors/division_by_zero.ezc
+---
+Error: division by zero
+   ╭─[ division_by_zero.ezc:1:6 ]
+   │
+ 1 │ 42 0 /
+   │      ┬  
+   │      ╰── division by zero
+───╯

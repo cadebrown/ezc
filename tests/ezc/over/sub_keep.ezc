@@ -1,0 +1,2 @@
+# compute b-a while keeping a: a b _ - => a (b-a)
+3 10 _ -

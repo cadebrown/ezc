@@ -1,0 +1,2 @@
+# condition false on first check — body never runs
+0 (: 0 !=) (1 +) &

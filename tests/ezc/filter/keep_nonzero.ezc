@@ -1,0 +1,5 @@
+# nonzero ints are truthy -- use identity block
+# but we need the predicate to return a value...
+# filter checks truthiness of top of sub-stack after running block
+# so just leave the value there (empty block = identity)
+[0 1 0 2 0 3] () &?
