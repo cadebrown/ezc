@@ -57,6 +57,8 @@ pub enum Token {
     AmpBang,
     /// `&?` — filter.
     AmpQuestion,
+    /// `&/` — fold / reduce.
+    AmpSlash,
     /// `&` — loop.
     Amp,
     /// `==` — equality.
@@ -73,8 +75,14 @@ pub enum Token {
     GtEq,
     /// `~` — swap.
     Tilde,
-    /// `:` — dup.
+    /// `,` — dup (copy top).
+    Comma,
+    /// `;` — drop (discard top).
+    Semicolon,
+    /// `:` — write (print + newline + consume).
     Colon,
+    /// `.` — read (line from stdin).
+    Dot,
     /// `_` — over.
     Underscore,
     /// `@name` — bind: pop and store in variable.
@@ -111,6 +119,7 @@ impl fmt::Display for Token {
             Token::Pipe => write!(f, "|"),
             Token::AmpBang => write!(f, "&!"),
             Token::AmpQuestion => write!(f, "&?"),
+            Token::AmpSlash => write!(f, "&/"),
             Token::Amp => write!(f, "&"),
             Token::Eq => write!(f, "=="),
             Token::NotEq => write!(f, "!="),
@@ -119,7 +128,10 @@ impl fmt::Display for Token {
             Token::LtEq => write!(f, "<="),
             Token::GtEq => write!(f, ">="),
             Token::Tilde => write!(f, "~"),
+            Token::Comma => write!(f, ","),
+            Token::Semicolon => write!(f, ";"),
             Token::Colon => write!(f, ":"),
+            Token::Dot => write!(f, "."),
             Token::Underscore => write!(f, "_"),
             Token::Bind(name) => write!(f, "@{name}"),
             Token::Recall(name) => write!(f, "${name}"),

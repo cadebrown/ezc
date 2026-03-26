@@ -9,6 +9,49 @@ use crate::number::{self, ArithOp, Number};
 use crate::token::Op;
 use crate::types::{Block, Value};
 
+/// I/O backend for the engine. Default uses stdin/stdout.
+pub trait EzIo {
+    fn read_line(&mut self) -> std::io::Result<String>;
+    fn read_byte(&mut self) -> std::io::Result<u8>;
+    fn write_str(&mut self, s: &str) -> std::io::Result<()>;
+    fn write_byte(&mut self, b: u8) -> std::io::Result<()>;
+}
+
+/// Default I/O using stdin/stdout.
+pub struct StdIo;
+
+impl EzIo for StdIo {
+    fn read_line(&mut self) -> std::io::Result<String> {
+        use std::io::BufRead;
+        let mut line = String::new();
+        std::io::stdin().lock().read_line(&mut line)?;
+        if line.ends_with('\n') {
+            line.pop();
+        }
+        if line.ends_with('\r') {
+            line.pop();
+        }
+        Ok(line)
+    }
+    fn read_byte(&mut self) -> std::io::Result<u8> {
+        use std::io::Read;
+        let mut buf = [0u8];
+        std::io::stdin().lock().read_exact(&mut buf)?;
+        Ok(buf[0])
+    }
+    fn write_str(&mut self, s: &str) -> std::io::Result<()> {
+        use std::io::Write;
+        let mut out = std::io::stdout().lock();
+        out.write_all(s.as_bytes())?;
+        out.write_all(b"\n")?;
+        out.flush()
+    }
+    fn write_byte(&mut self, b: u8) -> std::io::Result<()> {
+        use std::io::Write;
+        std::io::stdout().lock().write_all(&[b])
+    }
+}
+
 /// A value tagged with the source span where it was produced.
 #[derive(Debug, Clone)]
 pub struct Tagged {
@@ -27,6 +70,8 @@ pub struct Engine {
     env: Vec<HashMap<String, Value>>,
     /// Interner for deduplicating strings, bins, and big integers.
     pub interner: Interner,
+    /// I/O backend.
+    io: Box<dyn EzIo>,
 }
 
 impl Engine {
@@ -35,6 +80,17 @@ impl Engine {
             stack: Vec::new(),
             env: vec![HashMap::new()],
             interner: Interner::new(),
+            io: Box::new(StdIo),
+        }
+    }
+
+    /// Create an engine with a custom I/O backend.
+    pub fn with_io(io: Box<dyn EzIo>) -> Self {
+        Engine {
+            stack: Vec::new(),
+            env: vec![HashMap::new()],
+            interner: Interner::new(),
+            io,
         }
     }
 
@@ -117,6 +173,7 @@ impl Engine {
             stack: Vec::new(),
             env: self.env.clone(),
             interner: Interner::new(), // child gets its own interner
+            io: Box::new(StdIo),       // child gets default I/O
         }
     }
 
@@ -154,6 +211,69 @@ impl Engine {
             }
 
             Expr::Ident(name) => {
+                // No-arg builtins: these don't pop from the stack.
+                match name.as_str() {
+                    "rl" => {
+                        let line = self.io.read_line().map_err(|e| EvalError {
+                            kind: EvalErrorKind::IoError(e.to_string()),
+                            span: Some(span.clone()),
+                            labels: vec![],
+                        })?;
+                        self.stack.push(Tagged {
+                            value: Value::Str(self.interner.intern_str(&line)),
+                            span,
+                        });
+                        return Ok(());
+                    }
+                    "rb" => {
+                        let b = self.io.read_byte().map_err(|e| EvalError {
+                            kind: EvalErrorKind::IoError(e.to_string()),
+                            span: Some(span.clone()),
+                            labels: vec![],
+                        })?;
+                        self.stack.push(Tagged {
+                            value: Value::int(b as i64),
+                            span,
+                        });
+                        return Ok(());
+                    }
+                    "wl" => {
+                        let val = self.pop("wl", &span)?;
+                        let text = val.value.to_string();
+                        self.io.write_str(&text).map_err(|e| EvalError {
+                            kind: EvalErrorKind::IoError(e.to_string()),
+                            span: Some(span),
+                            labels: vec![],
+                        })?;
+                        return Ok(());
+                    }
+                    "wb" => {
+                        let val = self.pop("wb", &span)?;
+                        match &val.value {
+                            Value::Num(n) => {
+                                let byte = n.to_f64_lossy() as u8;
+                                self.io.write_byte(byte).map_err(|e| EvalError {
+                                    kind: EvalErrorKind::IoError(e.to_string()),
+                                    span: Some(span),
+                                    labels: vec![],
+                                })?;
+                                return Ok(());
+                            }
+                            _ => {
+                                return Err(EvalError {
+                                    kind: EvalErrorKind::TypeMismatch {
+                                        op: "wb".into(),
+                                        expected: "a number".into(),
+                                        found: val.value.type_name().into(),
+                                    },
+                                    span: Some(span),
+                                    labels: vec![],
+                                });
+                            }
+                        }
+                    }
+                    _ => {}
+                }
                 self.eval_builtin(name, &span)?;
             }
 
@@ -175,11 +295,52 @@ impl Engine {
                         // Dynamic scope: block sees current env, not definition-time env.
                         self.eval(&block.body)?;
                     }
+                    Value::List(items) => {
+                        debug!("splatting list ({} items)", items.len());
+                        for item in items {
+                            self.stack.push(Tagged {
+                                value: item,
+                                span: span.clone(),
+                            });
+                        }
+                    }
+                    Value::Str(s) => {
+                        debug!("eval string as code");
+                        let src = s.0.to_string();
+                        let tokens = crate::lexer::lex(&src).map_err(|errs| EvalError {
+                            kind: EvalErrorKind::TypeMismatch {
+                                op: "!".into(),
+                                expected: "valid ezc code".into(),
+                                found: errs
+                                    .iter()
+                                    .map(|e| e.to_string())
+                                    .collect::<Vec<_>>()
+                                    .join("; "),
+                            },
+                            span: Some(span.clone()),
+                            labels: vec![],
+                        })?;
+                        let ast =
+                            crate::parser::parse(&tokens, src.len()).map_err(|errs| EvalError {
+                                kind: EvalErrorKind::TypeMismatch {
+                                    op: "!".into(),
+                                    expected: "valid ezc code".into(),
+                                    found: errs
+                                        .iter()
+                                        .map(|e| e.to_string())
+                                        .collect::<Vec<_>>()
+                                        .join("; "),
+                                },
+                                span: Some(span.clone()),
+                                labels: vec![],
+                            })?;
+                        self.eval(&ast)?;
+                    }
                     other => {
                         return Err(EvalError {
                             kind: EvalErrorKind::TypeMismatch {
                                 op: "!".into(),
-                                expected: "a block".into(),
+                                expected: "a block, list, or string".into(),
                                 found: other.type_name().into(),
                             },
                             span: Some(span),
@@ -297,9 +458,35 @@ impl Engine {
             }
 
             Expr::Dup => {
-                let a = self.pop(":", &span)?;
+                let a = self.pop(",", &span)?;
                 self.stack.push(a.clone());
                 self.stack.push(a);
+            }
+
+            Expr::Drop => {
+                self.pop(";", &span)?;
+            }
+
+            Expr::Write => {
+                let val = self.pop(":", &span)?;
+                let text = val.value.to_string();
+                self.io.write_str(&text).map_err(|e| EvalError {
+                    kind: EvalErrorKind::IoError(e.to_string()),
+                    span: Some(span),
+                    labels: vec![],
+                })?;
+            }
+
+            Expr::Read => {
+                let line = self.io.read_line().map_err(|e| EvalError {
+                    kind: EvalErrorKind::IoError(e.to_string()),
+                    span: Some(span.clone()),
+                    labels: vec![],
+                })?;
+                self.stack.push(Tagged {
+                    value: Value::Str(self.interner.intern_str(&line)),
+                    span,
+                });
             }
 
             Expr::Over => {
@@ -507,6 +694,50 @@ impl Engine {
                                 ErrorLabel {
                                     span: body.span,
                                     message: format!("this is {}", b.type_name()),
+                                },
+                            ],
+                        });
+                    }
+                }
+            }
+
+            Expr::Fold => {
+                let block_tagged = self.pop("&/", &span)?;
+                let init = self.pop("&/", &span)?;
+                let list_tagged = self.pop("&/", &span)?;
+                match (&list_tagged.value, &block_tagged.value) {
+                    (Value::List(items), Value::Block(b)) => {
+                        let items = items.clone();
+                        let body = b.body.clone();
+                        self.stack.push(init);
+                        for item in items {
+                            self.stack.push(Tagged {
+                                value: item,
+                                span: span.clone(),
+                            });
+                            self.eval(&body)?;
+                        }
+                    }
+                    _ => {
+                        return Err(EvalError {
+                            kind: EvalErrorKind::TypeMismatch {
+                                op: "&/".into(),
+                                expected: "a list and a block".into(),
+                                found: format!(
+                                    "{} and {}",
+                                    list_tagged.value.type_name(),
+                                    block_tagged.value.type_name()
+                                ),
+                            },
+                            span: Some(span),
+                            labels: vec![
+                                ErrorLabel {
+                                    span: list_tagged.span,
+                                    message: format!("this is {}", list_tagged.value.type_name()),
+                                },
+                                ErrorLabel {
+                                    span: block_tagged.span,
+                                    message: format!("this is {}", block_tagged.value.type_name()),
                                 },
                             ],
                         });
@@ -887,12 +1118,12 @@ mod tests {
 
     #[test]
     fn dup() {
-        assert_eq!(run("5 :"), vec![Value::int(5), Value::int(5)]);
+        assert_eq!(run("5 ,"), vec![Value::int(5), Value::int(5)]);
     }
 
     #[test]
     fn dup_square() {
-        assert_eq!(run("7 : *"), vec![Value::int(49)]);
+        assert_eq!(run("7 , *"), vec![Value::int(49)]);
     }
 
     #[test]
@@ -1049,12 +1280,12 @@ mod tests {
 
     #[test]
     fn loop_countdown() {
-        assert_eq!(run("5 (: 0 !=) (1 -) &"), vec![Value::int(0)]);
+        assert_eq!(run("5 (, 0 !=) (1 -) &"), vec![Value::int(0)]);
     }
 
     #[test]
     fn loop_zero_iters() {
-        assert_eq!(run("0 (: 0 !=) (1 +) &"), vec![Value::int(0)]);
+        assert_eq!(run("0 (, 0 !=) (1 +) &"), vec![Value::int(0)]);
     }
 
     // ── Variables ─────────────────────────────────────────────────────────
@@ -1066,7 +1297,7 @@ mod tests {
 
     #[test]
     fn named_function() {
-        assert_eq!(run("(: *) @square 5 $square !"), vec![Value::int(25)]);
+        assert_eq!(run("(, *) @square 5 $square !"), vec![Value::int(25)]);
     }
 
     #[test]

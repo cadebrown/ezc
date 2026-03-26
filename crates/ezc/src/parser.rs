@@ -50,6 +50,7 @@ where
             Token::Amp => Expr::Loop,
             Token::AmpBang => Expr::Map,
             Token::AmpQuestion => Expr::Filter,
+            Token::AmpSlash => Expr::Fold,
             Token::Eq => Expr::Equal,
             Token::NotEq => Expr::NotEqual,
             Token::Lt => Expr::Lt,
@@ -57,7 +58,10 @@ where
             Token::LtEq => Expr::LtEq,
             Token::GtEq => Expr::GtEq,
             Token::Tilde => Expr::Swap,
-            Token::Colon => Expr::Dup,
+            Token::Comma => Expr::Dup,
+            Token::Semicolon => Expr::Drop,
+            Token::Colon => Expr::Write,
+            Token::Dot => Expr::Read,
             Token::Underscore => Expr::Over,
             Token::Bind(name) => Expr::Bind(name),
             Token::Recall(name) => Expr::Recall(name),
@@ -277,7 +281,7 @@ mod tests {
     #[test]
     fn all_operators() {
         assert_eq!(
-            exprs("! ? ?? | & &! &? == != < > <= >= ~ : _"),
+            exprs("! ? ?? | & &! &? &/ == != < > <= >= ~ , ; : . _"),
             vec![
                 Expr::Execute,
                 Expr::Cond,
@@ -286,6 +290,7 @@ mod tests {
                 Expr::Loop,
                 Expr::Map,
                 Expr::Filter,
+                Expr::Fold,
                 Expr::Equal,
                 Expr::NotEqual,
                 Expr::Lt,
@@ -294,6 +299,9 @@ mod tests {
                 Expr::GtEq,
                 Expr::Swap,
                 Expr::Dup,
+                Expr::Drop,
+                Expr::Write,
+                Expr::Read,
                 Expr::Over,
             ]
         );

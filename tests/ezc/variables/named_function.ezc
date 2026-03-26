@@ -1,2 +1,2 @@
-(: *) @square
+(, *) @square
 5 $square !

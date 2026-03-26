@@ -37,6 +37,8 @@ pub enum Expr {
     Map,
     /// `&?` — filter.
     Filter,
+    /// `&/` — fold / reduce.
+    Fold,
     /// `==` — equality comparison, pushes Bool.
     Equal,
     /// `!=` — not-equal comparison, pushes Bool.
@@ -51,8 +53,14 @@ pub enum Expr {
     GtEq,
     /// `~` — swap top two stack elements.
     Swap,
-    /// `:` — dup: duplicate top of stack.
+    /// `,` — dup: duplicate top of stack.
     Dup,
+    /// `;` — drop: discard top of stack.
+    Drop,
+    /// `:` — write: print top of stack with newline, consume it.
+    Write,
+    /// `.` — read: read a line from stdin, push as string.
+    Read,
     /// `_` — over: copy second element to top.
     Over,
     /// `@name` — bind: pop top of stack and store in variable.

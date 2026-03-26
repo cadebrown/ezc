@@ -19,17 +19,26 @@ pub const COMPLETIONS: &[(&str, &str)] = &[
     ("<=", "less or equal"),
     (">=", "greater or equal"),
     // Control
-    ("!", "execute block"),
+    ("!", "execute/splat/eval"),
     ("?", "conditional drop"),
     ("??", "ternary branch"),
     ("|", "compose/concat"),
     ("&", "loop"),
     ("&!", "map"),
     ("&?", "filter"),
+    ("&/", "fold/reduce"),
     // Stack
     ("~", "swap top two"),
+    (",", "dup (copy top)"),
+    (";", "drop (discard top)"),
     ("_", "over (dup under)"),
-    (":", "duplicate top"),
+    // I/O
+    (":", "write (print + newline)"),
+    (".", "read line"),
+    ("rl", "read line"),
+    ("wl", "write line"),
+    ("rb", "read byte"),
+    ("wb", "write byte"),
     // Type constructors
     ("int", "cast to bigint"),
     ("u8", "cast to u8"),

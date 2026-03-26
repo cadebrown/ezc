@@ -106,6 +106,7 @@ fn lexer<'src>(
     let double_question = just("??").to(Token::DoubleQuestion);
     let amp_bang = just("&!").to(Token::AmpBang);
     let amp_question = just("&?").to(Token::AmpQuestion);
+    let amp_slash = just("&/").to(Token::AmpSlash);
     let eq = just("==").to(Token::Eq);
     let not_eq = just("!=").to(Token::NotEq);
     let lt_eq = just("<=").to(Token::LtEq);
@@ -119,7 +120,10 @@ fn lexer<'src>(
     let pipe = just('|').to(Token::Pipe);
     let amp = just('&').to(Token::Amp);
     let tilde = just('~').to(Token::Tilde);
+    let comma = just(',').to(Token::Comma);
+    let semicolon = just(';').to(Token::Semicolon);
     let colon = just(':').to(Token::Colon);
+    let dot = just('.').to(Token::Dot);
     let underscore_op = just('_').to(Token::Underscore);
 
     // ── Arithmetic operators ──────────────────────────────────────────────
@@ -163,6 +167,7 @@ fn lexer<'src>(
         double_question,
         amp_bang,
         amp_question,
+        amp_slash,
         eq,
         not_eq,
         lt_eq,
@@ -179,7 +184,10 @@ fn lexer<'src>(
         pipe,
         amp,
         tilde,
+        comma,
+        semicolon,
         colon,
+        dot,
         underscore_op,
         add,
         sub,

@@ -43,7 +43,7 @@ Values are pushed onto the stack. Operators pop arguments and push results.
 3.14              # float literal (f64)
 0xFF              # hex integer
 1 2 ~             # swap → 2 1
-5 @x $x $x +     # bind and recall → 10
+5 @x $x $x +     # variables → 10
 { 10 @t $t 2 * }  # scoped bindings → 20
 42 f32            # type constructor → 42.0f32
 ```
@@ -51,11 +51,12 @@ Values are pushed onto the stack. Operators pop arguments and push results.
 ### Operators
 
 Math: `+ - * / % ^`
-Stack: `:` (dup), `~` (swap), `_` (over)
-Control: `!` (exec), `?` (cond drop), `??` (ternary), `&` (loop)
+Stack: `,` (dup), `;` (drop), `~` (swap), `_` (over)
+Control: `!` (exec/splat/eval), `?` (cond drop), `??` (ternary), `&` (loop)
 Compose: `|` (concat lists, strings, or blocks)
-Higher-order: `&!` (map), `&?` (filter)
+Higher-order: `&!` (map), `&?` (filter), `&/` (fold)
 Comparison: `== != < > <= >=` (push 1 or 0)
+I/O: `:` (write line), `.` (read line), `rl`/`wl`/`rb`/`wb`
 Variables: `@name` (bind), `$name` (recall)
 Scoping: `{...}` (local bindings)
 

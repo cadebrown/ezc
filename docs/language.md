@@ -94,7 +94,7 @@ bindings inside don't leak out, but stack effects pass through:
 
 ```
 5 @x $x $x +        # → 10
-(: *) @square        # define a function
+(, *) @square        # define a function
 5 $square !          # → 25
 ```
 
@@ -119,7 +119,8 @@ All binary. Pop two values, push result.
 
 | Op | Description | Example |
 |----|-------------|---------|
-| `:` | Dup (copy top) | `5 :` → `5 5` |
+| `,` | Dup (copy top) | `5 ,` → `5 5` |
+| `;` | Drop (discard top) | `1 2 3 ;` → `1 2` |
 | `~` | Swap top two | `1 2 ~` → `2 1` |
 | `_` | Over (copy second to top) | `1 2 _` → `1 2 1` |
 
@@ -127,10 +128,26 @@ All binary. Pop two values, push result.
 
 | Op | Description | Example |
 |----|-------------|---------|
-| `!` | Execute a block | `3 (4 +) !` → `7` |
+| `!` | Execute block / splat list / eval string | `3 (4 +) !` → `7` |
 | `?` | Conditional: if top is falsy, also pop next | `5 0 ?` → (empty) |
 | `??` | Ternary: pop cond, keep one of two values | `10 20 1 ??` → `20` |
-| `&` | Loop: `cond body &` — while cond is truthy | `5 (: 0 !=) (1 -) &` → `0` |
+| `&` | Loop: `cond body &` — while cond is truthy | `5 (, 0 !=) (1 -) &` → `0` |
+
+`!` works on multiple types:
+- **Block**: execute the code — `(3 4 +) !` → `7`
+- **List**: splat onto stack — `[1 2 3] !` → `1 2 3`
+- **String**: eval as code — `"3 4 +" !` → `7`
+
+### I/O
+
+| Op | Description |
+|----|-------------|
+| `:` | Write: print top of stack with newline, consume it |
+| `.` | Read: read a line from stdin, push as string |
+| `rl` | Read line (same as `.`) |
+| `wl` | Write line (same as `:`) |
+| `rb` | Read byte, push as int |
+| `wb` | Pop int, write as byte |
 
 ### Comparison
 
@@ -167,6 +184,7 @@ Pop two values, push `1` (true) or `0` (false). Works on numbers and strings.
 |----|-------------|---------|
 | `&!` | Map: apply block to each element | `[1 2 3] (1 +) &!` → `[2 3 4]` |
 | `&?` | Filter: keep elements where block is truthy | `[1 2 3 4 5] (3 >) &?` → `[4 5]` |
+| `&/` | Fold: `list init (block) &/` | `[1 2 3] 0 (+) &/` → `6` |
 
 ### Type Constructors
 
@@ -227,20 +245,27 @@ Error: `+` got list and int — needs two numbers
 ## Examples
 
 ```
-# Factorial via loop: 5! = 120
-5 1 ~ (~ : 0 !=) (~ _ * ~ 1 -) & ~
-# Stack: 120 0 → drop the 0, keep 120
-
-# Fibonacci sequence as a list
-[1 1] 10 (: (: 1 - 0 !=) ~ (: _ + ~) & ~) &!
-# ... work in progress
-
 # Named functions
-(: *) @square
-(: $square ! $square !) @fourth
+(, *) @square
+(, $square ! $square !) @fourth
 2 $fourth !    # → 16
 
-# Map with a variable
+# Sum and product via fold
+[1 2 3 4 5] 0 (+) &/    # → 15
+[1 2 3 4 5] 1 (*) &/    # → 120
+
+# Map with a captured variable
 10 @offset
 [1 2 3] ($offset +) &!    # → [11 12 13]
+
+# Splat a list onto the stack
+[10 20 30] ! + +           # → 60
+
+# Eval a string as code
+"3 4 +" !                  # → 7
+
+# I/O
+"What is your name? " wl   # prompt (no newline... wait, wl adds newline)
+. @name                    # read a line, bind to name
+"Hello, " $name | :        # greet
 ```

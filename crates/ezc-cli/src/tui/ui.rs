@@ -80,6 +80,7 @@ fn token_style(tok: &Token) -> Style {
         | Token::Amp
         | Token::AmpBang
         | Token::AmpQuestion
+        | Token::AmpSlash
         | Token::Eq
         | Token::NotEq
         | Token::Lt
@@ -87,7 +88,10 @@ fn token_style(tok: &Token) -> Style {
         | Token::LtEq
         | Token::GtEq
         | Token::Tilde
+        | Token::Comma
+        | Token::Semicolon
         | Token::Colon
+        | Token::Dot
         | Token::Underscore => Style::default()
             .fg(Color::White)
             .add_modifier(Modifier::BOLD),

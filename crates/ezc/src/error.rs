@@ -59,6 +59,9 @@ pub enum EvalErrorKind {
 
     #[error("undefined: ${name}")]
     UndefinedVariable { name: String },
+
+    #[error("I/O error: {0}")]
+    IoError(String),
 }
 
 impl fmt::Display for EzError {
