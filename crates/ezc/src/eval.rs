@@ -811,6 +811,160 @@ impl Engine {
                 _ => return Err(self.cast_error(name, &val, span)),
             },
 
+            // ── Numeric operations ────────────────────────────────────────
+            "neg" => match val {
+                Value::Num(n) => {
+                    use crate::number::Number;
+                    let negated = match n {
+                        Number::Int(ref i) => {
+                            let neg = -(i.as_ref().clone());
+                            self.interner.intern_int(neg)
+                        }
+                        Number::I8(v) => Number::I8(-v),
+                        Number::I16(v) => Number::I16(-v),
+                        Number::I32(v) => Number::I32(-v),
+                        Number::I64(v) => Number::I64(-v),
+                        Number::I128(v) => Number::I128(-v),
+                        Number::I256(v) => Number::I256(-v),
+                        Number::F16(v) => Number::F16(-v),
+                        Number::F32(v) => Number::F32(-v),
+                        Number::F64(v) => Number::F64(-v),
+                        _ => return Err(self.cast_error(name, &Value::Num(n), span)),
+                    };
+                    Value::Num(negated)
+                }
+                _ => return Err(self.cast_error(name, &val, span)),
+            },
+            "abs" => match val {
+                Value::Num(n) => {
+                    use crate::number::Number;
+                    let result = match n {
+                        Number::Int(ref i) => {
+                            let a = if i.as_ref() < &num_bigint::BigInt::ZERO { -(i.as_ref().clone()) } else { i.as_ref().clone() };
+                            self.interner.intern_int(a)
+                        }
+                        Number::I8(v) => Number::I8(v.abs()),
+                        Number::I16(v) => Number::I16(v.abs()),
+                        Number::I32(v) => Number::I32(v.abs()),
+                        Number::I64(v) => Number::I64(v.abs()),
+                        Number::I128(v) => Number::I128(v.abs()),
+                        Number::I256(v) => Number::I256(v.abs()),
+                        Number::F16(v) => {
+                            Number::F16(half::f16::from_f64(f64::from(f32::from(v)).abs()))
+                        }
+                        Number::F32(v) => Number::F32(v.abs()),
+                        Number::F64(v) => Number::F64(v.abs()),
+                        other => other, // unsigned types are already non-negative
+                    };
+                    Value::Num(result)
+                }
+                _ => return Err(self.cast_error(name, &val, span)),
+            },
+
+            // ── Collection operations ─────────────────────────────────────
+            "len" => match &val {
+                Value::List(items) => Value::int(items.len() as i64),
+                Value::Str(s) => Value::int(s.0.len() as i64),
+                Value::Bin(b) => Value::int(b.0.len() as i64),
+                _ => return Err(self.cast_error(name, &val, span)),
+            },
+            "hd" => match val {
+                Value::List(items) => {
+                    if items.is_empty() {
+                        return Err(EvalError {
+                            kind: EvalErrorKind::StackUnderflow {
+                                op: "hd".into(),
+                                expected: 1,
+                                found: 0,
+                            },
+                            span: Some(span.clone()),
+                            labels: vec![],
+                        });
+                    }
+                    items.into_iter().next().unwrap()
+                }
+                _ => return Err(self.cast_error(name, &val, span)),
+            },
+            "tl" => match val {
+                Value::List(mut items) => {
+                    if items.is_empty() {
+                        return Err(EvalError {
+                            kind: EvalErrorKind::StackUnderflow {
+                                op: "tl".into(),
+                                expected: 1,
+                                found: 0,
+                            },
+                            span: Some(span.clone()),
+                            labels: vec![],
+                        });
+                    }
+                    items.remove(0);
+                    Value::List(items)
+                }
+                _ => return Err(self.cast_error(name, &val, span)),
+            },
+            "rev" => match val {
+                Value::List(mut items) => {
+                    items.reverse();
+                    Value::List(items)
+                }
+                Value::Str(s) => {
+                    let reversed: String = s.0.chars().rev().collect();
+                    Value::Str(self.interner.intern_str(&reversed))
+                }
+                _ => return Err(self.cast_error(name, &val, span)),
+            },
+            "srt" => match val {
+                Value::List(mut items) => {
+                    items.sort_by_key(|a| a.to_string());
+                    Value::List(items)
+                }
+                _ => return Err(self.cast_error(name, &val, span)),
+            },
+            "typeof" => {
+                let type_name = val.type_name();
+                Value::Str(self.interner.intern_str(type_name))
+            }
+            "iota" => match &val {
+                Value::Num(n) => {
+                    let count = n.to_f64_lossy() as i64;
+                    if count < 0 {
+                        return Err(self.cast_error(name, &val, span));
+                    }
+                    let items: Vec<Value> = (0..count).map(Value::int).collect();
+                    Value::List(items)
+                }
+                _ => return Err(self.cast_error(name, &val, span)),
+            },
+            "nth" => {
+                // `nth` pops index (already popped as `val`), then pops list.
+                let index = match &val {
+                    Value::Num(n) => n.to_f64_lossy() as usize,
+                    _ => return Err(self.cast_error(name, &val, span)),
+                };
+                let list_tagged = self.pop("nth", span)?;
+                match list_tagged.value {
+                    Value::List(items) => {
+                        if index >= items.len() {
+                            return Err(EvalError {
+                                kind: EvalErrorKind::StackUnderflow {
+                                    op: format!(
+                                        "nth (index {index} out of bounds, len {})",
+                                        items.len()
+                                    ),
+                                    expected: index + 1,
+                                    found: items.len(),
+                                },
+                                span: Some(span.clone()),
+                                labels: vec![],
+                            });
+                        }
+                        items.into_iter().nth(index).unwrap()
+                    }
+                    _ => return Err(self.cast_error(name, &list_tagged.value, span)),
+                }
+            }
+
             _ => {
                 return Err(EvalError {
                     kind: EvalErrorKind::UndefinedVariable {

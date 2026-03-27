@@ -58,6 +58,17 @@ pub const COMPLETIONS: &[(&str, &str)] = &[
     ("f64", "cast to f64"),
     ("str", "cast to string"),
     ("bin", "cast to binary"),
+    // Builtins
+    ("neg", "negate"),
+    ("abs", "absolute value"),
+    ("len", "length"),
+    ("nth", "index into list"),
+    ("iota", "range [0..n)"),
+    ("typeof", "type name as str"),
+    ("rev", "reverse list/str"),
+    ("srt", "sort list"),
+    ("hd", "head (first elem)"),
+    ("tl", "tail (rest of list)"),
 ];
 
 /// Check whether a token string is a known operator (for syntax highlighting).
