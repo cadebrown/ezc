@@ -40,6 +40,8 @@ enum Commands {
         #[arg(long)]
         no_tui: bool,
     },
+    /// Start the language server (communicates over stdio)
+    Lsp,
 }
 
 fn main() {
@@ -50,6 +52,7 @@ fn main() {
         Commands::Run { file } => commands::run::execute(&file),
         Commands::Check { file } => commands::check::execute(&file),
         Commands::Repl { no_tui } => commands::repl::execute(no_tui),
+        Commands::Lsp => commands::lsp::execute(),
     };
 
     if let Err(e) = result {

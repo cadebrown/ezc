@@ -1,0 +1,148 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "EZC",
+  "scopeName": "source.ezc",
+  "fileTypes": ["ezc"],
+  "patterns": [
+    { "include": "#comment" },
+    { "include": "#string" },
+    { "include": "#numeric" },
+    { "include": "#variable-bind" },
+    { "include": "#variable-recall" },
+    { "include": "#operator-multi" },
+    { "include": "#operator-comparison" },
+    { "include": "#operator-arithmetic" },
+    { "include": "#operator-stack" },
+    { "include": "#operator-io" },
+    { "include": "#operator-control" },
+    { "include": "#operator-compose" },
+    { "include": "#type-constructor" },
+    { "include": "#builtin" },
+    { "include": "#identifier" },
+    { "include": "#delimiter" }
+  ],
+  "repository": {
+    "comment": {
+      "name": "comment.line.number-sign.ezc",
+      "match": "#.*$"
+    },
+    "string": {
+      "name": "string.quoted.double.ezc",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        {
+          "name": "constant.character.escape.ezc",
+          "match": "\\\\[ntr\\\\\"0]"
+        }
+      ]
+    },
+    "numeric": {
+      "patterns": [
+        {
+          "name": "constant.numeric.hex.ezc",
+          "match": "\\b0x[0-9a-fA-F]+(u8|u16|u32|u64|u128|u256|i8|i16|i32|i64|i128|i256)?\\b"
+        },
+        {
+          "name": "constant.numeric.float.ezc",
+          "match": "\\b[0-9]+\\.[0-9]+([eE][+-]?[0-9]+)?(f16|f32|f64)?\\b"
+        },
+        {
+          "name": "constant.numeric.float.ezc",
+          "match": "\\b[0-9]+(f16|f32|f64)\\b"
+        },
+        {
+          "name": "constant.numeric.integer.typed.ezc",
+          "match": "\\b[0-9]+(u8|u16|u32|u64|u128|u256|i8|i16|i32|i64|i128|i256)\\b"
+        },
+        {
+          "name": "constant.numeric.integer.ezc",
+          "match": "\\b[0-9]+\\b"
+        }
+      ]
+    },
+    "variable-bind": {
+      "match": "(@)([a-zA-Z_][a-zA-Z0-9_]*)",
+      "captures": {
+        "1": { "name": "punctuation.definition.variable.bind.ezc" },
+        "2": { "name": "variable.other.bind.ezc" }
+      }
+    },
+    "variable-recall": {
+      "match": "(\\$)([a-zA-Z_][a-zA-Z0-9_]*)",
+      "captures": {
+        "1": { "name": "punctuation.definition.variable.recall.ezc" },
+        "2": { "name": "variable.other.recall.ezc" }
+      }
+    },
+    "operator-multi": {
+      "patterns": [
+        { "name": "keyword.operator.higher-order.map.ezc",    "match": "&!" },
+        { "name": "keyword.operator.higher-order.filter.ezc", "match": "&\\?" },
+        { "name": "keyword.operator.higher-order.fold.ezc",   "match": "&/" },
+        { "name": "keyword.operator.control.ternary.ezc",     "match": "\\?\\?" },
+        { "name": "keyword.operator.comparison.ezc",          "match": "==" },
+        { "name": "keyword.operator.comparison.ezc",          "match": "!=" },
+        { "name": "keyword.operator.comparison.ezc",          "match": "<=" },
+        { "name": "keyword.operator.comparison.ezc",          "match": ">=" }
+      ]
+    },
+    "operator-comparison": {
+      "patterns": [
+        { "name": "keyword.operator.comparison.ezc", "match": "<" },
+        { "name": "keyword.operator.comparison.ezc", "match": ">" }
+      ]
+    },
+    "operator-arithmetic": {
+      "name": "keyword.operator.arithmetic.ezc",
+      "match": "[+\\-*/%^]"
+    },
+    "operator-stack": {
+      "patterns": [
+        { "name": "keyword.operator.stack.swap.ezc", "match": "~" },
+        { "name": "keyword.operator.stack.dup.ezc",  "match": "," },
+        { "name": "keyword.operator.stack.drop.ezc", "match": ";" },
+        { "name": "keyword.operator.stack.over.ezc", "match": "(?<![a-zA-Z0-9_])_(?![a-zA-Z0-9_])" }
+      ]
+    },
+    "operator-io": {
+      "patterns": [
+        { "name": "keyword.operator.io.write.ezc", "match": ":" },
+        { "name": "keyword.operator.io.read.ezc",  "match": "\\." }
+      ]
+    },
+    "operator-control": {
+      "patterns": [
+        { "name": "keyword.operator.control.execute.ezc", "match": "!" },
+        { "name": "keyword.operator.control.cond.ezc",    "match": "\\?" },
+        { "name": "keyword.operator.control.loop.ezc",    "match": "&" }
+      ]
+    },
+    "operator-compose": {
+      "name": "keyword.operator.compose.ezc",
+      "match": "\\|"
+    },
+    "type-constructor": {
+      "name": "support.type.ezc",
+      "match": "\\b(int|u8|u16|u32|u64|u128|u256|i8|i16|i32|i64|i128|i256|f16|f32|f64|str|bin)\\b"
+    },
+    "builtin": {
+      "name": "support.function.builtin.ezc",
+      "match": "\\b(rl|wl|rb|wb)\\b"
+    },
+    "identifier": {
+      "name": "variable.other.ezc",
+      "match": "\\b[a-zA-Z_][a-zA-Z0-9_]*\\b"
+    },
+    "delimiter": {
+      "patterns": [
+        { "name": "punctuation.section.block.begin.ezc", "match": "\\(" },
+        { "name": "punctuation.section.block.end.ezc",   "match": "\\)" },
+        { "name": "punctuation.section.list.begin.ezc",  "match": "\\[" },
+        { "name": "punctuation.section.list.end.ezc",    "match": "\\]" },
+        { "name": "punctuation.section.scope.begin.ezc", "match": "\\{" },
+        { "name": "punctuation.section.scope.end.ezc",   "match": "\\}" }
+      ]
+    }
+  }
+}

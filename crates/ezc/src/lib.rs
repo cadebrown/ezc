@@ -29,7 +29,7 @@ use eval::Engine;
 use types::Value;
 
 /// Lex and parse source into an AST, returning structured errors via `EzError`.
-fn lex_and_parse(src: &str) -> Result<Vec<ast::Spanned<ast::Expr>>, EzError> {
+pub fn lex_and_parse(src: &str) -> Result<Vec<ast::Spanned<ast::Expr>>, EzError> {
     let tokens = lexer::lex(src).map_err(|errs| {
         EzError::Parse(
             errs.into_iter()

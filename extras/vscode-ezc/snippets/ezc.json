@@ -1,0 +1,77 @@
+{
+  "Execute Block": {
+    "prefix": "exec",
+    "body": ["(${1:body}) !"],
+    "description": "Create and immediately execute a block"
+  },
+  "Named Function": {
+    "prefix": "fn",
+    "body": ["(${2:body}) @${1:name}"],
+    "description": "Define a named function (block bound to a variable)"
+  },
+  "Call Function": {
+    "prefix": "call",
+    "body": ["\\$${1:name} !"],
+    "description": "Recall and execute a named function"
+  },
+  "Loop": {
+    "prefix": "loop",
+    "body": ["(${1:condition}) (${2:body}) &"],
+    "description": "Loop while condition is truthy"
+  },
+  "Map": {
+    "prefix": "map",
+    "body": ["(${1:transform}) &!"],
+    "description": "Map a block over a list"
+  },
+  "Filter": {
+    "prefix": "filter",
+    "body": ["(${1:predicate}) &?"],
+    "description": "Filter a list by a predicate block"
+  },
+  "Fold": {
+    "prefix": "fold",
+    "body": ["${1:initial} (${2:combine}) &/"],
+    "description": "Fold/reduce a list with an initial value and combining block"
+  },
+  "Conditional": {
+    "prefix": "if",
+    "body": ["${1:value} ${2:condition} ?"],
+    "description": "Conditional: drop value if condition is falsy"
+  },
+  "Ternary": {
+    "prefix": "ternary",
+    "body": ["${1:if_false} ${2:if_true} ${3:condition} ??"],
+    "description": "Ternary: select one of two values based on condition"
+  },
+  "Scope": {
+    "prefix": "scope",
+    "body": ["{", "\t${1:body}", "}"],
+    "description": "Scoped block with local bindings"
+  },
+  "Let Bind": {
+    "prefix": "let",
+    "body": ["${2:value} @${1:name}"],
+    "description": "Bind a value to a variable"
+  },
+  "List": {
+    "prefix": "list",
+    "body": ["[${1:elements}]"],
+    "description": "Create a list"
+  },
+  "Compose": {
+    "prefix": "compose",
+    "body": ["${1:a} ${2:b} |"],
+    "description": "Compose/concatenate two blocks, lists, or strings"
+  },
+  "Write Line": {
+    "prefix": "print",
+    "body": ["${1:value} :"],
+    "description": "Print top of stack with newline and consume it"
+  },
+  "Read Line": {
+    "prefix": "input",
+    "body": ["."],
+    "description": "Read a line from stdin, push as string"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "name": "tree-sitter-ezc",
+  "version": "0.1.0",
+  "description": "Tree-sitter grammar for the EZC programming language",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cadebrown/ezc"
+  },
+  "main": "bindings/node",
+  "types": "bindings/node",
+  "keywords": [
+    "tree-sitter",
+    "parser",
+    "ezc"
+  ],
+  "dependencies": {
+    "node-addon-api": "^8.3.0",
+    "node-gyp-build": "^4.8.4"
+  },
+  "peerDependencies": {
+    "tree-sitter": "^0.22.4"
+  },
+  "peerDependenciesMeta": {
+    "tree-sitter": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "tree-sitter-cli": "^0.24.0"
+  },
+  "scripts": {
+    "generate": "tree-sitter generate",
+    "test": "tree-sitter test",
+    "parse": "tree-sitter parse"
+  }
+}

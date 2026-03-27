@@ -12,6 +12,7 @@ path = "src/main.rs"
 
 [dependencies]
 ezc.workspace = true
+ezc-lsp = { path = "../ezc-lsp" }
 clap.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true

@@ -1,0 +1,65 @@
+{
+  "name": "ezc",
+  "displayName": "EZC Language",
+  "description": "Language support for EZC — a stack-based, reverse-polish-notation programming language",
+  "version": "0.1.0",
+  "publisher": "cadebrown",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cadebrown/ezc"
+  },
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": ["Programming Languages", "Snippets"],
+  "activationEvents": ["onLanguage:ezc"],
+  "main": "./out/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "ezc",
+        "aliases": ["EZC", "ezc"],
+        "extensions": [".ezc"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "ezc",
+        "scopeName": "source.ezc",
+        "path": "./syntaxes/ezc.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "ezc",
+        "path": "./snippets/ezc.json"
+      }
+    ],
+    "configuration": {
+      "title": "EZC",
+      "properties": {
+        "ezc.server.path": {
+          "type": "string",
+          "default": "ezc",
+          "description": "Path to the ezc binary. Defaults to 'ezc' (must be in PATH)."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "vscode:prepublish": "npm run compile"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.75.0",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.0.0",
+    "@vscode/vsce": "^3.0.0"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.0"
+  }
+}

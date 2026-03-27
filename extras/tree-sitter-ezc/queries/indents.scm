@@ -1,0 +1,6 @@
+(block "(" @indent)
+(block ")" @outdent)
+(list "[" @indent)
+(list "]" @outdent)
+(scope "{" @indent)
+(scope "}" @outdent)
