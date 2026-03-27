@@ -76,6 +76,8 @@ pub const COMPLETIONS: &[(&str, &str)] = &[
     ("max", "maximum of two"),
     ("cut", "split string"),
     ("cat", "join list"),
+    ("if", "cond (block) if"),
+    ("ife", "cond (then) (else) ife"),
 ];
 
 /// Check whether a token string is a known operator (for syntax highlighting).

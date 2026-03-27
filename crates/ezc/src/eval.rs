@@ -289,6 +289,60 @@ impl Engine {
                             }
                         }
                     }
+                    "if" => {
+                        // cond (block) if → execute block if cond truthy
+                        let block = self.pop("if", &span)?;
+                        let cond = self.pop("if", &span)?;
+                        if cond.value.is_truthy() {
+                            match block.value {
+                                Value::Block(b) => self.eval(&b.body)?,
+                                _ => {
+                                    return Err(EvalError {
+                                        kind: EvalErrorKind::TypeMismatch {
+                                            op: "if".into(),
+                                            expected: "a block".into(),
+                                            found: block.value.type_name().into(),
+                                        },
+                                        span: Some(span),
+                                        labels: vec![ErrorLabel {
+                                            span: block.span,
+                                            message: format!("this is {}", block.value.type_name()),
+                                        }],
+                                    });
+                                }
+                            }
+                        }
+                        return Ok(());
+                    }
+                    "ife" => {
+                        // cond (then) (else) ife → execute then if truthy, else otherwise
+                        let else_tagged = self.pop("ife", &span)?;
+                        let then_tagged = self.pop("ife", &span)?;
+                        let cond = self.pop("ife", &span)?;
+                        let chosen = if cond.value.is_truthy() {
+                            then_tagged
+                        } else {
+                            else_tagged
+                        };
+                        match chosen.value {
+                            Value::Block(b) => self.eval(&b.body)?,
+                            _ => {
+                                return Err(EvalError {
+                                    kind: EvalErrorKind::TypeMismatch {
+                                        op: "ife".into(),
+                                        expected: "a block".into(),
+                                        found: chosen.value.type_name().into(),
+                                    },
+                                    span: Some(span),
+                                    labels: vec![ErrorLabel {
+                                        span: chosen.span,
+                                        message: format!("this is {}", chosen.value.type_name()),
+                                    }],
+                                });
+                            }
+                        }
+                        return Ok(());
+                    }
                     _ => {}
                 }
                 self.eval_builtin(name, &span)?;
