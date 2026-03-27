@@ -26,7 +26,6 @@ const THREAD_ID: i64 = 1;
 // ── Variable reference constants ─────────────────────────────────────────
 const VAR_REF_BINDINGS: usize = 1;
 const VAR_REF_STACK: usize = 2;
-const VAR_REF_DYNAMIC_START: usize = 3;
 
 // ── Session ───────────────────────────────────────────────────────────────
 

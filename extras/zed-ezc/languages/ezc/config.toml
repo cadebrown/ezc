@@ -1,0 +1,26 @@
+[language]
+name = "EZC"
+grammar = "ezc"
+path_suffixes = ["ezc"]
+line_comments = ["# "]
+block_comment = { start = "", end = "" }
+brackets = [
+  { start = "(", end = ")", close = true, newline = false },
+  { start = "[", end = "]", close = true, newline = false },
+  { start = "{", end = "}", close = true, newline = true },
+  { start = "\"", end = "\"", close = true, newline = false },
+]
+autoclose_before = ";:.,=}]\n "
+word_characters = "@$_"
+
+[language_server]
+name = "ezc-lsp"
+
+[[language.debuggers]]
+name = "ezc"
+command = "ezc"
+args = ["debug"]
+transport = "stdio"
+templates = [
+  { label = "Debug current file", request = "launch", variables = { program = "{file}" }, config = { stopOnEntry = true } },
+]

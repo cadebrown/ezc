@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EZC Playground</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #1a1b1e;
+      --panel:    #25262b;
+      --border:   #373a40;
+      --accent:   #4dabf7;
+      --green:    #69db7c;
+      --red:      #ff6b6b;
+      --yellow:   #ffd43b;
+      --text:     #c1c2c5;
+      --dim:      #868e96;
+      --mono:     "JetBrains Mono", "Fira Code", "Cascadia Code", monospace;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 14px;
+      height: 100dvh;
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.75rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--panel);
+    }
+    header h1 { font-size: 1rem; font-weight: 600; color: var(--accent); }
+    header p  { font-size: 0.8rem; color: var(--dim); }
+
+    main {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      overflow: hidden;
+    }
+
+    .pane {
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--border);
+      overflow: hidden;
+    }
+    .pane:last-child { border-right: none; }
+
+    .pane-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.5rem 1rem;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      font-size: 0.75rem;
+      color: var(--dim);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .pane-header button {
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      border-radius: 4px;
+      padding: 0.25rem 0.75rem;
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .pane-header button:hover { opacity: 0.85; }
+    .pane-header button:active { opacity: 0.7; }
+
+    #editor {
+      flex: 1;
+      width: 100%;
+      background: transparent;
+      border: none;
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 14px;
+      line-height: 1.6;
+      padding: 1rem;
+      resize: none;
+      outline: none;
+      tab-size: 2;
+    }
+
+    #output {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem;
+    }
+
+    .stack-item {
+      display: flex;
+      align-items: baseline;
+      gap: 0.75rem;
+      padding: 0.2rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .stack-item:last-child { border-bottom: none; }
+    .stack-index { color: var(--dim); font-size: 0.75rem; min-width: 2rem; text-align: right; }
+    .stack-value { color: var(--green); }
+    .stack-type  { color: var(--dim);  font-size: 0.75rem; }
+
+    .error-box {
+      background: #2d1515;
+      border: 1px solid var(--red);
+      border-radius: 4px;
+      padding: 0.75rem 1rem;
+      color: var(--red);
+      white-space: pre-wrap;
+      font-size: 0.85rem;
+    }
+
+    .empty-hint {
+      color: var(--dim);
+      font-size: 0.85rem;
+      font-style: italic;
+    }
+
+    .status-ok  { color: var(--green); }
+    .status-err { color: var(--red); }
+
+    /* Trace pane */
+    #trace-output {
+      flex: 1;
+      overflow-y: auto;
+    }
+    .trace-row {
+      display: grid;
+      grid-template-columns: 3rem 1fr 1fr;
+      gap: 0.5rem;
+      padding: 0.2rem 1rem;
+      font-size: 0.82rem;
+      border-bottom: 1px solid #2a2b2f;
+    }
+    .trace-row:hover { background: #2a2b2f; }
+    .trace-line  { color: var(--dim); text-align: right; }
+    .trace-expr  { color: var(--text); }
+    .trace-stack { color: var(--green); }
+    .trace-err   { color: var(--red); grid-column: 2/-1; }
+
+    /* Share link */
+    #share-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--dim);
+    }
+    #share-btn:hover { border-color: var(--accent); color: var(--accent); background: transparent; opacity: 1; }
+
+    @media (max-width: 700px) {
+      main { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
+      .pane { border-right: none; border-bottom: 1px solid var(--border); }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>EZC Playground</h1>
+  <p>Stack-based · RPN · Mathematical</p>
+  <div style="flex:1"></div>
+  <button id="share-btn">Share</button>
+</header>
+
+<main>
+  <!-- Left: editor -->
+  <div class="pane">
+    <div class="pane-header">
+      <span>Program</span>
+      <div style="display:flex;gap:.5rem">
+        <button id="trace-btn">Trace</button>
+        <button id="run-btn">Run ▶</button>
+      </div>
+    </div>
+    <textarea id="editor" spellcheck="false" autocorrect="off" autocapitalize="off"
+      placeholder="# EZC program
+# Push values and apply operators
+
+3 4 +        # 7
+2 *          # 14
+@result      # bind to 'result'
+$result      # push it back
+"></textarea>
+  </div>
+
+  <!-- Right: output -->
+  <div class="pane">
+    <div class="pane-header" id="output-label">
+      <span>Stack / Output</span>
+      <span id="status-indicator"></span>
+    </div>
+    <div id="output"><span class="empty-hint">Run the program to see the stack.</span></div>
+  </div>
+</main>
+
+<script type="module">
+// ── WASM loading ──────────────────────────────────────────────────────────
+
+let wasmReady = false;
+let wasmRun, wasmCheck, EzcEngine;
+
+async function loadWasm() {
+  try {
+    const mod = await import("./pkg/ezc_web.js");
+    await mod.default(); // init()
+    wasmRun   = mod.run;
+    wasmCheck = mod.check;
+    EzcEngine = mod.EzcEngine;
+    wasmReady = true;
+    document.getElementById("run-btn").textContent = "Run ▶";
+  } catch (err) {
+    document.getElementById("output").innerHTML =
+      `<div class="error-box">Failed to load WASM module:\n${err.message}\n\nBuild with: wasm-pack build crates/ezc-web --target web --out-dir extras/playground/pkg</div>`;
+  }
+}
+
+loadWasm();
+
+// ── Editor ────────────────────────────────────────────────────────────────
+
+const editor = document.getElementById("editor");
+
+// Restore from URL hash on load
+const hash = location.hash.slice(1);
+if (hash) {
+  try { editor.value = decodeURIComponent(hash); } catch {}
+}
+
+// Tab key inserts spaces
+editor.addEventListener("keydown", (e) => {
+  if (e.key === "Tab") {
+    e.preventDefault();
+    const { selectionStart: s, selectionEnd: end } = editor;
+    editor.value = editor.value.slice(0, s) + "  " + editor.value.slice(end);
+    editor.selectionStart = editor.selectionEnd = s + 2;
+  }
+  // Ctrl/Cmd+Enter runs the program
+  if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+    e.preventDefault();
+    runProgram();
+  }
+});
+
+// ── Run ───────────────────────────────────────────────────────────────────
+
+function renderStack(stack) {
+  if (stack.length === 0) {
+    return `<span class="empty-hint">Stack is empty.</span>`;
+  }
+  return stack.map((v, i) => {
+    const type = inferType(v);
+    return `<div class="stack-item">
+      <span class="stack-index">[${i}]</span>
+      <span class="stack-value">${escHtml(v)}</span>
+      <span class="stack-type">${type}</span>
+    </div>`;
+  }).join("");
+}
+
+function runProgram() {
+  if (!wasmReady) return;
+  const src = editor.value;
+  const raw = wasmRun(src);
+  const result = typeof raw === "string" ? JSON.parse(raw) : raw;
+  const output = document.getElementById("output");
+  const status = document.getElementById("status-indicator");
+
+  if (result.ok) {
+    output.innerHTML = renderStack(result.stack);
+    status.textContent = `${result.stack.length} item${result.stack.length !== 1 ? "s" : ""}`;
+    status.className = "status-ok";
+  } else {
+    output.innerHTML = `<div class="error-box">${escHtml(result.error)}</div>`;
+    status.textContent = "error";
+    status.className = "status-err";
+  }
+}
+
+function traceProgram() {
+  if (!wasmReady) return;
+  // Use the EzcEngine to step through line by line
+  const src = editor.value;
+  const lines = src.split("\n");
+  const engine = new EzcEngine();
+  const output = document.getElementById("output");
+  const label  = document.getElementById("output-label").firstElementChild;
+  const status = document.getElementById("status-indicator");
+
+  label.textContent = "Trace";
+  let html = "";
+  let lineNum = 0;
+
+  for (const line of lines) {
+    lineNum++;
+    const trimmed = line.replace(/#.*$/, "").trim();
+    if (!trimmed) continue;
+
+    // Evaluate each non-comment token on the line
+    const raw  = engine.eval(trimmed);
+    const res  = typeof raw === "string" ? JSON.parse(raw) : raw;
+    const stackStr = res.stack.map(v => v).join(" ");
+    const exprHtml = escHtml(trimmed.slice(0, 30));
+
+    if (res.ok) {
+      html += `<div class="trace-row">
+        <span class="trace-line">${lineNum}</span>
+        <span class="trace-expr">${exprHtml}</span>
+        <span class="trace-stack">[${escHtml(stackStr)}]</span>
+      </div>`;
+    } else {
+      html += `<div class="trace-row">
+        <span class="trace-line">${lineNum}</span>
+        <span class="trace-expr">${exprHtml}</span>
+        <span class="trace-err">${escHtml(res.error)}</span>
+      </div>`;
+      break;
+    }
+  }
+
+  engine.free?.();
+  output.innerHTML = html || `<span class="empty-hint">No output.</span>`;
+  status.textContent = "";
+}
+
+document.getElementById("run-btn").addEventListener("click", runProgram);
+document.getElementById("trace-btn").addEventListener("click", traceProgram);
+
+// ── Share ─────────────────────────────────────────────────────────────────
+
+document.getElementById("share-btn").addEventListener("click", () => {
+  const url = location.origin + location.pathname + "#" + encodeURIComponent(editor.value);
+  navigator.clipboard.writeText(url).then(() => {
+    const btn = document.getElementById("share-btn");
+    btn.textContent = "Copied!";
+    setTimeout(() => { btn.textContent = "Share"; }, 2000);
+  });
+});
+
+// ── Helpers ───────────────────────────────────────────────────────────────
+
+function escHtml(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function inferType(s) {
+  if (/^-?\d+$/.test(s))               return "int";
+  if (/^-?\d+\.\d+/.test(s))           return "float";
+  if (/^\d+[uif]\d+$/.test(s))         return "num";
+  if (s.startsWith('"'))               return "str";
+  if (s.startsWith("0x"))              return "bin";
+  if (s.startsWith("["))               return "list";
+  if (s.startsWith("("))               return "block";
+  return "";
+}
+</script>
+
+</body>
+</html>

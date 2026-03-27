@@ -12,8 +12,10 @@ path = "src/main.rs"
 
 [dependencies]
 ezc.workspace = true
+ezc-dap = { path = "../ezc-dap" }
 ezc-lsp = { path = "../ezc-lsp" }
-clap.workspace = true
+clap = { workspace = true, features = ["derive"] }
+clap_complete = "4"
 tracing.workspace = true
 tracing-subscriber.workspace = true
 ariadne.workspace = true

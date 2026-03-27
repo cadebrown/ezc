@@ -12,8 +12,8 @@
   "engines": {
     "vscode": "^1.75.0"
   },
-  "categories": ["Programming Languages", "Snippets"],
-  "activationEvents": ["onLanguage:ezc"],
+  "categories": ["Programming Languages", "Snippets", "Debuggers"],
+  "activationEvents": ["onLanguage:ezc", "onDebugResolve:ezc"],
   "main": "./out/extension.js",
   "contributes": {
     "languages": [
@@ -46,6 +46,90 @@
           "description": "Path to the ezc binary. Defaults to 'ezc' (must be in PATH)."
         }
       }
+    },
+    "breakpoints": [
+      {
+        "language": "ezc"
+      }
+    ],
+    "debuggers": [
+      {
+        "type": "ezc",
+        "label": "EZC Debug",
+        "languages": ["ezc"],
+        "configurationAttributes": {
+          "launch": {
+            "required": ["program"],
+            "properties": {
+              "program": {
+                "type": "string",
+                "description": "Absolute path to the .ezc source file to debug.",
+                "default": "${file}"
+              },
+              "stopOnEntry": {
+                "type": "boolean",
+                "description": "Pause before executing the first instruction.",
+                "default": true
+              },
+              "noDebug": {
+                "type": "boolean",
+                "description": "Run without the debugger (no breakpoints, no stops).",
+                "default": false
+              }
+            }
+          }
+        },
+        "initialConfigurations": [
+          {
+            "type": "ezc",
+            "request": "launch",
+            "name": "Debug Current File",
+            "program": "${file}",
+            "stopOnEntry": true
+          }
+        ],
+        "configurationSnippets": [
+          {
+            "label": "EZC: Debug Current File",
+            "description": "Debug the currently open .ezc file",
+            "body": {
+              "type": "ezc",
+              "request": "launch",
+              "name": "Debug Current File",
+              "program": "^\"\\${file}\"",
+              "stopOnEntry": true
+            }
+          },
+          {
+            "label": "EZC: Run File (no debug)",
+            "description": "Run a .ezc file without stopping at breakpoints",
+            "body": {
+              "type": "ezc",
+              "request": "launch",
+              "name": "Run ${1:file.ezc}",
+              "program": "^\"\\${workspaceFolder}/${1:file.ezc}\"",
+              "stopOnEntry": false,
+              "noDebug": true
+            }
+          }
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "command": "ezc.debugFile",
+        "title": "EZC: Debug Current File",
+        "icon": "$(debug-alt)"
+      }
+    ],
+    "menus": {
+      "editor/title/run": [
+        {
+          "command": "ezc.debugFile",
+          "when": "resourceLangId == ezc",
+          "group": "navigation"
+        }
+      ]
     }
   },
   "scripts": {

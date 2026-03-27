@@ -1,0 +1,11 @@
+[extension]
+id = "ezc"
+name = "EZC"
+version = "0.1.0"
+description = "Language support for EZC — a stack-based, RPN programming language"
+authors = ["Cade Brown <contact@cadebrown.com>"]
+repository = "https://github.com/cadebrown/ezc"
+
+[language_servers.ezc-lsp]
+name = "EZC Language Server"
+language = "EZC"

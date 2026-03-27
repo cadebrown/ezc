@@ -1,0 +1,42 @@
+# Helix language configuration for EZC
+#
+# To use, merge this into your Helix config directory:
+#   ~/.config/helix/languages.toml
+#
+# Also copy the tree-sitter parser:
+#   Copy extras/tree-sitter-ezc/src/ to:
+#   ~/.config/helix/runtime/grammars/sources/ezc/
+#   Then run: hx --grammar build
+
+[[language]]
+name = "ezc"
+scope = "source.ezc"
+file-types = ["ezc"]
+roots = ["Cargo.toml", ".git"]
+comment-token = "#"
+indent = { tab-width = 2, unit = "  " }
+language-servers = ["ezc-lsp"]
+
+[language.debugger]
+name = "ezc"
+transport = "stdio"
+command = "ezc"
+args = ["debug"]
+port-arg = ""
+
+[[language.debugger.templates]]
+name = "Debug current file"
+request = "launch"
+completion = [{ name = "program", completion = "filename" }]
+
+[language.debugger.templates.args]
+program = "{0}"
+stopOnEntry = true
+
+[language-server.ezc-lsp]
+command = "ezc"
+args = ["lsp"]
+
+[[grammar]]
+name = "ezc"
+source = { path = "extras/tree-sitter-ezc" }
