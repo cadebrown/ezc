@@ -1,0 +1,23 @@
+#!/usr/bin/env ezc
+
+# ezc has 16 numeric types + str + bin
+
+# Default integers are arbitrary precision
+2 256 ^ :                    # huge number
+
+# Typed integers with suffixes
+42u8 typeof :                # "u8"
+100u8 50u8 + :               # 150u8
+
+# Floats — f64 is the default (no suffix shown)
+3.14 :                       # 3.14
+3.14f32 :                    # 3.14f32
+
+# Type constructors (bare words)
+42 f64 :                     # 42.0
+42 str :                     # "42"
+"hello" bin :                # 0x68656c6c6f
+
+# Hex literals
+0xFF :                       # 255
+0xDEADu32 :                  # 57005u32

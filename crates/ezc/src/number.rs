@@ -468,10 +468,11 @@ impl fmt::Display for Number {
                 }
             }
             Number::F64(n) => {
+                // f64 is the default float — no suffix, like Int has no suffix.
                 if n.fract() == 0.0 && n.is_finite() {
-                    write!(f, "{n:.1}f64")
+                    write!(f, "{n:.1}")
                 } else {
-                    write!(f, "{n}f64")
+                    write!(f, "{n}")
                 }
             }
         }

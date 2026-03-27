@@ -69,6 +69,13 @@ pub const COMPLETIONS: &[(&str, &str)] = &[
     ("srt", "sort list"),
     ("hd", "head (first elem)"),
     ("tl", "tail (rest of list)"),
+    ("not", "logical not"),
+    ("and", "logical and"),
+    ("or", "logical or"),
+    ("min", "minimum of two"),
+    ("max", "maximum of two"),
+    ("cut", "split string"),
+    ("cat", "join list"),
 ];
 
 /// Check whether a token string is a known operator (for syntax highlighting).

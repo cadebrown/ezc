@@ -3,6 +3,7 @@ resolver = "2"
 members = [
     "crates/ezc",
     "crates/ezc-cli",
+    "crates/ezc-dap",
     "crates/ezc-lsp",
     "crates/ezc-web",
 ]
@@ -37,9 +38,10 @@ crossterm = "0.29"
 reedline = "0.46"
 nu-ansi-term = "0.50"
 
-# LSP
+# LSP / DAP
 tower-lsp = "0.20"
 tokio = { version = "1", features = ["rt", "rt-multi-thread", "io-std", "sync", "macros"] }
+serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 
 # Testing

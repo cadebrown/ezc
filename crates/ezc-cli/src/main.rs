@@ -77,9 +77,8 @@ fn main() {
 
 fn run_string(src: &str, check_only: bool) -> Result<(), Box<dyn std::error::Error>> {
     if check_only {
-        ezc::lex_and_parse(src).map_err(|e| {
+        ezc::lex_and_parse(src).inspect_err(|e| {
             e.report("<eval>", src);
-            e
         })?;
         eprintln!("OK");
     } else {

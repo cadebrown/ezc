@@ -187,7 +187,7 @@ mod tests {
     fn display_typed_nums() {
         assert_eq!(Value::Num(Number::U8(255)).to_string(), "255u8");
         assert_eq!(Value::Num(Number::I32(-42)).to_string(), "-42i32");
-        assert_eq!(Value::Num(Number::F64(3.14)).to_string(), "3.14f64");
+        assert_eq!(Value::Num(Number::F64(3.14)).to_string(), "3.14");
     }
 
     #[test]

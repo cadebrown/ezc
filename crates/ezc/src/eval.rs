@@ -126,6 +126,23 @@ impl Engine {
         self.stack.pop().map(|t| t.value)
     }
 
+    /// Execute a single expression. Used by the debugger stepper to advance
+    /// the program counter one expression at a time.
+    pub fn eval_one(&mut self, (expr, span): &Spanned<Expr>) -> Result<(), EvalError> {
+        self.eval_expr(expr, span.clone())
+    }
+
+    /// Peek at the top of the value stack without consuming it.
+    pub fn peek_top(&self) -> Option<&Value> {
+        self.stack.last().map(|t| &t.value)
+    }
+
+    /// Snapshot the current environment (all scopes, outermost first).
+    /// Used by the debugger to display variable bindings.
+    pub fn env_snapshot(&self) -> Vec<HashMap<String, Value>> {
+        self.env.clone()
+    }
+
     /// Reset the engine: clear stack and all bindings except the top-level scope.
     pub fn reset(&mut self) {
         self.stack.clear();
@@ -278,8 +295,9 @@ impl Engine {
             }
 
             Expr::Op(op) => {
-                let b = self.pop("binary op", &span)?;
-                let a = self.pop("binary op", &span)?;
+                let op_name = op.to_string();
+                let b = self.pop(&op_name, &span)?;
+                let a = self.pop(&op_name, &span)?;
                 let result = self.apply_op(*op, a, b, &span)?;
                 self.stack.push(Tagged {
                     value: result,
@@ -840,7 +858,11 @@ impl Engine {
                     use crate::number::Number;
                     let result = match n {
                         Number::Int(ref i) => {
-                            let a = if i.as_ref() < &num_bigint::BigInt::ZERO { -(i.as_ref().clone()) } else { i.as_ref().clone() };
+                            let a = if i.as_ref() < &num_bigint::BigInt::ZERO {
+                                -(i.as_ref().clone())
+                            } else {
+                                i.as_ref().clone()
+                            };
                             self.interner.intern_int(a)
                         }
                         Number::I8(v) => Number::I8(v.abs()),
@@ -960,6 +982,85 @@ impl Engine {
                             });
                         }
                         items.into_iter().nth(index).unwrap()
+                    }
+                    _ => return Err(self.cast_error(name, &list_tagged.value, span)),
+                }
+            }
+
+            // ── Logic ──────────────────────────────────────────────────────
+            "not" => Value::int(if val.is_truthy() { 0 } else { 1 }),
+            "and" => {
+                let other = self.pop("and", span)?;
+                Value::int(if other.value.is_truthy() && val.is_truthy() {
+                    1
+                } else {
+                    0
+                })
+            }
+            "or" => {
+                let other = self.pop("or", span)?;
+                Value::int(if other.value.is_truthy() || val.is_truthy() {
+                    1
+                } else {
+                    0
+                })
+            }
+
+            // ── Min / Max ─────────────────────────────────────────────────
+            "min" => {
+                let other = self.pop("min", span)?;
+                match (&other.value, &val) {
+                    (Value::Num(a), Value::Num(b)) => match number::compare(a, b) {
+                        Ok(std::cmp::Ordering::Less | std::cmp::Ordering::Equal) => other.value,
+                        Ok(std::cmp::Ordering::Greater) => val,
+                        Err(_) => return Err(self.cast_error(name, &val, span)),
+                    },
+                    _ => return Err(self.cast_error(name, &val, span)),
+                }
+            }
+            "max" => {
+                let other = self.pop("max", span)?;
+                match (&other.value, &val) {
+                    (Value::Num(a), Value::Num(b)) => match number::compare(a, b) {
+                        Ok(std::cmp::Ordering::Greater | std::cmp::Ordering::Equal) => other.value,
+                        Ok(std::cmp::Ordering::Less) => val,
+                        Err(_) => return Err(self.cast_error(name, &val, span)),
+                    },
+                    _ => return Err(self.cast_error(name, &val, span)),
+                }
+            }
+
+            // ── String split/join ─────────────────────────────────────────
+            "cut" => {
+                // "a,b,c" "," cut → ["a" "b" "c"]
+                // val = delimiter (popped first), need to pop the string
+                let str_tagged = self.pop("cut", span)?;
+                match (&str_tagged.value, &val) {
+                    (Value::Str(s), Value::Str(delim)) => {
+                        let parts: Vec<Value> =
+                            s.0.split(delim.0.as_ref())
+                                .map(|p| Value::Str(self.interner.intern_str(p)))
+                                .collect();
+                        Value::List(parts)
+                    }
+                    _ => return Err(self.cast_error(name, &str_tagged.value, span)),
+                }
+            }
+            "cat" => {
+                // ["a" "b" "c"] "," cat → "a,b,c"
+                // val = delimiter (popped first), need to pop the list
+                let list_tagged = self.pop("cat", span)?;
+                match (&list_tagged.value, &val) {
+                    (Value::List(items), Value::Str(delim)) => {
+                        let joined: String = items
+                            .iter()
+                            .map(|v| match v {
+                                Value::Str(s) => s.0.to_string(),
+                                other => other.to_string(),
+                            })
+                            .collect::<Vec<_>>()
+                            .join(delim.0.as_ref());
+                        Value::Str(self.interner.intern_str(&joined))
                     }
                     _ => return Err(self.cast_error(name, &list_tagged.value, span)),
                 }

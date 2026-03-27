@@ -1,0 +1,16 @@
+#!/usr/bin/env ezc
+
+# FizzBuzz 1 to 20
+# exec_if: cond block → runs block if cond truthy, else no-op
+# ?? order: falsy truthy cond ??
+( @b @c () ($b !) $c ?? ! ) @exec_if
+
+20 iota (1 +) &! 0 (
+    @n ;
+    "" @r
+    $n 3 % 0 == ($r "Fizz" | @r) $exec_if !
+    $n 5 % 0 == ($r "Buzz" | @r) $exec_if !
+    $r "" == ($n str @r) $exec_if !
+    $r :
+    0
+) &/ ;
