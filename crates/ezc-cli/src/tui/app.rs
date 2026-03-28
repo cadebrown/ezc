@@ -78,12 +78,11 @@ pub const COMPLETIONS: &[(&str, &str)] = &[
     ("cat", "join list"),
     ("if", "cond (block) if"),
     ("ifel", "cond (then) (else) ifel"),
-    ("while", "cond body while"),
-    ("loop", "cond body loop"),
+    ("loop", "(cond) (body) loop"),
+    ("each", "list/n (block) each"),
     ("map", "list (block) map"),
     ("fil", "list (block) filter"),
     ("red", "list init (block) reduce"),
-    ("for", "list (block) for-each"),
 ];
 
 /// Check whether a token string is a known operator (for syntax highlighting).

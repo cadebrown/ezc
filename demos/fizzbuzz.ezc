@@ -9,4 +9,4 @@
     :
 ) @fizzbuzz
 
-1 101 range $fizzbuzz for
+1 101 range $fizzbuzz each

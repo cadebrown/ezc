@@ -293,9 +293,9 @@ impl Engine {
                     "map" => return self.eval_expr(&Expr::Map, span),
                     "fil" => return self.eval_expr(&Expr::Filter, span),
                     "red" => return self.eval_expr(&Expr::Fold, span),
-                    "for" => {
-                        let block = self.pop("for", &span)?;
-                        let collection = self.pop("for", &span)?;
+                    "each" => {
+                        let block = self.pop("each", &span)?;
+                        let collection = self.pop("each", &span)?;
                         match (&collection.value, &block.value) {
                             (Value::List(items), Value::Block(b)) => {
                                 let items = items.clone();
@@ -322,7 +322,7 @@ impl Engine {
                             _ => {
                                 return Err(EvalError {
                                     kind: EvalErrorKind::TypeMismatch {
-                                        op: "for".into(),
+                                        op: "each".into(),
                                         expected: "a list or number, and a block".into(),
                                         found: format!(
                                             "{} and {}",
@@ -337,7 +337,7 @@ impl Engine {
                         }
                         return Ok(());
                     }
-                    "while" | "loop" => return self.eval_expr(&Expr::Loop, span),
+                    "loop" => return self.eval_expr(&Expr::Loop, span),
                     _ => {}
                 }
                 // Check environment before falling through to builtins.
