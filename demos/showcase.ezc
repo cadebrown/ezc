@@ -1,0 +1,100 @@
+#!/usr/bin/env ezc
+
+# ── Showcase: demonstrates ezc features for LSP testing ──────────────
+# Open this file in VS Code with the ezc extension to test:
+#   - Hover over operators (+, ?, ??, &, etc.) for docs
+#   - Ctrl+click on $square or bare 'square' to jump to definition
+#   - Right-click → Find All References on any variable
+#   - F2 on a variable name to rename everywhere
+#   - Check the Outline sidebar for function/variable symbols
+#   - Observe semantic highlighting (colors for types, functions, etc.)
+
+# ── Imports ──────────────────────────────────────────────────────────
+
+"std/math.ezc" import
+
+# ── Function definitions ─────────────────────────────────────────────
+
+(, *) @square                        # square a number
+(, square square) @fourth            # raise to the 4th power
+(@n $n $n 1 - * 2 /) @triangle      # nth triangular number
+
+# ── Variables ────────────────────────────────────────────────────────
+
+42 @answer
+3.14 @pi
+"Hello, ezc!" @greeting
+
+# ── Using named functions ────────────────────────────────────────────
+
+$greeting :                          # Hello, ezc!
+$answer square :                     # 1764
+2 fourth :                           # 16
+7 triangle :                         # 21
+
+# ── Type system ──────────────────────────────────────────────────────
+
+255u8 typeof :                       # u8
+$pi f32 typeof :                     # f32
+$answer str :                        # 42
+
+# ── List operations ──────────────────────────────────────────────────
+
+10 iota @numbers                     # [0 1 2 ... 9]
+$numbers (square) map @squares       # [0 1 4 9 ... 81]
+$squares (20 >) fil @big            # [25 36 49 64 81]
+$numbers 0 (+) red @total            # 45
+
+$squares :
+$big :
+$total :
+
+# ── Scoped bindings ──────────────────────────────────────────────────
+
+{
+    100 @temp
+    $temp square @temp_sq
+    $temp_sq :                       # 10000 (visible here)
+}
+# $temp and $temp_sq are NOT visible here
+
+# ── Conditionals ─────────────────────────────────────────────────────
+
+$answer 40 > ("big") ("small") ??
+:                                    # big
+
+$answer even ("even") ?
+$answer odd ("odd") ?
+# one of these fires
+
+# ── Loops ────────────────────────────────────────────────────────────
+
+# Countdown
+10 @count
+($count gtz) ($count dec @count) loop
+$count :                             # 0
+
+# ── FizzBuzz (compact) ───────────────────────────────────────────────
+
+(@n ""
+    $n 3 dvb ("Fizz" |) if
+    $n 5 dvb ("Buzz" |) if
+    $n str dfl :
+) @fizzbuzz
+
+1 16 range $fizzbuzz each
+
+# ── Recursion via math library ───────────────────────────────────────
+
+"Factorials:" :
+5 iota (1 +) map (, str ": " | ~ fact str | :) each
+
+# ── String operations ────────────────────────────────────────────────
+
+"hello world" " " cut :             # ["hello" "world"]
+["one" "two" "three"] ", " cat :    # one, two, three
+"racecar" , rev == :                # 1 (palindrome)
+
+# ── Stack display ────────────────────────────────────────────────────
+
+"Done!" :
