@@ -135,16 +135,16 @@ pub fn token_docs(token: &Token) -> Option<&'static str> {
              **Example**: `(2 *) !` executes the block; `[1 2 3] !` pushes `1 2 3`"
         }
         Token::Question => {
-            "**`?`** — Conditional Drop\n\n\
-             ```\nval cond → val  (if cond is truthy)\n         →      (if cond is falsy)\n```\n\n\
-             Pop `cond`. If falsy, also pop `val`. Used to guard a value.\n\n\
-             **Example**: `42 1 ?` → `42`; `42 0 ?` → *(empty)*"
+            "**`?`** — Conditional Execute\n\n\
+             ```\ncond (block) → (result of block)  (if cond truthy)\n             →                  (if cond falsy)\n```\n\n\
+             Pop block, pop cond. If cond is truthy, execute the block.\n\n\
+             **Example**: `1 (42) ?` → `42`; `0 (42) ?` → *(empty)*"
         }
         Token::DoubleQuestion => {
-            "**`??`** — Ternary\n\n\
-             ```\nfalse_val true_val cond → true_val  (if cond is truthy)\n                        → false_val (if cond is falsy)\n```\n\n\
-             Pop `cond`, select `true_val` (truthy) or `false_val` (falsy).\n\n\
-             **Example**: `0 1 1 ??` → `1` (condition is `1`, truthy)"
+            "**`??`** — If-Else\n\n\
+             ```\ncond (then) (else) → (result of then)  (if cond truthy)\n                   → (result of else)  (if cond falsy)\n```\n\n\
+             Pop else-block, then-block, cond. Execute the matching branch.\n\n\
+             **Example**: `1 (\"yes\") (\"no\") ??` → `\"yes\"`"
         }
 
         // ── Higher-order ─────────────────────────────────────────────────────
@@ -238,6 +238,30 @@ pub fn token_docs(token: &Token) -> Option<&'static str> {
                  ```\nint → \n```\n\n\
                  Write one byte (from integer value) to stdout."
             }
+            // Collection builtins
+            "len" => "**`len`** — Length\n\nPush the length of a list, string, or binary.",
+            "nth" => "**`nth`** — Index\n\n`list n nth` → element at index n.",
+            "tl" => "**`tl`** — Tail\n\nRemove the first element of a list.",
+            "rev" => "**`rev`** — Reverse\n\nReverse a list or string.",
+            "srt" => "**`srt`** — Sort\n\nSort a list.",
+            "take" => "**`take`** — Take\n\n`list/str n take` → first n elements/chars.",
+            "skip" => "**`skip`** — Skip\n\n`list/str n skip` → everything after first n.",
+            "zip" => "**`zip`** — Zip\n\n`list list zip` → list of pairs.",
+            "range" => "**`range`** — Range\n\n`start end range` → `[start start+1 ... end-1]`.",
+            "typeof" => "**`typeof`** — Type\n\nPush the type name as a string.",
+            "cut" => "**`cut`** — Split\n\n`str delim cut` → list of parts.",
+            "cat" => "**`cat`** — Join\n\n`list delim cat` → joined string.",
+            // Control flow
+            "if" => "**`if`** — Conditional\n\n`cond (block) if` → execute if truthy. Alias for `?`.",
+            "ifel" => "**`ifel`** — If-Else\n\n`cond (then) (else) ifel` → execute one branch. Alias for `??`.",
+            "each" => "**`each`** — Iterate\n\n`list/n (block) each` → run block for each element.",
+            "loop" => "**`loop`** — While Loop\n\n`(cond) (body) loop` → loop while cond truthy. Alias for `&`.",
+            "import" => "**`import`** — Import\n\n`\"path\" import` → load and eval a file. Checks embedded std modules first.",
+            "words" => "**`words`** — List Definitions\n\nPush a list of all defined names.",
+            // Higher-order aliases
+            "map" => "**`map`** — Map\n\n`list/n (block) map` → apply block to each, collect results. Alias for `&!`.",
+            "fil" => "**`fil`** — Filter\n\n`list/n (block) fil` → keep truthy results. Alias for `&?`.",
+            "red" => "**`red`** — Reduce/Fold\n\n`list init (block) red` → fold. Alias for `&/`.",
             _ => return None,
         },
 
@@ -328,7 +352,7 @@ pub fn completion_items(vars: &[String]) -> Vec<CompletionItem> {
             "Execute block / splat list / eval string",
         ),
         op_item("?", "val cond → ?", "Conditional drop"),
-        op_item("??", "a b c → a|b", "Ternary select"),
+        op_item("??", "cond (then) (else) →", "If-else execute"),
         op_item("&", "cond body → ", "Loop while condition truthy"),
         op_item(
             "&!",
