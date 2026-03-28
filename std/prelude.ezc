@@ -25,10 +25,25 @@
 # ── Math ───────────────────────────────────────────────────────────────────
 
 (, *) @sq              # a sq → a^2
+(0 ~ -) @neg           # a neg → -a
+(, 0 < (neg) if) @abs  # a abs → |a|
 (0 (+) red) @sum       # [list] sum → total
 (1 (*) red) @prod      # [list] prod → product
+(0 ~ range) @iota      # n iota → [0 1 ... n-1]
+
+# ── Logic ──────────────────────────────────────────────────────────────────
+
+(0 ==) @not            # a not → logical negation
+
+# ── Collection shortcuts ───────────────────────────────────────────────────
+
+(0 nth) @hd            # [list] hd → first element
+
+# ── Comparison ─────────────────────────────────────────────────────────────
+
+(@b @a $a $b < ($a) ($b) ife) @min   # a b min → smaller
+(@b @a $a $b > ($a) ($b) ife) @max   # a b max → larger
 
 # ── Printing ───────────────────────────────────────────────────────────────
 
-# Print without consuming (peek)
-(, :) @peek
+(, :) @peek            # print without consuming
