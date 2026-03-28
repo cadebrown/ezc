@@ -131,6 +131,12 @@ pub struct BuiltinSets {
     pub prelude_names: HashSet<String>,
 }
 
+impl Default for BuiltinSets {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl BuiltinSets {
     /// Build from the embedded prelude source.
     pub fn new() -> Self {

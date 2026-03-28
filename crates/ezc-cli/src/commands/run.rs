@@ -35,12 +35,10 @@ pub fn execute(file: &Path, trace: bool) -> Result<(), Box<dyn std::error::Error
 ///   1 │ +              → [7]
 /// ```
 pub fn execute_trace_src(src: &str, filename: &str) -> Result<(), Box<dyn std::error::Error>> {
-    use ezc::eval::Engine;
     use ezc::line_index::LineIndex;
 
-    let ast = ezc::lex_and_parse(src).map_err(|e| {
+    let ast = ezc::lex_and_parse(src).inspect_err(|e| {
         e.report(filename, src);
-        e
     })?;
 
     let line_index = LineIndex::new(src);

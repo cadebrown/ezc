@@ -357,7 +357,6 @@ impl LanguageServer for Backend {
                 name: "ezc-lsp".into(),
                 version: Some(env!("CARGO_PKG_VERSION").into()),
             }),
-            ..Default::default()
         })
     }
 
@@ -1318,12 +1317,15 @@ fn edit_distance(a: &str, b: &str) -> usize {
     let b: Vec<char> = b.chars().collect();
     let (m, n) = (a.len(), b.len());
     let mut dp = vec![vec![0usize; n + 1]; m + 1];
+    #[allow(clippy::needless_range_loop)]
     for i in 0..=m {
         dp[i][0] = i;
     }
+    #[allow(clippy::needless_range_loop)]
     for j in 0..=n {
         dp[0][j] = j;
     }
+    #[allow(clippy::needless_range_loop)]
     for i in 1..=m {
         for j in 1..=n {
             let cost = if a[i - 1] == b[j - 1] { 0 } else { 1 };
