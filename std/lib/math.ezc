@@ -1,0 +1,20 @@
+# std/lib/math.ezc — extended math library
+
+# Factorial: n fact → n!
+(, 1 <= (;  1) (, 1 - fact *) ??) @fact
+
+# Fibonacci: n fib → nth fibonacci number
+(, 1 <= () (, 1 - fib ~ 2 - fib +) ??) @fib
+
+# GCD (Euclidean algorithm): a b gcd → gcd(a,b)
+(@b @a $b zero ($a) ($a $b % $b gcd) ??) @gcd
+
+# Power (integer): base exp pow2 → base^exp
+# (built-in ^ only works for u32 exponents, this is general)
+(@e @b $e zero (;  1) ($b $e dec pow2 $b *) ??) @pow2
+
+# Clamp: val lo hi clamp → val clamped to [lo, hi]
+(@hi @lo @v $v $lo max $hi min) @clamp
+
+# Signum: n sgn → -1, 0, or 1
+(, zero (;  0) (, gtz (;  1) (;  0 1 -) ??) ??) @sgn

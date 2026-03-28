@@ -1,0 +1,16 @@
+#!/usr/bin/env ezc
+
+# Advanced string operations
+"std/lib/str.ezc" import
+
+# Repeat
+"ha" 3 rep :                           # hahaha
+
+# Starts/ends with
+"hello world" "hello" starts :         # 1
+"hello world" "world" ends :           # 1
+"hello world" "xyz" starts :           # 0
+
+# Contains
+"the quick brown fox" "brown" has :    # 1
+"the quick brown fox" "blue" has :     # 0

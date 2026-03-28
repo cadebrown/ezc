@@ -338,6 +338,66 @@ impl Engine {
                         return Ok(());
                     }
                     "loop" => return self.eval_expr(&Expr::Loop, span),
+                    "import" => {
+                        // "path.ezc" import → read file, eval into current engine
+                        let path_tagged = self.pop("import", &span)?;
+                        match &path_tagged.value {
+                            Value::Str(s) => {
+                                let path = s.0.to_string();
+                                let src =
+                                    std::fs::read_to_string(&path).map_err(|e| EvalError {
+                                        kind: EvalErrorKind::IoError(format!(
+                                            "import \"{path}\": {e}"
+                                        )),
+                                        span: Some(span.clone()),
+                                        labels: vec![ErrorLabel {
+                                            span: path_tagged.span.clone(),
+                                            message: "this path".into(),
+                                        }],
+                                    })?;
+                                let ast = crate::lexer::lex(&src)
+                                    .map_err(|errs| EvalError {
+                                        kind: EvalErrorKind::IoError(format!(
+                                            "import \"{path}\": {}",
+                                            errs.iter()
+                                                .map(|e| e.to_string())
+                                                .collect::<Vec<_>>()
+                                                .join("; ")
+                                        )),
+                                        span: Some(span.clone()),
+                                        labels: vec![],
+                                    })
+                                    .and_then(|tokens| {
+                                        crate::parser::parse(&tokens, src.len()).map_err(|errs| {
+                                            EvalError {
+                                                kind: EvalErrorKind::IoError(format!(
+                                                    "import \"{path}\": {}",
+                                                    errs.iter()
+                                                        .map(|e| e.to_string())
+                                                        .collect::<Vec<_>>()
+                                                        .join("; ")
+                                                )),
+                                                span: Some(span.clone()),
+                                                labels: vec![],
+                                            }
+                                        })
+                                    })?;
+                                self.eval(&ast)?;
+                            }
+                            _ => {
+                                return Err(EvalError {
+                                    kind: EvalErrorKind::TypeMismatch {
+                                        op: "import".into(),
+                                        expected: "a string path".into(),
+                                        found: path_tagged.value.type_name().into(),
+                                    },
+                                    span: Some(span),
+                                    labels: vec![],
+                                });
+                            }
+                        }
+                        return Ok(());
+                    }
                     _ => {}
                 }
                 // Check environment before falling through to builtins.
@@ -955,27 +1015,35 @@ impl Engine {
                 _ => return Err(self.cast_error(name, &val, span)),
             },
             "take" => {
-                // list n take → first n elements
+                // list/str n take → first n elements/chars
                 let n = match &val {
                     Value::Num(n) => n.to_f64_lossy() as usize,
                     _ => return Err(self.cast_error(name, &val, span)),
                 };
-                let list_tagged = self.pop("take", span)?;
-                match list_tagged.value {
+                let coll = self.pop("take", span)?;
+                match coll.value {
                     Value::List(items) => Value::List(items.into_iter().take(n).collect()),
-                    _ => return Err(self.cast_error(name, &list_tagged.value, span)),
+                    Value::Str(s) => {
+                        let taken: String = s.0.chars().take(n).collect();
+                        Value::Str(self.interner.intern_str(&taken))
+                    }
+                    _ => return Err(self.cast_error(name, &coll.value, span)),
                 }
             }
             "skip" => {
-                // list n skip → everything after first n elements
+                // list/str n skip → everything after first n
                 let n = match &val {
                     Value::Num(n) => n.to_f64_lossy() as usize,
                     _ => return Err(self.cast_error(name, &val, span)),
                 };
-                let list_tagged = self.pop("skip", span)?;
-                match list_tagged.value {
+                let coll = self.pop("skip", span)?;
+                match coll.value {
                     Value::List(items) => Value::List(items.into_iter().skip(n).collect()),
-                    _ => return Err(self.cast_error(name, &list_tagged.value, span)),
+                    Value::Str(s) => {
+                        let skipped: String = s.0.chars().skip(n).collect();
+                        Value::Str(self.interner.intern_str(&skipped))
+                    }
+                    _ => return Err(self.cast_error(name, &coll.value, span)),
                 }
             }
             "zip" => {

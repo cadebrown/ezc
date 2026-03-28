@@ -1,0 +1,6 @@
+#!/usr/bin/env ezc
+
+# First 15 fibonacci numbers
+"std/lib/math.ezc" import
+
+15 iota (fib) map :

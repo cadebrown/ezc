@@ -91,6 +91,7 @@ pub const COMPLETIONS: &[(&str, &str)] = &[
     ("ifel", "cond (then) (else) ifel"),
     ("loop", "(cond) (body) loop"),
     ("each", "list/n (block) each"),
+    ("import", "path import"),
     ("map", "list (block) map"),
     ("fil", "list (block) filter"),
     ("red", "list init (block) reduce"),

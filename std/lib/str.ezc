@@ -1,0 +1,22 @@
+# std/lib/str.ezc — string utilities
+
+# Repeat: "abc" 3 rep → "abcabcabc"
+(@n @s "" $n (;  $s |) each) @rep
+
+# Pad left: "42" 5 "0" padl → "00042"
+(@fill @width @s
+    $s len @slen
+    $slen $width < ($fill $width $slen - rep $s |) ($s) ??
+) @padl
+
+# Uppercase check (ASCII): char is between A-Z
+# (we don't have char ops yet, but this shows the pattern)
+
+# Contains: "hello world" "world" has → 1
+(@needle @hay $hay $needle cut len 1 >) @has
+
+# Starts with: "hello" "hel" starts → 1
+(@pfx @s $s $pfx len take $pfx ==) @starts
+
+# Ends with: "hello" "llo" ends → 1
+(@sfx @s $s rev $sfx rev starts) @ends
