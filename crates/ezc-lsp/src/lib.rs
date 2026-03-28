@@ -936,7 +936,10 @@ impl LanguageServer for Backend {
                     command: Some(Command {
                         title,
                         command: "editor.action.findReferences".into(),
-                        arguments: None,
+                        arguments: Some(vec![
+                            serde_json::to_value(uri.to_string()).unwrap(),
+                            serde_json::to_value(range.start).unwrap(),
+                        ]),
                     }),
                     data: None,
                 });

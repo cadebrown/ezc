@@ -62,7 +62,7 @@
         },
         "ezc.inlayHints.maxStackDisplay": {
           "type": "number",
-          "default": 6,
+          "default": 10,
           "description": "Maximum number of stack values to show inline."
         },
         "ezc.inlayHints.references": {
