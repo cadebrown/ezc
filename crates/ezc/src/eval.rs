@@ -383,6 +383,20 @@ impl Engine {
                     }
                     _ => {}
                 }
+                // Check environment before falling through to builtins.
+                // Blocks auto-execute; other values push (like $name).
+                if let Some(val) = self.lookup(name).cloned() {
+                    match val {
+                        Value::Block(b) => {
+                            self.eval(&b.body)?;
+                            return Ok(());
+                        }
+                        other => {
+                            self.stack.push(Tagged { value: other, span });
+                            return Ok(());
+                        }
+                    }
+                }
                 self.eval_builtin(name, &span)?;
             }
 

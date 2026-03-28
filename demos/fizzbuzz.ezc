@@ -1,10 +1,12 @@
 #!/usr/bin/env ezc
 
 # FizzBuzz 1 to 100
-100 iota (1 +) map (@n
+(@n
     ""
     $n 3 % 0 == ("Fizz" |) if
     $n 5 % 0 == ("Buzz" |) if
     , "" == ($n str ~ ;) if
     :
-) for
+) @fizzbuzz
+
+100 iota (1 +) map (fizzbuzz) for

@@ -4,11 +4,11 @@
 3 4 + :                      # 7
 2 100 ^ :                    # 2^100
 
-# Named functions
+# Named functions — just use them as bare words
 (, *) @square
-(, $square ! $square !) @fourth
-5 $square ! :                # 25
-2 $fourth ! :                # 16
+(, square square) @fourth
+5 square :                   # 25
+2 fourth :                   # 16
 
 # Fold: sum and product
 [1 2 3 4 5] 0 (+) red :     # 15
