@@ -1,2 +1,2 @@
-# nonzero is truthy => keep value below
-42 1 ?
+# nonzero is truthy => execute block, push 42
+1 (42) ?

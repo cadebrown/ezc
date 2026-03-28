@@ -1,49 +1,55 @@
 # ezc standard library (prelude)
 # Loaded automatically before every program and REPL session.
-# All definitions here are bare words — user code can override them.
+
+# ── Control flow aliases ───────────────────────────────────────────────────
+
+(?) @if                    # cond (block) if → execute if truthy
+(??) @ife                  # cond (then) (else) ife → if-else
 
 # ── Predicates ─────────────────────────────────────────────────────────────
 
-(% 0 ==) @dvb          # a b dvb → 1 if a divisible by b
-(, 0 ==) @zero         # a zero → 1 if a is zero
-(2 dvb) @even          # a even → 1 if a is even
-(2 dvb not) @odd       # a odd → 1 if a is odd
-(0 <) @ltz             # a ltz → 1 if a < 0
-(0 >) @gtz             # a gtz → 1 if a > 0
-
-# ── Stack combinators ──────────────────────────────────────────────────────
-
-# val fallback dfl → if val is falsy, use fallback instead
-(~ , (~ ;) (;) ife) @dfl
-
-# a b nip → a  (drop second, keep top)
-(~ ;) @nip
-
-# a b tuck → b a b  (copy top under second)
-(~ _ ~) @tuck
-
-# ── Math ───────────────────────────────────────────────────────────────────
-
-(, *) @sq              # a sq → a^2
-(0 ~ -) @neg           # a neg → -a
-(, 0 < (neg) if) @abs  # a abs → |a|
-(0 (+) red) @sum       # [list] sum → total
-(1 (*) red) @prod      # [list] prod → product
-(0 ~ range) @iota      # n iota → [0 1 ... n-1]
+(% 0 ==) @dvb             # a b dvb → 1 if a divisible by b
+(, 0 ==) @zero            # a zero → 1 if zero
+(2 dvb) @even             # a even → 1 if even
+(2 dvb not) @odd          # a odd → 1 if odd
+(0 <) @ltz                # a ltz → 1 if < 0
+(0 >) @gtz                # a gtz → 1 if > 0
 
 # ── Logic ──────────────────────────────────────────────────────────────────
 
-(0 ==) @not            # a not → logical negation
+(0 ==) @not               # a not → logical negation
+(0 != ~ 0 != *) @and      # a b and → 1 if both truthy
+(0 != ~ 0 != + 0 !=) @or  # a b or → 1 if either truthy
+
+# ── Stack combinators ──────────────────────────────────────────────────────
+
+(~ , (~ ;) (;) ??) @dfl   # val fallback dfl → fallback if val falsy
+(~ ;) @nip                # a b nip → b
+(~ _ ~) @tuck             # a b tuck → b a b
+(_ _) @dup2               # a b dup2 → a b a b
+(@c @b @a $b $c $a) @rot  # a b c rot → b c a
+() @id                    # no-op
+
+# ── Math ───────────────────────────────────────────────────────────────────
+
+(, *) @sq                 # a sq → a^2
+(0 ~ -) @neg              # a neg → -a
+(, 0 < (neg) ?) @abs      # a abs → |a|
+(0 (+) red) @sum          # [list] sum → total
+(1 (*) red) @prod         # [list] prod → product
+(0 ~ range) @iota         # n iota → [0 1 ... n-1]
 
 # ── Collection shortcuts ───────────────────────────────────────────────────
 
-(0 nth) @hd            # [list] hd → first element
+(0 nth) @hd               # [list] hd → first element
+([] (|) red) @flat        # [[1 2] [3 4]] flat → [1 2 3 4]
+(@b ! $b !) @apply        # [args] (block) apply → splat args, exec block
 
 # ── Comparison ─────────────────────────────────────────────────────────────
 
-(@b @a $a $b < ($a) ($b) ife) @min   # a b min → smaller
-(@b @a $a $b > ($a) ($b) ife) @max   # a b max → larger
+(@b @a $a $b < ($a) ($b) ??) @min  # a b min → smaller
+(@b @a $a $b > ($a) ($b) ??) @max  # a b max → larger
 
 # ── Printing ───────────────────────────────────────────────────────────────
 
-(, :) @peek            # print without consuming
+(, :) @peek               # print without consuming

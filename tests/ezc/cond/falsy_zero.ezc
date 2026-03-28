@@ -1,2 +1,2 @@
-# 0 is falsy => pop value below too, stack empty
-42 0 ?
+# 0 is falsy => block not executed, stack empty
+0 (42) ?

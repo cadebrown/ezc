@@ -1,2 +1,2 @@
-# a b 1 ?? => b (truthy picks second)
-10 20 1 ??
+# cond (then) (else) ?? => truthy picks then
+1 (20) (10) ??

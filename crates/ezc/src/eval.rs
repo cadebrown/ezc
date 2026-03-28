@@ -289,40 +289,14 @@ impl Engine {
                             }
                         }
                     }
-                    "if" => {
-                        // cond (block) if → execute block if cond truthy
-                        let block = self.pop("if", &span)?;
-                        let cond = self.pop("if", &span)?;
-                        if cond.value.is_truthy() {
-                            match block.value {
-                                Value::Block(b) => self.eval(&b.body)?,
-                                _ => {
-                                    return Err(EvalError {
-                                        kind: EvalErrorKind::TypeMismatch {
-                                            op: "if".into(),
-                                            expected: "a block".into(),
-                                            found: block.value.type_name().into(),
-                                        },
-                                        span: Some(span),
-                                        labels: vec![ErrorLabel {
-                                            span: block.span,
-                                            message: format!("this is {}", block.value.type_name()),
-                                        }],
-                                    });
-                                }
-                            }
-                        }
-                        return Ok(());
-                    }
                     // Named aliases for symbolic operators
                     "map" => return self.eval_expr(&Expr::Map, span),
                     "fil" => return self.eval_expr(&Expr::Filter, span),
                     "red" => return self.eval_expr(&Expr::Fold, span),
                     "for" => {
-                        // list (block) each → run block for each element
-                        let block = self.pop("each", &span)?;
-                        let list = self.pop("each", &span)?;
-                        match (&list.value, &block.value) {
+                        let block = self.pop("for", &span)?;
+                        let collection = self.pop("for", &span)?;
+                        match (&collection.value, &block.value) {
                             (Value::List(items), Value::Block(b)) => {
                                 let items = items.clone();
                                 let body = b.body.clone();
@@ -334,14 +308,25 @@ impl Engine {
                                     self.eval(&body)?;
                                 }
                             }
+                            (Value::Num(n), Value::Block(b)) => {
+                                let count = n.to_f64_lossy() as i64;
+                                let body = b.body.clone();
+                                for i in 0..count {
+                                    self.stack.push(Tagged {
+                                        value: Value::int(i),
+                                        span: span.clone(),
+                                    });
+                                    self.eval(&body)?;
+                                }
+                            }
                             _ => {
                                 return Err(EvalError {
                                     kind: EvalErrorKind::TypeMismatch {
-                                        op: "each".into(),
-                                        expected: "a list and a block".into(),
+                                        op: "for".into(),
+                                        expected: "a list or number, and a block".into(),
                                         found: format!(
                                             "{} and {}",
-                                            list.value.type_name(),
+                                            collection.value.type_name(),
                                             block.value.type_name()
                                         ),
                                     },
@@ -352,35 +337,7 @@ impl Engine {
                         }
                         return Ok(());
                     }
-                    "ife" => {
-                        // cond (then) (else) ife → execute then if truthy, else otherwise
-                        let else_tagged = self.pop("ife", &span)?;
-                        let then_tagged = self.pop("ife", &span)?;
-                        let cond = self.pop("ife", &span)?;
-                        let chosen = if cond.value.is_truthy() {
-                            then_tagged
-                        } else {
-                            else_tagged
-                        };
-                        match chosen.value {
-                            Value::Block(b) => self.eval(&b.body)?,
-                            _ => {
-                                return Err(EvalError {
-                                    kind: EvalErrorKind::TypeMismatch {
-                                        op: "ife".into(),
-                                        expected: "a block".into(),
-                                        found: chosen.value.type_name().into(),
-                                    },
-                                    span: Some(span),
-                                    labels: vec![ErrorLabel {
-                                        span: chosen.span,
-                                        message: format!("this is {}", chosen.value.type_name()),
-                                    }],
-                                });
-                            }
-                        }
-                        return Ok(());
-                    }
+                    "while" => return self.eval_expr(&Expr::Loop, span),
                     _ => {}
                 }
                 // Check environment before falling through to builtins.
@@ -478,20 +435,39 @@ impl Engine {
             }
 
             Expr::Cond => {
-                let condition = self.pop("?", &span)?;
-                if !condition.value.is_truthy() {
-                    let _ = self.pop("? (discard)", &span)?;
+                let block = self.pop("?", &span)?;
+                let cond = self.pop("?", &span)?;
+                if cond.value.is_truthy() {
+                    match block.value {
+                        Value::Block(b) => self.eval(&b.body)?,
+                        other => {
+                            // Non-block: just push the value back (conditional push)
+                            self.stack.push(Tagged {
+                                value: other,
+                                span: span.clone(),
+                            });
+                        }
+                    }
                 }
             }
 
             Expr::Ternary => {
-                let condition = self.pop("??", &span)?;
-                let truthy_val = self.pop("??", &span)?;
-                let falsy_val = self.pop("??", &span)?;
-                if condition.value.is_truthy() {
-                    self.stack.push(truthy_val);
+                let else_tagged = self.pop("??", &span)?;
+                let then_tagged = self.pop("??", &span)?;
+                let cond = self.pop("??", &span)?;
+                let chosen = if cond.value.is_truthy() {
+                    then_tagged
                 } else {
-                    self.stack.push(falsy_val);
+                    else_tagged
+                };
+                match chosen.value {
+                    Value::Block(b) => self.eval(&b.body)?,
+                    other => {
+                        self.stack.push(Tagged {
+                            value: other,
+                            span: span.clone(),
+                        });
+                    }
                 }
             }
 
@@ -1025,24 +1001,6 @@ impl Engine {
                 }
             }
 
-            // ── Logic ──────────────────────────────────────────────────────
-            "and" => {
-                let other = self.pop("and", span)?;
-                Value::int(if other.value.is_truthy() && val.is_truthy() {
-                    1
-                } else {
-                    0
-                })
-            }
-            "or" => {
-                let other = self.pop("or", span)?;
-                Value::int(if other.value.is_truthy() || val.is_truthy() {
-                    1
-                } else {
-                    0
-                })
-            }
-
             // ── String split/join ─────────────────────────────────────────
             "cut" => {
                 // "a,b,c" "," cut → ["a" "b" "c"]
@@ -1411,22 +1369,22 @@ mod tests {
 
     #[test]
     fn conditional_truthy() {
-        assert_eq!(run("5 1 ?"), vec![Value::int(5)]);
+        assert_eq!(run("1 (5) ?"), vec![Value::int(5)]);
     }
 
     #[test]
     fn conditional_falsy() {
-        assert_eq!(run("5 0 ?"), vec![]);
+        assert_eq!(run("0 (5) ?"), vec![]);
     }
 
     #[test]
     fn ternary_truthy() {
-        assert_eq!(run("10 20 1 ??"), vec![Value::int(20)]);
+        assert_eq!(run("1 (20) (10) ??"), vec![Value::int(20)]);
     }
 
     #[test]
     fn ternary_falsy() {
-        assert_eq!(run("10 20 0 ??"), vec![Value::int(10)]);
+        assert_eq!(run("0 (20) (10) ??"), vec![Value::int(10)]);
     }
 
     // ── Lists ─────────────────────────────────────────────────────────────

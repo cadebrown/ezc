@@ -1,2 +1,2 @@
-# a b 0 ?? => a (falsy picks first)
-10 20 0 ??
+# cond (then) (else) ?? => falsy picks else
+0 (20) (10) ??
