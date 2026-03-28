@@ -13,7 +13,17 @@ let client: LanguageClient | undefined;
 
 export function activate(context: vscode.ExtensionContext) {
   const config = vscode.workspace.getConfiguration("ezc");
-  const serverPath: string = config.get("server.path") ?? "ezc";
+  let serverPath: string = config.get("server.path") ?? "ezc";
+
+  // In development, try to find the debug build relative to the extension.
+  if (serverPath === "ezc") {
+    const fs = require("fs");
+    const devBuild = path.resolve(context.extensionPath, "../../target/debug/ezc");
+    if (fs.existsSync(devBuild)) {
+      serverPath = devBuild;
+      console.log(`[ezc] Using dev build: ${devBuild}`);
+    }
+  }
 
   // ── LSP client ───────────────────────────────────────────────────────
 
