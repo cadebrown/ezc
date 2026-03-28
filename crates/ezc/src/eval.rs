@@ -1064,6 +1064,20 @@ impl Engine {
                 }
                 _ => return Err(self.cast_error(name, &val, span)),
             },
+            "range" => {
+                // start end range → [start start+1 ... end-1]
+                let end = match &val {
+                    Value::Num(n) => n.to_f64_lossy() as i64,
+                    _ => return Err(self.cast_error(name, &val, span)),
+                };
+                let start_tagged = self.pop("range", span)?;
+                let start = match &start_tagged.value {
+                    Value::Num(n) => n.to_f64_lossy() as i64,
+                    _ => return Err(self.cast_error(name, &start_tagged.value, span)),
+                };
+                let items: Vec<Value> = (start..end).map(Value::int).collect();
+                Value::List(items)
+            }
             "nth" => {
                 // `nth` pops index (already popped as `val`), then pops list.
                 let index = match &val {

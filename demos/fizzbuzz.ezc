@@ -9,4 +9,4 @@
     :
 ) @fizzbuzz
 
-100 iota (1 +) map (fizzbuzz) for
+1 101 range (fizzbuzz) for
