@@ -3,10 +3,10 @@
 # FizzBuzz 1 to 100
 (@n
     ""
-    $n 3 % 0 == ("Fizz" |) if
-    $n 5 % 0 == ("Buzz" |) if
-    , "" == ($n str ~ ;) if
+    $n 3 dvb ("Fizz" |) if
+    $n 5 dvb ("Buzz" |) if
+    $n str dfl
     :
 ) @fizzbuzz
 
-1 101 range (fizzbuzz) for
+1 101 range $fizzbuzz for

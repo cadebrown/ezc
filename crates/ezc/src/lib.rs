@@ -30,6 +30,18 @@ use error::{EzError, ParseError};
 use eval::Engine;
 use types::Value;
 
+/// The standard library prelude, embedded in the binary.
+pub const PRELUDE: &str = include_str!("../../../std/prelude.ezc");
+
+/// Create a new engine with the standard library prelude loaded.
+pub fn engine() -> Engine {
+    let mut e = Engine::new();
+    // Prelude errors are bugs, not user errors.
+    let ast = lex_and_parse(PRELUDE).expect("prelude failed to parse");
+    e.eval(&ast).expect("prelude failed to evaluate");
+    e
+}
+
 /// Lex and parse source into an AST, returning structured errors via `EzError`.
 pub fn lex_and_parse(src: &str) -> Result<Vec<ast::Spanned<ast::Expr>>, EzError> {
     let tokens = lexer::lex(src).map_err(|errs| {
@@ -66,11 +78,12 @@ pub fn lex_and_parse(src: &str) -> Result<Vec<ast::Spanned<ast::Expr>>, EzError>
 }
 
 /// Run an ezc program from source, returning the final stack.
+/// The standard library prelude is loaded automatically.
 pub fn run(src: &str) -> Result<Vec<Value>, EzError> {
     let ast = lex_and_parse(src)?;
-    let mut engine = Engine::new();
-    engine.eval(&ast).map_err(EzError::Eval)?;
-    Ok(engine.into_stack())
+    let mut e = engine();
+    e.eval(&ast).map_err(EzError::Eval)?;
+    Ok(e.into_stack())
 }
 
 /// Evaluate a line of source against an existing engine.

@@ -1,0 +1,34 @@
+# ezc standard library (prelude)
+# Loaded automatically before every program and REPL session.
+# All definitions here are bare words — user code can override them.
+
+# ── Predicates ─────────────────────────────────────────────────────────────
+
+(% 0 ==) @dvb          # a b dvb → 1 if a divisible by b
+(, 0 ==) @zero         # a zero → 1 if a is zero
+(2 dvb) @even          # a even → 1 if a is even
+(2 dvb not) @odd       # a odd → 1 if a is odd
+(0 <) @ltz             # a ltz → 1 if a < 0
+(0 >) @gtz             # a gtz → 1 if a > 0
+
+# ── Stack combinators ──────────────────────────────────────────────────────
+
+# val fallback dfl → if val is falsy, use fallback instead
+(~ , (~ ;) (;) ife) @dfl
+
+# a b nip → a  (drop second, keep top)
+(~ ;) @nip
+
+# a b tuck → b a b  (copy top under second)
+(~ _ ~) @tuck
+
+# ── Math ───────────────────────────────────────────────────────────────────
+
+(, *) @sq              # a sq → a^2
+(0 (+) red) @sum       # [list] sum → total
+(1 (*) red) @prod      # [list] prod → product
+
+# ── Printing ───────────────────────────────────────────────────────────────
+
+# Print without consuming (peek)
+(, :) @peek

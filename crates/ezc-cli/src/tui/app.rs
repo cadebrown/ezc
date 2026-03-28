@@ -143,7 +143,7 @@ pub enum EntryKind {
 impl App {
     pub fn new() -> Self {
         App {
-            engine: Engine::new(),
+            engine: ezc::engine(),
             input: String::new(),
             cursor: 0,
             history: Vec::new(),

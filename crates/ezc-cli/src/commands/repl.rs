@@ -8,8 +8,6 @@ use reedline::{
     PromptHistorySearch, PromptHistorySearchStatus, Reedline, Signal, Span, StyledText, Suggestion,
 };
 
-use ezc::eval::Engine;
-
 use crate::tui::{is_operator, COMPLETIONS};
 
 // ── Prompt ────────────────────────────────────────────────────────────────────
@@ -164,7 +162,7 @@ fn plain() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let prompt = EzcPrompt;
-    let mut engine = Engine::new();
+    let mut engine = ezc::engine();
 
     println!("ezc repl — Tab to complete, Ctrl-R to search history, Ctrl-D to exit");
 

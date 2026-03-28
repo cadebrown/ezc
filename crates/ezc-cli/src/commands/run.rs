@@ -44,7 +44,7 @@ pub fn execute_trace_src(src: &str, filename: &str) -> Result<(), Box<dyn std::e
     })?;
 
     let line_index = LineIndex::new(src);
-    let mut engine = Engine::new();
+    let mut engine = ezc::engine();
 
     for spanned in &ast {
         let (_expr, span) = spanned;
