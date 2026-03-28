@@ -175,6 +175,6 @@ class EzcDebugAdapterDescriptorFactory
     const configuredPath =
       vscode.workspace.getConfiguration("ezc").get<string>("server.path") ??
       this.serverPath;
-    return new vscode.DebugAdapterExecutable(configuredPath, ["debug"]);
+    return new vscode.DebugAdapterExecutable(configuredPath, ["dap"]);
   }
 }

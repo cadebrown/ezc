@@ -93,7 +93,7 @@ function M._setup_dap(config)
   dap.adapters.ezc = {
     type = "executable",
     command = config.cmd,
-    args = { "debug" },
+    args = { "dap" },
     name = "ezc",
   }
 

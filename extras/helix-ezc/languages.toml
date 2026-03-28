@@ -21,7 +21,7 @@ language-servers = ["ezc-lsp"]
 name = "ezc"
 transport = "stdio"
 command = "ezc"
-args = ["debug"]
+args = ["dap"]
 port-arg = ""
 
 [[language.debugger.templates]]
