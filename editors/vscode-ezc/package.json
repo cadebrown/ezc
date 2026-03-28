@@ -44,6 +44,31 @@
           "type": "string",
           "default": "ezc",
           "description": "Path to the ezc binary. Defaults to 'ezc' (must be in PATH)."
+        },
+        "ezc.lsp.path": {
+          "type": "string",
+          "default": "",
+          "description": "Path to the ezc-lsp binary. Empty = auto-detect."
+        },
+        "ezc.dap.path": {
+          "type": "string",
+          "default": "",
+          "description": "Path to the ezc-dap binary. Empty = auto-detect."
+        },
+        "ezc.inlayHints.stackState": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show stack state after each line (the killer feature for stack languages)."
+        },
+        "ezc.inlayHints.maxStackDisplay": {
+          "type": "number",
+          "default": 6,
+          "description": "Maximum number of stack values to show inline."
+        },
+        "ezc.inlayHints.references": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show reference counts after @name definitions."
         }
       }
     },

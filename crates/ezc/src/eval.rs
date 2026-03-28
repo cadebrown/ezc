@@ -80,6 +80,9 @@ pub struct Engine {
     io: Box<dyn EzIo>,
     /// Modules already imported (guard against double-import).
     imported: HashSet<String>,
+    /// Step counter for execution limits (0 = unlimited).
+    steps: u64,
+    max_steps: u64,
 }
 
 impl Engine {
@@ -90,6 +93,8 @@ impl Engine {
             interner: Interner::new(),
             io: Box::new(StdIo),
             imported: HashSet::new(),
+            steps: 0,
+            max_steps: 0, // 0 = unlimited
         }
     }
 
@@ -101,7 +106,14 @@ impl Engine {
             interner: Interner::new(),
             io,
             imported: HashSet::new(),
+            steps: 0,
+            max_steps: 0,
         }
+    }
+
+    /// Set a maximum step limit. 0 = unlimited.
+    pub fn set_step_limit(&mut self, limit: u64) {
+        self.max_steps = limit;
     }
 
     // ── Stack access ──────────────────────────────────────────────────────
@@ -160,6 +172,7 @@ impl Engine {
         self.env.push(HashMap::new());
         self.interner = Interner::new();
         self.imported.clear();
+        self.steps = 0;
     }
 
     // ── Environment ───────────────────────────────────────────────────────
@@ -203,6 +216,8 @@ impl Engine {
             interner: Interner::new(),
             io: Box::new(StdIo),
             imported: self.imported.clone(),
+            steps: self.steps,
+            max_steps: self.max_steps,
         }
     }
 
@@ -218,6 +233,20 @@ impl Engine {
     }
 
     fn eval_expr(&mut self, expr: &Expr, span: std::ops::Range<usize>) -> Result<(), EvalError> {
+        // Step counting for execution limits.
+        if self.max_steps > 0 {
+            self.steps += 1;
+            if self.steps > self.max_steps {
+                return Err(EvalError {
+                    kind: EvalErrorKind::StepLimitExceeded {
+                        limit: self.max_steps,
+                    },
+                    span: Some(span),
+                    labels: vec![],
+                });
+            }
+        }
+
         match expr {
             Expr::Literal(num) => {
                 debug!("push {}", num.type_name());

@@ -12,6 +12,7 @@ use std::ops::Range as ByteRange;
 use std::sync::Arc;
 
 use docs::{completion_items, token_docs};
+use ezc::eval::EzIo;
 use ezc::lexer;
 use ezc::line_index::LineIndex;
 use ezc::token::Token;
@@ -20,6 +21,88 @@ use tokio::sync::RwLock;
 use tower_lsp::jsonrpc::Result;
 use tower_lsp::lsp_types::*;
 use tower_lsp::{Client, LanguageServer, LspService, Server};
+
+// ── No-op I/O for LSP evaluation ─────────────────────────────────────────────
+
+/// No-op I/O backend for LSP evaluation (no stdin/stdout side effects).
+struct NoopIo;
+
+impl EzIo for NoopIo {
+    fn read_line(&mut self) -> std::io::Result<String> {
+        Ok(String::new())
+    }
+    fn read_byte(&mut self) -> std::io::Result<u8> {
+        Ok(0)
+    }
+    fn write_str(&mut self, _s: &str) -> std::io::Result<()> {
+        Ok(())
+    }
+    fn write_byte(&mut self, _b: u8) -> std::io::Result<()> {
+        Ok(())
+    }
+}
+
+// ── Stack state computation ─────────────────────────────────────────────────
+
+/// Compute stack state after each line by running the evaluator.
+/// Returns (line_number, display_string) pairs.
+/// Uses NoopIo and a step limit to prevent blocking.
+pub fn compute_stack_states(src: &str, max_display: usize) -> Vec<(u32, String)> {
+    let ast = match ezc::lex_and_parse(src) {
+        Ok(ast) => ast,
+        Err(_) => return vec![],
+    };
+
+    let li = ezc::line_index::LineIndex::new(src);
+    let mut engine = ezc::eval::Engine::with_io(Box::new(NoopIo));
+    engine.set_step_limit(100_000);
+
+    // Load prelude
+    if let Ok(prelude_ast) = ezc::lex_and_parse(ezc::PRELUDE) {
+        let _ = engine.eval(&prelude_ast);
+    }
+
+    // Track stack state per line (last expression per line wins)
+    let mut line_states: std::collections::HashMap<u32, String> = std::collections::HashMap::new();
+
+    for spanned in &ast {
+        let (_expr, span) = spanned;
+        let line = li.line_of(span.start) as u32;
+
+        match engine.eval_one(spanned) {
+            Ok(()) => {
+                let stack = engine.stack();
+                let display = format_stack_display(&stack, max_display);
+                line_states.insert(line, format!("→ {display}"));
+            }
+            Err(e) => {
+                line_states.insert(line, format!("⚠ {}", e.kind));
+                break; // Stop evaluation after error
+            }
+        }
+    }
+
+    let mut result: Vec<(u32, String)> = line_states.into_iter().collect();
+    result.sort_by_key(|(line, _)| *line);
+    result
+}
+
+/// Format a stack for inline display.
+pub fn format_stack_display(stack: &[&ezc::types::Value], max_items: usize) -> String {
+    if stack.is_empty() {
+        return "[]".to_string();
+    }
+    let len = stack.len();
+    let skip = len.saturating_sub(max_items);
+    let mut parts = Vec::new();
+    if skip > 0 {
+        parts.push(format!("...{skip}"));
+    }
+    for v in stack.iter().skip(skip) {
+        parts.push(v.to_string());
+    }
+    format!("[{}]", parts.join(" "))
+}
 
 // ── Position utilities ────────────────────────────────────────────────────────
 
@@ -927,10 +1010,43 @@ impl LanguageServer for Backend {
         let li = LineIndex::new(src);
         let mut hints: Vec<InlayHint> = Vec::new();
 
-        // Show reference count and type info after @name definitions.
+        // ── Stack state hints (end of each line) ──────────────────────────
+        let stack_states = compute_stack_states(src, 6);
+        for (line, display) in &stack_states {
+            if *line < params.range.start.line || *line > params.range.end.line {
+                continue;
+            }
+            // Position at end of the line's content
+            let line_end = if (*line as usize + 1) < li.line_count() {
+                li.line_start(*line as usize + 1).saturating_sub(1)
+            } else {
+                src.len()
+            };
+            // Find actual end of content (before trailing whitespace/newline)
+            let line_start = li.line_start(*line as usize);
+            let line_text = &src[line_start..line_end];
+            let trimmed_len = line_text.trim_end().len();
+
+            hints.push(InlayHint {
+                position: Position {
+                    line: *line,
+                    character: trimmed_len as u32,
+                },
+                label: InlayHintLabel::String(format!("  {display}")),
+                kind: None,
+                text_edits: None,
+                tooltip: Some(InlayHintTooltip::String(
+                    "Stack state after this line".into(),
+                )),
+                padding_left: Some(true),
+                padding_right: None,
+                data: None,
+            });
+        }
+
+        // ── Reference count hints (after @name definitions) ───────────────
         for (name, def_spans) in &index.definitions {
             let ref_count = index.references.get(name).map(|v| v.len()).unwrap_or(0);
-
             let kind_label = if def_spans.iter().any(|s| index.is_function_def(s)) {
                 "block"
             } else {
@@ -939,15 +1055,13 @@ impl LanguageServer for Backend {
 
             for def_span in def_spans {
                 let (line, col) = li.line_col(def_span.end);
-
-                // Only show hints within the requested range
                 let hint_line = line as u32;
                 if hint_line < params.range.start.line || hint_line > params.range.end.line {
                     continue;
                 }
 
                 let label = format!(
-                    " \u{2190} {ref_count} ref{}, {kind_label}",
+                    " ← {ref_count} ref{}, {kind_label}",
                     if ref_count == 1 { "" } else { "s" }
                 );
 

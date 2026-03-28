@@ -60,6 +60,9 @@ pub enum EvalErrorKind {
     #[error("undefined: ${name}")]
     UndefinedVariable { name: String },
 
+    #[error("step limit exceeded ({limit} steps)")]
+    StepLimitExceeded { limit: u64 },
+
     #[error("I/O error: {0}")]
     IoError(String),
 }

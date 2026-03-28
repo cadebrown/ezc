@@ -495,3 +495,63 @@ fn complex_program_index() {
         "i is referenced multiple times via $i"
     );
 }
+
+// ── Stack state computation ─────────────────────────────────────────
+
+#[test]
+fn test_stack_state_simple_arithmetic() {
+    let states = ezc_lsp::compute_stack_states("3 4 +", 6);
+    assert_eq!(states.len(), 1);
+    assert_eq!(states[0].0, 0); // line 0
+    assert!(states[0].1.contains("[7]"));
+}
+
+#[test]
+fn test_stack_state_multiline() {
+    let states = ezc_lsp::compute_stack_states("3 4 +\n2 *", 6);
+    assert_eq!(states.len(), 2);
+    assert!(states[0].1.contains("[7]")); // line 0
+    assert!(states[1].1.contains("[14]")); // line 1
+}
+
+#[test]
+fn test_stack_state_variable_binding() {
+    let states = ezc_lsp::compute_stack_states("42 @x", 6);
+    assert_eq!(states.len(), 1);
+    assert!(states[0].1.contains("[]")); // stack empty after binding
+}
+
+#[test]
+fn test_stack_state_error_stops() {
+    let states = ezc_lsp::compute_stack_states("3 +\n2 *", 6);
+    assert_eq!(states.len(), 1); // only line 0 (error), line 1 skipped
+    assert!(states[0].1.contains("⚠"));
+}
+
+#[test]
+fn test_stack_state_function_def_and_call() {
+    let states = ezc_lsp::compute_stack_states("(, *) @sq\n5 sq", 6);
+    assert_eq!(states.len(), 2);
+    assert!(states[0].1.contains("[]")); // block bound, stack empty
+    assert!(states[1].1.contains("[25]")); // 5 squared
+}
+
+#[test]
+fn test_stack_state_empty_source() {
+    let states = ezc_lsp::compute_stack_states("", 6);
+    assert!(states.is_empty());
+}
+
+#[test]
+fn test_stack_state_comment_only() {
+    let states = ezc_lsp::compute_stack_states("# just a comment", 6);
+    assert!(states.is_empty()); // comments produce no AST
+}
+
+#[test]
+fn test_stack_state_truncation() {
+    // Push many values, verify truncation
+    let states = ezc_lsp::compute_stack_states("1 2 3 4 5 6 7 8 9 10", 3);
+    assert_eq!(states.len(), 1);
+    assert!(states[0].1.contains("...7")); // 7 values truncated
+}
