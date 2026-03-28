@@ -555,3 +555,292 @@ fn test_stack_state_truncation() {
     assert_eq!(states.len(), 1);
     assert!(states[0].1.contains("...7")); // 7 values truncated
 }
+
+#[test]
+fn test_stack_state_prelude_functions() {
+    // Prelude functions like sq, neg, sum should work
+    let states = ezc_lsp::compute_stack_states("7 sq", 10);
+    assert_eq!(states.len(), 1);
+    assert!(states[0].1.contains("[49]"));
+}
+
+#[test]
+fn test_stack_state_io_noop() {
+    // I/O operations (: . rl wl) should not block — uses NoopIo
+    let states = ezc_lsp::compute_stack_states("42 :", 10);
+    assert_eq!(states.len(), 1);
+    // : consumes the value, stack should be empty
+    assert!(states[0].1.contains("[]"));
+}
+
+#[test]
+fn test_stack_state_multi_expr_single_line() {
+    // Multiple expressions on one line — shows state after LAST expression
+    let states = ezc_lsp::compute_stack_states("3 4 + 2 *", 10);
+    assert_eq!(states.len(), 1);
+    assert!(states[0].1.contains("[14]")); // not [7]
+}
+
+#[test]
+fn test_stack_state_list_operations() {
+    let states = ezc_lsp::compute_stack_states("[1 2 3] (2 *) map", 10);
+    assert_eq!(states.len(), 1);
+    assert!(states[0].1.contains("[2 4 6]"));
+}
+
+#[test]
+fn test_stack_state_string() {
+    let states = ezc_lsp::compute_stack_states("\"hello\"", 10);
+    assert_eq!(states.len(), 1);
+    assert!(states[0].1.contains("\"hello\""));
+}
+
+#[test]
+fn test_stack_state_scope() {
+    // Scoped block: bindings don't leak
+    let states = ezc_lsp::compute_stack_states("{ 10 @x $x 2 * }", 10);
+    assert_eq!(states.len(), 1);
+    assert!(states[0].1.contains("[20]"));
+}
+
+#[test]
+fn test_stack_state_infinite_loop_limited() {
+    // Infinite loop should hit step limit, not hang
+    let states = ezc_lsp::compute_stack_states("1 (1) (1) &", 10);
+    assert_eq!(states.len(), 1);
+    assert!(states[0].1.contains("⚠")); // step limit error
+}
+
+// ── format_stack_display ────────────────────────────────────────────────────
+
+#[test]
+fn test_format_stack_display_empty() {
+    let stack: Vec<&ezc::types::Value> = vec![];
+    assert_eq!(ezc_lsp::format_stack_display(&stack, 10), "[]");
+}
+
+#[test]
+fn test_format_stack_display_single() {
+    let v = ezc::types::Value::int(42);
+    let stack = vec![&v];
+    assert_eq!(ezc_lsp::format_stack_display(&stack, 10), "[42]");
+}
+
+#[test]
+fn test_format_stack_display_multiple() {
+    let a = ezc::types::Value::int(1);
+    let b = ezc::types::Value::int(2);
+    let c = ezc::types::Value::int(3);
+    let stack = vec![&a, &b, &c];
+    assert_eq!(ezc_lsp::format_stack_display(&stack, 10), "[1 2 3]");
+}
+
+#[test]
+fn test_format_stack_display_truncation() {
+    let vals: Vec<ezc::types::Value> = (1..=10).map(|i| ezc::types::Value::int(i)).collect();
+    let stack: Vec<&ezc::types::Value> = vals.iter().collect();
+    let display = ezc_lsp::format_stack_display(&stack, 3);
+    assert!(display.contains("...7"));
+    assert!(display.contains("8 9 10"));
+    assert!(!display.contains("1 2"));
+}
+
+// ── Folding: additional cases ───────────────────────────────────────────────
+
+#[test]
+fn folding_comment_lines() {
+    let src = "# line 1\n# line 2\n# line 3\n42";
+    let ranges = ezc_lsp::compute_folding_ranges(src);
+    let comment_folds: Vec<_> = ranges
+        .iter()
+        .filter(|r| r.kind == Some(tower_lsp::lsp_types::FoldingRangeKind::Comment))
+        .collect();
+    assert!(!comment_folds.is_empty());
+}
+
+#[test]
+fn folding_scope_block() {
+    let src = "{\n  10 @x\n  $x\n}";
+    let ranges = ezc_lsp::compute_folding_ranges(src);
+    assert!(!ranges.is_empty());
+}
+
+// ── Formatting: additional cases ────────────────────────────────────────────
+
+#[test]
+fn format_empty_source() {
+    assert_eq!(ezc_lsp::format_source(""), "\n");
+}
+
+#[test]
+fn format_multiple_spaces_between_tokens() {
+    assert_eq!(ezc_lsp::format_source("3    4     +"), "3 4 +\n");
+}
+
+#[test]
+fn format_preserves_indentation_in_multiline() {
+    let src = "(\n  1 +\n  2 *\n)";
+    let formatted = ezc_lsp::format_source(src);
+    // Should preserve the structure (indentation within blocks)
+    assert!(formatted.contains("(\n"));
+    assert!(formatted.contains(")"));
+}
+
+// ── SymbolIndex: additional edge cases ──────────────────────────────────────
+
+#[test]
+fn symbol_index_same_name_different_scopes() {
+    let builtins = BuiltinSets::new();
+    let src = "1 @x { 2 @x $x } $x";
+    let index = SymbolIndex::build(src, &builtins);
+    // Two definitions of x
+    assert_eq!(index.definition_sites("x").len(), 2);
+    // Two references ($x inside scope, $x outside)
+    assert_eq!(index.references.get("x").map(|v| v.len()).unwrap_or(0), 2);
+}
+
+#[test]
+fn symbol_index_prelude_function_not_user_ref() {
+    let builtins = BuiltinSets::new();
+    let src = "5 sq";
+    let index = SymbolIndex::build(src, &builtins);
+    // sq is a prelude name — should NOT be in references
+    assert!(!index.references.contains_key("sq"));
+}
+
+#[test]
+fn symbol_index_import_not_user_ref() {
+    let builtins = BuiltinSets::new();
+    let src = "\"std/math.ezc\" import";
+    let index = SymbolIndex::build(src, &builtins);
+    // import is a builtin keyword — should NOT be in references
+    assert!(!index.references.contains_key("import"));
+}
+
+// ── BuiltinSets: completeness ───────────────────────────────────────────────
+
+#[test]
+fn builtin_sets_knows_all_type_constructors() {
+    let b = BuiltinSets::new();
+    for name in [
+        "int", "str", "bin", "u8", "u16", "u32", "u64", "u128", "u256", "i8", "i16", "i32", "i64",
+        "i128", "i256", "f16", "f32", "f64",
+    ] {
+        assert!(b.is_known(name), "{name} should be known");
+        assert_eq!(
+            b.classify(name),
+            SemanticClass::Type,
+            "{name} should be Type"
+        );
+    }
+}
+
+#[test]
+fn builtin_sets_knows_all_control_flow() {
+    let b = BuiltinSets::new();
+    for name in ["if", "ifel", "loop", "each", "import"] {
+        assert!(b.is_known(name), "{name} should be known");
+        assert_eq!(
+            b.classify(name),
+            SemanticClass::Keyword,
+            "{name} should be Keyword"
+        );
+    }
+}
+
+#[test]
+fn builtin_sets_knows_all_builtins() {
+    let b = BuiltinSets::new();
+    for name in [
+        "len", "nth", "tl", "rev", "srt", "take", "skip", "zip", "range", "typeof", "cut", "cat",
+        "map", "fil", "red", "rl", "wl", "rb", "wb", "words", "and", "or",
+    ] {
+        assert!(b.is_known(name), "{name} should be known");
+    }
+}
+
+#[test]
+fn builtin_sets_knows_prelude_names() {
+    let b = BuiltinSets::new();
+    for name in [
+        "not", "dvb", "even", "odd", "neg", "abs", "sq", "sum", "prod", "hd", "flat", "min", "max",
+        "dfl", "inc", "dec", "peek",
+    ] {
+        assert!(b.is_known(name), "prelude name {name} should be known");
+    }
+}
+
+// ── find_close_matches: additional cases ────────────────────────────────────
+
+#[test]
+fn find_close_matches_single_char_diff() {
+    let matches = ezc_lsp::find_close_matches("sqare", &["square", "sq", "sqrt"], 3);
+    assert!(matches.contains(&"square")); // edit distance 1
+}
+
+#[test]
+fn find_close_matches_empty_candidates() {
+    let matches = ezc_lsp::find_close_matches("foo", &[], 3);
+    assert!(matches.is_empty());
+}
+
+// ── Docs: token_docs coverage ───────────────────────────────────────────────
+
+#[test]
+fn docs_exist_for_all_operators() {
+    use ezc::token::{Op, Token};
+
+    let tokens_to_check = vec![
+        Token::Op(Op::Add),
+        Token::Op(Op::Sub),
+        Token::Op(Op::Mul),
+        Token::Op(Op::Div),
+        Token::Op(Op::Mod),
+        Token::Op(Op::Pow),
+        Token::Bang,
+        Token::Question,
+        Token::DoubleQuestion,
+        Token::Pipe,
+        Token::Amp,
+        Token::AmpBang,
+        Token::AmpQuestion,
+        Token::AmpSlash,
+        Token::Eq,
+        Token::NotEq,
+        Token::Lt,
+        Token::Gt,
+        Token::LtEq,
+        Token::GtEq,
+        Token::Tilde,
+        Token::Comma,
+        Token::Semicolon,
+        Token::Underscore,
+        Token::Colon,
+        Token::Dot,
+    ];
+
+    for tok in tokens_to_check {
+        assert!(
+            ezc_lsp::docs::token_docs(&tok).is_some(),
+            "No docs for token: {tok}"
+        );
+    }
+}
+
+#[test]
+fn docs_exist_for_builtin_idents() {
+    use ezc::token::Token;
+
+    let ident_names = vec![
+        "int", "str", "bin", "f32", "f64", "u8", "len", "nth", "rev", "srt", "typeof", "range",
+        "each", "loop", "import", "words", "map", "fil", "red", "rl", "wl", "rb", "wb",
+    ];
+
+    for name in ident_names {
+        let tok = Token::Ident(name.to_string());
+        assert!(
+            ezc_lsp::docs::token_docs(&tok).is_some(),
+            "No docs for ident: {name}"
+        );
+    }
+}
