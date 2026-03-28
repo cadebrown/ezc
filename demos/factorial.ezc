@@ -1,7 +1,7 @@
 #!/usr/bin/env ezc
 
 # Compute factorials using the math library
-"std/math.ezc" import
+"math" import
 
 10 iota (1 +) map (
     , str ": " | ~ fact str | :

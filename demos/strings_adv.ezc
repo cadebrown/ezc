@@ -1,7 +1,7 @@
 #!/usr/bin/env ezc
 
 # Advanced string operations
-"std/str.ezc" import
+"str" import
 
 # Repeat
 "ha" 3 rep :                           # hahaha

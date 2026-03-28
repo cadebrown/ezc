@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use tracing::{debug, trace};
 
@@ -64,6 +64,12 @@ pub struct Tagged {
 /// All operations modify the stack in place. Variables are stored in a scope
 /// chain (innermost scope last). Blocks use dynamic scoping — they see whatever
 /// bindings exist at execution time.
+/// Embedded standard library modules (shipped with binary).
+const EMBEDDED_MODULES: &[(&str, &str)] = &[
+    ("math", include_str!("../../../std/math.ezc")),
+    ("str", include_str!("../../../std/str.ezc")),
+];
+
 pub struct Engine {
     stack: Vec<Tagged>,
     /// Scope chain: index 0 is the outermost (top-level), last is innermost.
@@ -72,6 +78,8 @@ pub struct Engine {
     pub interner: Interner,
     /// I/O backend.
     io: Box<dyn EzIo>,
+    /// Modules already imported (guard against double-import).
+    imported: HashSet<String>,
 }
 
 impl Engine {
@@ -81,6 +89,7 @@ impl Engine {
             env: vec![HashMap::new()],
             interner: Interner::new(),
             io: Box::new(StdIo),
+            imported: HashSet::new(),
         }
     }
 
@@ -91,6 +100,7 @@ impl Engine {
             env: vec![HashMap::new()],
             interner: Interner::new(),
             io,
+            imported: HashSet::new(),
         }
     }
 
@@ -149,6 +159,7 @@ impl Engine {
         self.env.clear();
         self.env.push(HashMap::new());
         self.interner = Interner::new();
+        self.imported.clear();
     }
 
     // ── Environment ───────────────────────────────────────────────────────
@@ -189,8 +200,9 @@ impl Engine {
         Engine {
             stack: Vec::new(),
             env: self.env.clone(),
-            interner: Interner::new(), // child gets its own interner
-            io: Box::new(StdIo),       // child gets default I/O
+            interner: Interner::new(),
+            io: Box::new(StdIo),
+            imported: self.imported.clone(),
         }
     }
 
@@ -338,27 +350,58 @@ impl Engine {
                         return Ok(());
                     }
                     "loop" => return self.eval_expr(&Expr::Loop, span),
+                    "words" => {
+                        // Print all defined names (useful for REPL exploration).
+                        let mut names: Vec<&String> = Vec::new();
+                        for scope in &self.env {
+                            names.extend(scope.keys());
+                        }
+                        names.sort();
+                        names.dedup();
+                        let list: Vec<Value> = names
+                            .into_iter()
+                            .map(|n| Value::Str(self.interner.intern_str(n)))
+                            .collect();
+                        self.stack.push(Tagged {
+                            value: Value::List(list),
+                            span,
+                        });
+                        return Ok(());
+                    }
                     "import" => {
-                        // "path.ezc" import → read file, eval into current engine
                         let path_tagged = self.pop("import", &span)?;
                         match &path_tagged.value {
                             Value::Str(s) => {
-                                let path = s.0.to_string();
-                                let src =
-                                    std::fs::read_to_string(&path).map_err(|e| EvalError {
-                                        kind: EvalErrorKind::IoError(format!(
-                                            "import \"{path}\": {e}"
-                                        )),
-                                        span: Some(span.clone()),
-                                        labels: vec![ErrorLabel {
-                                            span: path_tagged.span.clone(),
-                                            message: "this path".into(),
-                                        }],
-                                    })?;
+                                let name = s.0.to_string();
+
+                                // Guard: skip if already imported.
+                                if self.imported.contains(&name) {
+                                    return Ok(());
+                                }
+                                self.imported.insert(name.clone());
+
+                                // Check embedded modules first ("math", "str", etc.)
+                                let src = EMBEDDED_MODULES
+                                    .iter()
+                                    .find(|(n, _)| *n == name)
+                                    .map(|(_, src)| src.to_string())
+                                    .or_else(|| std::fs::read_to_string(&name).ok());
+
+                                let src = src.ok_or_else(|| EvalError {
+                                    kind: EvalErrorKind::IoError(format!(
+                                        "import \"{name}\": not found"
+                                    )),
+                                    span: Some(span.clone()),
+                                    labels: vec![ErrorLabel {
+                                        span: path_tagged.span.clone(),
+                                        message: "this path".into(),
+                                    }],
+                                })?;
+
                                 let ast = crate::lexer::lex(&src)
                                     .map_err(|errs| EvalError {
                                         kind: EvalErrorKind::IoError(format!(
-                                            "import \"{path}\": {}",
+                                            "import \"{name}\": {}",
                                             errs.iter()
                                                 .map(|e| e.to_string())
                                                 .collect::<Vec<_>>()
@@ -371,7 +414,7 @@ impl Engine {
                                         crate::parser::parse(&tokens, src.len()).map_err(|errs| {
                                             EvalError {
                                                 kind: EvalErrorKind::IoError(format!(
-                                                    "import \"{path}\": {}",
+                                                    "import \"{name}\": {}",
                                                     errs.iter()
                                                         .map(|e| e.to_string())
                                                         .collect::<Vec<_>>()
@@ -388,7 +431,7 @@ impl Engine {
                                 return Err(EvalError {
                                     kind: EvalErrorKind::TypeMismatch {
                                         op: "import".into(),
-                                        expected: "a string path".into(),
+                                        expected: "a string".into(),
                                         found: path_tagged.value.type_name().into(),
                                     },
                                     span: Some(span),
@@ -719,8 +762,40 @@ impl Engine {
             Expr::Map => {
                 let block = self.pop("&!", &span)?;
                 let list = self.pop("&!", &span)?;
-                match (list.value, &block.value) {
-                    (Value::List(items), Value::Block(b)) => {
+                // Convert numbers to ranges for map.
+                let items = match &list.value {
+                    Value::List(items) => items.clone(),
+                    Value::Num(n) => {
+                        let count = n.to_f64_lossy() as i64;
+                        (0..count).map(Value::int).collect()
+                    }
+                    _ => {
+                        return Err(EvalError {
+                            kind: EvalErrorKind::TypeMismatch {
+                                op: "&!".into(),
+                                expected: "a list or number, and a block".into(),
+                                found: format!(
+                                    "{} and {}",
+                                    list.value.type_name(),
+                                    block.value.type_name()
+                                ),
+                            },
+                            span: Some(span),
+                            labels: vec![
+                                ErrorLabel {
+                                    span: list.span,
+                                    message: format!("this is {}", list.value.type_name()),
+                                },
+                                ErrorLabel {
+                                    span: block.span,
+                                    message: format!("this is {}", block.value.type_name()),
+                                },
+                            ],
+                        });
+                    }
+                };
+                match &block.value {
+                    Value::Block(b) => {
                         let mut result = Vec::with_capacity(items.len());
                         for item in items {
                             let mut sub = self.child();
@@ -749,28 +824,18 @@ impl Engine {
                             span: span.clone(),
                         });
                     }
-                    (list_val, _) => {
+                    _ => {
                         return Err(EvalError {
                             kind: EvalErrorKind::TypeMismatch {
                                 op: "&!".into(),
-                                expected: "a list and a block".into(),
-                                found: format!(
-                                    "{} and {}",
-                                    list_val.type_name(),
-                                    block.value.type_name()
-                                ),
+                                expected: "a block".into(),
+                                found: block.value.type_name().into(),
                             },
                             span: Some(span),
-                            labels: vec![
-                                ErrorLabel {
-                                    span: list.span,
-                                    message: format!("this is {}", list_val.type_name()),
-                                },
-                                ErrorLabel {
-                                    span: block.span,
-                                    message: format!("this is {}", block.value.type_name()),
-                                },
-                            ],
+                            labels: vec![ErrorLabel {
+                                span: block.span,
+                                message: format!("this is {}", block.value.type_name()),
+                            }],
                         });
                     }
                 }
@@ -779,8 +844,30 @@ impl Engine {
             Expr::Filter => {
                 let block = self.pop("&?", &span)?;
                 let list = self.pop("&?", &span)?;
-                match (list.value, &block.value) {
-                    (Value::List(items), Value::Block(b)) => {
+                let items: Vec<Value> = match &list.value {
+                    Value::List(items) => items.clone(),
+                    Value::Num(n) => {
+                        let count = n.to_f64_lossy() as i64;
+                        (0..count).map(Value::int).collect()
+                    }
+                    _ => {
+                        return Err(EvalError {
+                            kind: EvalErrorKind::TypeMismatch {
+                                op: "&?".into(),
+                                expected: "a list or number, and a block".into(),
+                                found: format!(
+                                    "{} and {}",
+                                    list.value.type_name(),
+                                    block.value.type_name()
+                                ),
+                            },
+                            span: Some(span),
+                            labels: vec![],
+                        });
+                    }
+                };
+                match &block.value {
+                    Value::Block(b) => {
                         let mut result = Vec::new();
                         for item in items {
                             let mut sub = self.child();
@@ -799,28 +886,15 @@ impl Engine {
                             span: span.clone(),
                         });
                     }
-                    (list_val, _) => {
+                    _ => {
                         return Err(EvalError {
                             kind: EvalErrorKind::TypeMismatch {
                                 op: "&?".into(),
-                                expected: "a list and a block".into(),
-                                found: format!(
-                                    "{} and {}",
-                                    list_val.type_name(),
-                                    block.value.type_name()
-                                ),
+                                expected: "a block".into(),
+                                found: block.value.type_name().into(),
                             },
                             span: Some(span),
-                            labels: vec![
-                                ErrorLabel {
-                                    span: list.span,
-                                    message: format!("this is {}", list_val.type_name()),
-                                },
-                                ErrorLabel {
-                                    span: block.span,
-                                    message: format!("this is {}", block.value.type_name()),
-                                },
-                            ],
+                            labels: vec![],
                         });
                     }
                 }
