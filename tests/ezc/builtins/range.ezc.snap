@@ -1,0 +1,7 @@
+---
+source: crates/ezc/tests/snapshot.rs
+assertion_line: 30
+expression: output
+input_file: tests/ezc/builtins/range.ezc
+---
+[3 4 5 6]

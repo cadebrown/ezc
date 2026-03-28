@@ -1,0 +1,13 @@
+---
+source: crates/ezc/tests/snapshot.rs
+assertion_line: 35
+expression: report
+input_file: tests/ezc/typed_int/cross_family_error.ezc
+---
+Error: `arithmetic` got u8 and i8 — needs same numeric family (e.g. both unsigned, or both signed)
+   ╭─[ cross_family_error.ezc:1:11 ]
+   │
+ 1 │ 42u8 42i8 +
+   │           ┬  
+   │           ╰── `arithmetic` got u8 and i8 — needs same numeric family (e.g. both unsigned, or both signed)
+───╯
