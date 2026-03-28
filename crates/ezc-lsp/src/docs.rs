@@ -351,7 +351,7 @@ pub fn completion_items(vars: &[String]) -> Vec<CompletionItem> {
             "block → ...",
             "Execute block / splat list / eval string",
         ),
-        op_item("?", "val cond → ?", "Conditional drop"),
+        op_item("?", "cond (block) →", "Conditional execute"),
         op_item("??", "cond (then) (else) →", "If-else execute"),
         op_item("&", "cond body → ", "Loop while condition truthy"),
         op_item(
@@ -395,6 +395,31 @@ pub fn completion_items(vars: &[String]) -> Vec<CompletionItem> {
         builtin_item("wl", "str →   (write line)"),
         builtin_item("rb", " → int  (read byte)"),
         builtin_item("wb", "int →   (write byte)"),
+        // ── Collection builtins ──────────────────────────────────────────────
+        builtin_item("len", "list/str/bin → n  (length)"),
+        builtin_item("nth", "list n → elem  (index)"),
+        builtin_item("tl", "list → list  (tail)"),
+        builtin_item("rev", "list/str → list/str  (reverse)"),
+        builtin_item("srt", "list → list  (sort)"),
+        builtin_item("take", "list/str n → list/str  (first n)"),
+        builtin_item("skip", "list/str n → list/str  (drop first n)"),
+        builtin_item("zip", "list list → list  (zip pairs)"),
+        builtin_item("range", "start end → list  (integer range)"),
+        builtin_item("typeof", "a → str  (type name)"),
+        builtin_item("cut", "str delim → list  (split)"),
+        builtin_item("cat", "list delim → str  (join)"),
+        // ── Control builtins ─────────────────────────────────────────────────
+        builtin_item("each", "list/n (block) → ...  (iterate)"),
+        builtin_item("loop", "(cond) (body) →  (while loop)"),
+        builtin_item("import", "\"path\" →  (load file)"),
+        builtin_item("words", " → list  (defined names)"),
+        // ── Higher-order aliases ─────────────────────────────────────────────
+        builtin_item("map", "list/n (block) → list  (map)"),
+        builtin_item("fil", "list/n (block) → list  (filter)"),
+        builtin_item("red", "list init (block) → result  (fold)"),
+        // ── Logic ────────────────────────────────────────────────────────────
+        builtin_item("and", "a b → 0|1  (logical and)"),
+        builtin_item("or", "a b → 0|1  (logical or)"),
     ];
 
     // Variable completions from the document

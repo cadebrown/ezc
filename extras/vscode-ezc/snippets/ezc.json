@@ -16,8 +16,8 @@
   },
   "Loop": {
     "prefix": "loop",
-    "body": ["(${1:condition}) (${2:body}) &"],
-    "description": "Loop while condition is truthy"
+    "body": ["(${1:condition}) (${2:body}) loop"],
+    "description": "While loop"
   },
   "Map": {
     "prefix": "map",
@@ -35,14 +35,29 @@
     "description": "Fold/reduce a list with an initial value and combining block"
   },
   "Conditional": {
-    "prefix": "if",
-    "body": ["${1:value} ${2:condition} ?"],
-    "description": "Conditional: drop value if condition is falsy"
+    "prefix": "?",
+    "body": ["${1:condition} (${2:body}) ?"],
+    "description": "Conditional execute: run block if condition is truthy"
   },
-  "Ternary": {
-    "prefix": "ternary",
-    "body": ["${1:if_false} ${2:if_true} ${3:condition} ??"],
-    "description": "Ternary: select one of two values based on condition"
+  "If-Else": {
+    "prefix": "??",
+    "body": ["${1:condition} (${2:then}) (${3:else}) ??"],
+    "description": "If-else: execute then-block if truthy, else-block if falsy"
+  },
+  "Each": {
+    "prefix": "each",
+    "body": ["${1:list} (${2:body}) each"],
+    "description": "Iterate over list or 0..n"
+  },
+  "Define Function": {
+    "prefix": "def",
+    "body": ["(${1:body}) @${2:name}"],
+    "description": "Define a named function"
+  },
+  "Import": {
+    "prefix": "import",
+    "body": ["\"${1:std/math.ezc}\" import"],
+    "description": "Import a module"
   },
   "Scope": {
     "prefix": "scope",

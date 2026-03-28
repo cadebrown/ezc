@@ -38,11 +38,11 @@
 (op_fold) @function
 
 (op_eq) @operator
-(op_ne) @operator
+(op_neq) @operator
 (op_lt) @operator
 (op_gt) @operator
-(op_lte) @operator
-(op_gte) @operator
+(op_lteq) @operator
+(op_gteq) @operator
 
 (bind name: (identifier)) @variable
 (recall name: (identifier)) @variable

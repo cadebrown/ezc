@@ -170,7 +170,18 @@ module.exports = grammar({
         ),
       ),
 
-    builtin: (_$) => token(choice("rl", "wl", "rb", "wb")),
+    builtin: (_$) => token(choice(
+      // I/O
+      "rl", "wl", "rb", "wb",
+      // Collection
+      "len", "nth", "tl", "rev", "srt", "take", "skip", "zip", "range", "typeof", "cut", "cat",
+      // Control
+      "each", "loop", "import", "words",
+      // Higher-order aliases
+      "map", "fil", "red",
+      // Logic
+      "and", "or",
+    )),
 
     identifier: (_$) => token(/[a-zA-Z_][a-zA-Z0-9_]*/),
   },
