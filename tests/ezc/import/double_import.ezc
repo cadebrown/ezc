@@ -1,0 +1,4 @@
+# Importing the same module twice should be a no-op the second time.
+"std/math.ezc" import
+"std/math.ezc" import
+5 fact

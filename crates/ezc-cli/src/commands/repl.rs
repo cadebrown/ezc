@@ -12,11 +12,19 @@ use crate::tui::{is_operator, COMPLETIONS};
 
 // ── Prompt ────────────────────────────────────────────────────────────────────
 
-struct EzcPrompt;
+struct EzcPrompt {
+    /// When `true` the prompt shows a continuation indicator instead of the
+    /// normal `Σ` sigil — signalling that delimiters are still open.
+    continuation: bool,
+}
 
 impl Prompt for EzcPrompt {
     fn render_prompt_left(&self) -> Cow<'_, str> {
-        Cow::Borrowed("Σ")
+        if self.continuation {
+            Cow::Borrowed("…")
+        } else {
+            Cow::Borrowed("Σ")
+        }
     }
 
     fn render_prompt_right(&self) -> Cow<'_, str> {
@@ -131,6 +139,40 @@ fn history_path() -> Option<PathBuf> {
     Some(dir.join("history"))
 }
 
+// ── Multiline balancing ──────────────────────────────────────────────────────
+
+/// Returns `true` when all delimiter pairs in `src` are balanced (or
+/// over-closed — we let the parser report that). The REPL uses this to
+/// decide whether to keep reading continuation lines.
+fn is_balanced(src: &str) -> bool {
+    let mut parens = 0i32;
+    let mut brackets = 0i32;
+    let mut braces = 0i32;
+    let mut in_string = false;
+    let mut prev_char = '\0';
+
+    for ch in src.chars() {
+        if ch == '"' && prev_char != '\\' {
+            in_string = !in_string;
+        }
+        if !in_string {
+            match ch {
+                '(' => parens += 1,
+                ')' => parens -= 1,
+                '[' => brackets += 1,
+                ']' => brackets -= 1,
+                '{' => braces += 1,
+                '}' => braces -= 1,
+                '#' => break, // rest of line is a comment
+                _ => {}
+            }
+        }
+        prev_char = ch;
+    }
+
+    parens <= 0 && brackets <= 0 && braces <= 0
+}
+
 // ── Public entry point ────────────────────────────────────────────────────────
 
 pub fn execute(no_tui: bool) -> Result<(), Box<dyn std::error::Error>> {
@@ -161,20 +203,36 @@ fn plain() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    let prompt = EzcPrompt;
+    let mut prompt = EzcPrompt {
+        continuation: false,
+    };
     let mut engine = ezc::engine();
+    let mut buffer = String::new();
 
     println!("ezc repl — Tab to complete, Ctrl-R to search history, Ctrl-D to exit");
 
     loop {
         match line_editor.read_line(&prompt)? {
             Signal::Success(line) => {
-                let line = line.trim();
-                if line.is_empty() {
+                if !buffer.is_empty() {
+                    buffer.push('\n');
+                }
+                buffer.push_str(&line);
+
+                if !is_balanced(&buffer) {
+                    prompt.continuation = true;
                     continue;
                 }
 
-                match ezc::eval_line(&mut engine, line) {
+                prompt.continuation = false;
+                let input = buffer.trim().to_string();
+                buffer.clear();
+
+                if input.is_empty() {
+                    continue;
+                }
+
+                match ezc::eval_line(&mut engine, &input) {
                     Ok(()) => {
                         let stack = engine.stack();
                         if !stack.is_empty() {
@@ -184,12 +242,16 @@ fn plain() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     Err(e) => {
                         // Full ariadne error report with source annotations.
-                        eprint!("{}", e.report_string("<repl>", line));
+                        eprint!("{}", e.report_string("<repl>", &input));
                     }
                 }
             }
-            // Ctrl-C clears the current line but keeps the session running.
-            Signal::CtrlC => continue,
+            // Ctrl-C clears the current line and any pending buffer.
+            Signal::CtrlC => {
+                buffer.clear();
+                prompt.continuation = false;
+                continue;
+            }
             // Ctrl-D exits.
             Signal::CtrlD => {
                 println!();

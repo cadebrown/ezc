@@ -26,6 +26,14 @@ struct Cli {
     #[arg(short, long)]
     check: bool,
 
+    /// Format source file in place (or to stdout with --stdout)
+    #[arg(short = 'f', long)]
+    format: bool,
+
+    /// When combined with --format, print to stdout instead of overwriting the file
+    #[arg(long)]
+    stdout: bool,
+
     /// Print the stack after each expression (trace mode)
     #[arg(long)]
     trace: bool,
@@ -60,7 +68,13 @@ fn main() {
     let cli = Cli::parse();
     logging::init(cli.verbose);
 
-    let result = if let Some(cmd) = cli.command {
+    let result = if cli.format {
+        if let Some(file) = &cli.file {
+            run_format(file, cli.stdout)
+        } else {
+            Err("--format requires a file argument".into())
+        }
+    } else if let Some(cmd) = cli.command {
         match cmd {
             Commands::Lsp => commands::lsp::execute(),
             Commands::Dap => commands::debug::execute(),
@@ -118,9 +132,75 @@ fn run_string(src: &str, check_only: bool, trace: bool) -> Result<(), Box<dyn st
     Ok(())
 }
 
+fn run_format(file: &PathBuf, to_stdout: bool) -> Result<(), Box<dyn std::error::Error>> {
+    let src = std::fs::read_to_string(file).map_err(|e| format!("{}: {e}", file.display()))?;
+    let formatted = format_ezc(&src);
+    if to_stdout {
+        print!("{formatted}");
+    } else {
+        std::fs::write(file, &formatted).map_err(|e| format!("{}: {e}", file.display()))?;
+    }
+    Ok(())
+}
+
 fn run_stdin(check_only: bool, trace: bool) -> Result<(), Box<dyn std::error::Error>> {
     use std::io::Read;
     let mut src = String::new();
     std::io::stdin().read_to_string(&mut src)?;
     run_string(&src, check_only, trace)
+}
+
+// ── Formatter ────────────────────────────────────────────────────────────────
+
+/// Split a line into (code, comment) at the first `#` that isn't inside a string.
+fn split_at_comment(line: &str) -> (&str, &str) {
+    let mut in_string = false;
+    let mut prev = '\0';
+    for (i, ch) in line.char_indices() {
+        if ch == '"' && prev != '\\' {
+            in_string = !in_string;
+        }
+        if ch == '#' && !in_string {
+            return (&line[..i], &line[i..]);
+        }
+        prev = ch;
+    }
+    (line, "")
+}
+
+/// Normalize whitespace: single spaces between tokens, trim trailing whitespace,
+/// preserve comments, ensure a single trailing newline.
+fn format_ezc(src: &str) -> String {
+    let mut result = String::new();
+
+    for line in src.lines() {
+        let (code, comment) = split_at_comment(line);
+        let code = code.trim();
+
+        if code.is_empty() && comment.is_empty() {
+            result.push('\n');
+            continue;
+        }
+
+        // Normalize spaces in the code portion.
+        let normalized: String = code.split_whitespace().collect::<Vec<_>>().join(" ");
+        result.push_str(&normalized);
+
+        if !comment.is_empty() {
+            if !normalized.is_empty() {
+                result.push(' ');
+            }
+            result.push_str(comment.trim_end());
+        }
+        result.push('\n');
+    }
+
+    // Strip trailing blank lines but keep one trailing newline.
+    while result.ends_with("\n\n") {
+        result.pop();
+    }
+    if !result.ends_with('\n') {
+        result.push('\n');
+    }
+    result
 }
