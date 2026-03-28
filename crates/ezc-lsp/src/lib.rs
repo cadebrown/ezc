@@ -4,10 +4,11 @@
 //! references, document symbols, rename, and semantic tokens.
 //! Start with `ezc lsp` or run the `ezc-lsp` binary — communicates over stdio.
 
-mod docs;
-mod symbols;
+pub mod docs;
+pub mod symbols;
 
 use std::collections::HashMap;
+use std::ops::Range as ByteRange;
 use std::sync::Arc;
 
 use docs::{completion_items, token_docs};
@@ -265,6 +266,8 @@ impl LanguageServer for Backend {
                 workspace_symbol_provider: Some(OneOf::Left(true)),
                 inlay_hint_provider: Some(OneOf::Left(true)),
                 document_formatting_provider: Some(OneOf::Left(true)),
+                code_action_provider: Some(CodeActionProviderCapability::Simple(true)),
+                selection_range_provider: Some(SelectionRangeProviderCapability::Simple(true)),
                 ..Default::default()
             },
             server_info: Some(ServerInfo {
@@ -1077,6 +1080,95 @@ impl LanguageServer for Backend {
             new_text: formatted,
         }]))
     }
+
+    // ── Code Actions ───────────────────────────────────────────────────────
+
+    async fn code_action(&self, params: CodeActionParams) -> Result<Option<CodeActionResponse>> {
+        let uri = &params.text_document.uri;
+
+        let docs = self.documents.read().await;
+        let (src, index) = match docs.get(uri) {
+            Some(pair) => pair,
+            None => return Ok(None),
+        };
+
+        let li = LineIndex::new(src);
+        let mut actions: Vec<CodeActionOrCommand> = Vec::new();
+
+        // Collect all defined names for fuzzy matching.
+        let defined: Vec<&str> = index.definitions.keys().map(|s| s.as_str()).collect();
+        let all_known: Vec<&str> = defined
+            .iter()
+            .copied()
+            .chain(self.builtins.all_names().iter().copied())
+            .collect();
+
+        // For each diagnostic about an undefined variable, suggest close matches.
+        for diag in &params.context.diagnostics {
+            // Check if the diagnostic range corresponds to an undefined reference
+            let start_offset = position_to_offset(src, diag.range.start);
+            if let Some(name) = index.name_at(start_offset) {
+                // Only suggest for names that have no definition
+                if !index.definitions.contains_key(name) && !self.builtins.is_known(name) {
+                    let suggestions = find_close_matches(name, &all_known, 3);
+                    for suggestion in suggestions {
+                        let title = format!("Did you mean `{suggestion}`?");
+                        // Build a text edit replacing the reference with the suggestion
+                        let edits = build_rename_edits(src, &li, index, name, suggestion, uri);
+
+                        if !edits.is_empty() {
+                            let mut changes = HashMap::new();
+                            changes.insert(uri.clone(), edits);
+
+                            actions.push(CodeActionOrCommand::CodeAction(CodeAction {
+                                title,
+                                kind: Some(CodeActionKind::QUICKFIX),
+                                diagnostics: Some(vec![diag.clone()]),
+                                edit: Some(WorkspaceEdit {
+                                    changes: Some(changes),
+                                    ..Default::default()
+                                }),
+                                is_preferred: Some(false),
+                                ..Default::default()
+                            }));
+                        }
+                    }
+                }
+            }
+        }
+
+        if actions.is_empty() {
+            Ok(None)
+        } else {
+            Ok(Some(actions))
+        }
+    }
+
+    // ── Selection Ranges ───────────────────────────────────────────────────
+
+    async fn selection_range(
+        &self,
+        params: SelectionRangeParams,
+    ) -> Result<Option<Vec<SelectionRange>>> {
+        let uri = &params.text_document.uri;
+
+        let docs = self.documents.read().await;
+        let (src, index) = match docs.get(uri) {
+            Some(pair) => pair,
+            None => return Ok(None),
+        };
+
+        let li = LineIndex::new(src);
+        let mut result: Vec<SelectionRange> = Vec::new();
+
+        for pos in &params.positions {
+            let offset = position_to_offset(src, *pos);
+            let ranges = compute_selection_ranges(src, &li, &index.tokens, offset);
+            result.push(ranges);
+        }
+
+        Ok(Some(result))
+    }
 }
 
 /// Find the byte offset of a `#` comment start on a raw source line,
@@ -1099,6 +1191,342 @@ fn find_comment_start(
         }
     }
     None
+}
+
+// ── Code action helpers ──────────────────────────────────────────────────────
+
+/// Simple edit distance (Levenshtein) for short strings.
+fn edit_distance(a: &str, b: &str) -> usize {
+    let a: Vec<char> = a.chars().collect();
+    let b: Vec<char> = b.chars().collect();
+    let (m, n) = (a.len(), b.len());
+    let mut dp = vec![vec![0usize; n + 1]; m + 1];
+    for i in 0..=m {
+        dp[i][0] = i;
+    }
+    for j in 0..=n {
+        dp[0][j] = j;
+    }
+    for i in 1..=m {
+        for j in 1..=n {
+            let cost = if a[i - 1] == b[j - 1] { 0 } else { 1 };
+            dp[i][j] = (dp[i - 1][j] + 1)
+                .min(dp[i][j - 1] + 1)
+                .min(dp[i - 1][j - 1] + cost);
+        }
+    }
+    dp[m][n]
+}
+
+/// Find the closest matching names for a given identifier, ranked by edit distance.
+/// Returns up to `max` suggestions. Only includes names within distance 3.
+pub fn find_close_matches<'a>(name: &str, candidates: &[&'a str], max: usize) -> Vec<&'a str> {
+    let mut scored: Vec<(&str, usize)> = candidates
+        .iter()
+        .filter(|&&c| c != name)
+        .map(|&c| (c, edit_distance(name, c)))
+        .filter(|&(_, d)| d <= 3)
+        .collect();
+    scored.sort_by_key(|&(_, d)| d);
+    scored.into_iter().take(max).map(|(s, _)| s).collect()
+}
+
+/// Build text edits to rename all occurrences of `old_name` to `new_name`.
+fn build_rename_edits(
+    src: &str,
+    li: &LineIndex,
+    index: &SymbolIndex,
+    old_name: &str,
+    new_name: &str,
+    _uri: &Url,
+) -> Vec<TextEdit> {
+    let mut edits = Vec::new();
+    for (tok, span) in &index.tokens {
+        let replacement = match tok {
+            Token::Bind(n) if n == old_name => format!("@{new_name}"),
+            Token::Recall(n) if n == old_name => format!("${new_name}"),
+            Token::Ident(n) if n == old_name => new_name.to_string(),
+            _ => continue,
+        };
+        edits.push(TextEdit {
+            range: span_to_range(li, span),
+            new_text: replacement,
+        });
+    }
+    let _ = src; // used for span_to_range via li
+    edits
+}
+
+// ── Selection range helpers ──────────────────────────────────────────────────
+
+/// Compute nested selection ranges for a byte offset. Returns ranges from
+/// innermost (current token) to outermost (entire file), linked via `parent`.
+fn compute_selection_ranges(
+    src: &str,
+    li: &LineIndex,
+    tokens: &[(Token, ByteRange<usize>)],
+    offset: usize,
+) -> SelectionRange {
+    let mut ranges: Vec<Range> = Vec::new();
+
+    // 1. Current token
+    if let Some((_, span)) = tokens
+        .iter()
+        .find(|(_, span)| span.start <= offset && offset < span.end)
+    {
+        ranges.push(span_to_range(li, span));
+    }
+
+    // 2. Enclosing blocks — find all bracket pairs containing offset, inner to outer.
+    let enclosing = find_enclosing_brackets(tokens, offset);
+    for (open_span, close_span) in &enclosing {
+        let combined = open_span.start..close_span.end;
+        ranges.push(span_to_range(li, &combined));
+    }
+
+    // 3. Current line
+    let (line, _) = li.line_col(offset);
+    let _line_start = li.line_start(line);
+    let line_end = if line + 1 < li.line_count() {
+        li.line_start(line + 1).saturating_sub(1)
+    } else {
+        src.len()
+    };
+    let line_range = Range {
+        start: Position {
+            line: line as u32,
+            character: 0,
+        },
+        end: offset_to_position(src, line_end),
+    };
+    ranges.push(line_range);
+
+    // 4. Entire file
+    let file_range = Range {
+        start: Position {
+            line: 0,
+            character: 0,
+        },
+        end: offset_to_position(src, src.len()),
+    };
+    ranges.push(file_range);
+
+    // Deduplicate consecutive equal ranges.
+    ranges.dedup();
+
+    // Build nested SelectionRange from innermost to outermost.
+    build_selection_range_chain(&ranges)
+}
+
+/// Find all bracket pairs (open_span, close_span) that enclose the given offset,
+/// ordered from innermost to outermost.
+fn find_enclosing_brackets(
+    tokens: &[(Token, ByteRange<usize>)],
+    offset: usize,
+) -> Vec<(ByteRange<usize>, ByteRange<usize>)> {
+    // Build a stack of open brackets, then match closers.
+    let mut pairs: Vec<(ByteRange<usize>, ByteRange<usize>)> = Vec::new();
+    let mut stack: Vec<(Token, ByteRange<usize>)> = Vec::new();
+
+    for (tok, span) in tokens {
+        match tok {
+            Token::OpenParen | Token::OpenBracket | Token::OpenBrace => {
+                stack.push((tok.clone(), span.clone()));
+            }
+            Token::CloseParen | Token::CloseBracket | Token::CloseBrace => {
+                let expected = match tok {
+                    Token::CloseParen => Token::OpenParen,
+                    Token::CloseBracket => Token::OpenBracket,
+                    Token::CloseBrace => Token::OpenBrace,
+                    _ => unreachable!(),
+                };
+                if let Some(pos) = stack.iter().rposition(|(t, _)| *t == expected) {
+                    let (_, open_span) = stack.remove(pos);
+                    // Does this pair enclose the offset?
+                    if open_span.start <= offset && offset <= span.end {
+                        pairs.push((open_span, span.clone()));
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+
+    // Sort innermost first: smallest span first.
+    pairs.sort_by_key(|(a, b)| std::cmp::Reverse(a.start + (b.end - a.start)));
+    pairs.sort_by_key(|(a, b)| b.end - a.start);
+    pairs
+}
+
+/// Chain a list of ranges into a nested `SelectionRange` (innermost first).
+fn build_selection_range_chain(ranges: &[Range]) -> SelectionRange {
+    // Build from outermost (last) to innermost (first).
+    let mut current: Option<SelectionRange> = None;
+    for range in ranges.iter().rev() {
+        current = Some(SelectionRange {
+            range: *range,
+            parent: current.map(Box::new),
+        });
+    }
+    current.unwrap_or(SelectionRange {
+        range: Range::default(),
+        parent: None,
+    })
+}
+
+// ── Extractable formatting/folding helpers ───────────────────────────────────
+
+/// Format ezc source code with normalized whitespace. Testable standalone function.
+pub fn format_source(src: &str) -> String {
+    let tokens: Vec<(Token, ByteRange<usize>)> = match lexer::lex(src) {
+        Ok(toks) => toks.into_iter().map(|(t, s)| (t, s.into_range())).collect(),
+        Err(_) => return src.to_string(), // can't format broken source
+    };
+
+    let li = LineIndex::new(src);
+    let mut formatted_lines: Vec<String> = Vec::new();
+    let line_count = li.line_count();
+
+    for line_num in 0..line_count {
+        let line_start = li.line_start(line_num);
+        let line_end = if line_num + 1 < line_count {
+            li.line_start(line_num + 1) - 1
+        } else {
+            src.len()
+        };
+
+        let raw_line = &src[line_start..line_end];
+
+        let comment_start = find_comment_start(raw_line, line_start, &tokens);
+        let (code_part, comment_part) = match comment_start {
+            Some(offset) => {
+                let rel = offset - line_start;
+                (&raw_line[..rel], Some(raw_line[rel..].trim_end()))
+            }
+            None => (raw_line, None),
+        };
+
+        let line_tokens: Vec<&str> = tokens
+            .iter()
+            .filter(|(_, span)| {
+                let (tok_line, _) = li.line_col(span.start);
+                tok_line == line_num && span.start < line_start + code_part.len()
+            })
+            .map(|(_, span)| &src[span.start..span.end])
+            .collect();
+
+        let mut line_out = if line_tokens.is_empty() {
+            String::new()
+        } else {
+            line_tokens.join(" ")
+        };
+
+        if let Some(comment) = comment_part {
+            if !line_out.is_empty() {
+                line_out.push(' ');
+            }
+            line_out.push_str(comment);
+        }
+
+        let trimmed = line_out.trim_end().to_string();
+        formatted_lines.push(trimmed);
+    }
+
+    while formatted_lines
+        .last()
+        .map(|l| l.is_empty())
+        .unwrap_or(false)
+    {
+        formatted_lines.pop();
+    }
+
+    let mut formatted = formatted_lines.join("\n");
+    formatted.push('\n');
+    formatted
+}
+
+/// Compute folding ranges from source code. Testable standalone function.
+pub fn compute_folding_ranges(src: &str) -> Vec<FoldingRange> {
+    let tokens: Vec<(Token, ByteRange<usize>)> = match lexer::lex(src) {
+        Ok(toks) => toks.into_iter().map(|(t, s)| (t, s.into_range())).collect(),
+        Err(_) => return vec![],
+    };
+
+    let li = LineIndex::new(src);
+    let mut ranges: Vec<FoldingRange> = Vec::new();
+
+    // Delimiter-based folding
+    let mut stack: Vec<(u32, &Token)> = Vec::new();
+    for (tok, span) in &tokens {
+        match tok {
+            Token::OpenParen | Token::OpenBracket | Token::OpenBrace => {
+                let (line, _) = li.line_col(span.start);
+                stack.push((line as u32, tok));
+            }
+            Token::CloseParen | Token::CloseBracket | Token::CloseBrace => {
+                let expected_open = match tok {
+                    Token::CloseParen => Token::OpenParen,
+                    Token::CloseBracket => Token::OpenBracket,
+                    Token::CloseBrace => Token::OpenBrace,
+                    _ => unreachable!(),
+                };
+                if let Some(pos) = stack.iter().rposition(|(_, t)| **t == expected_open) {
+                    let (start_line, _) = stack.remove(pos);
+                    let (end_line, _) = li.line_col(span.start);
+                    let end_line = end_line as u32;
+                    if end_line > start_line {
+                        ranges.push(FoldingRange {
+                            start_line,
+                            start_character: None,
+                            end_line,
+                            end_character: None,
+                            kind: Some(FoldingRangeKind::Region),
+                            collapsed_text: None,
+                        });
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+
+    // Comment-block folding
+    let mut comment_start: Option<u32> = None;
+    for (line_num, line) in src.lines().enumerate() {
+        let trimmed = line.trim_start();
+        if trimmed.starts_with('#') {
+            if comment_start.is_none() {
+                comment_start = Some(line_num as u32);
+            }
+        } else if let Some(start) = comment_start.take() {
+            let end = line_num as u32 - 1;
+            if end > start {
+                ranges.push(FoldingRange {
+                    start_line: start,
+                    start_character: None,
+                    end_line: end,
+                    end_character: None,
+                    kind: Some(FoldingRangeKind::Comment),
+                    collapsed_text: None,
+                });
+            }
+        }
+    }
+    if let Some(start) = comment_start {
+        let end = src.lines().count() as u32 - 1;
+        if end > start {
+            ranges.push(FoldingRange {
+                start_line: start,
+                start_character: None,
+                end_line: end,
+                end_character: None,
+                kind: Some(FoldingRangeKind::Comment),
+                collapsed_text: None,
+            });
+        }
+    }
+
+    ranges
 }
 
 // ── Entry point ───────────────────────────────────────────────────────────────

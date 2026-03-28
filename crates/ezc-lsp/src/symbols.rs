@@ -178,6 +178,16 @@ impl BuiltinSets {
             || self.prelude_names.contains(name)
     }
 
+    /// Return all known names (type constructors, control flow, builtins, prelude).
+    pub fn all_names(&self) -> Vec<&str> {
+        let mut names: Vec<&str> = Vec::new();
+        names.extend(self.type_constructors.iter().copied());
+        names.extend(self.control_flow.iter().copied());
+        names.extend(self.builtins.iter().copied());
+        names.extend(self.prelude_names.iter().map(|s| s.as_str()));
+        names
+    }
+
     /// Classify an Ident token for semantic highlighting.
     pub fn classify(&self, name: &str) -> SemanticClass {
         if self.type_constructors.contains(name) {
