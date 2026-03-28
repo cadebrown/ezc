@@ -62,7 +62,7 @@ function M.setup(opts)
       callback = function(ev)
         vim.lsp.start(vim.tbl_extend("force", {
           name = "ezc-lsp",
-          cmd = { config.cmd, "lsp" },
+          cmd = { "ezc-lsp" },
           root_dir = vim.fs.root(ev.buf, { ".git", "Cargo.toml" }),
           settings = config.lsp_settings,
         }, {}))
@@ -89,11 +89,10 @@ function M._setup_dap(config)
     return -- nvim-dap not installed; skip silently
   end
 
-  -- Adapter: spawn ezc debug on stdio
+  -- Adapter: spawn ezc-dap on stdio
   dap.adapters.ezc = {
     type = "executable",
-    command = config.cmd,
-    args = { "dap" },
+    command = "ezc-dap",
     name = "ezc",
   }
 

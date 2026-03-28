@@ -13,23 +13,42 @@ let client: LanguageClient | undefined;
 
 export function activate(context: vscode.ExtensionContext) {
   const config = vscode.workspace.getConfiguration("ezc");
-  let serverPath: string = config.get("server.path") ?? "ezc";
+  const fs = require("fs");
+  const devDir = path.resolve(context.extensionPath, "../../target/debug");
 
-  // In development, try to find the debug build relative to the extension.
-  if (serverPath === "ezc") {
-    const fs = require("fs");
-    const devBuild = path.resolve(context.extensionPath, "../../target/debug/ezc");
-    if (fs.existsSync(devBuild)) {
-      serverPath = devBuild;
-      console.log(`[ezc] Using dev build: ${devBuild}`);
+  // Resolve LSP binary: prefer standalone ezc-lsp, fall back to ezc lsp
+  let lspPath: string = config.get("lsp.path") ?? "";
+  let lspArgs: string[] = [];
+  if (!lspPath) {
+    const devLsp = path.join(devDir, "ezc-lsp");
+    if (fs.existsSync(devLsp)) {
+      lspPath = devLsp;
+      console.log(`[ezc] Using dev LSP: ${devLsp}`);
+    } else {
+      // Try standalone ezc-lsp on PATH, fall back to ezc lsp subcommand
+      lspPath = "ezc-lsp";
+      // If ezc-lsp isn't installed, this will fail and we could try "ezc" + ["lsp"]
+    }
+  }
+
+  // Resolve DAP binary: prefer standalone ezc-dap, fall back to ezc dap
+  let dapPath: string = config.get("dap.path") ?? "";
+  let dapArgs: string[] = [];
+  if (!dapPath) {
+    const devDap = path.join(devDir, "ezc-dap");
+    if (fs.existsSync(devDap)) {
+      dapPath = devDap;
+      console.log(`[ezc] Using dev DAP: ${devDap}`);
+    } else {
+      dapPath = "ezc-dap";
     }
   }
 
   // ── LSP client ───────────────────────────────────────────────────────
 
   const serverOptions: ServerOptions = {
-    command: serverPath,
-    args: ["lsp"],
+    command: lspPath,
+    args: lspArgs,
     transport: TransportKind.stdio,
   };
 
@@ -59,7 +78,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   // ── DAP: debug adapter descriptor factory ────────────────────────────
 
-  const adapterFactory = new EzcDebugAdapterDescriptorFactory(serverPath);
+  const adapterFactory = new EzcDebugAdapterDescriptorFactory(dapPath);
   context.subscriptions.push(
     vscode.debug.registerDebugAdapterDescriptorFactory("ezc", adapterFactory),
   );
@@ -176,15 +195,15 @@ class EzcDebugConfigurationProvider
 class EzcDebugAdapterDescriptorFactory
   implements vscode.DebugAdapterDescriptorFactory
 {
-  constructor(private readonly serverPath: string) {}
+  constructor(private readonly dapPath: string) {}
 
   createDebugAdapterDescriptor(
     _session: vscode.DebugSession,
   ): vscode.DebugAdapterDescriptor {
-    // Re-read the config each time in case the user changed it
     const configuredPath =
-      vscode.workspace.getConfiguration("ezc").get<string>("server.path") ??
-      this.serverPath;
-    return new vscode.DebugAdapterExecutable(configuredPath, ["dap"]);
+      vscode.workspace.getConfiguration("ezc").get<string>("dap.path") ??
+      this.dapPath;
+    // Standalone binary — no subcommand args needed
+    return new vscode.DebugAdapterExecutable(configuredPath, []);
   }
 }

@@ -6,6 +6,10 @@ edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
 
+[[bin]]
+name = "ezc-dap"
+path = "src/main.rs"
+
 [dependencies]
 ezc.workspace = true
 serde.workspace = true

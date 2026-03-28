@@ -18,8 +18,7 @@ name = "ezc-lsp"
 
 [[language.debuggers]]
 name = "ezc"
-command = "ezc"
-args = ["dap"]
+command = "ezc-dap"
 transport = "stdio"
 templates = [
   { label = "Debug current file", request = "launch", variables = { program = "{file}" }, config = { stopOnEntry = true } },

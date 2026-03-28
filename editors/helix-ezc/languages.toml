@@ -20,8 +20,7 @@ language-servers = ["ezc-lsp"]
 [language.debugger]
 name = "ezc"
 transport = "stdio"
-command = "ezc"
-args = ["dap"]
+command = "ezc-dap"
 port-arg = ""
 
 [[language.debugger.templates]]
@@ -34,9 +33,8 @@ program = "{0}"
 stopOnEntry = true
 
 [language-server.ezc-lsp]
-command = "ezc"
-args = ["lsp"]
+command = "ezc-lsp"
 
 [[grammar]]
 name = "ezc"
-source = { path = "extras/tree-sitter-ezc" }
+source = { path = "editors/tree-sitter-ezc" }
