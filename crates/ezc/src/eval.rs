@@ -66,8 +66,8 @@ pub struct Tagged {
 /// bindings exist at execution time.
 /// Embedded standard library modules (shipped with binary).
 const EMBEDDED_MODULES: &[(&str, &str)] = &[
-    ("math", include_str!("../../../std/math.ezc")),
-    ("str", include_str!("../../../std/str.ezc")),
+    ("std/math.ezc", include_str!("../../../std/math.ezc")),
+    ("std/str.ezc", include_str!("../../../std/str.ezc")),
 ];
 
 pub struct Engine {
