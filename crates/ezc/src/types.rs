@@ -76,6 +76,15 @@ impl Value {
         Value::Num(Number::Int(Arc::new(n.into())))
     }
 
+    /// Format for printing (`:` and `wl`). Strings print raw content
+    /// without quotes. Everything else uses `Display`.
+    pub fn print_string(&self) -> String {
+        match self {
+            Value::Str(s) => s.0.to_string(),
+            other => other.to_string(),
+        }
+    }
+
     /// Returns a human-readable type name for error messages.
     pub fn type_name(&self) -> &'static str {
         match self {

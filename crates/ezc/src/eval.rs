@@ -256,7 +256,7 @@ impl Engine {
                     }
                     "wl" => {
                         let val = self.pop("wl", &span)?;
-                        let text = val.value.to_string();
+                        let text = val.value.print_string();
                         self.io.write_str(&text).map_err(|e| EvalError {
                             kind: EvalErrorKind::IoError(e.to_string()),
                             span: Some(span),
@@ -579,7 +579,7 @@ impl Engine {
 
             Expr::Write => {
                 let val = self.pop(":", &span)?;
-                let text = val.value.to_string();
+                let text = val.value.print_string();
                 self.io.write_str(&text).map_err(|e| EvalError {
                     kind: EvalErrorKind::IoError(e.to_string()),
                     span: Some(span),
