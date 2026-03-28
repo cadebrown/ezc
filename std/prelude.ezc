@@ -4,7 +4,7 @@
 # ── Control flow aliases ───────────────────────────────────────────────────
 
 (?) @if                    # cond (block) if → execute if truthy
-(??) @ife                  # cond (then) (else) ife → if-else
+(??) @ifel                 # cond (then) (else) ifel → if-else
 
 # ── Predicates ─────────────────────────────────────────────────────────────
 

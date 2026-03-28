@@ -337,7 +337,7 @@ impl Engine {
                         }
                         return Ok(());
                     }
-                    "while" => return self.eval_expr(&Expr::Loop, span),
+                    "while" | "loop" => return self.eval_expr(&Expr::Loop, span),
                     _ => {}
                 }
                 // Check environment before falling through to builtins.
