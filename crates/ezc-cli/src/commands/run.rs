@@ -13,7 +13,7 @@ pub fn execute(file: &Path, trace: bool) -> Result<(), Box<dyn std::error::Error
         match ezc::run(&src) {
             Ok(stack) => {
                 for value in &stack {
-                    println!("{value}");
+                    println!("{}", value.print_string());
                 }
                 Ok(())
             }

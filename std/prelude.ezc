@@ -29,6 +29,12 @@
 (_ _) @dup2               # a b dup2 → a b a b
 (@c @b @a $b $c $a) @rot  # a b c rot → b c a
 () @id                    # no-op
+(,) @dup                  # named form of ,
+(;) @drop                 # named form of ;
+(~) @swap                 # named form of ~
+(_) @over                 # named form of _
+(1 +) @inc                # a inc → a+1
+(1 -) @dec                # a dec → a-1
 
 # ── Math ───────────────────────────────────────────────────────────────────
 

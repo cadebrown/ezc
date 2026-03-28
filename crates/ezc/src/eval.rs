@@ -954,6 +954,45 @@ impl Engine {
                 }
                 _ => return Err(self.cast_error(name, &val, span)),
             },
+            "take" => {
+                // list n take → first n elements
+                let n = match &val {
+                    Value::Num(n) => n.to_f64_lossy() as usize,
+                    _ => return Err(self.cast_error(name, &val, span)),
+                };
+                let list_tagged = self.pop("take", span)?;
+                match list_tagged.value {
+                    Value::List(items) => Value::List(items.into_iter().take(n).collect()),
+                    _ => return Err(self.cast_error(name, &list_tagged.value, span)),
+                }
+            }
+            "skip" => {
+                // list n skip → everything after first n elements
+                let n = match &val {
+                    Value::Num(n) => n.to_f64_lossy() as usize,
+                    _ => return Err(self.cast_error(name, &val, span)),
+                };
+                let list_tagged = self.pop("skip", span)?;
+                match list_tagged.value {
+                    Value::List(items) => Value::List(items.into_iter().skip(n).collect()),
+                    _ => return Err(self.cast_error(name, &list_tagged.value, span)),
+                }
+            }
+            "zip" => {
+                // list1 list2 zip → [[a1 b1] [a2 b2] ...]
+                let list2_tagged = self.pop("zip", span)?;
+                match (&val, &list2_tagged.value) {
+                    (Value::List(b), Value::List(a)) => {
+                        let pairs: Vec<Value> = a
+                            .iter()
+                            .zip(b.iter())
+                            .map(|(x, y)| Value::List(vec![x.clone(), y.clone()]))
+                            .collect();
+                        Value::List(pairs)
+                    }
+                    _ => return Err(self.cast_error(name, &val, span)),
+                }
+            }
             "typeof" => {
                 let type_name = val.type_name();
                 Value::Str(self.interner.intern_str(type_name))
