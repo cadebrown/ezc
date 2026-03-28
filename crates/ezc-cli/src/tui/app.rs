@@ -82,7 +82,6 @@ pub const COMPLETIONS: &[(&str, &str)] = &[
     ("fil", "list (block) filter"),
     ("red", "list init (block) reduce"),
     ("for", "list (block) for-each"),
-    ("each", "list (block) for-each"),
 ];
 
 /// Check whether a token string is a known operator (for syntax highlighting).

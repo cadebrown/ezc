@@ -318,7 +318,7 @@ impl Engine {
                     "map" => return self.eval_expr(&Expr::Map, span),
                     "fil" => return self.eval_expr(&Expr::Filter, span),
                     "red" => return self.eval_expr(&Expr::Fold, span),
-                    "for" | "each" => {
+                    "for" => {
                         // list (block) each → run block for each element
                         let block = self.pop("each", &span)?;
                         let list = self.pop("each", &span)?;
