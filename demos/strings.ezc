@@ -1,0 +1,17 @@
+#!/usr/bin/env ezc
+
+# Concatenation
+"hello" " " | "world" | :            # "hello world"
+
+# Split and join
+"hello world" " " cut :              # ["hello" "world"]
+["one" "two" "three"] ", " cat :     # "one, two, three"
+
+# Palindrome check
+"racecar" , rev == :                  # 1
+
+# String length
+"hello" len :                         # 5
+
+# Reverse
+"stressed" rev :                      # "desserts"

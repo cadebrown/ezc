@@ -11,4 +11,4 @@
     :
 ) @fizzbuzz
 
-100 iota (1 +) &! ($fizzbuzz !) each
+100 iota (1 +) map ($fizzbuzz !) for

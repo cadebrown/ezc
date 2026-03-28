@@ -1,0 +1,26 @@
+#!/usr/bin/env ezc
+
+# Arithmetic
+3 4 + :                      # 7
+2 100 ^ :                    # 2^100
+
+# Named functions
+(, *) @square
+(, $square ! $square !) @fourth
+5 $square ! :                # 25
+2 $fourth ! :                # 16
+
+# Fold: sum and product
+[1 2 3 4 5] 0 (+) red :     # 15
+[1 2 3 4 5] 1 (*) red :     # 120
+
+# Map with a captured variable
+10 @offset
+[1 2 3] ($offset +) map :   # [11 12 13]
+
+# Filter evens from 1..10
+10 iota (1 +) map (2 % 0 ==) fil :  # [2 4 6 8 10]
+
+# Min and max
+3 7 min :                    # 3
+3 7 max :                    # 7
