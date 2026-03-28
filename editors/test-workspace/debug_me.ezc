@@ -1,0 +1,23 @@
+#!/usr/bin/env ezc
+
+# Test file for the DAP debugger
+# Set breakpoints, step through, inspect stack and variables
+
+(, *) @square
+(@n $n $n 1 - * 2 /) @triangle
+
+# Set a breakpoint on the next line and step through
+10 @n
+$n square @sq
+$n triangle @tri
+
+"n = " $n str | :
+"n^2 = " $sq str | :
+"tri(n) = " $tri str | :
+
+# Step into this loop
+1 6 range (
+    @i
+    $i square @s
+    $i str ": " | $s str | :
+) each

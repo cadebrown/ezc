@@ -1,0 +1,21 @@
+#!/usr/bin/env ezc
+
+# Test file for error diagnostics
+# These should show inline errors and rich ariadne reports
+
+# Uncomment one at a time to test:
+
+# Stack underflow
+# +
+
+# Type mismatch
+# "hello" 42 +
+
+# Undefined variable
+# $nope
+
+# Division by zero
+# 1 0 /
+
+# This one works fine
+3 4 + :

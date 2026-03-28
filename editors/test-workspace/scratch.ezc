@@ -1,0 +1,39 @@
+#!/usr/bin/env ezc
+
+# Scratch file for testing LSP features
+# Try: hover, go-to-def, find references, rename, semantic highlighting
+
+"std/math.ezc" import
+
+# Define some functions — check Outline sidebar
+(, *) @square
+(, square square) @fourth
+(@n $n $n 1 - * 2 /) @triangle
+
+# Use them — Ctrl+click to jump to definition
+5 square :
+2 fourth :
+10 triangle :
+
+# Variables — try renaming 'x' with F2
+42 @x
+$x square @y
+$y $x + :
+
+# Conditionals
+$x even ("even") ("odd") ?? :
+
+# Lists
+10 iota (square) map @squares
+$squares (25 >) fil :
+$squares sum :
+
+# Scoped
+{
+    100 @temp
+    $temp square :
+}
+
+# FizzBuzz in 4 lines
+(@n "" $n 3 dvb ("Fizz" |) if $n 5 dvb ("Buzz" |) if $n str dfl :) @fb
+1 21 range $fb each
