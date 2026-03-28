@@ -249,6 +249,22 @@ impl LanguageServer for Backend {
                         },
                     ),
                 ),
+                folding_range_provider: Some(FoldingRangeProviderCapability::Simple(true)),
+                document_link_provider: Some(DocumentLinkOptions {
+                    resolve_provider: Some(false),
+                    work_done_progress_options: Default::default(),
+                }),
+                signature_help_provider: Some(SignatureHelpOptions {
+                    trigger_characters: Some(vec![" ".into()]),
+                    retrigger_characters: None,
+                    work_done_progress_options: Default::default(),
+                }),
+                code_lens_provider: Some(CodeLensOptions {
+                    resolve_provider: Some(false),
+                }),
+                workspace_symbol_provider: Some(OneOf::Left(true)),
+                inlay_hint_provider: Some(OneOf::Left(true)),
+                document_formatting_provider: Some(OneOf::Left(true)),
                 ..Default::default()
             },
             server_info: Some(ServerInfo {
@@ -604,6 +620,485 @@ impl LanguageServer for Backend {
             data,
         })))
     }
+
+    // ── Folding Ranges ──────────────────────────────────────────────────────
+
+    async fn folding_range(&self, params: FoldingRangeParams) -> Result<Option<Vec<FoldingRange>>> {
+        let uri = &params.text_document.uri;
+
+        let docs = self.documents.read().await;
+        let (src, index) = match docs.get(uri) {
+            Some(pair) => pair,
+            None => return Ok(None),
+        };
+
+        let li = LineIndex::new(src);
+        let mut ranges: Vec<FoldingRange> = Vec::new();
+
+        // Delimiter-based folding: match ()/[]/{}
+        let mut stack: Vec<(u32, &Token)> = Vec::new();
+        for (tok, span) in &index.tokens {
+            match tok {
+                Token::OpenParen | Token::OpenBracket | Token::OpenBrace => {
+                    let (line, _) = li.line_col(span.start);
+                    stack.push((line as u32, tok));
+                }
+                Token::CloseParen | Token::CloseBracket | Token::CloseBrace => {
+                    let expected_open = match tok {
+                        Token::CloseParen => Token::OpenParen,
+                        Token::CloseBracket => Token::OpenBracket,
+                        Token::CloseBrace => Token::OpenBrace,
+                        _ => unreachable!(),
+                    };
+                    // Pop matching opener
+                    if let Some(pos) = stack.iter().rposition(|(_, t)| **t == expected_open) {
+                        let (start_line, _) = stack.remove(pos);
+                        let (end_line, _) = li.line_col(span.start);
+                        let end_line = end_line as u32;
+                        if end_line > start_line {
+                            ranges.push(FoldingRange {
+                                start_line,
+                                start_character: None,
+                                end_line,
+                                end_character: None,
+                                kind: Some(FoldingRangeKind::Region),
+                                collapsed_text: None,
+                            });
+                        }
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        // Comment-block folding: consecutive lines starting with #
+        let mut comment_start: Option<u32> = None;
+        for (line_num, line) in src.lines().enumerate() {
+            let trimmed = line.trim_start();
+            if trimmed.starts_with('#') {
+                if comment_start.is_none() {
+                    comment_start = Some(line_num as u32);
+                }
+            } else if let Some(start) = comment_start.take() {
+                let end = line_num as u32 - 1;
+                if end > start {
+                    ranges.push(FoldingRange {
+                        start_line: start,
+                        start_character: None,
+                        end_line: end,
+                        end_character: None,
+                        kind: Some(FoldingRangeKind::Comment),
+                        collapsed_text: None,
+                    });
+                }
+            }
+        }
+        // Trailing comment block
+        if let Some(start) = comment_start {
+            let end = src.lines().count() as u32 - 1;
+            if end > start {
+                ranges.push(FoldingRange {
+                    start_line: start,
+                    start_character: None,
+                    end_line: end,
+                    end_character: None,
+                    kind: Some(FoldingRangeKind::Comment),
+                    collapsed_text: None,
+                });
+            }
+        }
+
+        if ranges.is_empty() {
+            Ok(None)
+        } else {
+            Ok(Some(ranges))
+        }
+    }
+
+    // ── Document Links ──────────────────────────────────────────────────────
+
+    async fn document_link(&self, params: DocumentLinkParams) -> Result<Option<Vec<DocumentLink>>> {
+        let uri = &params.text_document.uri;
+
+        let docs = self.documents.read().await;
+        let (src, index) = match docs.get(uri) {
+            Some(pair) => pair,
+            None => return Ok(None),
+        };
+
+        let li = LineIndex::new(src);
+        let mut links: Vec<DocumentLink> = Vec::new();
+
+        // Look for Token::Str followed by Token::Ident("import")
+        for window in index.tokens.windows(2) {
+            let (tok, span) = &window[0];
+            let (next_tok, _) = &window[1];
+
+            if let Token::Str(path) = tok {
+                if matches!(next_tok, Token::Ident(name) if name == "import") {
+                    // Resolve the path
+                    let target = if path.starts_with("std/") {
+                        // Embedded module — try workspace root
+                        uri.join(path).ok()
+                    } else {
+                        // Relative to the document
+                        let base = uri.join(".").unwrap_or_else(|_| uri.clone());
+                        base.join(path).ok()
+                    };
+
+                    links.push(DocumentLink {
+                        range: span_to_range(&li, span),
+                        target,
+                        tooltip: Some(format!("Import: {path}")),
+                        data: None,
+                    });
+                }
+            }
+        }
+
+        if links.is_empty() {
+            Ok(None)
+        } else {
+            Ok(Some(links))
+        }
+    }
+
+    // ── Signature Help ──────────────────────────────────────────────────────
+
+    async fn signature_help(&self, params: SignatureHelpParams) -> Result<Option<SignatureHelp>> {
+        let uri = &params.text_document_position_params.text_document.uri;
+        let pos = params.text_document_position_params.position;
+
+        let docs = self.documents.read().await;
+        let (src, index) = match docs.get(uri) {
+            Some(pair) => pair,
+            None => return Ok(None),
+        };
+
+        let offset = position_to_offset(src, pos);
+
+        // Find the token at or just before cursor
+        let token = index.token_at(offset).or_else(|| {
+            if offset > 0 {
+                index.token_at(offset - 1)
+            } else {
+                None
+            }
+        });
+
+        let (tok, _) = match token {
+            Some(pair) => pair,
+            None => return Ok(None),
+        };
+
+        let doc = match token_docs(tok) {
+            Some(d) => d,
+            None => return Ok(None),
+        };
+
+        // Extract first line as signature label (the stack effect)
+        let label = doc
+            .lines()
+            .find(|l| !l.is_empty())
+            .unwrap_or(doc)
+            .to_string();
+
+        Ok(Some(SignatureHelp {
+            signatures: vec![SignatureInformation {
+                label,
+                documentation: Some(tower_lsp::lsp_types::Documentation::MarkupContent(
+                    MarkupContent {
+                        kind: MarkupKind::Markdown,
+                        value: doc.to_string(),
+                    },
+                )),
+                parameters: None,
+                active_parameter: None,
+            }],
+            active_signature: Some(0),
+            active_parameter: None,
+        }))
+    }
+
+    // ── Code Lens ───────────────────────────────────────────────────────────
+
+    async fn code_lens(&self, params: CodeLensParams) -> Result<Option<Vec<CodeLens>>> {
+        let uri = &params.text_document.uri;
+
+        let docs = self.documents.read().await;
+        let (src, index) = match docs.get(uri) {
+            Some(pair) => pair,
+            None => return Ok(None),
+        };
+
+        let li = LineIndex::new(src);
+        let mut lenses: Vec<CodeLens> = Vec::new();
+
+        for (name, def_spans) in &index.definitions {
+            let ref_count = index.references.get(name).map(|v| v.len()).unwrap_or(0);
+
+            for def_span in def_spans {
+                let range = span_to_range(&li, def_span);
+                let title = if ref_count == 1 {
+                    "1 reference".to_string()
+                } else {
+                    format!("{ref_count} references")
+                };
+
+                lenses.push(CodeLens {
+                    range,
+                    command: Some(Command {
+                        title,
+                        command: "editor.action.findReferences".into(),
+                        arguments: None,
+                    }),
+                    data: None,
+                });
+            }
+        }
+
+        if lenses.is_empty() {
+            Ok(None)
+        } else {
+            Ok(Some(lenses))
+        }
+    }
+
+    // ── Workspace Symbols ───────────────────────────────────────────────────
+
+    #[allow(deprecated)]
+    async fn symbol(
+        &self,
+        params: WorkspaceSymbolParams,
+    ) -> Result<Option<Vec<SymbolInformation>>> {
+        let query = &params.query;
+        let docs = self.documents.read().await;
+        let mut symbols: Vec<SymbolInformation> = Vec::new();
+
+        for (uri, (src, index)) in docs.iter() {
+            let li = LineIndex::new(src);
+            for (name, spans) in index.defined_names() {
+                // Filter by query: empty query matches all, otherwise substring match
+                if !query.is_empty() && !name.contains(query.as_str()) {
+                    continue;
+                }
+                let first_span = &spans[0];
+                let kind = if index.is_function_def(first_span) {
+                    SymbolKind::FUNCTION
+                } else {
+                    SymbolKind::VARIABLE
+                };
+
+                symbols.push(SymbolInformation {
+                    name: name.to_string(),
+                    kind,
+                    tags: None,
+                    deprecated: None,
+                    location: Location {
+                        uri: uri.clone(),
+                        range: span_to_range(&li, first_span),
+                    },
+                    container_name: None,
+                });
+            }
+        }
+
+        if symbols.is_empty() {
+            Ok(None)
+        } else {
+            Ok(Some(symbols))
+        }
+    }
+
+    // ── Inlay Hints ─────────────────────────────────────────────────────────
+
+    async fn inlay_hint(&self, params: InlayHintParams) -> Result<Option<Vec<InlayHint>>> {
+        let uri = &params.text_document.uri;
+
+        let docs = self.documents.read().await;
+        let (src, index) = match docs.get(uri) {
+            Some(pair) => pair,
+            None => return Ok(None),
+        };
+
+        let li = LineIndex::new(src);
+        let mut hints: Vec<InlayHint> = Vec::new();
+
+        // Show reference count and type info after @name definitions.
+        for (name, def_spans) in &index.definitions {
+            let ref_count = index.references.get(name).map(|v| v.len()).unwrap_or(0);
+
+            let kind_label = if def_spans.iter().any(|s| index.is_function_def(s)) {
+                "block"
+            } else {
+                "value"
+            };
+
+            for def_span in def_spans {
+                let (line, col) = li.line_col(def_span.end);
+
+                // Only show hints within the requested range
+                let hint_line = line as u32;
+                if hint_line < params.range.start.line || hint_line > params.range.end.line {
+                    continue;
+                }
+
+                let label = format!(
+                    " \u{2190} {ref_count} ref{}, {kind_label}",
+                    if ref_count == 1 { "" } else { "s" }
+                );
+
+                hints.push(InlayHint {
+                    position: Position {
+                        line: hint_line,
+                        character: col as u32,
+                    },
+                    label: InlayHintLabel::String(label),
+                    kind: Some(InlayHintKind::TYPE),
+                    text_edits: None,
+                    tooltip: None,
+                    padding_left: Some(true),
+                    padding_right: None,
+                    data: None,
+                });
+            }
+        }
+
+        if hints.is_empty() {
+            Ok(None)
+        } else {
+            Ok(Some(hints))
+        }
+    }
+
+    // ── Formatting ──────────────────────────────────────────────────────────
+
+    async fn formatting(&self, params: DocumentFormattingParams) -> Result<Option<Vec<TextEdit>>> {
+        let uri = &params.text_document.uri;
+
+        let docs = self.documents.read().await;
+        let (src, index) = match docs.get(uri) {
+            Some(pair) => pair,
+            None => return Ok(None),
+        };
+
+        // Rebuild source from tokens with normalized whitespace.
+        // Strategy: for each line, collect the tokens on that line and
+        // re-emit them with single spaces. Preserve comment text as-is.
+        let li = LineIndex::new(src);
+        let mut formatted_lines: Vec<String> = Vec::new();
+        let line_count = li.line_count();
+
+        for line_num in 0..line_count {
+            let line_start = li.line_start(line_num);
+            let line_end = if line_num + 1 < line_count {
+                // line_start of next line minus the newline
+                li.line_start(line_num + 1) - 1
+            } else {
+                src.len()
+            };
+
+            let raw_line = &src[line_start..line_end];
+
+            // Check for comment: find # not inside a string token
+            let comment_start = find_comment_start(raw_line, line_start, &index.tokens);
+            let (code_part, comment_part) = match comment_start {
+                Some(offset) => {
+                    let rel = offset - line_start;
+                    (&raw_line[..rel], Some(raw_line[rel..].trim_end()))
+                }
+                None => (raw_line, None),
+            };
+
+            // Collect tokens on this line
+            let line_tokens: Vec<&str> = index
+                .tokens
+                .iter()
+                .filter(|(_, span)| {
+                    let (tok_line, _) = li.line_col(span.start);
+                    tok_line == line_num && span.start < line_start + code_part.len()
+                })
+                .map(|(_, span)| &src[span.start..span.end])
+                .collect();
+
+            let mut line_out = if line_tokens.is_empty() {
+                // Blank or comment-only line — preserve emptiness
+                String::new()
+            } else {
+                line_tokens.join(" ")
+            };
+
+            // Append comment
+            if let Some(comment) = comment_part {
+                if !line_out.is_empty() {
+                    line_out.push(' ');
+                }
+                line_out.push_str(comment);
+            }
+
+            // Trim trailing whitespace
+            let trimmed = line_out.trim_end().to_string();
+            formatted_lines.push(trimmed);
+        }
+
+        // Strip trailing empty lines, then ensure exactly one trailing newline
+        while formatted_lines
+            .last()
+            .map(|l| l.is_empty())
+            .unwrap_or(false)
+        {
+            formatted_lines.pop();
+        }
+
+        let mut formatted = formatted_lines.join("\n");
+        formatted.push('\n');
+
+        // If nothing changed, return no edits
+        if formatted == *src {
+            return Ok(None);
+        }
+
+        // Replace the entire document
+        let last_line = li.line_count().saturating_sub(1);
+        let last_line_start = li.line_start(last_line);
+        let last_col = src.len() - last_line_start;
+
+        Ok(Some(vec![TextEdit {
+            range: Range {
+                start: Position {
+                    line: 0,
+                    character: 0,
+                },
+                end: Position {
+                    line: last_line as u32,
+                    character: last_col as u32,
+                },
+            },
+            new_text: formatted,
+        }]))
+    }
+}
+
+/// Find the byte offset of a `#` comment start on a raw source line,
+/// skipping any `#` that falls inside a string token.
+fn find_comment_start(
+    line: &str,
+    line_offset: usize,
+    tokens: &[(Token, std::ops::Range<usize>)],
+) -> Option<usize> {
+    for (i, ch) in line.char_indices() {
+        if ch == '#' {
+            let abs = line_offset + i;
+            // Check if this offset is inside a string token
+            let in_string = tokens.iter().any(|(tok, span)| {
+                matches!(tok, Token::Str(_)) && span.start <= abs && abs < span.end
+            });
+            if !in_string {
+                return Some(abs);
+            }
+        }
+    }
+    None
 }
 
 // ── Entry point ───────────────────────────────────────────────────────────────
