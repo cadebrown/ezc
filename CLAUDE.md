@@ -23,10 +23,13 @@ cargo test                                     # run all tests
 cargo test -p ezc                              # test core crate only
 cargo insta test                               # run snapshot tests
 cargo insta review                             # review pending snapshots
-cargo run -p ezc-cli -- run <file.ezc>         # run a program
-cargo run -p ezc-cli -- check <file.ezc>       # parse-check only
-cargo run -p ezc-cli -- repl                   # interactive TUI REPL
-cargo run -p ezc-cli -- repl --no-tui          # plain reedline REPL
+cargo run -p ezc-cli -- <file.ezc>             # run a program
+cargo run -p ezc-cli -- -e "3 4 +"             # eval a string
+cargo run -p ezc-cli -- -c <file.ezc>          # check only
+cargo run -p ezc-cli -- -f <file.ezc>          # format in place
+cargo run -p ezc-cli -- --trace <file.ezc>     # step trace
+cargo run -p ezc-cli                           # interactive TUI REPL
+cargo run -p ezc-cli -- --no-tui               # plain reedline REPL
 ```
 
 ## Language Quick Reference
