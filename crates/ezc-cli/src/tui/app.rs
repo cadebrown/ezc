@@ -78,6 +78,7 @@ pub const COMPLETIONS: &[(&str, &str)] = &[
     ("cat", "join list"),
     ("if", "cond (block) if"),
     ("ife", "cond (then) (else) ife"),
+    ("each", "list (block) each"),
 ];
 
 /// Check whether a token string is a known operator (for syntax highlighting).

@@ -314,6 +314,40 @@ impl Engine {
                         }
                         return Ok(());
                     }
+                    "each" => {
+                        // list (block) each → run block for each element
+                        let block = self.pop("each", &span)?;
+                        let list = self.pop("each", &span)?;
+                        match (&list.value, &block.value) {
+                            (Value::List(items), Value::Block(b)) => {
+                                let items = items.clone();
+                                let body = b.body.clone();
+                                for item in items {
+                                    self.stack.push(Tagged {
+                                        value: item,
+                                        span: span.clone(),
+                                    });
+                                    self.eval(&body)?;
+                                }
+                            }
+                            _ => {
+                                return Err(EvalError {
+                                    kind: EvalErrorKind::TypeMismatch {
+                                        op: "each".into(),
+                                        expected: "a list and a block".into(),
+                                        found: format!(
+                                            "{} and {}",
+                                            list.value.type_name(),
+                                            block.value.type_name()
+                                        ),
+                                    },
+                                    span: Some(span),
+                                    labels: vec![],
+                                });
+                            }
+                        }
+                        return Ok(());
+                    }
                     "ife" => {
                         // cond (then) (else) ife → execute then if truthy, else otherwise
                         let else_tagged = self.pop("ife", &span)?;

@@ -2,12 +2,13 @@
 
 # FizzBuzz 1 to 100
 (
-    @n "" @r
-    $n 3 % 0 == ($r "Fizz" | @r) if
-    $n 5 % 0 == ($r "Buzz" | @r) if
-    $r "" == ($n str @r) if
-    $r :
+    @n
+    $n 15 % 0 == ("FizzBuzz") (
+        $n 3 % 0 == ("Fizz") (
+            $n 5 % 0 == ("Buzz") ($n str) ife
+        ) ife
+    ) ife
+    :
 ) @fizzbuzz
 
-# fold body: acc elem → swap, drop acc, run fizzbuzz, push dummy acc
-100 iota (1 +) &! 0 (~ ; $fizzbuzz ! 0) &/ ;
+100 iota (1 +) &! ($fizzbuzz !) each
