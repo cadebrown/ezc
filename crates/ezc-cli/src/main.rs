@@ -46,8 +46,8 @@ struct Cli {
 enum Commands {
     /// Start the language server (communicates over stdio)
     Lsp,
-    /// Start the debug adapter server (DAP, communicates over stdio)
-    Debug,
+    /// Start the debug adapter (DAP over stdio)
+    Dap,
     /// Print shell completions for the given shell
     Completions {
         /// The shell to generate completions for
@@ -63,7 +63,7 @@ fn main() {
     let result = if let Some(cmd) = cli.command {
         match cmd {
             Commands::Lsp => commands::lsp::execute(),
-            Commands::Debug => commands::debug::execute(),
+            Commands::Dap => commands::debug::execute(),
             Commands::Completions { shell } => {
                 let mut cmd = Cli::command();
                 clap_complete::generate(shell, &mut cmd, "ezc", &mut std::io::stdout());
