@@ -92,6 +92,16 @@ impl fmt::Display for ParseError {
     }
 }
 
+/// Sanitize a span so that start <= end (ariadne panics otherwise).
+/// chumsky alpha can produce inverted spans on malformed input.
+fn sanitize_span(span: &std::ops::Range<usize>) -> std::ops::Range<usize> {
+    if span.start > span.end {
+        span.end..span.end
+    } else {
+        span.clone()
+    }
+}
+
 impl EzError {
     /// Build ariadne reports for this error.
     fn build_reports<'a>(
@@ -103,11 +113,12 @@ impl EzError {
             EzError::Parse(errors) => errors
                 .iter()
                 .map(|err| {
-                    Report::build(ReportKind::Error, (filename, err.span.clone()))
+                    let span = sanitize_span(&err.span);
+                    Report::build(ReportKind::Error, (filename, span.clone()))
                         .with_config(config)
                         .with_message(&err.message)
                         .with_label(
-                            Label::new((filename, err.span.clone()))
+                            Label::new((filename, span))
                                 .with_message(&err.message)
                                 .with_color(Color::Red),
                         )

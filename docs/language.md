@@ -129,7 +129,7 @@ All binary. Pop two values, push result.
 | Op | Description | Example |
 |----|-------------|---------|
 | `!` | Execute block / splat list / eval string | `3 (4 +) !` → `7` |
-| `?` | Conditional: if top is falsy, also pop next | `5 0 ?` → (empty) |
+| `?` | Conditional execute: pop cond, if truthy execute next (block) | `(2 *) 1 ?` → executes `2 *` |
 | `??` | Ternary: pop cond, keep one of two values | `10 20 1 ??` → `20` |
 | `&` | Loop: `cond body &` — while cond is truthy | `5 (, 0 !=) (1 -) &` → `0` |
 
@@ -145,7 +145,7 @@ All binary. Pop two values, push result.
 | `:` | Write: print top of stack with newline, consume it |
 | `.` | Read: read a line from stdin, push as string |
 | `rl` | Read line (same as `.`) |
-| `wl` | Write line (same as `:`) |
+| `wl` | Write line with newline (same as `:`) |
 | `rb` | Read byte, push as int |
 | `wb` | Pop int, write as byte |
 
@@ -265,7 +265,102 @@ Error: `+` got list and int — needs two numbers
 "3 4 +" !                  # → 7
 
 # I/O
-"What is your name? " wl   # prompt (no newline... wait, wl adds newline)
+"What is your name?" :     # prompt (`:` prints with newline)
 . @name                    # read a line, bind to name
-"Hello, " $name | :        # greet
+"Hello, " $name | :       # greet
 ```
+
+## Standard Library (Prelude)
+
+The prelude (`std/prelude.ezc`) is loaded automatically before every program and
+REPL session. It defines the following names as regular variable bindings:
+
+### Control Flow
+
+| Name | Stack Effect | Description |
+|------|-------------|-------------|
+| `if` | `(block) cond if` | Execute block if cond is truthy (alias for `?`) |
+| `ifel` | `(else) (then) cond ifel` | If-else (alias for `??`) |
+
+### Predicates
+
+| Name | Stack Effect | Description |
+|------|-------------|-------------|
+| `dvb` | `a b dvb` | 1 if `a` divisible by `b` |
+| `zero` | `a zero` | 1 if `a` is zero |
+| `even` | `a even` | 1 if `a` is even |
+| `odd` | `a odd` | 1 if `a` is odd |
+| `ltz` | `a ltz` | 1 if `a < 0` |
+| `gtz` | `a gtz` | 1 if `a > 0` |
+
+### Logic
+
+| Name | Stack Effect | Description |
+|------|-------------|-------------|
+| `not` | `a not` | Logical negation |
+| `and` | `a b and` | 1 if both truthy |
+| `or` | `a b or` | 1 if either truthy |
+
+### Stack Combinators
+
+| Name | Stack Effect | Description |
+|------|-------------|-------------|
+| `dup` | `a dup` | Copy top (named `,`) |
+| `drop` | `a drop` | Discard top (named `;`) |
+| `swap` | `a b swap` | Swap top two (named `~`) |
+| `over` | `a b over` | Copy second (named `_`) |
+| `nip` | `a b nip` | Drop second |
+| `tuck` | `a b tuck` | Copy top under second |
+| `dup2` | `a b dup2` | Copy top two |
+| `rot` | `a b c rot` | Rotate: `b c a` |
+| `id` | | No-op |
+| `dfl` | `val fallback dfl` | Use fallback if val is falsy |
+| `inc` | `a inc` | `a + 1` |
+| `dec` | `a dec` | `a - 1` |
+
+### Math
+
+| Name | Stack Effect | Description |
+|------|-------------|-------------|
+| `sq` | `a sq` | Square (`a * a`) |
+| `neg` | `a neg` | Negate (`0 - a`) |
+| `abs` | `a abs` | Absolute value |
+| `sum` | `[list] sum` | Sum of list |
+| `prod` | `[list] prod` | Product of list |
+| `iota` | `n iota` | `[0 1 ... n-1]` |
+
+### Collections
+
+| Name | Stack Effect | Description |
+|------|-------------|-------------|
+| `hd` | `[list] hd` | First element |
+| `flat` | `[[nested]] flat` | Flatten one level |
+| `apply` | `[args] (block) apply` | Splat args, exec block |
+
+### Comparison
+
+| Name | Stack Effect | Description |
+|------|-------------|-------------|
+| `min` | `a b min` | Smaller of two values |
+| `max` | `a b max` | Larger of two values |
+
+### Printing
+
+| Name | Stack Effect | Description |
+|------|-------------|-------------|
+| `peek` | `a peek` | Print without consuming |
+
+## Builtin Shadowing
+
+Prelude names are ordinary variable bindings, not keywords. You can rebind any
+of them:
+
+```
+(, , * ~ * +) @sq    # redefine sq to compute a^2 differently
+```
+
+Builtins like `+`, `-`, `!`, `?` etc. are *not* variable bindings and cannot
+be shadowed. Type constructors (`int`, `f64`, `str`, etc.) and collection
+operations (`len`, `nth`, `rev`, etc.) are ident-builtins resolved by the
+evaluator; rebinding them with `@` will shadow them for `$name !` usage but
+the bare name still invokes the builtin.

@@ -394,10 +394,13 @@ pub fn arith(a: Number, b: Number, op: ArithOp) -> Result<Number, ArithError> {
                 ArithOp::Add => a + b,
                 ArithOp::Sub => a - b,
                 ArithOp::Mul => a * b,
-                ArithOp::Div => a / b, // IEEE 754: no error, produces Inf/NaN
+                ArithOp::Div => a / b,
                 ArithOp::Mod => a % b,
                 ArithOp::Pow => a.powf(b),
             };
+            if result.is_nan() {
+                return Err(ArithError::DivisionByZero); // NaN from 0.0/0.0 etc.
+            }
             Ok(Number::from_f64(result, target))
         }
     }

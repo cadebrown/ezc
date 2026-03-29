@@ -20,7 +20,7 @@ A stack-based, reverse-polish-notation programming language with a mathematical 
 # → "hello world"
 
 # variables and named functions
-(: *) @square
+(, *) @square
 5 $square !
 # → 25
 

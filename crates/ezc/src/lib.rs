@@ -26,6 +26,8 @@ pub mod stepper;
 pub mod token;
 pub mod types;
 
+use std::panic::{catch_unwind, AssertUnwindSafe};
+
 use error::{EzError, ParseError};
 use eval::Engine;
 use types::Value;
@@ -60,8 +62,13 @@ pub fn lex_and_parse(src: &str) -> Result<Vec<ast::Spanned<ast::Expr>>, EzError>
         )
     })?;
 
-    parser::parse(&tokens, src.len()).map_err(|errs| {
-        EzError::Parse(
+    // chumsky 1.0.0-alpha.8 can panic on some malformed inputs (e.g. unclosed
+    // delimiters). Catch the panic and convert to a parse error.
+    let parse_result = catch_unwind(AssertUnwindSafe(|| parser::parse(&tokens, src.len())));
+
+    match parse_result {
+        Ok(Ok(ast)) => Ok(ast),
+        Ok(Err(errs)) => Err(EzError::Parse(
             errs.into_iter()
                 .map(|e| {
                     let span = e.span().into_range();
@@ -73,8 +80,14 @@ pub fn lex_and_parse(src: &str) -> Result<Vec<ast::Spanned<ast::Expr>>, EzError>
                     }
                 })
                 .collect(),
-        )
-    })
+        )),
+        Err(_) => Err(EzError::Parse(vec![ParseError {
+            span: 0..src.len(),
+            message: "parse error: unclosed delimiter or malformed input".into(),
+            expected: vec![],
+            found: None,
+        }])),
+    }
 }
 
 /// Run an ezc program from source, returning the final stack.

@@ -1120,7 +1120,13 @@ impl Engine {
             "take" => {
                 // list/str n take → first n elements/chars
                 let n = match &val {
-                    Value::Num(n) => n.to_f64_lossy() as usize,
+                    Value::Num(n) => {
+                        let n_val = n.to_f64_lossy();
+                        if n_val < 0.0 {
+                            return Err(self.cast_error(name, &val, span));
+                        }
+                        n_val as usize
+                    }
                     _ => return Err(self.cast_error(name, &val, span)),
                 };
                 let coll = self.pop("take", span)?;
@@ -1136,7 +1142,13 @@ impl Engine {
             "skip" => {
                 // list/str n skip → everything after first n
                 let n = match &val {
-                    Value::Num(n) => n.to_f64_lossy() as usize,
+                    Value::Num(n) => {
+                        let n_val = n.to_f64_lossy();
+                        if n_val < 0.0 {
+                            return Err(self.cast_error(name, &val, span));
+                        }
+                        n_val as usize
+                    }
                     _ => return Err(self.cast_error(name, &val, span)),
                 };
                 let coll = self.pop("skip", span)?;
@@ -1193,13 +1205,10 @@ impl Engine {
                     Value::List(items) => {
                         if index >= items.len() {
                             return Err(EvalError {
-                                kind: EvalErrorKind::StackUnderflow {
-                                    op: format!(
-                                        "nth (index {index} out of bounds, len {})",
-                                        items.len()
-                                    ),
-                                    expected: index + 1,
-                                    found: items.len(),
+                                kind: EvalErrorKind::TypeMismatch {
+                                    op: "nth".into(),
+                                    expected: format!("index < {} (list length)", items.len()),
+                                    found: format!("index {index}"),
                                 },
                                 span: Some(span.clone()),
                                 labels: vec![],
