@@ -22,7 +22,14 @@ pub fn read_message<R: BufRead>(reader: &mut R) -> io::Result<Value> {
     let mut content_length: Option<usize> = None;
     loop {
         let mut header_line = String::new();
-        reader.read_line(&mut header_line)?;
+        let n = reader.read_line(&mut header_line)?;
+        if n == 0 {
+            // Client closed stdin (e.g. VS Code disconnect) before sending a message.
+            return Err(io::Error::new(
+                io::ErrorKind::UnexpectedEof,
+                "EOF while reading DAP headers",
+            ));
+        }
         let trimmed = header_line.trim_end_matches(['\r', '\n']);
         if trimmed.is_empty() {
             break; // blank line marks end of headers
@@ -70,6 +77,13 @@ mod tests {
         let mut cursor = std::io::BufReader::new(buf.as_slice());
         let parsed = read_message(&mut cursor).unwrap();
         assert_eq!(parsed, msg);
+    }
+
+    #[test]
+    fn eof_before_headers_is_unexpected_eof() {
+        let mut cursor = std::io::BufReader::new(std::io::empty());
+        let err = read_message(&mut cursor).expect_err("expected EOF");
+        assert_eq!(err.kind(), std::io::ErrorKind::UnexpectedEof);
     }
 
     #[test]

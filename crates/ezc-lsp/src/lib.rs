@@ -7,6 +7,23 @@
 pub mod docs;
 pub mod symbols;
 
+/// CodeLens command registered by the VS Code extension. Arguments: document URI string,
+/// then LSP [`Position`] `{ line, character }`. The extension forwards to
+/// `editor.action.findReferences` with proper `vscode.Uri` / `vscode.Position` instances
+/// (JSON from the server alone does not satisfy VS Code's `URI.isUri` / `Position.isIPosition`).
+pub const EZC_SHOW_REFERENCES_COMMAND: &str = "ezc.showReferences";
+
+/// JSON arguments for [`EZC_SHOW_REFERENCES_COMMAND`], for tests and clients.
+pub fn references_code_lens_arguments(uri: &Url, position: Position) -> Vec<serde_json::Value> {
+    vec![
+        serde_json::Value::String(uri.to_string()),
+        serde_json::json!({
+            "line": position.line,
+            "character": position.character,
+        }),
+    ]
+}
+
 use std::collections::HashMap;
 use std::ops::Range as ByteRange;
 use std::sync::Arc;
@@ -934,11 +951,8 @@ impl LanguageServer for Backend {
                     range,
                     command: Some(Command {
                         title,
-                        command: "editor.action.findReferences".into(),
-                        arguments: Some(vec![
-                            serde_json::to_value(uri.to_string()).unwrap(),
-                            serde_json::to_value(range.start).unwrap(),
-                        ]),
+                        command: EZC_SHOW_REFERENCES_COMMAND.into(),
+                        arguments: Some(references_code_lens_arguments(uri, range.start)),
                     }),
                     data: None,
                 });
@@ -1646,6 +1660,32 @@ pub fn compute_folding_ranges(src: &str) -> Vec<FoldingRange> {
     }
 
     ranges
+}
+
+#[cfg(test)]
+mod reference_code_lens_tests {
+    use super::{references_code_lens_arguments, EZC_SHOW_REFERENCES_COMMAND};
+    use tower_lsp::lsp_types::{Position, Url};
+
+    /// Regression: VS Code `editor.action.findReferences` rejects JSON args from the server
+    /// (string URI + LSP `Position` are not `URI.isUri` / `Position.isIPosition`). The extension
+    /// command `ezc.showReferences` must receive this stable shape.
+    #[test]
+    fn references_code_lens_arguments_match_extension_contract() {
+        let uri: Url = "file:///tmp/x.ezc".parse().unwrap();
+        let pos = Position {
+            line: 2,
+            character: 5,
+        };
+        let args = references_code_lens_arguments(&uri, pos);
+        assert_eq!(args.len(), 2);
+        assert_eq!(
+            args[0],
+            serde_json::Value::String("file:///tmp/x.ezc".into())
+        );
+        assert_eq!(args[1], serde_json::json!({ "line": 2, "character": 5 }));
+        assert_eq!(EZC_SHOW_REFERENCES_COMMAND, "ezc.showReferences");
+    }
 }
 
 // ── Entry point ───────────────────────────────────────────────────────────────

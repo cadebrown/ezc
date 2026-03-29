@@ -13,7 +13,11 @@
     "vscode": "^1.75.0"
   },
   "categories": ["Programming Languages", "Snippets", "Debuggers"],
-  "activationEvents": ["onLanguage:ezc", "onDebugResolve:ezc"],
+  "activationEvents": [
+    "onLanguage:ezc",
+    "onDebugResolve:ezc",
+    "onCommand:ezc.showOutput"
+  ],
   "main": "./out/extension.js",
   "contributes": {
     "languages": [
@@ -69,6 +73,17 @@
           "type": "boolean",
           "default": true,
           "description": "Show reference counts after @name definitions."
+        },
+        "ezc.trace.dap": {
+          "type": "boolean",
+          "default": true,
+          "description": "Log DAP traffic to Output → EZC and set RUST_LOG for the adapter (turn off for less noise)."
+        },
+        "ezc.trace.server": {
+          "type": "string",
+          "enum": ["off", "messages", "verbose"],
+          "default": "off",
+          "description": "Log LSP JSON-RPC to Output → EZC LSP (verbose includes full payloads)."
         }
       }
     },
@@ -145,6 +160,14 @@
         "command": "ezc.debugFile",
         "title": "EZC: Debug Current File",
         "icon": "$(debug-alt)"
+      },
+      {
+        "command": "ezc.showReferences",
+        "title": "EZC: Show References (internal)"
+      },
+      {
+        "command": "ezc.showOutput",
+        "title": "EZC: Show Output Log"
       }
     ],
     "menus": {

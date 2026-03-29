@@ -13,6 +13,7 @@ use serde_json::{json, Value};
 use tracing::{debug, warn};
 
 use crate::codec::{read_message, write_message};
+use crate::paths::dap_source_paths_equivalent;
 use crate::protocol::{
     self, parse_args, DapBreakpointResult, DapScope, DapSource, DapStackFrame, DapThread,
     DapVariable, EvaluateArgs, LaunchArgs, RawRequest, ScopesArgs, SetBreakpointsArgs,
@@ -131,10 +132,12 @@ pub struct DapServer<R: BufRead, W: Write> {
     pending_breakpoints: Vec<(Option<String>, Vec<Breakpoint>)>,
     /// Whether the `initialized` event has been sent.
     initialized: bool,
+    /// Set when `configurationDone` is received; session starts after both this and `launch`.
+    configuration_done: bool,
     /// Whether to stop on entry (set from `launch` args, applied after
     /// `configurationDone`).
     stop_on_entry: bool,
-    /// Pending launch info (stored between `launch` and `configurationDone`).
+    /// Pending launch until `configurationDone` (or immediate start if config finished first).
     pending_launch: Option<LaunchArgs>,
 }
 
@@ -147,6 +150,7 @@ impl<R: BufRead, W: Write> DapServer<R, W> {
             session: None,
             pending_breakpoints: Vec::new(),
             initialized: false,
+            configuration_done: false,
             stop_on_entry: true,
             pending_launch: None,
         }
@@ -157,8 +161,13 @@ impl<R: BufRead, W: Write> DapServer<R, W> {
         loop {
             let msg = match read_message(&mut self.reader) {
                 Ok(m) => m,
-                Err(e) if e.kind() == std::io::ErrorKind::UnexpectedEof => {
-                    debug!("client disconnected");
+                Err(e)
+                    if matches!(
+                        e.kind(),
+                        std::io::ErrorKind::UnexpectedEof | std::io::ErrorKind::ConnectionReset
+                    ) =>
+                {
+                    debug!(error = %e, "client disconnected");
                     return Ok(());
                 }
                 Err(e) => return Err(e.into()),
@@ -269,9 +278,10 @@ impl<R: BufRead, W: Write> DapServer<R, W> {
 
         // Apply to running session or buffer for later
         if let Some(session) = &mut self.session {
-            // Only apply if the path matches our source
-            if src_path.as_deref() == Some(session.source_path.as_str()) {
-                session.stepper.set_breakpoints(bps);
+            if let Some(ref bp_path) = src_path {
+                if dap_source_paths_equivalent(bp_path, &session.source_path) {
+                    session.stepper.set_breakpoints(bps);
+                }
             }
         } else {
             self.pending_breakpoints.push((src_path, bps));
@@ -308,6 +318,11 @@ impl<R: BufRead, W: Write> DapServer<R, W> {
         self.stop_on_entry = args.stop_on_entry;
         self.pending_launch = Some(args);
         self.send_response(req, json!({}))?;
+        if self.configuration_done {
+            if let Some(launch_args) = self.pending_launch.take() {
+                self.start_session(launch_args)?;
+            }
+        }
         Ok(())
     }
 
@@ -316,6 +331,7 @@ impl<R: BufRead, W: Write> DapServer<R, W> {
         req: &RawRequest,
     ) -> Result<(), Box<dyn std::error::Error>> {
         self.ack(req)?;
+        self.configuration_done = true;
         if let Some(launch_args) = self.pending_launch.take() {
             self.start_session(launch_args)?;
         }
@@ -334,8 +350,10 @@ impl<R: BufRead, W: Write> DapServer<R, W> {
 
         // Apply pending breakpoints that match this source
         for (src_path, bps) in self.pending_breakpoints.drain(..) {
-            if src_path.as_deref() == Some(&args.program) {
-                stepper.set_breakpoints(bps);
+            if let Some(ref p) = src_path {
+                if dap_source_paths_equivalent(p, &args.program) {
+                    stepper.set_breakpoints(bps);
+                }
             }
         }
 
@@ -602,6 +620,8 @@ impl<R: BufRead, W: Write> DapServer<R, W> {
     fn on_disconnect(&mut self, req: &RawRequest) -> Result<(), Box<dyn std::error::Error>> {
         self.ack(req)?;
         self.session = None;
+        self.configuration_done = false;
+        self.pending_launch = None;
         Ok(())
     }
 

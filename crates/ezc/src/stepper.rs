@@ -17,13 +17,32 @@
 /// `Block`: instead of running the block, it pops it and pushes a new frame.
 ///
 /// `step_out` runs to the end of the current frame, then pauses in the parent.
+///
+/// `&` loops are stepped by alternating cond/body expression lists instead of
+/// calling [`Engine::eval`] on whole blocks (which would skip inner breakpoints).
 use std::collections::HashMap;
 
 use crate::ast::{Expr, Spanned};
-use crate::error::EvalError;
+use crate::error::{EvalError, EvalErrorKind};
 use crate::eval::Engine;
 use crate::line_index::LineIndex;
 use crate::types::Value;
+
+// ── Loop stepping (`&`) ───────────────────────────────────────────────────
+
+/// State for stepping a `&` loop without atomic evaluation of cond/body blocks.
+#[derive(Debug, Clone)]
+pub struct LoopDriver {
+    pub cond: Vec<Spanned<Expr>>,
+    pub body: Vec<Spanned<Expr>>,
+    pub phase: LoopPhase,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum LoopPhase {
+    RunningCond,
+    RunningBody,
+}
 
 // ── Frame ─────────────────────────────────────────────────────────────────
 
@@ -37,6 +56,8 @@ pub struct StepFrame {
     pub body: Vec<Spanned<Expr>>,
     /// Index of the *next* expression to execute.
     pub pc: usize,
+    /// When set, this frame runs `&`: `body`/`pc` are the active phase slice.
+    pub loop_driver: Option<LoopDriver>,
 }
 
 impl StepFrame {
@@ -46,9 +67,15 @@ impl StepFrame {
         self.body.get(self.pc).map(|(_, span)| span.clone())
     }
 
-    /// Returns `true` if there are no more expressions to execute.
+    /// `true` if this frame can be removed by `drain_exhausted_frames`.
+    ///
+    /// Loop frames at `pc == body.len()` with an active driver need a phase
+    /// transition first and are not exhausted.
     pub fn is_exhausted(&self) -> bool {
-        self.pc >= self.body.len()
+        if self.pc < self.body.len() {
+            return false;
+        }
+        self.loop_driver.is_none()
     }
 }
 
@@ -163,6 +190,7 @@ impl Stepper {
             source_path: source_path.clone(),
             body: program,
             pc: 0,
+            loop_driver: None,
         }];
         Stepper {
             engine,
@@ -202,14 +230,113 @@ impl Stepper {
 
     // ── Stepping ─────────────────────────────────────────────────────────
 
+    /// After a cond/body slice finishes, check the flag or start the next iteration.
+    fn advance_loop_phases(&mut self) -> Result<(), EvalError> {
+        loop {
+            let Some(frame) = self.frames.last_mut() else {
+                break;
+            };
+            if frame.loop_driver.is_none() || frame.pc < frame.body.len() {
+                break;
+            }
+
+            let span_hint = frame
+                .loop_driver
+                .as_ref()
+                .and_then(|d| d.cond.first().map(|(_, s)| s.clone()))
+                .unwrap_or(0..0);
+
+            let driver = frame.loop_driver.as_mut().expect("checked");
+            match driver.phase {
+                LoopPhase::RunningCond => {
+                    let flag = self.engine.pop_value().ok_or_else(|| EvalError {
+                        kind: EvalErrorKind::StackUnderflow {
+                            op: "& (condition result)".into(),
+                            expected: 1,
+                            found: 0,
+                        },
+                        span: Some(span_hint),
+                        labels: vec![],
+                    })?;
+                    if !flag.is_truthy() {
+                        frame.loop_driver = None;
+                        self.frames.pop();
+                        break;
+                    }
+                    driver.phase = LoopPhase::RunningBody;
+                    frame.body = driver.body.clone();
+                    frame.pc = 0;
+                }
+                LoopPhase::RunningBody => {
+                    driver.phase = LoopPhase::RunningCond;
+                    frame.body = driver.cond.clone();
+                    frame.pc = 0;
+                    break;
+                }
+            }
+        }
+        Ok(())
+    }
+
+    /// Start stepping `&` when the current instruction is [`Expr::Loop`].
+    fn try_begin_loop_stepping(&mut self) -> Option<StepperState> {
+        let spanned = {
+            let frame = self.frames.last()?;
+            if frame.pc >= frame.body.len() {
+                return None;
+            }
+            let sp = frame.body[frame.pc].clone();
+            if !matches!(sp.0, Expr::Loop) {
+                return None;
+            }
+            sp
+        };
+
+        let span = spanned.1.clone();
+        match self.engine.pop_loop_blocks(span.clone()) {
+            Ok((cond_b, body_b)) => {
+                let source_path = {
+                    let frame = self.frames.last_mut()?;
+                    let sp = frame.source_path.clone();
+                    frame.pc += 1;
+                    sp
+                };
+                self.frames.push(StepFrame {
+                    name: format!("loop@{}", span.start),
+                    source_path,
+                    body: cond_b.body.clone(),
+                    pc: 0,
+                    loop_driver: Some(LoopDriver {
+                        cond: cond_b.body,
+                        body: body_b.body,
+                        phase: LoopPhase::RunningCond,
+                    }),
+                });
+                Some(StepperState::Paused(StopReason::Step))
+            }
+            Err(e) => Some(StepperState::Errored(e)),
+        }
+    }
+
     /// Execute the current expression atomically and advance the program counter.
     pub fn step_over(&mut self) -> StepperState {
+        if let Err(e) = self.advance_loop_phases() {
+            return StepperState::Errored(e);
+        }
         self.drain_exhausted_frames();
         if self.frames.is_empty() {
             return StepperState::Terminated;
         }
 
+        if let Some(s) = self.try_begin_loop_stepping() {
+            return s;
+        }
+
         let frame = self.frames.last_mut().unwrap();
+        if frame.pc >= frame.body.len() {
+            return StepperState::Paused(StopReason::Step);
+        }
+
         let spanned = frame.body[frame.pc].clone();
         frame.pc += 1;
 
@@ -225,14 +352,22 @@ impl Stepper {
     /// `Block`, intercept: pop the block and push a new call frame. Otherwise,
     /// behaves identically to `step_over`.
     pub fn step_in(&mut self) -> StepperState {
+        if let Err(e) = self.advance_loop_phases() {
+            return StepperState::Errored(e);
+        }
         self.drain_exhausted_frames();
         if self.frames.is_empty() {
             return StepperState::Terminated;
         }
 
+        if let Some(s) = self.try_begin_loop_stepping() {
+            return s;
+        }
+
         let is_execute_into_block = {
             let frame = self.frames.last().unwrap();
-            matches!(&frame.body[frame.pc].0, Expr::Execute)
+            frame.pc < frame.body.len()
+                && matches!(&frame.body[frame.pc].0, Expr::Execute)
                 && matches!(self.engine.peek_top(), Some(Value::Block(_)))
         };
 
@@ -253,12 +388,17 @@ impl Stepper {
                 source_path: self.source_path.clone(),
                 body: block.body,
                 pc: 0,
+                loop_driver: None,
             });
             return StepperState::Paused(StopReason::Step);
         }
 
         // Fall through: step over
         let frame = self.frames.last_mut().unwrap();
+        if frame.pc >= frame.body.len() {
+            return StepperState::Paused(StopReason::Step);
+        }
+
         let spanned = frame.body[frame.pc].clone();
         frame.pc += 1;
 
@@ -526,6 +666,26 @@ mod tests {
             StepperState::Paused(StopReason::Breakpoint(3))
         ));
         assert_eq!(s.engine.stack().len(), 2); // 1 and 2 pushed before halt
+    }
+
+    /// Breakpoints inside `&` loop bodies must fire (not skipped via `Engine::eval` on whole blocks).
+    /// Loop cond/body must be `(...)` blocks — `{...}` is a scope, not a deferred block.
+    #[test]
+    fn breakpoint_inside_loop_body() {
+        let src = "0 @n\n( $n 3 < )\n(\n$n 1 + @n\n)\n&\n";
+        let program = parse(src);
+        let mut s = Stepper::new(Engine::new(), program, src.into(), "test.ezc".into());
+        s.set_breakpoints(vec![Breakpoint {
+            line: 4,
+            condition: None,
+            log_message: None,
+        }]);
+
+        let state = s.continue_execution();
+        assert!(
+            matches!(state, StepperState::Paused(StopReason::Breakpoint(4))),
+            "expected breakpoint on loop body line, got {state:?}"
+        );
     }
 
     #[test]

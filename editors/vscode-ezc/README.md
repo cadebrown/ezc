@@ -18,19 +18,25 @@ Language support for [ezc](https://github.com/cadebrown/ezc) — a stack-based, 
 
 ## Requirements
 
-Install the ezc toolchain:
+**Easiest (one binary on PATH):** the CLI includes LSP and DAP as subcommands.
 
 ```bash
-cargo install --path crates/ezc-cli    # ezc (runtime)
-cargo install --path crates/ezc-lsp    # language server
-cargo install --path crates/ezc-dap    # debug adapter
+cargo install --path crates/ezc-cli
+# Provides `ezc`, `ezc lsp`, and `ezc dap` (add ~/.cargo/bin to PATH if needed)
 ```
 
-Or build from source:
+**Optional standalone binaries** (same as `ezc lsp` / `ezc dap`):
 
 ```bash
-cargo build
-# Binaries are in target/debug/ezc, target/debug/ezc-lsp, target/debug/ezc-dap
+cargo install --path crates/ezc-lsp
+cargo install --path crates/ezc-dap
+```
+
+**From a repo clone** (no install):
+
+```bash
+cargo build -p ezc-cli -p ezc-lsp -p ezc-dap
+# target/debug/ezc, ezc-lsp, ezc-dap
 ```
 
 ## Usage
@@ -45,26 +51,54 @@ cargo build
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| `ezc.lsp.path` | `"ezc-lsp"` | Path to the LSP binary |
-| `ezc.dap.path` | `"ezc-dap"` | Path to the DAP binary |
+| `ezc.lsp.path` | *(empty)* | Absolute path to `ezc-lsp`; empty = auto |
+| `ezc.dap.path` | *(empty)* | Absolute path to `ezc-dap`; empty = auto |
+| `ezc.trace.dap` | `true` | Log DAP to **Output → EZC**; sets `RUST_LOG` for the adapter |
+| `ezc.trace.server` | `off` | `messages` / `verbose` → **Output → EZC LSP** |
 
-During development, the extension auto-detects `target/debug/ezc-lsp` and `target/debug/ezc-dap` relative to the extension directory.
+**Resolution order** (when path settings are empty):
+
+1. `../../target/debug/ezc-lsp` (or `ezc-dap`) next to this extension — works when the repo is laid out as `ezc/editors/vscode-ezc/`.
+2. `<workspaceFolder>/target/debug/…` — useful if you opened the **repo root** (`ezc/`) as the workspace.
+3. Run `ezc lsp` / `ezc dap` via PATH (needs `ezc` on the **editor’s** PATH, not only your terminal — see Development).
+
+Override with absolute paths if the host does not see `ezc` on PATH.
 
 ## Development
 
+### 1. Open the extension folder as the workspace
+
+Use **File → Open Folder** on `editors/vscode-ezc` (not only the `.ezc` file).  
+`F5` / **Run → Start Debugging** uses `.vscode/launch.json`, which sets `--extensionDevelopmentPath` to that folder.
+
+### 2. Build Rust, then TypeScript
+
+From the repo root:
+
 ```bash
-# Build the language toolchain
-cargo build
-
-# Build the extension
-cd editors/vscode-ezc
-npm install
-npm run compile
-
-# Launch in development mode (F5 in VS Code/Cursor)
-# Opens editors/test-workspace/ with the extension loaded
-# LSP/DAP automatically use target/debug/ builds
+cargo build -p ezc-cli -p ezc-lsp -p ezc-dap
 ```
+
+In the editor, the default build task (**Terminal → Run Build Task**) runs, in order:
+
+1. `cargo build -p ezc-cli -p ezc-lsp -p ezc-dap` with `cwd` = repo root (`../..` from this folder)
+2. `npm run compile`
+
+The Extension launch configs use that compound task as **preLaunchTask**, so each F5 rebuilds the toolchain and recompiles the extension.
+
+### 3. PATH and the Extension Host
+
+Cursor/VS Code often **do not** load your shell profile, so `ezc` may work in Terminal but **not** inside the Extension Host. In that case:
+
+- Rely on **(1)** `../../target/debug/…` after `cargo build` (typical monorepo layout), or  
+- Set **`ezc.lsp.path`** / **`ezc.dap.path`** to absolute binaries (e.g. `/path/to/ezc/target/debug/ezc-lsp`), or  
+- Launch the GUI from a shell where `PATH` includes `~/.cargo/bin`, or set the same in your OS environment for GUI apps.
+
+Use **Output → EZC** (command **EZC: Show Output Log**) to see which command line the extension actually spawned.
+
+### 4. Debug a sample `.ezc` file
+
+Launch configs open `../test-workspace` or `../../demos`. Set breakpoints, use the **EZC** debug configuration, and confirm the EZC output channel shows DAP traffic if `ezc.trace.dap` is on.
 
 ### Project structure
 
@@ -74,6 +108,7 @@ editors/vscode-ezc/
   syntaxes/              # TextMate grammar for basic highlighting
   snippets/              # code snippets
   .vscode/launch.json    # F5 launch configs for development
+  .vscode/tasks.json     # cargo + npm preLaunch build chain
 ```
 
 ### Testing

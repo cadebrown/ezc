@@ -1482,6 +1482,42 @@ impl Engine {
             labels: vec![],
         })
     }
+
+    /// Pop cond and body blocks for `&` (loop), matching [`Expr::Loop`] semantics.
+    /// Used by the debugger stepper so loop bodies step expression-by-expression.
+    pub(crate) fn pop_loop_blocks(
+        &mut self,
+        span: std::ops::Range<usize>,
+    ) -> Result<(crate::types::Block, crate::types::Block), EvalError> {
+        use crate::error::ErrorLabel;
+        use crate::types::Value;
+
+        let body = self.pop("&", &span)?;
+        let cond = self.pop("&", &span)?;
+        let cond_span = cond.span.clone();
+        let body_span = body.span.clone();
+        match (cond.value, body.value) {
+            (Value::Block(cb), Value::Block(bb)) => Ok((cb, bb)),
+            (c, b) => Err(EvalError {
+                kind: EvalErrorKind::TypeMismatch {
+                    op: "&".into(),
+                    expected: "two blocks".into(),
+                    found: format!("{} and {}", c.type_name(), b.type_name()),
+                },
+                span: Some(span),
+                labels: vec![
+                    ErrorLabel {
+                        span: cond_span,
+                        message: format!("this is {}", c.type_name()),
+                    },
+                    ErrorLabel {
+                        span: body_span,
+                        message: format!("this is {}", b.type_name()),
+                    },
+                ],
+            }),
+        }
+    }
 }
 
 impl Default for Engine {
