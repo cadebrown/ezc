@@ -258,6 +258,8 @@ pub fn token_docs(token: &Token) -> Option<&'static str> {
             "loop" => "**`loop`** — While Loop\n\n`(cond) (body) loop` → loop while cond truthy. Alias for `&`.",
             "import" => "**`import`** — Import\n\n`\"path\" import` → load and eval a file. Checks embedded std modules first.",
             "words" => "**`words`** — List Definitions\n\nPush a list of all defined names.",
+            "depth" => "**`depth`** — Stack Depth\n\n```\n → int\n```\n\nPush the current stack height as an integer.",
+            "clear" => "**`clear`** — Clear Stack\n\n```\n → \n```\n\nRemove every value from the stack.",
             // Higher-order aliases
             "map" => "**`map`** — Map\n\n`list/n (block) map` → apply block to each, collect results. Alias for `&!`.",
             "fil" => "**`fil`** — Filter\n\n`list/n (block) fil` → keep truthy results. Alias for `&?`.",
@@ -413,6 +415,8 @@ pub fn completion_items(vars: &[String]) -> Vec<CompletionItem> {
         builtin_item("loop", "(cond) (body) →  (while loop)"),
         builtin_item("import", "\"path\" →  (load file)"),
         builtin_item("words", " → list  (defined names)"),
+        builtin_item("depth", " → int  (stack height)"),
+        builtin_item("clear", " →   (empty stack)"),
         // ── Higher-order aliases ─────────────────────────────────────────────
         builtin_item("map", "list/n (block) → list  (map)"),
         builtin_item("fil", "list/n (block) → list  (filter)"),

@@ -193,6 +193,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::approx_constant)]
     fn display_typed_nums() {
         assert_eq!(Value::Num(Number::U8(255)).to_string(), "255u8");
         assert_eq!(Value::Num(Number::I32(-42)).to_string(), "-42i32");

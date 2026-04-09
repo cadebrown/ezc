@@ -1,0 +1,2 @@
+# clear removes all values; depth on empty stack is 0
+1 2 3 clear depth

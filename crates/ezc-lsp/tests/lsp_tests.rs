@@ -753,7 +753,7 @@ fn builtin_sets_knows_all_builtins() {
     let b = BuiltinSets::new();
     for name in [
         "len", "nth", "tl", "rev", "srt", "take", "skip", "zip", "range", "typeof", "cut", "cat",
-        "map", "fil", "red", "rl", "wl", "rb", "wb", "words", "and", "or",
+        "map", "fil", "red", "rl", "wl", "rb", "wb", "words", "depth", "clear", "and", "or",
     ] {
         assert!(b.is_known(name), "{name} should be known");
     }
@@ -833,7 +833,8 @@ fn docs_exist_for_builtin_idents() {
 
     let ident_names = vec![
         "int", "str", "bin", "f32", "f64", "u8", "len", "nth", "rev", "srt", "typeof", "range",
-        "each", "loop", "import", "words", "map", "fil", "red", "rl", "wl", "rb", "wb",
+        "each", "loop", "import", "words", "depth", "clear", "map", "fil", "red", "rl", "wl", "rb",
+        "wb",
     ];
 
     for name in ident_names {

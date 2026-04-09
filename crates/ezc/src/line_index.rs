@@ -2,6 +2,7 @@
 ///
 /// Lines and columns are 0-based internally. DAP and LSP both use 1-based values,
 /// so callers should add 1 to the returned values when building protocol messages.
+#[derive(Clone)]
 pub struct LineIndex {
     /// Byte offset of the first character on each line.
     /// `line_starts[0]` is always 0. `line_starts[i]` is the offset right after

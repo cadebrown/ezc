@@ -8,23 +8,26 @@
 ///
 /// The `Stepper` maintains a `Vec<StepFrame>` parallel to the call stack:
 /// - Frame 0 (bottom) is the top-level program.
-/// - Higher frames are block invocations that were stepped into via `step_in`.
+/// - Higher frames are block invocations, loop cond/body slices, `each` / map /
+///   filter / fold bodies, or scoped `{...}` bodies.
 ///
-/// `step_over` executes the current expression atomically (including any
-/// sub-block calls inside it) and advances the program counter.
+/// `step_over` executes the current expression one step at a time. Composite
+/// forms (`&`, `each`, `import`, `[…]`, `?`, `??`, `&!`, `&?`, `&/`, `{…}`) and
+/// `!` on a block, string, or list use [`StepDriver`] / child frames so inner
+/// work is stepped instead of a whole [`Engine::eval`]. A bare [`Expr::Ident`]
+/// that resolves to a bound block is stepped the same way.
 ///
-/// `step_in` intercepts `Execute` (`!`) when the top of the value stack is a
-/// `Block`: instead of running the block, it pops it and pushes a new frame.
+/// Pushing a block literal `( … )` (without `!`) is still one step — its body
+/// runs only when the block is executed.
+///
+/// `step_in` currently matches `step_over` (same interception rules).
 ///
 /// `step_out` runs to the end of the current frame, then pauses in the parent.
-///
-/// `&` loops are stepped by alternating cond/body expression lists instead of
-/// calling [`Engine::eval`] on whole blocks (which would skip inner breakpoints).
-use std::collections::HashMap;
+use std::ops::Range;
 
 use crate::ast::{Expr, Spanned};
 use crate::error::{EvalError, EvalErrorKind};
-use crate::eval::Engine;
+use crate::eval::{Engine, ImportStep};
 use crate::line_index::LineIndex;
 use crate::types::Value;
 
@@ -44,6 +47,65 @@ pub enum LoopPhase {
     RunningBody,
 }
 
+// ── Other composite drivers ───────────────────────────────────────────────
+
+#[derive(Debug, Clone)]
+pub struct EachDriver {
+    pub items: Vec<Value>,
+    /// Index of the element currently on the stack / being stepped.
+    pub next_idx: usize,
+    pub span: Range<usize>,
+}
+
+#[derive(Debug, Clone)]
+pub struct MapDriver {
+    pub items: Vec<Value>,
+    pub next_idx: usize,
+    pub out: Vec<Value>,
+    pub span: Range<usize>,
+}
+
+#[derive(Debug, Clone)]
+pub struct FilterDriver {
+    pub items: Vec<Value>,
+    pub next_idx: usize,
+    pub out: Vec<Value>,
+    pub span: Range<usize>,
+}
+
+#[derive(Debug, Clone)]
+pub struct FoldDriver {
+    pub items: Vec<Value>,
+    /// Number of fold iterations completed; next operand is `items[finished_count]` when `< len`.
+    pub finished_count: usize,
+    pub span: Range<usize>,
+}
+
+#[derive(Debug, Clone)]
+pub struct ListBuildDriver {
+    pub base_stack: usize,
+    pub span: Range<usize>,
+}
+
+#[derive(Debug, Clone)]
+pub struct SplatDriver {
+    pub items: Vec<Value>,
+    pub idx: usize,
+    pub span: Range<usize>,
+}
+
+/// State for stepping composite expressions without atomic `eval` of whole bodies.
+#[derive(Debug, Clone)]
+pub enum StepDriver {
+    Loop(LoopDriver),
+    Each(EachDriver),
+    Map(MapDriver),
+    Filter(FilterDriver),
+    Fold(FoldDriver),
+    List(ListBuildDriver),
+    Splat(SplatDriver),
+}
+
 // ── Frame ─────────────────────────────────────────────────────────────────
 
 /// A single frame on the debugger call stack.
@@ -56,26 +118,37 @@ pub struct StepFrame {
     pub body: Vec<Spanned<Expr>>,
     /// Index of the *next* expression to execute.
     pub pc: usize,
-    /// When set, this frame runs `&`: `body`/`pc` are the active phase slice.
-    pub loop_driver: Option<LoopDriver>,
+    /// When set, this frame is stepping a composite (`&`, `each`, etc.).
+    pub driver: Option<StepDriver>,
+    /// [`Engine::pop_scope`] calls when this frame is removed after exhaustion.
+    pub scopes_to_pop: u8,
+    /// Line mapping for `body` spans (may differ per frame for `import` / string `!`).
+    pub line_index: LineIndex,
 }
 
 impl StepFrame {
     /// Returns the span of the expression *about to be* executed, or `None`
     /// if the frame has nothing left to execute.
-    pub fn current_span(&self) -> Option<std::ops::Range<usize>> {
-        self.body.get(self.pc).map(|(_, span)| span.clone())
+    pub fn current_span(&self) -> Option<Range<usize>> {
+        if self.pc < self.body.len() {
+            return self.body.get(self.pc).map(|(_, span)| span.clone());
+        }
+        match &self.driver {
+            Some(StepDriver::Splat(d)) => Some(d.span.clone()),
+            Some(StepDriver::List(d)) => Some(d.span.clone()),
+            _ => None,
+        }
     }
 
     /// `true` if this frame can be removed by `drain_exhausted_frames`.
     ///
-    /// Loop frames at `pc == body.len()` with an active driver need a phase
+    /// Frames at `pc == body.len()` with an active driver need a driver
     /// transition first and are not exhausted.
     pub fn is_exhausted(&self) -> bool {
         if self.pc < self.body.len() {
             return false;
         }
-        self.loop_driver.is_none()
+        self.driver.is_none()
     }
 }
 
@@ -124,12 +197,30 @@ pub enum StepperState {
 pub struct Breakpoint {
     /// 1-based line number.
     pub line: usize,
+    /// 1-based column (character offset on the line). When `None`, any column on `line` matches.
+    pub column: Option<u32>,
+    /// When set, only applies while the current stack frame's [`StepFrame::source_path`] matches
+    /// (after normalizing path separators). `None` matches every frame (typical for tests).
+    pub source_path: Option<String>,
     /// Optional EZC condition expression. Must leave a truthy value on the
     /// stack to trigger a halt. Evaluated in a snapshot of engine state so
     /// the condition cannot corrupt the running program.
     pub condition: Option<String>,
     /// Logpoint message (no halt — emits to the debug console instead).
     pub log_message: Option<String>,
+}
+
+impl Breakpoint {
+    /// Breakpoint on a 1-based line, any column, any source file.
+    pub fn line_only(line: usize) -> Self {
+        Self {
+            line,
+            column: None,
+            source_path: None,
+            condition: None,
+            log_message: None,
+        }
+    }
 }
 
 // ── Inspection types ─────────────────────────────────────────────────────
@@ -170,8 +261,8 @@ pub struct Stepper {
     pub source: String,
     /// Maps byte offsets to line/column positions.
     pub line_index: LineIndex,
-    /// Active breakpoints keyed by 1-based line number.
-    pub breakpoints: HashMap<usize, Breakpoint>,
+    /// Active breakpoints (order preserved; first match wins in [`Stepper::breakpoint_at_current`]).
+    pub breakpoints: Vec<Breakpoint>,
     /// Log messages queued by logpoint breakpoints; drained by the DAP server.
     pub pending_output: Vec<String>,
 }
@@ -190,7 +281,9 @@ impl Stepper {
             source_path: source_path.clone(),
             body: program,
             pc: 0,
-            loop_driver: None,
+            driver: None,
+            scopes_to_pop: 0,
+            line_index: line_index.clone(),
         }];
         Stepper {
             engine,
@@ -198,7 +291,7 @@ impl Stepper {
             source_path,
             source,
             line_index,
-            breakpoints: HashMap::new(),
+            breakpoints: Vec::new(),
             pending_output: Vec::new(),
         }
     }
@@ -207,78 +300,174 @@ impl Stepper {
 
     /// Replace all breakpoints.
     pub fn set_breakpoints(&mut self, bps: Vec<Breakpoint>) {
-        self.breakpoints.clear();
-        for bp in bps {
-            self.breakpoints.insert(bp.line, bp);
-        }
+        self.breakpoints = bps;
     }
 
     /// Returns the breakpoint at the *current* (not-yet-executed) position.
     pub fn breakpoint_at_current(&self) -> Option<&Breakpoint> {
         let frame = self.frames.last()?;
         let span = frame.current_span()?;
-        let line = self.line_index.line_of(span.start) + 1; // 1-based
-        self.breakpoints.get(&line)
+        let (l0, c0) = frame.line_index.line_col(span.start);
+        let line = l0 + 1;
+        let col = (c0 + 1) as u32;
+        self.breakpoints.iter().find(|bp| {
+            breakpoint_source_matches(bp.source_path.as_deref(), &frame.source_path)
+                && bp.line == line
+                && match bp.column {
+                    None => true,
+                    Some(bc) => bc == col,
+                }
+        })
     }
 
     /// Returns the 1-based line of the current expression, or `None`.
     pub fn current_line(&self) -> Option<usize> {
         let frame = self.frames.last()?;
         let span = frame.current_span()?;
-        Some(self.line_index.line_of(span.start) + 1)
+        Some(frame.line_index.line_of(span.start) + 1)
+    }
+
+    /// Increment the current frame's `pc` and clone its `source_path` and `line_index` for a
+    /// child frame that uses the same on-disk source mapping.
+    fn advance_pc_clone_source_context(&mut self) -> Option<(String, LineIndex)> {
+        let frame = self.frames.last_mut()?;
+        let source_path = frame.source_path.clone();
+        let line_index = frame.line_index.clone();
+        frame.pc += 1;
+        Some((source_path, line_index))
     }
 
     // ── Stepping ─────────────────────────────────────────────────────────
 
-    /// After a cond/body slice finishes, check the flag or start the next iteration.
-    fn advance_loop_phases(&mut self) -> Result<(), EvalError> {
-        loop {
-            let Some(frame) = self.frames.last_mut() else {
-                break;
-            };
-            if frame.loop_driver.is_none() || frame.pc < frame.body.len() {
-                break;
-            }
+    /// After a composite body's slice finishes, advance drivers (loop phases,
+    /// next `each` item, etc.).
+    fn advance_composite_drivers(&mut self) -> Result<(), EvalError> {
+        let Some(frame) = self.frames.last_mut() else {
+            return Ok(());
+        };
+        if frame.driver.is_none() || frame.pc < frame.body.len() {
+            return Ok(());
+        }
 
-            let span_hint = frame
-                .loop_driver
-                .as_ref()
-                .and_then(|d| d.cond.first().map(|(_, s)| s.clone()))
-                .unwrap_or(0..0);
-
-            let driver = frame.loop_driver.as_mut().expect("checked");
-            match driver.phase {
-                LoopPhase::RunningCond => {
-                    let flag = self.engine.pop_value().ok_or_else(|| EvalError {
+        match frame.driver.as_mut() {
+            None => return Ok(()),
+            Some(driver) => match driver {
+                StepDriver::Loop(driver) => {
+                    let span_hint = driver.cond.first().map(|(_, s)| s.clone()).unwrap_or(0..0);
+                    match driver.phase {
+                        LoopPhase::RunningCond => {
+                            let flag = self.engine.pop_value().ok_or_else(|| EvalError {
+                                kind: EvalErrorKind::StackUnderflow {
+                                    op: "& (condition result)".into(),
+                                    expected: 1,
+                                    found: 0,
+                                },
+                                span: Some(span_hint),
+                                labels: vec![],
+                            })?;
+                            if !flag.is_truthy() {
+                                frame.driver = None;
+                                self.frames.pop();
+                            } else {
+                                driver.phase = LoopPhase::RunningBody;
+                                frame.body = driver.body.clone();
+                                frame.pc = 0;
+                            }
+                        }
+                        LoopPhase::RunningBody => {
+                            driver.phase = LoopPhase::RunningCond;
+                            frame.body = driver.cond.clone();
+                            frame.pc = 0;
+                        }
+                    }
+                }
+                StepDriver::Each(d) => {
+                    let span = d.span.clone();
+                    d.next_idx += 1;
+                    if d.next_idx < d.items.len() {
+                        self.engine.push(d.items[d.next_idx].clone(), span.clone());
+                        frame.pc = 0;
+                    } else {
+                        frame.driver = None;
+                    }
+                }
+                StepDriver::Map(d) => {
+                    let span = d.span.clone();
+                    let mapped = self.engine.pop_value().ok_or_else(|| EvalError {
                         kind: EvalErrorKind::StackUnderflow {
-                            op: "& (condition result)".into(),
+                            op: "&! (map body produced no value)".into(),
                             expected: 1,
                             found: 0,
                         },
-                        span: Some(span_hint),
+                        span: Some(span.clone()),
                         labels: vec![],
                     })?;
-                    if !flag.is_truthy() {
-                        frame.loop_driver = None;
-                        self.frames.pop();
-                        break;
+                    d.out.push(mapped);
+                    d.next_idx += 1;
+                    if d.next_idx < d.items.len() {
+                        self.engine.push(d.items[d.next_idx].clone(), span.clone());
+                        frame.pc = 0;
+                    } else {
+                        self.engine
+                            .push(Value::List(std::mem::take(&mut d.out)), span);
+                        frame.driver = None;
                     }
-                    driver.phase = LoopPhase::RunningBody;
-                    frame.body = driver.body.clone();
-                    frame.pc = 0;
                 }
-                LoopPhase::RunningBody => {
-                    driver.phase = LoopPhase::RunningCond;
-                    frame.body = driver.cond.clone();
-                    frame.pc = 0;
-                    break;
+                StepDriver::Filter(d) => {
+                    let span = d.span.clone();
+                    let keep = self
+                        .engine
+                        .pop_value()
+                        .map(|v| v.is_truthy())
+                        .unwrap_or(false);
+                    if keep {
+                        let item = d.items[d.next_idx].clone();
+                        d.out.push(item);
+                    }
+                    d.next_idx += 1;
+                    if d.next_idx < d.items.len() {
+                        self.engine.push(d.items[d.next_idx].clone(), span.clone());
+                        frame.pc = 0;
+                    } else {
+                        self.engine
+                            .push(Value::List(std::mem::take(&mut d.out)), span);
+                        frame.driver = None;
+                    }
                 }
-            }
+                StepDriver::Fold(d) => {
+                    let span = d.span.clone();
+                    d.finished_count += 1;
+                    if d.finished_count < d.items.len() {
+                        self.engine
+                            .push(d.items[d.finished_count].clone(), span.clone());
+                        frame.pc = 0;
+                    } else {
+                        frame.driver = None;
+                    }
+                }
+                StepDriver::List(d) => {
+                    let span = d.span.clone();
+                    let base = d.base_stack;
+                    self.engine.finalize_list_literal(base, span)?;
+                    frame.driver = None;
+                }
+                StepDriver::Splat(d) => {
+                    let span = d.span.clone();
+                    if d.idx < d.items.len() {
+                        self.engine.push(d.items[d.idx].clone(), span.clone());
+                        d.idx += 1;
+                        if d.idx >= d.items.len() {
+                            frame.driver = None;
+                        }
+                    } else {
+                        frame.driver = None;
+                    }
+                }
+            },
         }
         Ok(())
     }
 
-    /// Start stepping `&` when the current instruction is [`Expr::Loop`].
     fn try_begin_loop_stepping(&mut self) -> Option<StepperState> {
         let spanned = {
             let frame = self.frames.last()?;
@@ -295,22 +484,19 @@ impl Stepper {
         let span = spanned.1.clone();
         match self.engine.pop_loop_blocks(span.clone()) {
             Ok((cond_b, body_b)) => {
-                let source_path = {
-                    let frame = self.frames.last_mut()?;
-                    let sp = frame.source_path.clone();
-                    frame.pc += 1;
-                    sp
-                };
+                let (source_path, line_index) = self.advance_pc_clone_source_context()?;
                 self.frames.push(StepFrame {
                     name: format!("loop@{}", span.start),
                     source_path,
                     body: cond_b.body.clone(),
                     pc: 0,
-                    loop_driver: Some(LoopDriver {
+                    driver: Some(StepDriver::Loop(LoopDriver {
                         cond: cond_b.body,
                         body: body_b.body,
                         phase: LoopPhase::RunningCond,
-                    }),
+                    })),
+                    scopes_to_pop: 0,
+                    line_index,
                 });
                 Some(StepperState::Paused(StopReason::Step))
             }
@@ -318,9 +504,459 @@ impl Stepper {
         }
     }
 
+    fn try_begin_scope(&mut self) -> Option<StepperState> {
+        let inner = {
+            let frame = self.frames.last()?;
+            if frame.pc >= frame.body.len() {
+                return None;
+            }
+            match &frame.body[frame.pc].0 {
+                Expr::Scope(b) => b.clone(),
+                _ => return None,
+            }
+        };
+        let span = self.frames.last().map(|f| f.body[f.pc].1.clone())?;
+        let (source_path, line_index) = self.advance_pc_clone_source_context()?;
+        self.engine.push_scope();
+        self.frames.push(StepFrame {
+            name: format!("scope@{}", span.start),
+            source_path,
+            body: inner,
+            pc: 0,
+            driver: None,
+            scopes_to_pop: 1,
+            line_index,
+        });
+        Some(StepperState::Paused(StopReason::Step))
+    }
+
+    fn try_begin_each(&mut self) -> Option<StepperState> {
+        if !self.matching_builtin("each") {
+            return None;
+        }
+        let span = self.frames.last().map(|f| f.body[f.pc].1.clone())?;
+        match self.engine.pop_each_operands(span.clone()) {
+            Ok((items, block)) => {
+                let (source_path, line_index) = self.advance_pc_clone_source_context()?;
+                if items.is_empty() {
+                    return Some(StepperState::Paused(StopReason::Step));
+                }
+                self.engine.push(items[0].clone(), span.clone());
+                self.frames.push(StepFrame {
+                    name: format!("each@{}", span.start),
+                    source_path,
+                    body: block.body.clone(),
+                    pc: 0,
+                    driver: Some(StepDriver::Each(EachDriver {
+                        items,
+                        next_idx: 0,
+                        span: span.clone(),
+                    })),
+                    scopes_to_pop: 0,
+                    line_index,
+                });
+                Some(StepperState::Paused(StopReason::Step))
+            }
+            Err(e) => Some(StepperState::Errored(e)),
+        }
+    }
+
+    fn try_begin_map(&mut self) -> Option<StepperState> {
+        if !matches!(self.current_expr_head(), Some(ExprHead::Map)) {
+            return None;
+        }
+        let span = self.frames.last().map(|f| f.body[f.pc].1.clone())?;
+        match self.engine.pop_map_operands(span.clone()) {
+            Ok((items, block)) => {
+                let (source_path, line_index) = self.advance_pc_clone_source_context()?;
+                if items.is_empty() {
+                    self.engine.push(Value::List(vec![]), span);
+                    return Some(StepperState::Paused(StopReason::Step));
+                }
+                self.engine.push(items[0].clone(), span.clone());
+                self.frames.push(StepFrame {
+                    name: format!("map@{}", span.start),
+                    source_path,
+                    body: block.body.clone(),
+                    pc: 0,
+                    driver: Some(StepDriver::Map(MapDriver {
+                        items,
+                        next_idx: 0,
+                        out: Vec::new(),
+                        span: span.clone(),
+                    })),
+                    scopes_to_pop: 0,
+                    line_index,
+                });
+                Some(StepperState::Paused(StopReason::Step))
+            }
+            Err(e) => Some(StepperState::Errored(e)),
+        }
+    }
+
+    fn try_begin_filter(&mut self) -> Option<StepperState> {
+        if !matches!(self.current_expr_head(), Some(ExprHead::Filter)) {
+            return None;
+        }
+        let span = self.frames.last().map(|f| f.body[f.pc].1.clone())?;
+        match self.engine.pop_filter_operands(span.clone()) {
+            Ok((items, block)) => {
+                let (source_path, line_index) = self.advance_pc_clone_source_context()?;
+                if items.is_empty() {
+                    self.engine.push(Value::List(vec![]), span);
+                    return Some(StepperState::Paused(StopReason::Step));
+                }
+                self.engine.push(items[0].clone(), span.clone());
+                self.frames.push(StepFrame {
+                    name: format!("filter@{}", span.start),
+                    source_path,
+                    body: block.body.clone(),
+                    pc: 0,
+                    driver: Some(StepDriver::Filter(FilterDriver {
+                        items,
+                        next_idx: 0,
+                        out: Vec::new(),
+                        span: span.clone(),
+                    })),
+                    scopes_to_pop: 0,
+                    line_index,
+                });
+                Some(StepperState::Paused(StopReason::Step))
+            }
+            Err(e) => Some(StepperState::Errored(e)),
+        }
+    }
+
+    fn try_begin_fold(&mut self) -> Option<StepperState> {
+        if !matches!(self.current_expr_head(), Some(ExprHead::Fold)) {
+            return None;
+        }
+        let span = self.frames.last().map(|f| f.body[f.pc].1.clone())?;
+        match self.engine.pop_fold_operands(span.clone()) {
+            Ok((items, init, block)) => {
+                let (source_path, line_index) = self.advance_pc_clone_source_context()?;
+                self.engine.push(init.value, init.span.clone());
+                if items.is_empty() {
+                    return Some(StepperState::Paused(StopReason::Step));
+                }
+                self.engine.push(items[0].clone(), span.clone());
+                self.frames.push(StepFrame {
+                    name: format!("fold@{}", span.start),
+                    source_path,
+                    body: block.body.clone(),
+                    pc: 0,
+                    driver: Some(StepDriver::Fold(FoldDriver {
+                        items,
+                        finished_count: 0,
+                        span: span.clone(),
+                    })),
+                    scopes_to_pop: 0,
+                    line_index,
+                });
+                Some(StepperState::Paused(StopReason::Step))
+            }
+            Err(e) => Some(StepperState::Errored(e)),
+        }
+    }
+
+    fn try_enter_execute_block(&mut self) -> Option<StepperState> {
+        let is_execute_into_block = {
+            let frame = self.frames.last()?;
+            frame.pc < frame.body.len()
+                && matches!(&frame.body[frame.pc].0, Expr::Execute)
+                && matches!(self.engine.peek_top(), Some(Value::Block(_)))
+        };
+        if !is_execute_into_block {
+            return None;
+        }
+        let span = self.frames.last().map(|f| f.body[f.pc].1.clone())?;
+        let (source_path, line_index) = self.advance_pc_clone_source_context()?;
+        let block = match self.engine.pop_value() {
+            Some(Value::Block(b)) => b,
+            _ => return None,
+        };
+        self.frames.push(StepFrame {
+            name: format!("block@{}", span.start),
+            source_path,
+            body: block.body,
+            pc: 0,
+            driver: None,
+            scopes_to_pop: 0,
+            line_index,
+        });
+        Some(StepperState::Paused(StopReason::Step))
+    }
+
+    fn try_begin_list_literal(&mut self) -> Option<StepperState> {
+        let inner = {
+            let frame = self.frames.last()?;
+            if frame.pc >= frame.body.len() {
+                return None;
+            }
+            match &frame.body[frame.pc].0 {
+                Expr::List(b) => b.clone(),
+                _ => return None,
+            }
+        };
+        let span = self.frames.last().map(|f| f.body[f.pc].1.clone())?;
+        let (source_path, line_index) = self.advance_pc_clone_source_context()?;
+        if inner.is_empty() {
+            self.engine.push(Value::List(vec![]), span.clone());
+            return Some(StepperState::Paused(StopReason::Step));
+        }
+        let base_stack = self.engine.stack_len();
+        self.frames.push(StepFrame {
+            name: format!("list@{}", span.start),
+            source_path,
+            body: inner,
+            pc: 0,
+            driver: Some(StepDriver::List(ListBuildDriver {
+                base_stack,
+                span: span.clone(),
+            })),
+            scopes_to_pop: 0,
+            line_index,
+        });
+        Some(StepperState::Paused(StopReason::Step))
+    }
+
+    fn try_begin_string_execute(&mut self) -> Option<StepperState> {
+        let is_str = {
+            let frame = self.frames.last()?;
+            frame.pc < frame.body.len()
+                && matches!(&frame.body[frame.pc].0, Expr::Execute)
+                && matches!(self.engine.peek_top(), Some(Value::Str(_)))
+        };
+        if !is_str {
+            return None;
+        }
+        let span = self.frames.last().map(|f| f.body[f.pc].1.clone())?;
+        {
+            let frame = self.frames.last_mut()?;
+            frame.pc += 1;
+        }
+        let snippet_src = match self.engine.pop_value() {
+            Some(Value::Str(s)) => s.0.to_string(),
+            _ => return None,
+        };
+        match Engine::parse_snippet_ast(&snippet_src, span.clone(), "!") {
+            Ok(ast) => {
+                let snippet_li = LineIndex::new(&snippet_src);
+                self.frames.push(StepFrame {
+                    name: format!("string!@{}", span.start),
+                    source_path: format!("<string ! @{}>", span.start),
+                    body: ast,
+                    pc: 0,
+                    driver: None,
+                    scopes_to_pop: 0,
+                    line_index: snippet_li,
+                });
+                Some(StepperState::Paused(StopReason::Step))
+            }
+            Err(e) => Some(StepperState::Errored(e)),
+        }
+    }
+
+    fn try_begin_splat(&mut self) -> Option<StepperState> {
+        let is_list = {
+            let frame = self.frames.last()?;
+            frame.pc < frame.body.len()
+                && matches!(&frame.body[frame.pc].0, Expr::Execute)
+                && matches!(self.engine.peek_top(), Some(Value::List(_)))
+        };
+        if !is_list {
+            return None;
+        }
+        let span = self.frames.last().map(|f| f.body[f.pc].1.clone())?;
+        let (source_path, line_index) = self.advance_pc_clone_source_context()?;
+        let items = match self.engine.pop_value() {
+            Some(Value::List(items)) => items,
+            _ => return None,
+        };
+        if items.is_empty() {
+            return Some(StepperState::Paused(StopReason::Step));
+        }
+        self.frames.push(StepFrame {
+            name: format!("splat@{}", span.start),
+            source_path,
+            body: Vec::new(),
+            pc: 0,
+            driver: Some(StepDriver::Splat(SplatDriver {
+                items,
+                idx: 0,
+                span,
+            })),
+            scopes_to_pop: 0,
+            line_index,
+        });
+        Some(StepperState::Paused(StopReason::Step))
+    }
+
+    fn try_begin_import(&mut self) -> Option<StepperState> {
+        if !self.matching_builtin("import") {
+            return None;
+        }
+        let span = self.frames.last().map(|f| f.body[f.pc].1.clone())?;
+        match self.engine.prepare_import_step(span.clone()) {
+            Ok(ImportStep::Skipped) => {
+                let frame = self.frames.last_mut()?;
+                frame.pc += 1;
+                Some(StepperState::Paused(StopReason::Step))
+            }
+            Ok(ImportStep::Run {
+                module_name,
+                module_src,
+                ast,
+            }) => {
+                let frame = self.frames.last_mut()?;
+                frame.pc += 1;
+                let li = LineIndex::new(&module_src);
+                self.frames.push(StepFrame {
+                    name: format!("import:{module_name}"),
+                    source_path: module_name.clone(),
+                    body: ast,
+                    pc: 0,
+                    driver: None,
+                    scopes_to_pop: 0,
+                    line_index: li,
+                });
+                Some(StepperState::Paused(StopReason::Step))
+            }
+            Err(e) => Some(StepperState::Errored(e)),
+        }
+    }
+
+    fn try_begin_cond(&mut self) -> Option<StepperState> {
+        let frame = self.frames.last()?;
+        if frame.pc >= frame.body.len() {
+            return None;
+        }
+        if !matches!(frame.body[frame.pc].0, Expr::Cond) {
+            return None;
+        }
+        let span = frame.body[frame.pc].1.clone();
+        let (source_path, line_index) = self.advance_pc_clone_source_context()?;
+        match self.engine.pop_cond_operands(&span) {
+            Ok((cond, block)) => {
+                if !cond.value.is_truthy() {
+                    return Some(StepperState::Paused(StopReason::Step));
+                }
+                match block.value {
+                    Value::Block(b) => {
+                        self.frames.push(StepFrame {
+                            name: format!("?@{}", span.start),
+                            source_path,
+                            body: b.body,
+                            pc: 0,
+                            driver: None,
+                            scopes_to_pop: 0,
+                            line_index,
+                        });
+                    }
+                    other => {
+                        self.engine.push(other, block.span);
+                    }
+                }
+                Some(StepperState::Paused(StopReason::Step))
+            }
+            Err(e) => Some(StepperState::Errored(e)),
+        }
+    }
+
+    fn try_begin_ternary(&mut self) -> Option<StepperState> {
+        let frame = self.frames.last()?;
+        if frame.pc >= frame.body.len() {
+            return None;
+        }
+        if !matches!(frame.body[frame.pc].0, Expr::Ternary) {
+            return None;
+        }
+        let span = frame.body[frame.pc].1.clone();
+        let (source_path, line_index) = self.advance_pc_clone_source_context()?;
+        match self.engine.pop_ternary_operands(&span) {
+            Ok((cond, then_b, else_b)) => {
+                let chosen = if cond.value.is_truthy() {
+                    then_b
+                } else {
+                    else_b
+                };
+                match chosen.value {
+                    Value::Block(b) => {
+                        self.frames.push(StepFrame {
+                            name: format!("??@{}", span.start),
+                            source_path,
+                            body: b.body,
+                            pc: 0,
+                            driver: None,
+                            scopes_to_pop: 0,
+                            line_index,
+                        });
+                    }
+                    other => {
+                        self.engine.push(other, chosen.span);
+                    }
+                }
+                Some(StepperState::Paused(StopReason::Step))
+            }
+            Err(e) => Some(StepperState::Errored(e)),
+        }
+    }
+
+    fn try_begin_bare_block(&mut self) -> Option<StepperState> {
+        let name = {
+            let frame = self.frames.last()?;
+            if frame.pc >= frame.body.len() {
+                return None;
+            }
+            match &frame.body[frame.pc].0 {
+                Expr::Ident(n) => n.clone(),
+                _ => return None,
+            }
+        };
+        let block = self.engine.lookup_autoexec_block(&name)?;
+        let span = self.frames.last().map(|f| f.body[f.pc].1.clone())?;
+        let (source_path, line_index) = self.advance_pc_clone_source_context()?;
+        self.frames.push(StepFrame {
+            name: format!("{name}@{}", span.start),
+            source_path,
+            body: block.body,
+            pc: 0,
+            driver: None,
+            scopes_to_pop: 0,
+            line_index,
+        });
+        Some(StepperState::Paused(StopReason::Step))
+    }
+
+    fn matching_builtin(&self, name: &str) -> bool {
+        let Some(frame) = self.frames.last() else {
+            return false;
+        };
+        if frame.pc >= frame.body.len() {
+            return false;
+        }
+        matches!(&frame.body[frame.pc].0, Expr::Ident(s) if s == name)
+    }
+
+    fn current_expr_head(&self) -> Option<ExprHead> {
+        let frame = self.frames.last()?;
+        if frame.pc >= frame.body.len() {
+            return None;
+        }
+        match &frame.body[frame.pc].0 {
+            Expr::Map => Some(ExprHead::Map),
+            Expr::Ident(s) if s == "map" => Some(ExprHead::Map),
+            Expr::Filter => Some(ExprHead::Filter),
+            Expr::Ident(s) if s == "fil" => Some(ExprHead::Filter),
+            Expr::Fold => Some(ExprHead::Fold),
+            Expr::Ident(s) if s == "red" => Some(ExprHead::Fold),
+            _ => None,
+        }
+    }
+
     /// Execute the current expression atomically and advance the program counter.
     pub fn step_over(&mut self) -> StepperState {
-        if let Err(e) = self.advance_loop_phases() {
+        if let Err(e) = self.advance_composite_drivers() {
             return StepperState::Errored(e);
         }
         self.drain_exhausted_frames();
@@ -329,6 +965,45 @@ impl Stepper {
         }
 
         if let Some(s) = self.try_begin_loop_stepping() {
+            return s;
+        }
+        if let Some(s) = self.try_begin_scope() {
+            return s;
+        }
+        if let Some(s) = self.try_begin_each() {
+            return s;
+        }
+        if let Some(s) = self.try_begin_map() {
+            return s;
+        }
+        if let Some(s) = self.try_begin_filter() {
+            return s;
+        }
+        if let Some(s) = self.try_begin_fold() {
+            return s;
+        }
+        if let Some(s) = self.try_begin_list_literal() {
+            return s;
+        }
+        if let Some(s) = self.try_enter_execute_block() {
+            return s;
+        }
+        if let Some(s) = self.try_begin_string_execute() {
+            return s;
+        }
+        if let Some(s) = self.try_begin_splat() {
+            return s;
+        }
+        if let Some(s) = self.try_begin_import() {
+            return s;
+        }
+        if let Some(s) = self.try_begin_cond() {
+            return s;
+        }
+        if let Some(s) = self.try_begin_ternary() {
+            return s;
+        }
+        if let Some(s) = self.try_begin_bare_block() {
             return s;
         }
 
@@ -348,64 +1023,9 @@ impl Stepper {
 
     /// Step into the current expression.
     ///
-    /// If the expression is `Execute` (`!`) and the top of the value stack is a
-    /// `Block`, intercept: pop the block and push a new call frame. Otherwise,
-    /// behaves identically to `step_over`.
+    /// Same interception rules as [`Stepper::step_over`] (including `!` into blocks).
     pub fn step_in(&mut self) -> StepperState {
-        if let Err(e) = self.advance_loop_phases() {
-            return StepperState::Errored(e);
-        }
-        self.drain_exhausted_frames();
-        if self.frames.is_empty() {
-            return StepperState::Terminated;
-        }
-
-        if let Some(s) = self.try_begin_loop_stepping() {
-            return s;
-        }
-
-        let is_execute_into_block = {
-            let frame = self.frames.last().unwrap();
-            frame.pc < frame.body.len()
-                && matches!(&frame.body[frame.pc].0, Expr::Execute)
-                && matches!(self.engine.peek_top(), Some(Value::Block(_)))
-        };
-
-        if is_execute_into_block {
-            let (_, span) = {
-                let frame = self.frames.last_mut().unwrap();
-                let s = frame.body[frame.pc].clone();
-                frame.pc += 1;
-                s
-            };
-
-            let block = match self.engine.pop_value() {
-                Some(Value::Block(b)) => b,
-                _ => unreachable!("guarded above"),
-            };
-            self.frames.push(StepFrame {
-                name: format!("block@{}", span.start),
-                source_path: self.source_path.clone(),
-                body: block.body,
-                pc: 0,
-                loop_driver: None,
-            });
-            return StepperState::Paused(StopReason::Step);
-        }
-
-        // Fall through: step over
-        let frame = self.frames.last_mut().unwrap();
-        if frame.pc >= frame.body.len() {
-            return StepperState::Paused(StopReason::Step);
-        }
-
-        let spanned = frame.body[frame.pc].clone();
-        frame.pc += 1;
-
-        match self.engine.eval_one(&spanned) {
-            Ok(()) => StepperState::Paused(StopReason::Step),
-            Err(e) => StepperState::Errored(e),
-        }
+        self.step_over()
     }
 
     /// Execute to the end of the current call frame, then pause in the parent.
@@ -442,21 +1062,17 @@ impl Stepper {
                 StepperState::Terminated => return StepperState::Terminated,
                 StepperState::Errored(e) => return StepperState::Errored(e),
                 StepperState::Paused(_) => {
-                    // Clone breakpoint data before any mutable borrows to satisfy
-                    // the borrow checker (eval_condition borrows self mutably).
                     let bp_data: Option<(usize, Option<String>, Option<String>)> = self
                         .breakpoint_at_current()
                         .map(|bp| (bp.line, bp.condition.clone(), bp.log_message.clone()));
 
                     if let Some((line, condition, log_message)) = bp_data {
-                        // Conditional breakpoint: eval in engine state snapshot
                         if let Some(cond) = condition {
                             match self.eval_condition(&cond) {
-                                Ok(true) => {}                  // halt
-                                Ok(false) | Err(_) => continue, // skip
+                                Ok(true) => {}
+                                Ok(false) | Err(_) => continue,
                             }
                         }
-                        // Logpoint: emit message, do not halt
                         if let Some(msg) = log_message {
                             self.pending_output.push(msg);
                             continue;
@@ -485,7 +1101,7 @@ impl Stepper {
                 let (line, col) = frame
                     .current_span()
                     .map(|span| {
-                        let (l, c) = self.line_index.line_col(span.start);
+                        let (l, c) = frame.line_index.line_col(span.start);
                         (l + 1, c + 1) // 1-based for DAP
                     })
                     .unwrap_or((1, 1));
@@ -532,15 +1148,16 @@ impl Stepper {
     fn drain_exhausted_frames(&mut self) {
         while let Some(frame) = self.frames.last() {
             if frame.is_exhausted() {
-                self.frames.pop();
+                let popped = self.frames.pop().expect("last");
+                for _ in 0..popped.scopes_to_pop {
+                    self.engine.pop_scope();
+                }
             } else {
                 break;
             }
         }
     }
 
-    /// Evaluate a condition expression in a snapshot of the current engine
-    /// state so the condition cannot corrupt the running program.
     fn eval_condition(&mut self, condition: &str) -> Result<bool, EvalError> {
         let tokens = crate::lexer::lex(condition).map_err(|_| EvalError {
             kind: crate::error::EvalErrorKind::IoError("bad condition syntax".into()),
@@ -553,7 +1170,6 @@ impl Stepper {
             labels: vec![],
         })?;
 
-        // Save and restore the stack so the condition is side-effect-free
         let saved_stack = self.engine.clone_raw_stack();
         let eval_result = self.engine.eval(&ast);
         let truthy = self
@@ -567,7 +1183,22 @@ impl Stepper {
     }
 }
 
+#[derive(Clone, Copy)]
+enum ExprHead {
+    Map,
+    Filter,
+    Fold,
+}
+
 // ── Helpers ───────────────────────────────────────────────────────────────
+
+fn breakpoint_source_matches(bp: Option<&str>, frame_path: &str) -> bool {
+    match bp {
+        None => true,
+        Some(p) if p.trim().is_empty() => true,
+        Some(p) => crate::debug_source_path::debug_source_paths_equivalent(p, frame_path),
+    }
+}
 
 fn make_scope_var(name: String, value: &Value) -> ScopeVariable {
     ScopeVariable {
@@ -602,6 +1233,10 @@ mod tests {
     use super::*;
     use crate::eval::Engine;
 
+    fn bp(line: usize) -> Breakpoint {
+        Breakpoint::line_only(line)
+    }
+
     fn parse(src: &str) -> Vec<Spanned<Expr>> {
         let tokens = crate::lexer::lex(src).unwrap();
         crate::parser::parse(&tokens, src.len()).unwrap()
@@ -628,20 +1263,19 @@ mod tests {
     }
 
     #[test]
-    fn step_in_block() {
+    fn step_over_enters_execute_block() {
         let src = "(3 4 +) !";
         let program = parse(src);
         let mut s = Stepper::new(Engine::new(), program, src.into(), "test.ezc".into());
 
-        s.step_over(); // push the block (1 frame)
+        s.step_over(); // push block
         assert_eq!(s.frames.len(), 1);
-        assert_eq!(s.engine.stack().len(), 1); // block on value stack
+        assert_eq!(s.engine.stack().len(), 1);
 
-        // step_in should intercept Execute and push a new frame
-        let state = s.step_in();
+        let state = s.step_over(); // enter block (same as former step_in-only behavior)
         assert!(matches!(state, StepperState::Paused(StopReason::Step)));
         assert_eq!(s.frames.len(), 2);
-        assert_eq!(s.engine.stack().len(), 0); // block was popped
+        assert_eq!(s.engine.stack().len(), 0);
 
         s.step_over(); // 3
         s.step_over(); // 4
@@ -650,36 +1284,44 @@ mod tests {
     }
 
     #[test]
+    fn step_in_block() {
+        let src = "(3 4 +) !";
+        let program = parse(src);
+        let mut s = Stepper::new(Engine::new(), program, src.into(), "test.ezc".into());
+
+        s.step_over();
+        let state = s.step_in();
+        assert!(matches!(state, StepperState::Paused(StopReason::Step)));
+        assert_eq!(s.frames.len(), 2);
+
+        s.step_over();
+        s.step_over();
+        s.step_over();
+        assert_eq!(s.engine.stack()[0].to_string(), "7");
+    }
+
+    #[test]
     fn breakpoint_halts() {
         let src = "1\n2\n3\n+\n+";
         let program = parse(src);
         let mut s = Stepper::new(Engine::new(), program, src.into(), "test.ezc".into());
-        s.set_breakpoints(vec![Breakpoint {
-            line: 3,
-            condition: None,
-            log_message: None,
-        }]);
+        s.set_breakpoints(vec![bp(3)]);
 
         let state = s.continue_execution();
         assert!(matches!(
             state,
             StepperState::Paused(StopReason::Breakpoint(3))
         ));
-        assert_eq!(s.engine.stack().len(), 2); // 1 and 2 pushed before halt
+        assert_eq!(s.engine.stack().len(), 2);
     }
 
     /// Breakpoints inside `&` loop bodies must fire (not skipped via `Engine::eval` on whole blocks).
-    /// Loop cond/body must be `(...)` blocks — `{...}` is a scope, not a deferred block.
     #[test]
     fn breakpoint_inside_loop_body() {
         let src = "0 @n\n( $n 3 < )\n(\n$n 1 + @n\n)\n&\n";
         let program = parse(src);
         let mut s = Stepper::new(Engine::new(), program, src.into(), "test.ezc".into());
-        s.set_breakpoints(vec![Breakpoint {
-            line: 4,
-            condition: None,
-            log_message: None,
-        }]);
+        s.set_breakpoints(vec![bp(4)]);
 
         let state = s.continue_execution();
         assert!(
@@ -689,21 +1331,277 @@ mod tests {
     }
 
     #[test]
+    fn breakpoint_inside_each_body() {
+        let src = "[1]\n(\n:\n)\neach\n";
+        let program = parse(src);
+        let mut s = Stepper::new(Engine::new(), program, src.into(), "test.ezc".into());
+        s.set_breakpoints(vec![bp(3)]);
+
+        let state = s.continue_execution();
+        assert!(
+            matches!(state, StepperState::Paused(StopReason::Breakpoint(3))),
+            "expected breakpoint in each body, got {state:?}"
+        );
+    }
+
+    #[test]
+    fn breakpoint_inside_map_body() {
+        let src = "[1]\n(\n1 +\n)\n&!\n";
+        let program = parse(src);
+        let mut s = Stepper::new(Engine::new(), program, src.into(), "test.ezc".into());
+        s.set_breakpoints(vec![bp(3)]);
+
+        let state = s.continue_execution();
+        assert!(
+            matches!(state, StepperState::Paused(StopReason::Breakpoint(3))),
+            "expected breakpoint in map body, got {state:?}"
+        );
+    }
+
+    #[test]
+    fn breakpoint_inside_scope_body() {
+        let src = "{\n:\n}\n";
+        let program = parse(src);
+        let mut s = Stepper::new(Engine::new(), program, src.into(), "test.ezc".into());
+        s.set_breakpoints(vec![bp(2)]);
+
+        let state = s.continue_execution();
+        assert!(
+            matches!(state, StepperState::Paused(StopReason::Breakpoint(2))),
+            "expected breakpoint in scope body, got {state:?}"
+        );
+    }
+
+    #[test]
+    fn breakpoint_inside_filter_body() {
+        let src = "[1]\n(\n1\n)\n&?\n";
+        let program = parse(src);
+        let mut s = Stepper::new(Engine::new(), program, src.into(), "test.ezc".into());
+        s.set_breakpoints(vec![bp(3)]);
+
+        let state = s.continue_execution();
+        assert!(
+            matches!(state, StepperState::Paused(StopReason::Breakpoint(3))),
+            "expected breakpoint in filter body, got {state:?}"
+        );
+    }
+
+    #[test]
+    fn breakpoint_inside_fold_body() {
+        let src = "[2]\n0\n(\n+\n)\n&/\n";
+        let program = parse(src);
+        let mut s = Stepper::new(Engine::new(), program, src.into(), "test.ezc".into());
+        s.set_breakpoints(vec![bp(4)]);
+
+        let state = s.continue_execution();
+        assert!(
+            matches!(state, StepperState::Paused(StopReason::Breakpoint(4))),
+            "expected breakpoint in fold body, got {state:?}"
+        );
+    }
+
+    #[test]
     fn step_out_returns_to_parent() {
         let src = "(1 2 +) !";
         let program = parse(src);
         let mut s = Stepper::new(Engine::new(), program, src.into(), "test.ezc".into());
 
-        s.step_over(); // push block
-        s.step_in(); // enter block frame (2 frames total)
+        s.step_over();
+        s.step_over();
         assert_eq!(s.frames.len(), 2);
 
-        let state = s.step_out(); // run to end of block
-                                  // Either terminated (if parent was also exhausted) or back at 1 frame
+        let state = s.step_out();
         match state {
             StepperState::Terminated | StepperState::Paused(_) => {}
             StepperState::Errored(e) => panic!("unexpected error: {e:?}"),
         }
         assert_eq!(s.engine.stack()[0].to_string(), "3");
+    }
+
+    #[test]
+    fn breakpoint_inside_list_literal() {
+        let src = "[\n1\n]\n";
+        let program = parse(src);
+        let mut s = Stepper::new(Engine::new(), program, src.into(), "test.ezc".into());
+        s.set_breakpoints(vec![bp(2)]);
+
+        let state = s.continue_execution();
+        assert!(
+            matches!(state, StepperState::Paused(StopReason::Breakpoint(2))),
+            "expected breakpoint inside list literal, got {state:?}"
+        );
+        s.step_over();
+        let state = s.continue_execution();
+        assert!(matches!(state, StepperState::Terminated), "{state:?}");
+    }
+
+    #[test]
+    fn breakpoint_in_imported_module() {
+        let src = "\"std/math.ezc\" import\n";
+        let program = parse(src);
+        let mut s = Stepper::new(Engine::new(), program, src.into(), "main.ezc".into());
+        s.set_breakpoints(vec![Breakpoint {
+            line: 4,
+            column: None,
+            source_path: Some("std/math.ezc".into()),
+            condition: None,
+            log_message: None,
+        }]);
+
+        let state = s.continue_execution();
+        assert!(
+            matches!(state, StepperState::Paused(StopReason::Breakpoint(4))),
+            "expected breakpoint in imported module, got {state:?}"
+        );
+    }
+
+    #[test]
+    fn breakpoint_bare_block_call() {
+        let src = "(\n1\n)\n@x\nx\n";
+        let program = parse(src);
+        let mut s = Stepper::new(Engine::new(), program, src.into(), "test.ezc".into());
+        s.set_breakpoints(vec![bp(2)]);
+
+        let state = s.continue_execution();
+        assert!(
+            matches!(state, StepperState::Paused(StopReason::Breakpoint(2))),
+            "expected breakpoint in bare block call body, got {state:?}"
+        );
+    }
+
+    #[test]
+    fn breakpoint_string_execute_multiline() {
+        let src = "\"1\n2\n+\" !\n";
+        let program = parse(src);
+        let mut s = Stepper::new(Engine::new(), program, src.into(), "test.ezc".into());
+        s.set_breakpoints(vec![bp(2)]);
+
+        let state = s.continue_execution();
+        assert!(
+            matches!(state, StepperState::Paused(StopReason::Breakpoint(2))),
+            "expected breakpoint in string-executed code line 2, got {state:?}"
+        );
+    }
+
+    #[test]
+    fn breakpoint_cond_truthy_block() {
+        let src = "1 (\n:\n) ?\n";
+        let program = parse(src);
+        let mut s = Stepper::new(Engine::new(), program, src.into(), "test.ezc".into());
+        s.set_breakpoints(vec![bp(2)]);
+
+        let state = s.continue_execution();
+        assert!(
+            matches!(state, StepperState::Paused(StopReason::Breakpoint(2))),
+            "expected breakpoint in `?` block, got {state:?}"
+        );
+    }
+
+    /// Falsy `?` must not enter the block — breakpoint inside the block is never hit.
+    #[test]
+    fn breakpoint_cond_falsy_skips_block() {
+        let src = "0 (\n:\n) ?\n";
+        let program = parse(src);
+        let mut s = Stepper::new(Engine::new(), program, src.into(), "test.ezc".into());
+        s.set_breakpoints(vec![bp(2)]);
+
+        let state = s.continue_execution();
+        assert!(
+            matches!(state, StepperState::Terminated),
+            "expected termination without inner breakpoint, got {state:?}"
+        );
+    }
+
+    #[test]
+    fn breakpoint_ternary_then_block() {
+        // Stack bottom→top: cond, then, else — `1` truthy → then block `( : )`
+        let src = "1\n(\n:\n)\n(\n;\n)\n??\n";
+        let program = parse(src);
+        let mut s = Stepper::new(Engine::new(), program, src.into(), "test.ezc".into());
+        s.set_breakpoints(vec![bp(3)]);
+
+        let state = s.continue_execution();
+        assert!(
+            matches!(state, StepperState::Paused(StopReason::Breakpoint(3))),
+            "expected breakpoint in `??` then-branch, got {state:?}"
+        );
+    }
+
+    #[test]
+    fn breakpoint_ternary_else_block() {
+        let src = "0\n(\n;\n)\n(\n:\n)\n??\n";
+        let program = parse(src);
+        let mut s = Stepper::new(Engine::new(), program, src.into(), "test.ezc".into());
+        // Line of `:` in the else block (falsy cond skips then-branch).
+        s.set_breakpoints(vec![bp(6)]);
+
+        let state = s.continue_execution();
+        assert!(
+            matches!(state, StepperState::Paused(StopReason::Breakpoint(6))),
+            "expected breakpoint in `??` else-branch, got {state:?}"
+        );
+    }
+
+    #[test]
+    fn string_execute_parse_error_surfaces() {
+        let src = "\"(\" !";
+        let program = parse(src);
+        let mut s = Stepper::new(Engine::new(), program, src.into(), "test.ezc".into());
+        s.step_over();
+        let state = s.step_over();
+        assert!(
+            matches!(state, StepperState::Errored(_)),
+            "expected parse error from string `!`, got {state:?}"
+        );
+    }
+
+    #[test]
+    fn splat_execute_steps_each_element() {
+        let src = "[1 2] !";
+        let program = parse(src);
+        let mut s = Stepper::new(Engine::new(), program, src.into(), "test.ezc".into());
+
+        s.step_over(); // list@ frame
+        s.step_over(); // push 1 inside list
+        s.step_over(); // push 2 inside list
+                       // Finalize list, start `!` splat (list is popped off the stack)
+        s.step_over();
+        assert_eq!(s.engine.stack().len(), 0);
+        assert!(s.frames.last().unwrap().name.starts_with("splat@"));
+        s.step_over(); // first splat push
+        assert_eq!(s.engine.stack().len(), 1);
+        assert_eq!(s.engine.stack()[0].to_string(), "1");
+        s.step_over();
+        assert_eq!(s.engine.stack().len(), 2);
+        s.step_over();
+        assert!(matches!(s.step_over(), StepperState::Terminated));
+    }
+
+    #[test]
+    fn breakpoint_column_filters_same_line() {
+        let src = "1 2 +";
+        let program = parse(src);
+        let mut s = Stepper::new(Engine::new(), program, src.into(), "test.ezc".into());
+        // Only halt when the `2` literal is about to run (column is 1-based).
+        let col = {
+            let span = s.frames[0].body[1].1.clone();
+            let (_, c0) = s.line_index.line_col(span.start);
+            c0 + 1
+        };
+        s.set_breakpoints(vec![Breakpoint {
+            line: 1,
+            column: Some(col as u32),
+            source_path: None,
+            condition: None,
+            log_message: None,
+        }]);
+
+        // From entry: first `step_over` in continue runs `1`, then we halt before `2`
+        // because the breakpoint column matches the next expression.
+        let state = s.continue_execution();
+        assert!(
+            matches!(state, StepperState::Paused(StopReason::Breakpoint(1))),
+            "expected column-filtered breakpoint on second expr, got {state:?}"
+        );
     }
 }

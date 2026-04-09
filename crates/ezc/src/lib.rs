@@ -15,6 +15,7 @@
 //! ```
 
 pub mod ast;
+pub mod debug_source_path;
 pub mod error;
 pub mod eval;
 pub mod intern;
@@ -25,6 +26,8 @@ pub mod parser;
 pub mod stepper;
 pub mod token;
 pub mod types;
+
+pub use debug_source_path::debug_source_paths_equivalent;
 
 use std::panic::{catch_unwind, AssertUnwindSafe};
 

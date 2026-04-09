@@ -153,7 +153,8 @@ impl BuiltinSets {
 
         let builtins: HashSet<&str> = [
             "len", "nth", "tl", "rev", "srt", "take", "skip", "zip", "range", "typeof", "cut",
-            "cat", "map", "fil", "red", "rl", "wl", "rb", "wb", "words", "and", "or",
+            "cat", "map", "fil", "red", "rl", "wl", "rb", "wb", "words", "depth", "clear", "and",
+            "or",
         ]
         .into_iter()
         .collect();

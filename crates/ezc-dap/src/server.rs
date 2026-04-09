@@ -253,6 +253,8 @@ impl<R: BufRead, W: Write> DapServer<R, W> {
             .into_iter()
             .map(|sb| Breakpoint {
                 line: sb.line,
+                column: sb.column.map(|c| c as u32),
+                source_path: src_path.clone(),
                 condition: sb.condition,
                 log_message: sb.log_message,
             })

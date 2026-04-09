@@ -1,5 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
+use num_bigint::BigInt;
 use tracing::{debug, trace};
 
 use crate::ast::{Expr, Spanned};
@@ -57,6 +58,18 @@ impl EzIo for StdIo {
 pub struct Tagged {
     pub value: Value,
     pub span: std::ops::Range<usize>,
+}
+
+/// Outcome of [`Engine::prepare_import_step`] — used by the debugger stepper.
+pub(crate) enum ImportStep {
+    /// `import` ran but the module was already loaded (operand consumed).
+    Skipped,
+    /// Execute `ast` as the body of the imported module.
+    Run {
+        module_name: String,
+        module_src: String,
+        ast: Vec<Spanned<Expr>>,
+    },
 }
 
 /// The ezc engine — a stack machine with dynamically scoped variable bindings.
@@ -195,12 +208,12 @@ impl Engine {
     }
 
     /// Push a new empty scope (for `{...}` and block execution).
-    fn push_scope(&mut self) {
+    pub(crate) fn push_scope(&mut self) {
         self.env.push(HashMap::new());
     }
 
     /// Pop the innermost scope.
-    fn pop_scope(&mut self) {
+    pub(crate) fn pop_scope(&mut self) {
         // Never pop the top-level scope.
         if self.env.len() > 1 {
             self.env.pop();
@@ -395,6 +408,18 @@ impl Engine {
                             value: Value::List(list),
                             span,
                         });
+                        return Ok(());
+                    }
+                    "depth" => {
+                        let n = self.stack.len();
+                        self.stack.push(Tagged {
+                            value: Value::int(BigInt::from(n)),
+                            span,
+                        });
+                        return Ok(());
+                    }
+                    "clear" => {
+                        self.stack.clear();
                         return Ok(());
                     }
                     "import" => {
@@ -1518,6 +1543,333 @@ impl Engine {
             }),
         }
     }
+
+    /// Expand a list or numeric count for `each`, `&!`, `&?` (same rules as [`Engine::eval_expr`]).
+    pub(crate) fn expand_list_or_count_for_step(
+        list: &Tagged,
+        block: &Tagged,
+        op: &str,
+        span: &std::ops::Range<usize>,
+    ) -> Result<Vec<Value>, EvalError> {
+        match &list.value {
+            Value::List(items) => Ok(items.clone()),
+            Value::Num(n) => {
+                let count = n.to_f64_lossy() as i64;
+                Ok((0..count).map(Value::int).collect())
+            }
+            _ => Err(EvalError {
+                kind: EvalErrorKind::TypeMismatch {
+                    op: op.into(),
+                    expected: "a list or number, and a block".into(),
+                    found: format!("{} and {}", list.value.type_name(), block.value.type_name()),
+                },
+                span: Some(span.clone()),
+                labels: vec![
+                    ErrorLabel {
+                        span: list.span.clone(),
+                        message: format!("this is {}", list.value.type_name()),
+                    },
+                    ErrorLabel {
+                        span: block.span.clone(),
+                        message: format!("this is {}", block.value.type_name()),
+                    },
+                ],
+            }),
+        }
+    }
+
+    /// Pop stack operands for `each`, matching built-in `each` semantics (block on TOS).
+    pub(crate) fn pop_each_operands(
+        &mut self,
+        span: std::ops::Range<usize>,
+    ) -> Result<(Vec<Value>, Block), EvalError> {
+        let block = self.pop("each", &span)?;
+        let collection = self.pop("each", &span)?;
+        match (&collection.value, &block.value) {
+            (Value::List(items), Value::Block(b)) => Ok((items.clone(), b.clone())),
+            (Value::Num(n), Value::Block(b)) => {
+                let count = n.to_f64_lossy() as i64;
+                let items: Vec<Value> = (0..count).map(Value::int).collect();
+                Ok((items, b.clone()))
+            }
+            _ => Err(EvalError {
+                kind: EvalErrorKind::TypeMismatch {
+                    op: "each".into(),
+                    expected: "a list or number, and a block".into(),
+                    found: format!(
+                        "{} and {}",
+                        collection.value.type_name(),
+                        block.value.type_name()
+                    ),
+                },
+                span: Some(span.clone()),
+                labels: vec![],
+            }),
+        }
+    }
+
+    /// Pop stack operands for `&!` (map). Block on TOS, then list or count.
+    pub(crate) fn pop_map_operands(
+        &mut self,
+        span: std::ops::Range<usize>,
+    ) -> Result<(Vec<Value>, Block), EvalError> {
+        let block = self.pop("&!", &span)?;
+        let list = self.pop("&!", &span)?;
+        let items = Self::expand_list_or_count_for_step(&list, &block, "&!", &span)?;
+        match &block.value {
+            Value::Block(b) => Ok((items, b.clone())),
+            _ => Err(EvalError {
+                kind: EvalErrorKind::TypeMismatch {
+                    op: "&!".into(),
+                    expected: "a block".into(),
+                    found: block.value.type_name().into(),
+                },
+                span: Some(span.clone()),
+                labels: vec![ErrorLabel {
+                    span: block.span.clone(),
+                    message: format!("this is {}", block.value.type_name()),
+                }],
+            }),
+        }
+    }
+
+    /// Pop stack operands for `&?` (filter).
+    pub(crate) fn pop_filter_operands(
+        &mut self,
+        span: std::ops::Range<usize>,
+    ) -> Result<(Vec<Value>, Block), EvalError> {
+        let block = self.pop("&?", &span)?;
+        let list = self.pop("&?", &span)?;
+        let items = Self::expand_list_or_count_for_step(&list, &block, "&?", &span)?;
+        match &block.value {
+            Value::Block(b) => Ok((items, b.clone())),
+            _ => Err(EvalError {
+                kind: EvalErrorKind::TypeMismatch {
+                    op: "&?".into(),
+                    expected: "a block".into(),
+                    found: block.value.type_name().into(),
+                },
+                span: Some(span.clone()),
+                labels: vec![ErrorLabel {
+                    span: block.span.clone(),
+                    message: format!("this is {}", block.value.type_name()),
+                }],
+            }),
+        }
+    }
+
+    /// Pop stack operands for `&/` (fold): block, initial accumulator, list (list only — same as eval).
+    pub(crate) fn pop_fold_operands(
+        &mut self,
+        span: std::ops::Range<usize>,
+    ) -> Result<(Vec<Value>, Tagged, Block), EvalError> {
+        let block_tagged = self.pop("&/", &span)?;
+        let init = self.pop("&/", &span)?;
+        let list_tagged = self.pop("&/", &span)?;
+        match (&list_tagged.value, &block_tagged.value) {
+            (Value::List(items), Value::Block(b)) => Ok((items.clone(), init, b.clone())),
+            (c, b) => Err(EvalError {
+                kind: EvalErrorKind::TypeMismatch {
+                    op: "&/".into(),
+                    expected: "a list and a block".into(),
+                    found: format!("{} and {}", c.type_name(), b.type_name()),
+                },
+                span: Some(span.clone()),
+                labels: vec![
+                    ErrorLabel {
+                        span: list_tagged.span.clone(),
+                        message: format!("this is {}", list_tagged.value.type_name()),
+                    },
+                    ErrorLabel {
+                        span: block_tagged.span.clone(),
+                        message: format!("this is {}", block_tagged.value.type_name()),
+                    },
+                ],
+            }),
+        }
+    }
+
+    pub(crate) fn stack_len(&self) -> usize {
+        self.stack.len()
+    }
+
+    /// Finish a list literal: stack entries from `base` upward become one [`Value::List`].
+    pub(crate) fn finalize_list_literal(
+        &mut self,
+        base: usize,
+        result_span: std::ops::Range<usize>,
+    ) -> Result<(), EvalError> {
+        if base > self.stack.len() {
+            return Err(EvalError {
+                kind: EvalErrorKind::IoError("internal: list literal stack base".into()),
+                span: Some(result_span),
+                labels: vec![],
+            });
+        }
+        let tail = self.stack.split_off(base);
+        let items: Vec<Value> = tail.into_iter().map(|t| t.value).collect();
+        self.stack.push(Tagged {
+            value: Value::List(items),
+            span: result_span,
+        });
+        Ok(())
+    }
+
+    /// Pop path and load a module for stepped `import` (same semantics as `eval_expr` `import`).
+    pub(crate) fn prepare_import_step(
+        &mut self,
+        span: std::ops::Range<usize>,
+    ) -> Result<ImportStep, EvalError> {
+        let path_tagged = self.pop("import", &span)?;
+        match &path_tagged.value {
+            Value::Str(s) => {
+                let name = s.0.to_string();
+
+                if self.imported.contains(&name) {
+                    return Ok(ImportStep::Skipped);
+                }
+                self.imported.insert(name.clone());
+
+                let src = EMBEDDED_MODULES
+                    .iter()
+                    .find(|(n, _)| *n == name)
+                    .map(|(_, src)| (*src).to_string())
+                    .or_else(|| std::fs::read_to_string(&name).ok());
+
+                let src = src.ok_or_else(|| EvalError {
+                    kind: EvalErrorKind::IoError(format!("import \"{name}\": not found")),
+                    span: Some(span.clone()),
+                    labels: vec![ErrorLabel {
+                        span: path_tagged.span.clone(),
+                        message: "this path".into(),
+                    }],
+                })?;
+
+                let ast = crate::lexer::lex(&src)
+                    .map_err(|errs| EvalError {
+                        kind: EvalErrorKind::IoError(format!(
+                            "import \"{name}\": {}",
+                            errs.iter()
+                                .map(|e| e.to_string())
+                                .collect::<Vec<_>>()
+                                .join("; ")
+                        )),
+                        span: Some(span.clone()),
+                        labels: vec![],
+                    })
+                    .and_then(|tokens| {
+                        crate::parser::parse(&tokens, src.len()).map_err(|errs| EvalError {
+                            kind: EvalErrorKind::IoError(format!(
+                                "import \"{name}\": {}",
+                                errs.iter()
+                                    .map(|e| e.to_string())
+                                    .collect::<Vec<_>>()
+                                    .join("; ")
+                            )),
+                            span: Some(span.clone()),
+                            labels: vec![],
+                        })
+                    })?;
+
+                Ok(ImportStep::Run {
+                    module_name: name,
+                    module_src: src,
+                    ast,
+                })
+            }
+            _ => Err(EvalError {
+                kind: EvalErrorKind::TypeMismatch {
+                    op: "import".into(),
+                    expected: "a string".into(),
+                    found: path_tagged.value.type_name().into(),
+                },
+                span: Some(span),
+                labels: vec![],
+            }),
+        }
+    }
+
+    pub(crate) fn parse_snippet_ast(
+        src: &str,
+        err_span: std::ops::Range<usize>,
+        op: &str,
+    ) -> Result<Vec<Spanned<Expr>>, EvalError> {
+        let tokens = crate::lexer::lex(src).map_err(|errs| EvalError {
+            kind: EvalErrorKind::TypeMismatch {
+                op: op.into(),
+                expected: "valid ezc code".into(),
+                found: errs
+                    .iter()
+                    .map(|e| e.to_string())
+                    .collect::<Vec<_>>()
+                    .join("; "),
+            },
+            span: Some(err_span.clone()),
+            labels: vec![],
+        })?;
+        crate::parser::parse(&tokens, src.len()).map_err(|errs| EvalError {
+            kind: EvalErrorKind::TypeMismatch {
+                op: op.into(),
+                expected: "valid ezc code".into(),
+                found: errs
+                    .iter()
+                    .map(|e| e.to_string())
+                    .collect::<Vec<_>>()
+                    .join("; "),
+            },
+            span: Some(err_span),
+            labels: vec![],
+        })
+    }
+
+    pub(crate) fn pop_cond_operands(
+        &mut self,
+        span: &std::ops::Range<usize>,
+    ) -> Result<(Tagged, Tagged), EvalError> {
+        let block = self.pop("?", span)?;
+        let cond = self.pop("?", span)?;
+        Ok((cond, block))
+    }
+
+    pub(crate) fn pop_ternary_operands(
+        &mut self,
+        span: &std::ops::Range<usize>,
+    ) -> Result<(Tagged, Tagged, Tagged), EvalError> {
+        let else_b = self.pop("??", span)?;
+        let then_b = self.pop("??", span)?;
+        let cond = self.pop("??", span)?;
+        Ok((cond, then_b, else_b))
+    }
+
+    /// Identifiers handled in [`Engine::eval_expr`] before environment `lookup` is consulted.
+    pub(crate) fn ident_skips_lookup(name: &str) -> bool {
+        matches!(
+            name,
+            "rl" | "rb"
+                | "wl"
+                | "wb"
+                | "map"
+                | "fil"
+                | "red"
+                | "each"
+                | "loop"
+                | "words"
+                | "depth"
+                | "clear"
+                | "import"
+        )
+    }
+
+    /// Block bound to `name` that [`Expr::Ident`] would auto-execute, or `None`.
+    pub(crate) fn lookup_autoexec_block(&self, name: &str) -> Option<Block> {
+        if Self::ident_skips_lookup(name) {
+            return None;
+        }
+        self.lookup(name).and_then(|v| match v {
+            Value::Block(b) => Some(b.clone()),
+            _ => None,
+        })
+    }
 }
 
 impl Default for Engine {
@@ -1613,6 +1965,29 @@ mod tests {
             run("1 2 _"),
             vec![Value::int(1), Value::int(2), Value::int(1)]
         );
+    }
+
+    #[test]
+    fn depth_pushes_stack_len() {
+        assert_eq!(
+            run("1 2 3 depth"),
+            vec![Value::int(1), Value::int(2), Value::int(3), Value::int(3)]
+        );
+    }
+
+    #[test]
+    fn clear_empties_stack() {
+        assert_eq!(run("1 2 3 clear depth"), vec![Value::int(0)]);
+    }
+
+    #[test]
+    fn comments_only_program() {
+        assert_eq!(run("# just a comment\n# another"), vec![]);
+    }
+
+    #[test]
+    fn empty_program() {
+        assert_eq!(run(""), vec![]);
     }
 
     // ── Blocks & control flow ─────────────────────────────────────────────

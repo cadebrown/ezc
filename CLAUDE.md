@@ -12,7 +12,7 @@ Rust workspace with 4 crates under `crates/`:
 
 - `ezc` -- core language (types, lexer, parser, evaluator, interner)
 - `ezc-cli` -- CLI binary (`ezc run`, `ezc check`, `ezc repl`)
-- `ezc-lsp` -- language server (stub)
+- `ezc-lsp` -- language server (formatting, symbols, docs, stack hints)
 - `ezc-web` -- WASM embedding (stub)
 
 ## Build & Test
@@ -60,6 +60,7 @@ Compose: `|` (concat lists, strings, or blocks)
 Higher-order: `&!` (map), `&?` (filter), `&/` (fold)
 Comparison: `== != < > <= >=` (push 1 or 0)
 I/O: `:` (write line), `.` (read line), `rl`/`wl`/`rb`/`wb`
+Stack introspection: `depth` (push stack height), `clear` (drop all stack values)
 Variables: `@name` (bind), `$name` (recall)
 Scoping: `{...}` (local bindings)
 
@@ -102,6 +103,10 @@ let mut engine = Engine::new();
 ezc::eval_line(&mut engine, "3 4 +")?;
 // engine.stack() → [7]
 ```
+
+## Debugger / DAP
+
+The debug adapter (`ezc-dap`) steps via `Stepper` + `Engine::eval_one`. Any `Engine::eval(&subtree)` inside `eval_expr` runs **without** per-expression PC updates, so breakpoints inside that subtree are invisible until the subtree returns. Extending coverage (e.g. `each`, `&!`, scopes) requires **EZC core** changes — see [docs/debugger-stepper-integration.md](docs/debugger-stepper-integration.md) for the full inventory and phased plan.
 
 ## Testing
 
