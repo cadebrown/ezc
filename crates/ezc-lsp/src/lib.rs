@@ -206,8 +206,8 @@ impl Backend {
 
     /// Re-parse a document, rebuild symbol index, and publish diagnostics.
     async fn on_change(&self, uri: Url, text: String) {
-        let diagnostics = parse_diagnostics(&text);
         let index = SymbolIndex::build(&text, &self.builtins);
+        let diagnostics = all_diagnostics(&text, &index, &self.builtins);
         self.documents
             .write()
             .await
@@ -216,6 +216,45 @@ impl Backend {
             .publish_diagnostics(uri, diagnostics, None)
             .await;
     }
+}
+
+/// All diagnostics: syntax errors + semantic warnings (undefined variables).
+pub fn all_diagnostics(src: &str, index: &SymbolIndex, builtins: &BuiltinSets) -> Vec<Diagnostic> {
+    let mut diags = parse_diagnostics(src);
+    // Only add semantic diagnostics if parsing succeeded (no syntax errors).
+    if diags.is_empty() {
+        diags.extend(semantic_diagnostics(src, index, builtins));
+    }
+    diags
+}
+
+/// Report warnings for references to names that have no definition.
+pub fn semantic_diagnostics(src: &str, index: &SymbolIndex, builtins: &BuiltinSets) -> Vec<Diagnostic> {
+    let mut diags = Vec::new();
+    for (name, spans) in &index.references {
+        // Skip if there's a definition for this name.
+        if index.definitions.contains_key(name) {
+            continue;
+        }
+        // Skip builtins.
+        if builtins.is_known(name) {
+            continue;
+        }
+        for span in spans {
+            let range = Range {
+                start: offset_to_position(src, span.start),
+                end: offset_to_position(src, span.end),
+            };
+            diags.push(Diagnostic {
+                range,
+                severity: Some(DiagnosticSeverity::WARNING),
+                source: Some("ezc".into()),
+                message: format!("undefined name `{name}`"),
+                ..Default::default()
+            });
+        }
+    }
+    diags
 }
 
 /// Lex and parse source, convert errors to LSP `Diagnostic` objects.
@@ -416,18 +455,63 @@ impl LanguageServer for Backend {
         };
 
         let offset = position_to_offset(src, pos);
-        let token = match index.token_at(offset) {
-            Some((t, _)) => t,
+        let (token, _span) = match index.token_at(offset) {
+            Some(pair) => pair,
             None => return Ok(None),
         };
 
-        Ok(token_docs(token).map(|md| Hover {
-            contents: HoverContents::Markup(MarkupContent {
-                kind: MarkupKind::Markdown,
-                value: md.into(),
-            }),
-            range: None,
-        }))
+        // Check for operator/builtin docs first.
+        if let Some(md) = token_docs(token) {
+            return Ok(Some(Hover {
+                contents: HoverContents::Markup(MarkupContent {
+                    kind: MarkupKind::Markdown,
+                    value: md.into(),
+                }),
+                range: None,
+            }));
+        }
+
+        // Variable hover: show definition count, reference count, and kind.
+        let name = match token {
+            Token::Bind(n) | Token::Recall(n) => Some(n.as_str()),
+            Token::Ident(n) if !self.builtins.is_known(n) => Some(n.as_str()),
+            _ => None,
+        };
+
+        if let Some(name) = name {
+            let def_count = index.definitions.get(name).map(|v| v.len()).unwrap_or(0);
+            let ref_count = index.references.get(name).map(|v| v.len()).unwrap_or(0);
+            let is_fn = index
+                .definitions
+                .get(name)
+                .and_then(|spans| spans.first())
+                .map(|s| index.is_function_def(s))
+                .unwrap_or(false);
+
+            let kind = if is_fn { "block" } else { "value" };
+            let def_str = if def_count == 0 {
+                "**undefined**".to_string()
+            } else {
+                format!(
+                    "{def_count} definition{}",
+                    if def_count == 1 { "" } else { "s" }
+                )
+            };
+
+            let md = format!(
+                "**`{name}`** — {kind}\n\n{def_str}, {ref_count} reference{}",
+                if ref_count == 1 { "" } else { "s" }
+            );
+            return Ok(Some(Hover {
+                contents: HoverContents::Markup(MarkupContent {
+                    kind: MarkupKind::Markdown,
+                    value: md,
+                }),
+                range: None,
+            }));
+        }
+
+        Ok(None)
     }
 
     async fn completion(&self, params: CompletionParams) -> Result<Option<CompletionResponse>> {
@@ -524,21 +608,35 @@ impl LanguageServer for Backend {
             None => return Ok(None),
         };
 
-        let occurrences = index.all_occurrences(&name);
-        if occurrences.is_empty() {
-            return Ok(None);
+        // Search across all open documents.
+        let mut locations: Vec<Location> = Vec::new();
+        for (doc_uri, (doc_src, doc_index)) in docs.iter() {
+            let occurrences = doc_index.all_occurrences(&name);
+            if !occurrences.is_empty() {
+                let li = LineIndex::new(doc_src);
+                for span in &occurrences {
+                    locations.push(Location {
+                        uri: doc_uri.clone(),
+                        range: span_to_range(&li, span),
+                    });
+                }
+            }
         }
 
-        let li = LineIndex::new(src);
-        let locations: Vec<Location> = occurrences
-            .iter()
-            .map(|span| Location {
-                uri: uri.clone(),
-                range: span_to_range(&li, span),
-            })
-            .collect();
-
-        Ok(Some(locations))
+        if locations.is_empty() {
+            Ok(None)
+        } else {
+            // Sort: current file first, then by position.
+            locations.sort_by(|a, b| {
+                let a_current = a.uri == *uri;
+                let b_current = b.uri == *uri;
+                b_current
+                    .cmp(&a_current)
+                    .then_with(|| a.uri.cmp(&b.uri))
+                    .then_with(|| a.range.start.cmp(&b.range.start))
+            });
+            Ok(Some(locations))
+        }
     }
 
     async fn document_symbol(
@@ -937,7 +1035,15 @@ impl LanguageServer for Backend {
         let mut lenses: Vec<CodeLens> = Vec::new();
 
         for (name, def_spans) in &index.definitions {
-            let ref_count = index.references.get(name).map(|v| v.len()).unwrap_or(0);
+            // Count references across all open documents.
+            let mut ref_count = 0;
+            for (_doc_uri, (_doc_src, doc_index)) in docs.iter() {
+                ref_count += doc_index
+                    .references
+                    .get(name)
+                    .map(|v| v.len())
+                    .unwrap_or(0);
+            }
 
             for def_span in def_spans {
                 let range = span_to_range(&li, def_span);

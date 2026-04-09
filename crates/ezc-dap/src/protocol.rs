@@ -222,6 +222,7 @@ pub fn capabilities() -> Value {
     serde_json::json!({
         "supportsConfigurationDoneRequest": true,
         "supportsConditionalBreakpoints": true,
+        "supportsHitConditionalBreakpoints": true,
         "supportsLogPoints": true,
         "supportsEvaluateForHovers": true,
         "supportsTerminateRequest": true,

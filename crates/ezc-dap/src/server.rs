@@ -139,6 +139,8 @@ pub struct DapServer<R: BufRead, W: Write> {
     stop_on_entry: bool,
     /// Pending launch until `configurationDone` (or immediate start if config finished first).
     pending_launch: Option<LaunchArgs>,
+    /// Exception breakpoint filter received before session start.
+    pending_break_on_exceptions: bool,
 }
 
 impl<R: BufRead, W: Write> DapServer<R, W> {
@@ -153,6 +155,7 @@ impl<R: BufRead, W: Write> DapServer<R, W> {
             configuration_done: false,
             stop_on_entry: true,
             pending_launch: None,
+            pending_break_on_exceptions: false,
         }
     }
 
@@ -257,6 +260,8 @@ impl<R: BufRead, W: Write> DapServer<R, W> {
                 source_path: src_path.clone(),
                 condition: sb.condition,
                 log_message: sb.log_message,
+                hit_condition: sb.hit_condition,
+                hit_count: 0,
             })
             .collect();
 
@@ -298,11 +303,11 @@ impl<R: BufRead, W: Write> DapServer<R, W> {
         req: &RawRequest,
     ) -> Result<(), Box<dyn std::error::Error>> {
         if let Some(args) = parse_args::<SetExceptionBreakpointsArgs>(req) {
+            let enabled = args.filters.iter().any(|f| f == "all");
             if let Some(session) = &mut self.session {
-                session.break_on_exceptions = args.filters.iter().any(|f| f == "all");
+                session.break_on_exceptions = enabled;
             } else {
-                // Store for when session starts
-                let _ = args; // will apply in on_launch
+                self.pending_break_on_exceptions = enabled;
             }
         }
         self.send_response(req, json!({ "breakpoints": [] }))?;
@@ -360,6 +365,7 @@ impl<R: BufRead, W: Write> DapServer<R, W> {
         }
 
         let mut session = Session::new(stepper, args.program.clone());
+        session.break_on_exceptions = self.pending_break_on_exceptions;
         session.rebuild_var_store();
         self.session = Some(session);
 

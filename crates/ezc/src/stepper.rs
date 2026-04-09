@@ -208,6 +208,11 @@ pub struct Breakpoint {
     pub condition: Option<String>,
     /// Logpoint message (no halt — emits to the debug console instead).
     pub log_message: Option<String>,
+    /// Hit condition expression (e.g. "5" means break on 5th hit, ">3" means after 3rd).
+    /// Supported forms: "N" (== N), ">N", ">=N", "<N", "<=N", "%N" (every Nth).
+    pub hit_condition: Option<String>,
+    /// Number of times this breakpoint has been hit (for hit count evaluation).
+    pub hit_count: usize,
 }
 
 impl Breakpoint {
@@ -219,6 +224,8 @@ impl Breakpoint {
             source_path: None,
             condition: None,
             log_message: None,
+            hit_condition: None,
+            hit_count: 0,
         }
     }
 }
@@ -1062,26 +1069,74 @@ impl Stepper {
                 StepperState::Terminated => return StepperState::Terminated,
                 StepperState::Errored(e) => return StepperState::Errored(e),
                 StepperState::Paused(_) => {
-                    let bp_data: Option<(usize, Option<String>, Option<String>)> = self
-                        .breakpoint_at_current()
-                        .map(|bp| (bp.line, bp.condition.clone(), bp.log_message.clone()));
+                    // Find the matching breakpoint index so we can mutate hit_count.
+                    let bp_idx = self.matching_breakpoint_index();
+                    let Some(idx) = bp_idx else { continue };
 
-                    if let Some((line, condition, log_message)) = bp_data {
-                        if let Some(cond) = condition {
-                            match self.eval_condition(&cond) {
-                                Ok(true) => {}
-                                Ok(false) | Err(_) => continue,
+                    // Increment hit count.
+                    self.breakpoints[idx].hit_count += 1;
+                    let bp = &self.breakpoints[idx];
+                    let line = bp.line;
+                    let condition = bp.condition.clone();
+                    let log_message = bp.log_message.clone();
+                    let hit_condition = bp.hit_condition.clone();
+                    let hit_count = bp.hit_count;
+
+                    // Evaluate condition expression (if any).
+                    if let Some(cond) = condition {
+                        match self.eval_condition(&cond) {
+                            Ok(true) => {}
+                            Ok(false) => continue,
+                            Err(e) => {
+                                self.pending_output.push(format!(
+                                    "Breakpoint condition error: {}", e.kind
+                                ));
+                                continue;
                             }
                         }
-                        if let Some(msg) = log_message {
-                            self.pending_output.push(msg);
-                            continue;
-                        }
-                        return StepperState::Paused(StopReason::Breakpoint(line));
                     }
+
+                    // Evaluate hit condition (if any).
+                    if let Some(ref hc) = hit_condition {
+                        match Self::eval_hit_condition(hc, hit_count) {
+                            Ok(true) => {}
+                            Ok(false) => continue,
+                            Err(msg) => {
+                                self.pending_output.push(format!(
+                                    "Hit condition error: {msg}"
+                                ));
+                                continue;
+                            }
+                        }
+                    }
+
+                    // Logpoints emit output but don't halt.
+                    if let Some(msg) = log_message {
+                        self.pending_output.push(msg);
+                        continue;
+                    }
+
+                    return StepperState::Paused(StopReason::Breakpoint(line));
                 }
             }
         }
+    }
+
+    /// Find the index of the breakpoint matching the current position, or `None`.
+    fn matching_breakpoint_index(&self) -> Option<usize> {
+        let frame = self.frames.last()?;
+        let span = frame.current_span()?;
+        let (l0, c0) = frame.line_index.line_col(span.start);
+        let line = l0 + 1;
+        let col = (c0 + 1) as u32;
+        self.breakpoints.iter().position(|bp| {
+            breakpoint_source_matches(bp.source_path.as_deref(), &frame.source_path)
+                && bp.line == line
+                && match bp.column {
+                    None => true,
+                    Some(bc) => bc == col,
+                }
+        })
     }
 
     /// Drain any log messages queued by logpoint breakpoints.
@@ -1156,6 +1211,59 @@ impl Stepper {
                 break;
             }
         }
+    }
+
+    /// Evaluate a hit condition expression against the current hit count.
+    /// Returns `true` if the breakpoint should fire.
+    ///
+    /// Supported forms:
+    /// - `"5"` or `"== 5"` — fire on exactly the 5th hit
+    /// - `"> 3"` — fire when hit count exceeds 3
+    /// - `">= 3"` — fire when hit count is 3 or more
+    /// - `"< 3"` — fire when hit count is less than 3
+    /// - `"<= 3"` — fire when hit count is 3 or fewer
+    /// - `"% 3"` — fire every 3rd hit (modulo)
+    fn eval_hit_condition(expr: &str, hit_count: usize) -> Result<bool, String> {
+        let expr = expr.trim();
+        if expr.is_empty() {
+            return Err("empty hit condition".into());
+        }
+
+        // Try to parse as plain number first (== N)
+        if let Ok(n) = expr.parse::<usize>() {
+            return Ok(hit_count == n);
+        }
+
+        // Parse operator + number
+        let (op, rest) = if let Some(r) = expr.strip_prefix(">=") {
+            (">=", r)
+        } else if let Some(r) = expr.strip_prefix("<=") {
+            ("<=", r)
+        } else if let Some(r) = expr.strip_prefix("==") {
+            ("==", r)
+        } else if let Some(r) = expr.strip_prefix('>') {
+            (">", r)
+        } else if let Some(r) = expr.strip_prefix('<') {
+            ("<", r)
+        } else if let Some(r) = expr.strip_prefix('%') {
+            ("%", r)
+        } else {
+            return Err(format!("invalid hit condition: `{expr}`"));
+        };
+
+        let n: usize = rest.trim().parse().map_err(|_| {
+            format!("invalid number in hit condition: `{expr}`")
+        })?;
+
+        Ok(match op {
+            "==" => hit_count == n,
+            ">" => hit_count > n,
+            ">=" => hit_count >= n,
+            "<" => hit_count < n,
+            "<=" => hit_count <= n,
+            "%" => n > 0 && hit_count % n == 0,
+            _ => false,
+        })
     }
 
     fn eval_condition(&mut self, condition: &str) -> Result<bool, EvalError> {
@@ -1446,6 +1554,8 @@ mod tests {
             source_path: Some("std/math.ezc".into()),
             condition: None,
             log_message: None,
+            hit_condition: None,
+            hit_count: 0,
         }]);
 
         let state = s.continue_execution();
@@ -1594,6 +1704,8 @@ mod tests {
             source_path: None,
             condition: None,
             log_message: None,
+            hit_condition: None,
+            hit_count: 0,
         }]);
 
         // From entry: first `step_over` in continue runs `1`, then we halt before `2`
@@ -1602,6 +1714,120 @@ mod tests {
         assert!(
             matches!(state, StepperState::Paused(StopReason::Breakpoint(1))),
             "expected column-filtered breakpoint on second expr, got {state:?}"
+        );
+    }
+
+    // ── Hit condition tests ─────────────────────────────────────────────
+
+    #[test]
+    fn hit_condition_exact() {
+        assert_eq!(Stepper::eval_hit_condition("3", 3), Ok(true));
+        assert_eq!(Stepper::eval_hit_condition("3", 2), Ok(false));
+        assert_eq!(Stepper::eval_hit_condition("3", 4), Ok(false));
+    }
+
+    #[test]
+    fn hit_condition_comparison() {
+        assert_eq!(Stepper::eval_hit_condition("> 3", 4), Ok(true));
+        assert_eq!(Stepper::eval_hit_condition("> 3", 3), Ok(false));
+        assert_eq!(Stepper::eval_hit_condition(">= 3", 3), Ok(true));
+        assert_eq!(Stepper::eval_hit_condition("< 3", 2), Ok(true));
+        assert_eq!(Stepper::eval_hit_condition("< 3", 3), Ok(false));
+        assert_eq!(Stepper::eval_hit_condition("<= 3", 3), Ok(true));
+        assert_eq!(Stepper::eval_hit_condition("== 5", 5), Ok(true));
+        assert_eq!(Stepper::eval_hit_condition("== 5", 4), Ok(false));
+    }
+
+    #[test]
+    fn hit_condition_modulo() {
+        assert_eq!(Stepper::eval_hit_condition("% 3", 6), Ok(true));
+        assert_eq!(Stepper::eval_hit_condition("% 3", 7), Ok(false));
+        assert_eq!(Stepper::eval_hit_condition("% 3", 9), Ok(true));
+    }
+
+    #[test]
+    fn hit_condition_errors() {
+        assert!(Stepper::eval_hit_condition("", 1).is_err());
+        assert!(Stepper::eval_hit_condition("abc", 1).is_err());
+        assert!(Stepper::eval_hit_condition("> abc", 1).is_err());
+    }
+
+    #[test]
+    fn hit_condition_breakpoint_fires_on_nth_hit() {
+        // Loop body executes 5 times. Breakpoint with hitCondition "3" should fire
+        // only on the 3rd iteration.
+        let src = "0 @n\n( $n 5 < )\n(\n$n 1 + @n\n)\n&\n";
+        let program = parse(src);
+        let mut s = Stepper::new(Engine::new(), program, src.into(), "test.ezc".into());
+        s.set_breakpoints(vec![Breakpoint {
+            line: 4,
+            column: None,
+            source_path: None,
+            condition: None,
+            log_message: None,
+            hit_condition: Some("3".into()),
+            hit_count: 0,
+        }]);
+
+        let state = s.continue_execution();
+        assert!(
+            matches!(state, StepperState::Paused(StopReason::Breakpoint(4))),
+            "expected breakpoint on 3rd hit, got {state:?}"
+        );
+        // n should be 2 at this point (0, 1, 2 — third iteration about to increment)
+        assert_eq!(s.breakpoints[0].hit_count, 3);
+    }
+
+    // ── Condition error surfacing ───────────────────────────────────────
+
+    #[test]
+    fn condition_error_surfaces_as_output() {
+        let src = "1\n2\n3\n+\n+";
+        let program = parse(src);
+        let mut s = Stepper::new(Engine::new(), program, src.into(), "test.ezc".into());
+        s.set_breakpoints(vec![Breakpoint {
+            line: 2,
+            column: None,
+            source_path: None,
+            condition: Some("bad syntax @#$".into()),
+            log_message: None,
+            hit_condition: None,
+            hit_count: 0,
+        }]);
+
+        // continue_execution should skip the breakpoint (bad condition) and finish
+        let state = s.continue_execution();
+        // Program terminates (breakpoint never fires due to condition error)
+        assert!(matches!(state, StepperState::Terminated));
+        // The error message should be in pending_output
+        let output = s.drain_pending_output();
+        assert!(
+            output.iter().any(|msg| msg.contains("condition error")),
+            "expected condition error in output, got: {output:?}"
+        );
+    }
+
+    #[test]
+    fn hit_condition_error_surfaces_as_output() {
+        let src = "1\n2\n3";
+        let program = parse(src);
+        let mut s = Stepper::new(Engine::new(), program, src.into(), "test.ezc".into());
+        s.set_breakpoints(vec![Breakpoint {
+            line: 2,
+            column: None,
+            source_path: None,
+            condition: None,
+            log_message: None,
+            hit_condition: Some("not_a_number".into()),
+            hit_count: 0,
+        }]);
+
+        let state = s.continue_execution();
+        assert!(matches!(state, StepperState::Terminated));
+        let output = s.drain_pending_output();
+        assert!(
+            output.iter().any(|msg| msg.contains("Hit condition error")),
+            "expected hit condition error in output, got: {output:?}"
         );
     }
 }

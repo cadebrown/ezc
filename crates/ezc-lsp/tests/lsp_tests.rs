@@ -845,3 +845,76 @@ fn docs_exist_for_builtin_idents() {
         );
     }
 }
+
+// ── Semantic diagnostics ───────────────────────────────────────────────────
+
+#[test]
+fn semantic_diag_undefined_recall() {
+    let builtins = BuiltinSets::new();
+    let src = "$undefined_name";
+    let index = SymbolIndex::build(src, &builtins);
+    let diags = ezc_lsp::semantic_diagnostics(src, &index, &builtins);
+    assert_eq!(diags.len(), 1, "should warn about undefined $name");
+    assert!(diags[0].message.contains("undefined_name"));
+    assert_eq!(diags[0].severity, Some(tower_lsp::lsp_types::DiagnosticSeverity::WARNING));
+}
+
+#[test]
+fn semantic_diag_defined_name_no_warning() {
+    let builtins = BuiltinSets::new();
+    let src = "42 @x $x";
+    let index = SymbolIndex::build(src, &builtins);
+    let diags = ezc_lsp::semantic_diagnostics(src, &index, &builtins);
+    assert!(diags.is_empty(), "defined variables should not warn");
+}
+
+#[test]
+fn semantic_diag_builtin_no_warning() {
+    let builtins = BuiltinSets::new();
+    let src = "[1 2 3] len";
+    let index = SymbolIndex::build(src, &builtins);
+    let diags = ezc_lsp::semantic_diagnostics(src, &index, &builtins);
+    assert!(diags.is_empty(), "builtins should not warn");
+}
+
+#[test]
+fn semantic_diag_prelude_no_warning() {
+    let builtins = BuiltinSets::new();
+    let src = "5 sq";
+    let index = SymbolIndex::build(src, &builtins);
+    let diags = ezc_lsp::semantic_diagnostics(src, &index, &builtins);
+    assert!(diags.is_empty(), "prelude names should not warn");
+}
+
+#[test]
+fn semantic_diag_multiple_undefined() {
+    let builtins = BuiltinSets::new();
+    let src = "$foo $bar";
+    let index = SymbolIndex::build(src, &builtins);
+    let diags = ezc_lsp::semantic_diagnostics(src, &index, &builtins);
+    assert_eq!(diags.len(), 2, "should warn for each undefined name");
+}
+
+#[test]
+fn semantic_diag_bare_ident_undefined() {
+    let builtins = BuiltinSets::new();
+    let src = "5 myfunc";
+    let index = SymbolIndex::build(src, &builtins);
+    let diags = ezc_lsp::semantic_diagnostics(src, &index, &builtins);
+    assert_eq!(diags.len(), 1, "undefined bare ident should warn");
+    assert!(diags[0].message.contains("myfunc"));
+}
+
+#[test]
+fn all_diagnostics_skips_semantic_on_parse_error() {
+    let builtins = BuiltinSets::new();
+    // Unclosed paren causes parse error
+    let src = "( 1 2 +";
+    let index = SymbolIndex::build(src, &builtins);
+    let diags = ezc_lsp::all_diagnostics(src, &index, &builtins);
+    // Should only contain parse error, not semantic warnings
+    assert!(
+        diags.iter().all(|d| d.severity == Some(tower_lsp::lsp_types::DiagnosticSeverity::ERROR)),
+        "should only have parse errors, not semantic warnings"
+    );
+}
