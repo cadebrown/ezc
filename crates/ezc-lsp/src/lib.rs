@@ -567,26 +567,47 @@ impl LanguageServer for Backend {
 
         let offset = position_to_offset(src, pos);
         let name = match index.name_at(offset) {
-            Some(n) => n,
+            Some(n) => n.to_owned(),
             None => return Ok(None),
         };
 
-        let def_sites = index.definition_sites(name);
-        if def_sites.is_empty() {
+        // Search current document first, then all open documents.
+        let mut locations: Vec<Location> = Vec::new();
+
+        let def_sites = index.definition_sites(&name);
+        if !def_sites.is_empty() {
+            let li = LineIndex::new(src);
+            for span in def_sites {
+                locations.push(Location {
+                    uri: uri.clone(),
+                    range: span_to_range(&li, span),
+                });
+            }
+        } else {
+            // Not found locally — search other open documents.
+            for (doc_uri, (doc_src, doc_index)) in docs.iter() {
+                if doc_uri == uri {
+                    continue;
+                }
+                let defs = doc_index.definition_sites(&name);
+                if !defs.is_empty() {
+                    let li = LineIndex::new(doc_src);
+                    for span in defs {
+                        locations.push(Location {
+                            uri: doc_uri.clone(),
+                            range: span_to_range(&li, span),
+                        });
+                    }
+                }
+            }
+        }
+
+        if locations.is_empty() {
             return Ok(None);
         }
 
-        let li = LineIndex::new(src);
-        let locations: Vec<Location> = def_sites
-            .iter()
-            .map(|span| Location {
-                uri: uri.clone(),
-                range: span_to_range(&li, span),
-            })
-            .collect();
-
         Ok(Some(if locations.len() == 1 {
-            GotoDefinitionResponse::Scalar(locations.into_iter().next().unwrap())
+            GotoDefinitionResponse::Scalar(locations.into_iter().next().expect("len == 1"))
         } else {
             GotoDefinitionResponse::Array(locations)
         }))
@@ -736,31 +757,38 @@ impl LanguageServer for Backend {
             None => return Ok(None),
         };
 
-        // Build edits for every occurrence. Each token's text includes the sigil
-        // (@name, $name, or bare name), so we reconstruct the replacement with the
-        // appropriate sigil.
-        let li = LineIndex::new(src);
-        let mut edits: Vec<TextEdit> = Vec::new();
+        // Build edits across all open documents. Each token's text includes the
+        // sigil (@name, $name, or bare name), so we reconstruct the replacement
+        // with the appropriate sigil.
+        let mut changes: HashMap<Url, Vec<TextEdit>> = HashMap::new();
 
-        for (tok, span) in &index.tokens {
-            let replacement = match tok {
-                Token::Bind(n) if n == &name => format!("@{new_name}"),
-                Token::Recall(n) if n == &name => format!("${new_name}"),
-                Token::Ident(n) if n == &name && !self.builtins.is_known(n) => new_name.clone(),
-                _ => continue,
-            };
-            edits.push(TextEdit {
-                range: span_to_range(&li, span),
-                new_text: replacement,
-            });
+        for (doc_uri, (doc_src, doc_index)) in docs.iter() {
+            let li = LineIndex::new(doc_src);
+            let mut edits: Vec<TextEdit> = Vec::new();
+
+            for (tok, span) in &doc_index.tokens {
+                let replacement = match tok {
+                    Token::Bind(n) if n == &name => format!("@{new_name}"),
+                    Token::Recall(n) if n == &name => format!("${new_name}"),
+                    Token::Ident(n) if n == &name && !self.builtins.is_known(n) => {
+                        new_name.clone()
+                    }
+                    _ => continue,
+                };
+                edits.push(TextEdit {
+                    range: span_to_range(&li, span),
+                    new_text: replacement,
+                });
+            }
+
+            if !edits.is_empty() {
+                changes.insert(doc_uri.clone(), edits);
+            }
         }
 
-        if edits.is_empty() {
+        if changes.is_empty() {
             return Ok(None);
         }
-
-        let mut changes = HashMap::new();
-        changes.insert(uri.clone(), edits);
 
         Ok(Some(WorkspaceEdit {
             changes: Some(changes),
@@ -848,7 +876,7 @@ impl LanguageServer for Backend {
                         Token::CloseParen => Token::OpenParen,
                         Token::CloseBracket => Token::OpenBracket,
                         Token::CloseBrace => Token::OpenBrace,
-                        _ => unreachable!(),
+                        _ => continue,
                     };
                     // Pop matching opener
                     if let Some(pos) = stack.iter().rposition(|(_, t)| **t == expected_open) {
@@ -936,15 +964,12 @@ impl LanguageServer for Backend {
 
             if let Token::Str(path) = tok {
                 if matches!(next_tok, Token::Ident(name) if name == "import") {
-                    // Resolve the path
-                    let target = if path.starts_with("std/") {
-                        // Embedded module — try workspace root
-                        uri.join(path).ok()
-                    } else {
-                        // Relative to the document
-                        let base = uri.join(".").unwrap_or_else(|_| uri.clone());
-                        base.join(path).ok()
-                    };
+                    // Resolve relative to the document's directory.
+                    let target = uri
+                        .to_file_path()
+                        .ok()
+                        .and_then(|file| file.parent().map(|dir| dir.join(path)))
+                        .and_then(|resolved| Url::from_file_path(resolved).ok());
 
                     links.push(DocumentLink {
                         range: span_to_range(&li, span),
@@ -1577,7 +1602,7 @@ fn find_enclosing_brackets(
                     Token::CloseParen => Token::OpenParen,
                     Token::CloseBracket => Token::OpenBracket,
                     Token::CloseBrace => Token::OpenBrace,
-                    _ => unreachable!(),
+                    _ => continue,
                 };
                 if let Some(pos) = stack.iter().rposition(|(t, _)| *t == expected) {
                     let (_, open_span) = stack.remove(pos);
@@ -1707,7 +1732,7 @@ pub fn compute_folding_ranges(src: &str) -> Vec<FoldingRange> {
                     Token::CloseParen => Token::OpenParen,
                     Token::CloseBracket => Token::OpenBracket,
                     Token::CloseBrace => Token::OpenBrace,
-                    _ => unreachable!(),
+                    _ => continue,
                 };
                 if let Some(pos) = stack.iter().rposition(|(_, t)| **t == expected_open) {
                     let (start_line, _) = stack.remove(pos);

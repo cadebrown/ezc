@@ -1332,7 +1332,53 @@ fn value_children(v: &Value) -> Vec<ScopeVariable> {
             .enumerate()
             .map(|(i, item)| make_scope_var(format!("[{i}]"), item))
             .collect(),
+        Value::Block(b) => b
+            .body
+            .iter()
+            .enumerate()
+            .map(|(i, (expr, _))| ScopeVariable {
+                name: format!("[{i}]"),
+                value: expr_summary(expr),
+                type_name: "expr".into(),
+                children: vec![],
+            })
+            .collect(),
         _ => vec![],
+    }
+}
+
+/// Short human-readable summary of an AST expression (for debugger display).
+fn expr_summary(expr: &Expr) -> String {
+    match expr {
+        Expr::Literal(n) => n.to_string(),
+        Expr::StrLiteral(s) => format!("\"{s}\""),
+        Expr::Ident(name) => name.clone(),
+        Expr::Op(op) => format!("{op}"),
+        Expr::Execute => "!".into(),
+        Expr::Cond => "?".into(),
+        Expr::Ternary => "??".into(),
+        Expr::Compose => "|".into(),
+        Expr::Loop => "&".into(),
+        Expr::Map => "&!".into(),
+        Expr::Filter => "&?".into(),
+        Expr::Fold => "&/".into(),
+        Expr::Equal => "==".into(),
+        Expr::NotEqual => "!=".into(),
+        Expr::Lt => "<".into(),
+        Expr::Gt => ">".into(),
+        Expr::LtEq => "<=".into(),
+        Expr::GtEq => ">=".into(),
+        Expr::Swap => "~".into(),
+        Expr::Dup => ",".into(),
+        Expr::Drop => ";".into(),
+        Expr::Write => ":".into(),
+        Expr::Read => ".".into(),
+        Expr::Over => "_".into(),
+        Expr::Bind(name) => format!("@{name}"),
+        Expr::Recall(name) => format!("${name}"),
+        Expr::Block(body) => format!("({} exprs)", body.len()),
+        Expr::List(body) => format!("[{} exprs]", body.len()),
+        Expr::Scope(body) => format!("{{{} exprs}}", body.len()),
     }
 }
 
