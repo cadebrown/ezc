@@ -26,6 +26,9 @@
       await mod.default({ module_or_path: pkgUrl("ezc_web_bg.wasm") });
       return mod;
     })();
+    // If init fails, clear wasmReady so a retry can re-attempt instead of
+    // permanently sticking on a rejected promise.
+    wasmReady.catch(() => { wasmReady = null; });
     return wasmReady;
   }
 
@@ -69,25 +72,38 @@
       if (pre.dataset.norun !== undefined) return;
       if (pre.classList.contains("ezc-norun")) return;
       if (pre.closest("#ezc-full-playground")) return;
-      // Skip if already wired
+      // Skip if already wired (idempotent).
       if (pre.parentElement.classList.contains("ezc-code-wrap")) return;
 
-      // Wrap pre in a positioned container.
+      // Build wrapper structure:
+      //   <div.ezc-code-wrap>
+      //     <pre>...code...</pre>
+      //     <div.ezc-run-row><button>Run ▶</button></div>
+      //     <div.ezc-output> (hidden until first run)
+      //   </div>
       const wrap = document.createElement("div");
       wrap.className = "ezc-code-wrap";
       pre.parentElement.insertBefore(wrap, pre);
       wrap.appendChild(pre);
 
+      const row = document.createElement("div");
+      row.className = "ezc-run-row";
+      wrap.appendChild(row);
+
       const btn = document.createElement("button");
       btn.className = "ezc-run-btn";
+      btn.type = "button";
       btn.textContent = "Run ▶";
-      btn.title = "Run this snippet (Ctrl+Enter)";
-      wrap.appendChild(btn);
+      btn.title = "Run this snippet";
+      btn.setAttribute("aria-label", "Run this ezc snippet");
+      row.appendChild(btn);
 
       const output = document.createElement("div");
       output.className = "ezc-output";
       output.style.display = "none";
-      wrap.parentElement.insertBefore(output, wrap.nextSibling);
+      output.setAttribute("role", "status");
+      output.setAttribute("aria-live", "polite");
+      wrap.appendChild(output);
 
       const run = async () => {
         btn.disabled = true;
@@ -98,13 +114,13 @@
         try {
           const wasm = await loadWasm();
           const result = wasm.run(code.textContent);
-          if (result.ok) {
+          if (result && result.ok) {
             output.innerHTML =
               '<span class="ezc-output-arrow">→</span>' +
               renderStack(result.stack);
           } else {
             output.classList.add("ezc-output-error");
-            output.textContent = "✗ " + result.error;
+            output.textContent = "✗ " + (result?.error ?? "unknown error");
           }
         } catch (e) {
           output.classList.add("ezc-output-error");
@@ -195,28 +211,79 @@
       }
     }
 
+    // Group source lines into bracket-balanced chunks. A chunk is a
+    // sequence of lines whose bracket depth returns to (or stays at) 0
+    // by the end. Inside a string literal or `# comment`, brackets don't
+    // count. This way trace can step over multi-line `(...)`, `[...]`,
+    // and `{...}` constructs without splitting them apart.
+    function balancedChunks(src) {
+      const chunks = [];
+      let buf = [];
+      let startLine = 1;
+      let depth = 0;
+      let inString = false;
+      let lineNum = 0;
+      const lines = src.split("\n");
+      for (const line of lines) {
+        lineNum++;
+        if (buf.length === 0) startLine = lineNum;
+        buf.push(line);
+        // Walk this line, updating string/comment/depth state.
+        for (let i = 0; i < line.length; i++) {
+          const ch = line[i];
+          if (inString) {
+            if (ch === "\\") { i++; continue; }
+            if (ch === '"') inString = false;
+          } else {
+            if (ch === "#") break; // rest of line is comment
+            if (ch === '"') { inString = true; continue; }
+            if (ch === "(" || ch === "[" || ch === "{") depth++;
+            else if (ch === ")" || ch === "]" || ch === "}") {
+              if (depth > 0) depth--;
+            }
+          }
+        }
+        // String literals can't span newlines in ezc; reset just in case.
+        inString = false;
+        if (depth === 0 && buf.some((l) => l.trim() && !l.trim().startsWith("#"))) {
+          chunks.push({ startLine, text: buf.join("\n") });
+          buf = [];
+        }
+      }
+      // Trailing unbalanced content — emit if there's executable code so the
+      // user sees the error. Skip if it's only comments.
+      if (
+        buf.length &&
+        buf.some((l) => l.trim() && !l.trim().startsWith("#"))
+      ) {
+        chunks.push({ startLine, text: buf.join("\n") });
+      }
+      return chunks;
+    }
+
     async function traceProgram() {
       tracePane.style.display = "block";
       traceOut.innerHTML = '<span class="ezc-stack-empty">loading…</span>';
       try {
         const wasm = await loadWasm();
-        const lines = ta.value.split("\n");
+        const chunks = balancedChunks(ta.value);
+        if (chunks.length === 0) {
+          traceOut.innerHTML = '<span class="ezc-stack-empty">(no executable code)</span>';
+          return;
+        }
         const engine = new wasm.EzcEngine();
         const rows = [];
-        let lineNum = 0;
-        for (const line of lines) {
-          lineNum++;
-          const trimmed = line.trim();
-          if (!trimmed || trimmed.startsWith("#")) continue;
-          const r = engine.eval(line);
-          if (r.ok) {
-            rows.push(`<div><span style="color:#888">${lineNum}:</span> ${escapeHtml(line)}  <span class="ezc-output-arrow">→</span> ${renderStack(r.stack)}</div>`);
+        for (const { startLine, text } of chunks) {
+          const display = text.trim().split("\n").join(" ⏎ ");
+          const r = engine.eval(text);
+          if (r && r.ok) {
+            rows.push(`<div><span style="color:var(--sidebar-fg,#888)">${startLine}:</span> ${escapeHtml(display)}  <span class="ezc-output-arrow">→</span> ${renderStack(r.stack)}</div>`);
           } else {
-            rows.push(`<div><span style="color:#ff8a8a">${lineNum}: ✗ ${escapeHtml(r.error)}</span></div>`);
+            rows.push(`<div><span style="color:#ff8a8a">${startLine}: ✗ ${escapeHtml(r?.error ?? "unknown error")}</span></div>`);
             break;
           }
         }
-        traceOut.innerHTML = rows.join("") || '<span class="ezc-stack-empty">(no executable lines)</span>';
+        traceOut.innerHTML = rows.join("");
       } catch (e) {
         traceOut.innerHTML = `<span style="color:#ff8a8a">✗ ${escapeHtml(String(e))}</span>`;
       }

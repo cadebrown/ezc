@@ -53,10 +53,9 @@ f16 f32 f64
 ```
 
 ```ezc
-42 f64       # → 42.0f64
+42 f64       # → 42.0
 3.7 int      # → 3      (truncates)
-"123" int    # → 123    (parse)
-[97 98] str  # → "ab"   (codepoints to string)
+42 str       # → "42"   (number to decimal string)
 ```
 
 ## Modules

@@ -1,31 +1,49 @@
 /* ── Runnable code blocks ────────────────────────────────────────────── */
 
+/* Wraps each runnable <pre> + the run-row beneath it. Margin lifts the
+   block so the run-row tucks under without a gap. */
 .ezc-code-wrap {
-  position: relative;
+  margin-bottom: 1rem;
+}
+
+.ezc-code-wrap > pre {
+  margin-bottom: 0;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+/* Bar that sits below the code block, holding the Run button. */
+.ezc-run-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0.3rem 0.5rem;
+  background: var(--quote-bg, #2b2b2b);
+  border-top: 1px solid var(--theme-hover, rgba(0, 0, 0, 0.15));
+  border-radius: 0 0 4px 4px;
 }
 
 .ezc-run-btn {
-  position: absolute;
-  top: 0.4rem;
-  right: 0.5rem;
-  padding: 0.25rem 0.6rem;
+  padding: 0.25rem 0.7rem;
   font-family: inherit;
   font-size: 0.8rem;
-  background: var(--theme-popup-bg, #2d2d2d);
-  color: var(--fg, #c1c2c5);
-  border: 1px solid var(--theme-popup-border, #444);
+  background: transparent;
+  color: var(--fg, inherit);
+  border: 1px solid var(--theme-popup-border, currentColor);
   border-radius: 4px;
   cursor: pointer;
-  opacity: 0.6;
-  transition: opacity 0.15s, background 0.15s;
-  z-index: 1;
+  opacity: 0.7;
+  transition: opacity 0.15s, background 0.15s, color 0.15s, border-color 0.15s;
 }
 
-.ezc-run-btn:hover {
+.ezc-run-btn:hover,
+.ezc-run-btn:focus-visible {
   opacity: 1;
-  background: var(--searchbar-shadow-color, #4dabf7);
+  background: #4dabf7;
   color: #fff;
   border-color: #4dabf7;
+  outline: none;
 }
 
 .ezc-run-btn[disabled] {
@@ -34,12 +52,10 @@
 }
 
 .ezc-output {
-  margin-top: -1rem;
-  margin-bottom: 1rem;
   padding: 0.6rem 1rem;
   background: var(--quote-bg, #2b2b2b);
   border-left: 3px solid #4dabf7;
-  border-radius: 0 4px 4px 0;
+  border-radius: 0 0 4px 4px;
   font-family: var(--mono-font, "Source Code Pro", monospace);
   font-size: 0.9rem;
   white-space: pre-wrap;
@@ -52,7 +68,8 @@
 }
 
 .ezc-output .ezc-stack-empty {
-  color: var(--sidebar-fg, #888);
+  color: var(--fg, inherit);
+  opacity: 0.6;
   font-style: italic;
 }
 

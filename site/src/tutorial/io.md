@@ -2,12 +2,12 @@
 
 ## Writing output
 
-Two operators write to stdout:
+Three operators write to stdout:
 
 | op   | type effect             | description |
 |------|-------------------------|-------------|
 | `:`  | `a →`                   | print top of stack with newline |
-| `wl` | `str →`                 | named alias of `:` for strings  |
+| `wl` | `a →`                   | named alias of `:`  |
 | `wb` | `int →`                 | write a single byte |
 
 ```ezc
@@ -48,14 +48,19 @@ Imports are guarded — importing the same path twice is a no-op.
 
 ## Putting it together
 
-A complete program that reads a number and prints its factorial:
+A complete program that prints the first ten factorials:
 
 ```ezc
 "std/math.ezc" import
-"Enter a number: " :
-. int @n
-$n " factorial is " | $n fact str | :
+1 11 range
+(@n
+  $n str " factorial is " | $n fact str | :
+) each
 ```
+
+Note the `str` calls — `|` (compose) only joins values of the same kind
+(string with string, list with list, block with block). To stitch
+numbers into a sentence, convert them to strings first.
 
 ## Errors
 

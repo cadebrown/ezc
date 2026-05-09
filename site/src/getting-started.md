@@ -28,11 +28,24 @@ Create `hello.ezc`:
 Run it:
 
 ```bash
-ezc run hello.ezc
+ezc hello.ezc
 ```
 
 `wl` writes a string with a newline. The string is pushed onto the stack,
 then `wl` pops and prints it.
+
+You can also evaluate a string directly:
+
+```bash
+ezc -e "3 4 +"
+# → 7
+```
+
+Or check for syntax errors without running:
+
+```bash
+ezc -c hello.ezc
+```
 
 ## The REPL
 

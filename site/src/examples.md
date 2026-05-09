@@ -57,22 +57,23 @@ default.
     1 21 range      # c in 1..20
     (@c
       $a sq $b sq + $c sq ==
-      ($a $b $c [] | | | :) ?
+      ([$a $b $c] :) ?
     ) each
   ) each
 ) each
 ```
 
-## Prime sieve (under 50)
+## Primes under 20
+
+For each candidate `n`, count how many integers in `[2..n-1]` divide it.
+If none do, `n` is prime.
 
 ```ezc
-2 50 range
+2 20 range
 (@n
-  $n 2 ==
-  $n 2 / 1 + iota tl
-  (@d $n $d % 0 != ) &?
+  2 $n range
+  (@d $n $d % 0 == ) &?
   len 0 ==
-  or
   ($n :) ?
 ) each
 ```

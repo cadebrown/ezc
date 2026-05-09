@@ -56,34 +56,30 @@ When a bare identifier resolves to a block, it auto-executes.
 
 ## Multiple arguments
 
-Blocks pop their inputs from the stack in the same order they were
-pushed. A two-argument function is just a block that pops two values:
+A function in ezc is just a block — the body operates on whatever is on
+the stack. Whoever calls it puts the arguments there.
+
+A two-argument adder:
 
 ```ezc
-(_ * +) @mul-add    # (a b c → a*b+c)
-2 3 4 mul-add       # → 14   (2*3 + 4? no: see below)
+(+) @add
+3 4 add        # → 7
 ```
 
-Wait — that's wrong. Let me show you correctly. `_` is *over*, which
-copies the second-from-top to the top. Let's write it more carefully:
+A function that doubles its input, adds 1, then squares:
 
 ```ezc
-(* +) @mul-add          # (a b c → (a*b) + c)
-2 3 4 mul-add           # 4 then * pops 4 and 3 first... 
+(2 * 1 + sq) @f
+3 f            # 3 → 6 → 7 → 49
 ```
 
-Actually trace through carefully:
-
-```ezc
-3 4 + 5 *        # (3+4) * 5 = 35
-```
-
-A useful exercise: try writing your own `cube` function using `,` and
-`*`:
+Try writing a `cube` function. It needs to leave `n³` on the stack:
 
 ```ezc
 # Define cube here, then test with: 3 cube
 ```
+
+(One answer: `(, , * *) @cube` — dup twice, then multiply twice.)
 
 ## Higher-order
 

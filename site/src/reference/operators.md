@@ -47,7 +47,7 @@ All push `1` for true, `0` for false. There is no separate boolean type.
 |------|--------------|-------------|
 | `:`  | `a →`        | write line (any type) |
 | `.`  | `→ str`      | read line |
-| `wl` | `str →`      | write line (string) |
+| `wl` | `a →`        | write line (alias of `:`) |
 | `rl` | `→ str`      | read line (alias of `.`) |
 | `wb` | `int →`      | write a single byte |
 | `rb` | `→ int`      | read a single byte |

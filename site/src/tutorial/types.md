@@ -44,8 +44,8 @@ convert it to f32":
 
 ```ezc
 42 f32      # → 42.0f32
-3.7 int     # → 3   (truncates)
-"123" int   # → 123 (parse)
+3.7 int     # → 3      (truncates float)
+42 str      # → "42"   (number to decimal string)
 ```
 
 ## Arithmetic promotion
@@ -53,14 +53,18 @@ convert it to f32":
 Operations within the same family promote to the wider type:
 
 ```ezc
-3u8 4u32 +     # → 7u32  (u8 promoted to u32)
-3 4u32 +       # → 7u32  (int promoted to u32)
+3u8 4u32 +     # → 7u32  (u8 promoted to u32, both unsigned)
+1i16 2i64 +    # → 3i64  (i16 promoted to i64, both signed)
+1.0f32 2.0f64 +  # → 3.0f64  (f32 promoted to f64, both float)
 ```
 
-Cross-family arithmetic is an error. You must convert explicitly:
+Cross-family arithmetic is an error — int, unsigned, signed, and float
+are *separate* families. You must convert explicitly:
 
 ```ezc
-3 4.0 +        # error: int + f64
+3 4u32 +       # error: int and u32 are different families
+3 u32 4u32 +   # → 7u32  (convert 3 to u32 first)
+3 4.0 +        # error: int and f64
 3 f64 4.0 +    # → 7.0f64
 ```
 

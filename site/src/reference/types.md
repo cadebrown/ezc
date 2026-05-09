@@ -31,18 +31,23 @@ Within a family, operations promote to the wider type:
 3u8 4u32 +    # → 7u32 (u8 promoted)
 ```
 
-Cross-family is an error — convert explicitly:
+Cross-family is an error — `int`, unsigned, signed, and float are
+*separate* families. Convert explicitly:
 
 ```ezc
-3 4u8 +        # error
-3 u8 4u8 +     # → 7u8
+3 4u8 +        # error: int and u8 are different families
+3 u8 4u8 +     # → 7u8  (convert 3 to u8 first)
 ```
 
-The unsuffixed `int` (BigInt) participates in any integer-family
-operation by promoting to the partner's width:
+`int` (BigInt) is its own family. Within int, all ops are exact:
 
 ```ezc
 2 100 ^        # 2^100 as int (no overflow)
+```
+
+Fixed-width types overflow (and error) when results exceed their range:
+
+```ezc
 2u8 7u8 ^      # 128u8 — fits
 2u8 8u8 ^      # error: overflow in u8
 ```
