@@ -16,6 +16,7 @@
 //! console.log(result); // { "ok": true, "stack": ["7"], "error": null }
 //! ```
 
+use serde::Serialize;
 use wasm_bindgen::prelude::*;
 
 // ── One-shot run ──────────────────────────────────────────────────────────
@@ -141,16 +142,13 @@ impl Default for EzcEngine {
 
 // ── Helpers ───────────────────────────────────────────────────────────────
 
-/// Serialize a serde_json::Value to a JsValue.
+/// Serialize a serde_json::Value to a JsValue as a plain JS object (not a Map).
 ///
-/// In a WASM context, `JsValue::from_serde` uses JSON.parse internally.
-/// We serialize to a JSON string and let wasm-bindgen convert it.
+/// `JsValue::from_str(&s)` would produce a JavaScript *string*; the default
+/// serde-wasm-bindgen serializer would produce a JS `Map`. Both break
+/// `result.ok` / `result.stack` access. The json_compatible serializer
+/// produces plain objects + arrays just like JSON.parse would.
 fn serde_wasm_bindgen_value(v: &serde_json::Value) -> JsValue {
-    // JsValue::from_serde is the old API; use serde-wasm-bindgen or
-    // manual JSON string approach for compatibility.
-    // The simplest portable approach that works with wasm-bindgen 0.2:
-    match serde_json::to_string(v) {
-        Ok(s) => JsValue::from_str(&s),
-        Err(_) => JsValue::NULL,
-    }
+    let serializer = serde_wasm_bindgen::Serializer::json_compatible();
+    v.serialize(&serializer).unwrap_or(JsValue::NULL)
 }
