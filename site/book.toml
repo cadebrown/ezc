@@ -1,0 +1,33 @@
+[book]
+title = "ezc"
+description = "Stack-based programming language with big integers, 16 numeric types, and first-class editor tooling."
+authors = ["Cade Brown"]
+language = "en"
+src = "src"
+
+[output.html]
+default-theme = "navy"
+preferred-dark-theme = "navy"
+git-repository-url = "https://github.com/cadebrown/ezc"
+edit-url-template = "https://github.com/cadebrown/ezc/edit/main/site/{path}"
+additional-css = ["theme/playground.css"]
+additional-js = ["theme/playground.js"]
+mathjax-support = false
+no-section-label = false
+
+[output.html.fold]
+enable = true
+level = 1
+
+[output.html.search]
+enable = true
+limit-results = 30
+use-boolean-and = true
+boost-title = 2
+boost-hierarchy = 1
+boost-paragraph = 1
+expand = true
+heading-split-level = 3
+
+[output.html.playground]
+runnable = false
