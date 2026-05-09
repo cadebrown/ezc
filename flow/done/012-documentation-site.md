@@ -26,5 +26,6 @@ Custom theme in `site/theme/`:
 Build: `site/build.sh` runs `wasm-pack` + `mdbook build` and copies the
 WASM bundle into the book output. Deploy `site/book/` anywhere.
 
-No domain hardcoded. Works on file://, GitHub Pages, Cloudflare Pages,
-or any static host.
+Deployed to ezc.cade.io via Cloudflare Pages — see infra/README.md.
+The output is a plain static site, so it works on file:// or any other
+static host as well.

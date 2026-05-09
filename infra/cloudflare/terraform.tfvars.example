@@ -1,0 +1,8 @@
+account_id   = "YOUR_CLOUDFLARE_ACCOUNT_ID"
+github_owner = "YOUR_GITHUB_USER_OR_ORG"
+# github_repo = "ezc"
+# pages_project_name = "ezc-cade-io"
+# pages_production_branch = "main"
+# zone_name = "cade.io"
+# subdomain_label = "ezc"
+# pages_custom_domain = "ezc.cade.io"

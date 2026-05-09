@@ -10,7 +10,7 @@
   let wasmReady = null;
 
   // mdbook serves the book at the root of the site, so /pkg/ is correct
-  // for both local serve and GitHub Pages (when deployed at the root path).
+  // for both local serve and Cloudflare Pages (deployed at the root path).
   function pkgUrl(file) {
     // Find the site root by counting how deep we are.
     const path = window.location.pathname;
