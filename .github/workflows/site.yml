@@ -43,6 +43,10 @@ jobs:
         run: bash site/build.sh
       - name: configure pages
         uses: actions/configure-pages@v5
+        with:
+          # Auto-enable GitHub Pages on first run if not already configured.
+          # Requires the workflow's `pages: write` permission (set above).
+          enablement: true
       - name: upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
