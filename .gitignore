@@ -3,4 +3,5 @@
 *.swo
 .DS_Store
 **/*.snap.new
-.claude/worktrees/
+.claude/
+.wrangler/
