@@ -1088,9 +1088,8 @@ impl Stepper {
                             Ok(true) => {}
                             Ok(false) => continue,
                             Err(e) => {
-                                self.pending_output.push(format!(
-                                    "Breakpoint condition error: {}", e.kind
-                                ));
+                                self.pending_output
+                                    .push(format!("Breakpoint condition error: {}", e.kind));
                                 continue;
                             }
                         }
@@ -1102,9 +1101,8 @@ impl Stepper {
                             Ok(true) => {}
                             Ok(false) => continue,
                             Err(msg) => {
-                                self.pending_output.push(format!(
-                                    "Hit condition error: {msg}"
-                                ));
+                                self.pending_output
+                                    .push(format!("Hit condition error: {msg}"));
                                 continue;
                             }
                         }
@@ -1251,9 +1249,10 @@ impl Stepper {
             return Err(format!("invalid hit condition: `{expr}`"));
         };
 
-        let n: usize = rest.trim().parse().map_err(|_| {
-            format!("invalid number in hit condition: `{expr}`")
-        })?;
+        let n: usize = rest
+            .trim()
+            .parse()
+            .map_err(|_| format!("invalid number in hit condition: `{expr}`"))?;
 
         Ok(match op {
             "==" => hit_count == n,

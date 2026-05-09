@@ -296,11 +296,9 @@ impl App {
                     self.cursor = prev;
                 }
             }
-            KeyCode::Delete => {
-                if self.cursor < self.input.len() {
-                    let next = self.next_char_boundary(self.cursor);
-                    self.input.drain(self.cursor..next);
-                }
+            KeyCode::Delete if self.cursor < self.input.len() => {
+                let next = self.next_char_boundary(self.cursor);
+                self.input.drain(self.cursor..next);
             }
             KeyCode::Char(c) => {
                 self.input.insert(self.cursor, c);

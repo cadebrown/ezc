@@ -229,7 +229,11 @@ pub fn all_diagnostics(src: &str, index: &SymbolIndex, builtins: &BuiltinSets) -
 }
 
 /// Report warnings for references to names that have no definition.
-pub fn semantic_diagnostics(src: &str, index: &SymbolIndex, builtins: &BuiltinSets) -> Vec<Diagnostic> {
+pub fn semantic_diagnostics(
+    src: &str,
+    index: &SymbolIndex,
+    builtins: &BuiltinSets,
+) -> Vec<Diagnostic> {
     let mut diags = Vec::new();
     for (name, spans) in &index.references {
         // Skip if there's a definition for this name.
@@ -770,9 +774,7 @@ impl LanguageServer for Backend {
                 let replacement = match tok {
                     Token::Bind(n) if n == &name => format!("@{new_name}"),
                     Token::Recall(n) if n == &name => format!("${new_name}"),
-                    Token::Ident(n) if n == &name && !self.builtins.is_known(n) => {
-                        new_name.clone()
-                    }
+                    Token::Ident(n) if n == &name && !self.builtins.is_known(n) => new_name.clone(),
                     _ => continue,
                 };
                 edits.push(TextEdit {
@@ -1063,11 +1065,7 @@ impl LanguageServer for Backend {
             // Count references across all open documents.
             let mut ref_count = 0;
             for (_doc_uri, (_doc_src, doc_index)) in docs.iter() {
-                ref_count += doc_index
-                    .references
-                    .get(name)
-                    .map(|v| v.len())
-                    .unwrap_or(0);
+                ref_count += doc_index.references.get(name).map(|v| v.len()).unwrap_or(0);
             }
 
             for def_span in def_spans {
@@ -1793,6 +1791,23 @@ pub fn compute_folding_ranges(src: &str) -> Vec<FoldingRange> {
     ranges
 }
 
+// ── Entry point ───────────────────────────────────────────────────────────────
+
+/// Start the LSP server on stdio. Blocks until the client disconnects.
+pub fn run_server() {
+    let rt = tokio::runtime::Builder::new_multi_thread()
+        .enable_all()
+        .build()
+        .expect("tokio runtime");
+
+    rt.block_on(async {
+        let stdin = tokio::io::stdin();
+        let stdout = tokio::io::stdout();
+        let (service, socket) = LspService::new(Backend::new);
+        Server::new(stdin, stdout, socket).serve(service).await;
+    });
+}
+
 #[cfg(test)]
 mod reference_code_lens_tests {
     use super::{references_code_lens_arguments, EZC_SHOW_REFERENCES_COMMAND};
@@ -1817,21 +1832,4 @@ mod reference_code_lens_tests {
         assert_eq!(args[1], serde_json::json!({ "line": 2, "character": 5 }));
         assert_eq!(EZC_SHOW_REFERENCES_COMMAND, "ezc.showReferences");
     }
-}
-
-// ── Entry point ───────────────────────────────────────────────────────────────
-
-/// Start the LSP server on stdio. Blocks until the client disconnects.
-pub fn run_server() {
-    let rt = tokio::runtime::Builder::new_multi_thread()
-        .enable_all()
-        .build()
-        .expect("tokio runtime");
-
-    rt.block_on(async {
-        let stdin = tokio::io::stdin();
-        let stdout = tokio::io::stdout();
-        let (service, socket) = LspService::new(Backend::new);
-        Server::new(stdin, stdout, socket).serve(service).await;
-    });
 }

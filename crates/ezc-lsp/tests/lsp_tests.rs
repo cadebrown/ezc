@@ -637,7 +637,7 @@ fn test_format_stack_display_multiple() {
 
 #[test]
 fn test_format_stack_display_truncation() {
-    let vals: Vec<ezc::types::Value> = (1..=10).map(|i| ezc::types::Value::int(i)).collect();
+    let vals: Vec<ezc::types::Value> = (1..=10).map(ezc::types::Value::int).collect();
     let stack: Vec<&ezc::types::Value> = vals.iter().collect();
     let display = ezc_lsp::format_stack_display(&stack, 3);
     assert!(display.contains("...7"));
@@ -856,7 +856,10 @@ fn semantic_diag_undefined_recall() {
     let diags = ezc_lsp::semantic_diagnostics(src, &index, &builtins);
     assert_eq!(diags.len(), 1, "should warn about undefined $name");
     assert!(diags[0].message.contains("undefined_name"));
-    assert_eq!(diags[0].severity, Some(tower_lsp::lsp_types::DiagnosticSeverity::WARNING));
+    assert_eq!(
+        diags[0].severity,
+        Some(tower_lsp::lsp_types::DiagnosticSeverity::WARNING)
+    );
 }
 
 #[test]
@@ -914,7 +917,9 @@ fn all_diagnostics_skips_semantic_on_parse_error() {
     let diags = ezc_lsp::all_diagnostics(src, &index, &builtins);
     // Should only contain parse error, not semantic warnings
     assert!(
-        diags.iter().all(|d| d.severity == Some(tower_lsp::lsp_types::DiagnosticSeverity::ERROR)),
+        diags
+            .iter()
+            .all(|d| d.severity == Some(tower_lsp::lsp_types::DiagnosticSeverity::ERROR)),
         "should only have parse errors, not semantic warnings"
     );
 }
